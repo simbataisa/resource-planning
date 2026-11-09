@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIT Sizing Model</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Design language: Techcombank web design system tokens (same set as Component_Isolation_Testing_Master_Design.html).
+   Primary red #ED1B24 for actions and focus · navy #1B1564 = detailed estimate · gold #9A7B2F/#D6B973 = rough estimate · page grey #F5F6F8.
+   Type: SF Pro Display / Text, light (300) headings and figures, 600 for H3, 2px-tracked uppercase captions. Radius 8px, soft shadows. */
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --sunk:#F1F1F1; --ink:#212121; --muted:#616161; --line:#DEDEDE; --line-strong:#C4C4C4;
+  --rough:#9A7B2F; --rough-soft:#F6EEDC; --detail:#1B1564; --detail-soft:#E3EEF0; --accent:#ED1B24; --accent-ink:#FFFFFF;
+  --gold:#D6B973; --navy:#1B1564; --sky:#D6EBEC; --ivory:#F1EFE9;
+  --good:#1E8E4A; --good-soft:#E5F6EB; --warn:#9A7B2F; --warn-soft:#F6EEDC; --bad:#ED1B24; --bad-soft:#FDE8E9;
+  --shadow:0 2px 8px rgba(0,0,0,.08);
+  --f-display:-apple-system,"SF Pro Display",BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --f-body:-apple-system,"SF Pro Text","SF Pro Display",BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --f-mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#131313; --surface:#1C2629; --sunk:#263236; --ink:#F5F6F8; --muted:#A2A2A2; --line:#35424A; --line-strong:#4A5A62;
+  --rough:#D6B973; --rough-soft:#2E2717; --detail:#9EA4FF; --detail-soft:#1F2440; --accent:#FF3B42; --accent-ink:#FFFFFF;
+  --gold:#D6B973; --navy:#9EA4FF; --sky:#2A3D42; --ivory:#2B2924;
+  --good:#32C959; --good-soft:#16301F; --warn:#D6B973; --warn-soft:#2E2717; --bad:#FF6B70; --bad-soft:#3A1C1E;
+  --shadow:0 2px 8px rgba(0,0,0,.4); color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#131313; --surface:#1C2629; --sunk:#263236; --ink:#F5F6F8; --muted:#A2A2A2; --line:#35424A; --line-strong:#4A5A62;
+  --rough:#D6B973; --rough-soft:#2E2717; --detail:#9EA4FF; --detail-soft:#1F2440; --accent:#FF3B42; --accent-ink:#FFFFFF;
+  --gold:#D6B973; --navy:#9EA4FF; --sky:#2A3D42; --ivory:#2B2924;
+  --good:#32C959; --good-soft:#16301F; --warn:#D6B973; --warn-soft:#2E2717; --bad:#FF6B70; --bad-soft:#3A1C1E;
+  --shadow:0 2px 8px rgba(0,0,0,.4); color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(2rem,4.4vw,2.9rem);font-weight:800;line-height:1.05}
+h2{font-size:1.35rem;font-weight:700}
+h3{font-size:1rem;font-weight:700}
+p{margin:0}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+[hidden]{display:none!important}
+
+header.top{padding-block:36px 22px}
+header.top .wrap{display:grid;gap:10px}
+.lede{max-width:66ch;font-size:1.08rem;color:var(--muted)}
+.note{display:inline-flex;gap:8px;align-items:flex-start;max-width:72ch;font-size:.9rem;padding:8px 12px;border-radius:8px;background:var(--warn-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent)}
+.note b{color:var(--warn)}
+
+main.wrap{display:grid;gap:22px;padding-block:0 56px}
+
+/* summary */
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:grid;gap:6px;align-content:start;min-width:0}
+.card .k{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.card .k i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.card .big{font-family:var(--f-display);font-size:2.1rem;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
+.card .big small{font-size:.95rem;font-weight:600;color:var(--muted);margin-left:4px}
+.card .rng{font-family:var(--f-mono);font-size:.86rem}
+.card .sub{font-size:.9rem;color:var(--muted)}
+.card.rough{border-top:4px solid var(--rough)} .card.rough .big{color:var(--rough)}
+.card.detail{border-top:4px solid var(--detail)} .card.detail .big{color:var(--detail)}
+.card.gap{border-top:4px solid var(--line-strong)}
+.card.cal{border-top:4px solid var(--warn)}
+.meter{height:8px;border-radius:99px;background:var(--sunk);border:1px solid var(--line);overflow:hidden}
+.meter span{display:block;height:100%;background:var(--warn)}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.panel-h{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline;justify-content:space-between;padding:18px 20px 0}
+.panel-b{padding:16px 20px 20px;display:grid;gap:14px;min-width:0}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;padding:14px 14px 0;border-bottom:1px solid var(--line)}
+.tab{font:600 .95rem var(--f-body);background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:8px 12px 9px;cursor:pointer;border-radius:6px 6px 0 0}
+.tab:hover{color:var(--ink);background:var(--sunk)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:1px}
+.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.scroll{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th{font:600 .74rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+tfoot td{font-weight:700;border-top:1px solid var(--line-strong)}
+
+input[type=number],input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--sunk);border:1px solid var(--line-strong);border-radius:6px;padding:5px 8px}
+input[type=number]{width:5.6em;font-family:var(--f-mono);font-size:.92rem;text-align:right}
+input.wide{width:100%;min-width:15em}
+select{padding:5px 6px}
+textarea{width:100%;min-height:150px;font-family:var(--f-mono);font-size:.8rem;line-height:1.45}
+label.f{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
+label.f input{width:7em}
+.fields{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:end}
+.chk{display:flex;gap:8px;align-items:center;font-size:.95rem}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+
+.btn{font:600 .92rem var(--f-body);border-radius:7px;padding:7px 14px;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+.btn.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+.icon-btn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.05rem;padding:2px 6px;border-radius:5px}
+.icon-btn:hover{color:var(--bad);background:var(--bad-soft)}
+.row-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+.chip{display:inline-flex;align-items:center;gap:5px;font:600 .72rem var(--f-mono);letter-spacing:.04em;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.chip.unc{color:var(--warn);background:var(--warn-soft);border:1px dashed color-mix(in srgb,var(--warn) 60%,transparent)}
+.chip.team{color:var(--good);background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 40%,transparent)}
+.chip.good{color:var(--good);background:var(--good-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.bad{color:var(--bad);background:var(--bad-soft)}
+.link{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-size:.85rem;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+.expand{font-family:var(--f-mono);font-size:.76rem;color:var(--muted);min-width:17em;max-width:24em;line-height:1.45}
+.hint{font-size:.88rem;color:var(--muted);max-width:75ch}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.stat{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:2px}
+.stat b{font-family:var(--f-mono);font-size:1.05rem}
+
+.ev{display:grid;gap:10px}
+.ev-row{display:grid;grid-template-columns:minmax(0,1.3fr) auto minmax(0,2fr);gap:10px 16px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ev-row:last-child{border-bottom:0}
+.ev-row .what{font-weight:600}
+.ev-row .eff{font-size:.9rem;color:var(--muted)}
+
+.agrp{display:grid;gap:4px}
+.agrp h3{padding-top:6px}
+.arow td:first-child{min-width:16em}
+.arow .ins{display:flex;gap:6px;flex-wrap:wrap}
+.arow .ins label{display:grid;gap:2px;font:500 .68rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.arow.changed td:first-child{box-shadow:inset 3px 0 0 var(--good)}
+
+/* bars */
+.bars{display:grid;gap:3px;min-width:110px}
+.bar{height:7px;border-radius:3px}
+.bar.r{background:var(--rough)} .bar.d{background:var(--detail)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.86rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.pos{color:var(--bad)} .neg{color:var(--good)}
+
+.torn{display:grid;gap:6px}
+.trow{display:grid;grid-template-columns:minmax(0,15em) minmax(0,1fr) 9.5em;gap:12px;align-items:center;font-size:.92rem}
+.track{position:relative;height:18px;background:var(--sunk);border-radius:4px;border:1px solid var(--line)}
+.track .mid{position:absolute;top:-3px;bottom:-3px;left:50%;width:2px;background:var(--ink);opacity:.55}
+.track .lo,.track .hi{position:absolute;top:2px;bottom:2px;border-radius:3px}
+.track .lo{background:var(--good)} .track .hi{background:var(--bad)}
+.tval{font-family:var(--f-mono);font-size:.8rem;text-align:right;color:var(--muted);white-space:nowrap}
+
+.scen{display:grid;gap:10px}
+.srow{display:grid;grid-template-columns:minmax(0,13em) minmax(0,1fr) 8.5em;gap:12px;align-items:center}
+.strack{height:26px;background:var(--sunk);border-radius:5px;border:1px solid var(--line);overflow:hidden}
+.strack span{display:block;height:100%;background:var(--detail);opacity:.85}
+.srow.cur .strack span{background:var(--accent);opacity:1}
+.srow.cur .lbl{font-weight:700}
+.callout{border-left:4px solid var(--accent);background:var(--detail-soft);padding:10px 14px;border-radius:0 8px 8px 0;font-size:.98rem}
+table.refs td{vertical-align:top;min-width:9em}
+table.refs td:last-child{min-width:12em}
+table.refs sup a,.reflist a{color:var(--accent)}
+.reflist{display:grid;gap:6px;padding-left:1.4em;margin:0;color:var(--muted)}
+.reflist li:target{background:var(--warn-soft);border-radius:4px}
+#standards h3{padding-top:6px}
+
+.formula{font-family:var(--f-mono);font-size:.86rem;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:1.7;overflow-x:auto;white-space:pre}
+.steps{display:grid;gap:8px;padding-left:1.2em;margin:0}
+.toast{font-size:.88rem;color:var(--good);min-height:1.3em}
+
+@media (max-width:900px){ .summary{grid-template-columns:repeat(2,minmax(0,1fr))} .grid2{grid-template-columns:1fr} }
+@media (max-width:560px){
+  .summary{grid-template-columns:1fr}
+  .ev-row{grid-template-columns:1fr}
+  .trow{grid-template-columns:1fr;gap:4px} .tval{text-align:left}
+  .srow{grid-template-columns:1fr;gap:4px}
+  .panel-h,.panel-b{padding-left:14px;padding-right:14px}
+}
+@media (prefers-reduced-motion:no-preference){ .meter span,.strack span,.bar,.track .lo,.track .hi{transition:width .35s ease,left .35s ease} }
+
+/* ===== TCB design language ===== */
+body{border-top:4px solid var(--accent);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+h1{font-weight:300;letter-spacing:-.01em;line-height:1.15}
+h2{font-weight:300;font-size:1.6rem;letter-spacing:0}
+h3{font-weight:600;letter-spacing:0}
+.eyebrow{font-family:var(--f-body);font-size:.78rem;font-weight:600;letter-spacing:2px;color:var(--accent)}
+.panel-h .eyebrow::before,header.top .eyebrow::before{content:"";display:inline-block;width:18px;height:2px;background:var(--accent);vertical-align:middle;margin-right:10px}
+.card,.panel{box-shadow:var(--shadow)}
+.card .k{font-family:var(--f-body);font-weight:600;letter-spacing:1.5px;font-size:.72rem}
+.card .big{font-weight:300;font-size:2.3rem}
+.card.gap .big{color:var(--ink)}
+.card.cal .big{color:var(--warn)}
+th{font-weight:600;background:var(--sunk)}
+.tab{font-weight:500;font-size:.92rem}
+.tab[aria-selected="true"]{font-weight:600;border-bottom-color:var(--accent)}
+.btn{border-radius:8px;border-color:var(--line)}
+.btn:hover{border-color:var(--accent);background:var(--surface)}
+.btn.primary:hover{filter:none;background:#C8141C;border-color:#C8141C}
+.callout{border-left-color:var(--navy);background:var(--detail-soft)}
+.note{background:var(--ivory);border-color:var(--gold)}
+.note b{color:var(--accent)}
+.srow.cur .strack span{background:var(--navy)}
+.strack span{background:var(--sky);opacity:1}
+.meter span{background:var(--gold)}
+input[type=number]:focus,input[type=text]:focus,select:focus,textarea:focus{border-color:var(--accent)}
+
+/* ===== language switch ===== */
+.lang-switch{position:fixed;z-index:30;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(12px,env(safe-area-inset-right,0px));display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.lang-switch button{font:inherit;font-size:.78rem;font-weight:600;letter-spacing:.04em;border:0;background:transparent;color:var(--muted);padding:5px 11px;border-radius:999px;cursor:pointer}
+.lang-switch button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.lang-switch button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ===== derived drivers and rubric ===== */
+.formula-cell{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);min-width:22em}
+.rubric-box{border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--sunk)}
+.rubric-box summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.rubric-box[open] summary{margin-bottom:8px}
+.rub td{vertical-align:top;min-width:12em;font-size:.88rem}
+.icost{font-family:var(--f-mono);font-size:.76rem;color:var(--accent);margin-top:4px}
+</style>
+</head>
+<body>
+
+
+<div class="lang-switch" role="group" aria-label="Language / Ngôn ngữ"><button type="button" data-lang="en" aria-pressed="true" title="English">EN</button><button type="button" data-lang="vi" aria-pressed="false" title="Tiếng Việt">VI</button></div>
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Quality engineering · SIT planning</p>
+    <h1>SIT Sizing Model</h1>
+    <p class="lede">Estimate SIT test cases, effort and FTE for a Biz Case or QBR. Start rough from feature sizes, refine with FSD counts, and see which assumptions move the number.</p>
+    <p class="note"><span><b>Planning range only.</b> Defaults are uncalibrated heuristics until your team replaces them with actuals. Confirm FTE and timelines with the accountable delivery owner. The example scope below is synthetic.</span></p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="summary" id="summary" aria-live="polite"></section>
+
+  <section class="panel" aria-label="Inputs">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-rough" aria-controls="p-rough" aria-selected="true"><span class="dot" style="background:var(--rough)"></span>Rough scope</button>
+      <button class="tab" role="tab" id="tab-detail" aria-controls="p-detail" aria-selected="false"><span class="dot" style="background:var(--detail)"></span>Detailed scope (FSD)</button>
+      <button class="tab" role="tab" id="tab-team" aria-controls="p-team" aria-selected="false">Window, team and environment</button>
+      <button class="tab" role="tab" id="tab-ev" aria-controls="p-ev" aria-selected="false">Shift-left evidence</button>
+      <button class="tab" role="tab" id="tab-asm" aria-controls="p-asm" aria-selected="false">Assumptions <span class="chip unc" id="tabUnc" style="margin-left:6px"></span></button>
+    </div>
+
+    <div class="panel-b" role="tabpanel" id="p-rough" aria-labelledby="tab-rough">
+      <p class="hint">No FSD yet. List the features or epics, give each a T-shirt size and complexity. Each size expands into screens, fields, APIs, integrations, rules, journeys, batch and file interfaces, events and workflows using the feature proxies under Assumptions. Channels and languages apply to the whole scope.</p>
+      <div class="scroll"><table id="featTable">
+        <thead><tr><th>Feature or epic</th><th>Size</th><th>Complexity</th><th class="n">Qty</th><th>Expands to</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="row-actions">
+        <button class="btn" id="addFeat">Add feature</button>
+        <label class="f" style="grid-auto-flow:column;align-items:center;gap:8px">User roles <input type="number" id="roughRoles" min="0" step="1"></label>
+        <label class="f" style="grid-auto-flow:column;align-items:center;gap:8px">Channels <input type="number" id="roughChannels" min="1" step="1"></label>
+        <label class="f" style="grid-auto-flow:column;align-items:center;gap:8px">Languages <input type="number" id="roughLanguages" min="1" step="1"></label>
+        <label class="f" style="grid-auto-flow:column;align-items:center;gap:8px">Product variants <input type="number" id="roughVariants" min="1" step="1"></label>
+      </div>
+    </div>
+
+    <div class="panel-b" role="tabpanel" id="p-detail" aria-labelledby="tab-detail" hidden>
+      <p class="hint">FSD available. Enter actual counts by complexity. Use the guide at the bottom of this tab to choose Simple, Medium or Complex.</p>
+      <h3>Counted drivers</h3>
+      <div class="scroll"><table id="detTable">
+        <thead><tr><th>Driver</th><th class="n">Simple</th><th class="n">Medium</th><th class="n">Complex</th><th class="n">Total</th><th class="n">Rough said</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="fields">
+        <label class="f">Input fields (total)<input type="number" id="d-fields" min="0" step="1"></label>
+        <label class="f">User roles<input type="number" id="d-roles" min="0" step="1"></label>
+        <label class="f">Protected actions outside workflows<input type="number" id="d-actions" min="0" step="1"></label>
+        <label class="f">Approval workflows (maker-checker)<input type="number" id="d-approvals" min="0" step="1"></label>
+        <label class="f">Critical business rules<input type="number" id="d-critical" min="0" step="1"></label>
+        <label class="f">Product, segment or currency variants<input type="number" id="d-variants" min="1" step="1"></label>
+        <label class="f">Channels (web, iOS, Android)<input type="number" id="d-channels" min="1" step="1"></label>
+        <label class="f">Languages<input type="number" id="d-languages" min="1" step="1"></label>
+      </div>
+      <p class="hint">Fields are the input fields across all screens and request payloads. Protected actions are permission-checked actions outside workflows, such as view balance or export; role-gated workflow transitions are added automatically. Critical rules are regulatory or money-moving rules such as AML thresholds, limits, interest and fees. Variants are the products, customer segments or currencies that change a rule's outcome.</p>
+      <p class="small muted" id="detRoughCmp"></p>
+      <h3>Derived drivers</h3>
+      <p class="hint">Calculated from the counts above, the assumptions and the shift-left evidence. Each row matches a driver row in the rough vs detailed comparison.</p>
+      <div class="scroll"><table id="derTable"><thead><tr><th>Driver</th><th>How it is calculated</th><th class="n">Detailed cases</th></tr></thead><tbody></tbody></table></div>
+      <details class="rubric-box"><summary>How to choose Simple, Medium or Complex</summary>
+        <p class="hint">Hours per item use the detailed-mode effort settings, before shift-left credits, uplifts and variants.</p>
+        <div class="scroll" id="rubric"></div>
+      </details>
+    </div>
+
+    <div class="panel-b" role="tabpanel" id="p-team" aria-labelledby="tab-team" hidden>
+      <div class="grid2">
+        <div style="display:grid;gap:14px">
+          <div class="fields">
+            <label class="f">SIT window (weeks)<input type="number" id="t-weeks" min="1" step="1"></label>
+            <label class="f">Environment availability<select id="t-env"></select></label>
+            <label class="f">Regression automated (%)<input type="number" id="t-auto" min="0" max="100" step="5"></label>
+          </div>
+          <h3>Team mix</h3>
+          <div class="fields">
+            <label class="f">Junior (%)<input type="number" id="t-junior" min="0" max="100" step="5"></label>
+            <label class="f">Mid (%)<input type="number" id="t-mid" min="0" max="100" step="5"></label>
+            <label class="f">Senior (%)<input type="number" id="t-senior" min="0" max="100" step="5"></label>
+          </div>
+          <p class="hint" id="mixNote"></p>
+          <p class="hint" id="envNote"></p>
+        </div>
+        <div style="display:grid;gap:10px;align-content:start">
+          <div class="stat"><span class="small muted">Hours one FTE can give in the window</span><b id="t-hpf"></b></div>
+          <div class="stat"><span class="small muted">Blended capacity factor for this mix</span><b id="t-blend"></b></div>
+          <div class="scroll"><table id="lvlTable"><thead><tr><th>Level</th><th class="n">Mix</th><th class="n">Rough FTE</th><th class="n">Detailed FTE</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-b" role="tabpanel" id="p-ev" aria-labelledby="tab-ev" hidden>
+      <p class="hint">What the delivery team proves before SIT decides what QE has to repeat by hand in SIT. Enter the team's current or expected gate results. Each row says which L1 tests it measures and what it changes in the estimate.</p>
+      <h3>Backend L1</h3>
+      <div class="ev">
+        <div class="ev-row"><div><div class="what">L1 mutation score (PIT)</div><div class="small muted">Measures the domain and service unit tests (JUnit 5 + Mockito): do they fail when the logic is wrong?</div></div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px"><input type="number" id="e-mut" min="0" max="100" step="1"> %</label><div class="eff" id="eff-mut"></div></div>
+        <div class="ev-row"><div><div class="what">Business rule unit tests</div><div class="small muted">Share of business rules with decision-table unit tests (limits, fees, eligibility, rate-limit buckets)</div></div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px"><input type="number" id="e-rule" min="0" max="100" step="1"> %</label><div class="eff" id="eff-rule"></div></div>
+        <div class="ev-row"><div><div class="what">Bean Validation constraint coverage</div><div class="small muted">Jakarta constraints on request DTOs, entities and custom annotations, each with a failing test</div></div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px"><input type="number" id="e-be" min="0" max="100" step="1"> %</label><div class="eff" id="eff-be"></div></div>
+        <div class="ev-row"><div><div class="what">Mapper and serialization tests</div><div class="small muted">MapStruct or ModelMapper mappers and @JsonTest: field names, money, dates, enums, nulls, hidden internal fields</div></div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px"><input type="number" id="e-map" min="0" max="100" step="1"> %</label><div class="eff" id="eff-map"></div></div>
+        <div class="ev-row"><div><div class="what">Line and branch coverage (JaCoCo)</div><div class="small muted">Shows which code the unit tests ran</div></div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px"><input type="number" id="e-jacoco" min="0" max="100" step="1"> %</label><div class="eff" id="eff-jacoco"></div></div>
+      </div>
+      <h3>Frontend L1</h3>
+      <div class="ev">
+        <div class="ev-row"><div><div class="what">Frontend field validation coverage</div><div class="small muted">Validators and Zod schemas that mirror the backend constraints (field validation matrix)</div></div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px"><input type="number" id="e-fe" min="0" max="100" step="1"> %</label><div class="eff" id="eff-fe"></div></div>
+        <div class="ev-row"><div><div class="what">Frontend unit tests</div><div class="small muted">Vitest or Jest on pure TypeScript, pipes, signal stores, hooks, reducers and selectors</div></div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px"><input type="number" id="e-feunit" min="0" max="100" step="1"> %</label><div class="eff" id="eff-feunit"></div></div>
+        <div class="ev-row"><div><div class="what">Frontend mutation score (Stryker)</div><div class="small muted">Checks that the frontend unit tests fail when UI logic is wrong</div></div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px"><input type="number" id="e-femut" min="0" max="100" step="1"> %</label><div class="eff" id="eff-femut"></div></div>
+      </div>
+      <h3>Beyond L1</h3>
+      <div class="ev">
+        <div class="ev-row"><div><div class="what">L4 end-to-end journeys</div><div class="small muted">Cross-system journeys run by QE in SIT</div></div><label class="chk"><input type="checkbox" id="e-l4"> QE runs L4 in SIT</label><div class="eff" id="eff-l4"></div></div>
+      </div>
+      <h3>What each L1 test spares SIT</h3>
+      <div class="scroll"><table class="refs">
+        <thead><tr><th>L1 test</th><th>What it proves</th><th>Measured by</th><th>Effect in this model (defaults)</th></tr></thead>
+        <tbody>
+          <tr><td>Domain and service unit tests (JUnit 5 + Mockito)</td><td>Method logic, calculations, business rules and error paths of one class, with its collaborators mocked</td><td>PIT mutation score</td><td>Below the gate: business-rule cases +25% and retest rate 30% instead of 20%</td></tr>
+          <tr><td>Mutation testing (PIT)</td><td>That the unit tests fail when the code is wrong, which line coverage alone cannot show</td><td>Score ≥ 70% overall, 80% in service and domain packages</td><td>Drives the business-rule and retest effect above</td></tr>
+          <tr><td>Bean Validation constraint tests</td><td>Every Jakarta constraint on DTOs, entities and custom annotations rejects bad input</td><td>Constraint coverage gate, 100%</td><td>Credits backend field cases: one sample per API, half, or all of them</td></tr>
+          <tr><td>Mapper and serialization tests</td><td>Entity, DTO and JSON stay in step: names, money, dates, enums and nulls map correctly and internal fields stay hidden</td><td>Share of mappers and DTOs with tests</td><td>Credits 2 mapping checks per API endpoint and 2 per event topic</td></tr>
+          <tr><td>Business rule unit tests (limits, fees, eligibility, rate-limit buckets)</td><td>Every decision-table branch and threshold of a rule, without Spring</td><td>Share of rules with decision-table unit tests; PIT checks their strength</td><td>Credits standard rules: one wiring case each, half, or the full table. Critical rules always run in full</td></tr>
+          <tr><td>Line and branch coverage (JaCoCo)</td><td>Which code ran during the tests</td><td>JaCoCo gate</td><td>Informational only, so the same tests are not credited twice</td></tr>
+          <tr><td>Frontend validators and Zod schemas</td><td>The UI rejects what the API rejects, field by field</td><td>Field validation matrix coverage, 100%</td><td>Credits frontend field cases: one sample per screen, half, or all of them</td></tr>
+          <tr><td>Frontend unit tests (Vitest or Jest)</td><td>Pure TypeScript logic, pipes, signal stores, hooks, reducers and selectors</td><td>Coverage of UI logic, gate 80%</td><td>Below the gate: screen cases +20%</td></tr>
+          <tr><td>Frontend mutation testing (Stryker)</td><td>That the frontend unit tests fail when UI logic is wrong</td><td>Stryker score, gate 60%</td><td>Below the gate: screen cases +15%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="hint">L2 slices, L3 integration and L4 contract tests also shift work left, but this tab credits only L1 evidence. Their effect shows up in fewer defects and a lower retest rate once you calibrate.</p>
+    </div>
+
+    <div class="panel-b" role="tabpanel" id="p-asm" aria-labelledby="tab-asm" hidden>
+      <div class="row-actions" style="justify-content:space-between">
+        <p class="hint">Every value starts as an uncalibrated heuristic. Change one to your team's actual and it becomes a team value. Export the profile under Calibration so other teams can reuse it. See <a href="#standards" style="color:var(--accent)">Standards and rationale</a> for where each default comes from.</p>
+        <span class="chip unc">Uncalibrated</span>
+      </div>
+      <div id="asmBody" style="display:grid;gap:18px"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-h"><div><p class="eyebrow">Rough vs detailed</p><h2>Where the two estimates differ</h2></div>
+      <div class="legend"><span><i style="background:var(--rough)"></i>Rough · no FSD</span><span><i style="background:var(--detail)"></i>Detailed · FSD</span></div></div>
+    <div class="panel-b">
+      <p class="callout" id="gapCallout"></p>
+      <div class="scroll"><table id="gapTable">
+        <thead><tr><th>Driver</th><th class="n">Rough cases</th><th class="n">Detailed cases</th><th></th><th class="n">Δ cases</th><th class="n">Δ FTE</th><th class="n">Share of gap</th></tr></thead>
+        <tbody></tbody><tfoot></tfoot>
+      </table></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-h"><div><p class="eyebrow">Sensitivity</p><h2>What moves the number</h2></div>
+      <div class="row-actions">
+        <label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">Estimate <select id="sMode"><option value="detailed">Detailed</option><option value="rough">Rough</option></select></label>
+        <label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">Swing <select id="sSwing"><option value="0.1">±10%</option><option value="0.25" selected>±25%</option><option value="0.5">±50%</option></select></label>
+      </div></div>
+    <div class="panel-b">
+      <p class="hint" id="tornHint"></p>
+      <div class="torn" id="torn"></div>
+      <div class="legend"><span><i style="background:var(--good)"></i>Fewer FTE</span><span><i style="background:var(--bad)"></i>More FTE</span><span>Centre line = current estimate</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-h"><div><p class="eyebrow">Shift-left credit</p><h2>What the L1 / L2 gates are worth in SIT</h2></div><span class="small muted">Detailed scope, same team and window</span></div>
+    <div class="panel-b">
+      <div class="scen" id="scen"></div>
+      <p class="callout" id="scenCallout"></p>
+    </div>
+  </section>
+
+  <section class="panel" id="calib">
+    <div class="panel-h"><div><p class="eyebrow">Calibration</p><h2>Profile and actuals</h2></div><span id="calStatus"></span></div>
+    <div class="panel-b">
+      <div class="grid2">
+        <div style="display:grid;gap:12px;align-content:start">
+          <label class="f">Profile name<input type="text" class="wide" id="profName" placeholder="Uncalibrated defaults"></label>
+          <p class="hint">After each SIT cycle, replace the defaults with what the team measured: minutes per case, retest rate, cases per driver. Export the profile and keep it with the project, or share it so other teams start from calibrated values.</p>
+          <div class="row-actions">
+            <button class="btn primary" id="exportBtn">Export profile</button>
+            <button class="btn" id="copySummary">Copy QBR summary</button>
+            <button class="btn danger" id="resetBtn">Reset to defaults</button>
+          </div>
+          <p class="toast" id="toast" role="status"></p>
+        </div>
+        <div style="display:grid;gap:8px;align-content:start">
+          <label class="f" for="io">Profile JSON (exported here, or paste one to import)</label>
+          <textarea id="io" spellcheck="false" placeholder="Paste an exported profile here, then Import."></textarea>
+          <div class="row-actions">
+            <button class="btn" id="importBtn">Import pasted profile</button>
+            <label class="btn" for="fileIn" style="display:inline-block">Import from file</label>
+            <input type="file" id="fileIn" accept=".json,application/json" hidden>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-h"><div><p class="eyebrow">Method</p><h2>How the estimate is calculated</h2></div></div>
+    <div class="panel-b">
+      <div class="formula">cases  = Σ counted driver × cases per driver (by complexity)
+       + business rules: critical in full, standard credited by rule unit tests, × mutation × variants
+       + workflows: transitions × (1 + invalid share)
+       + roles: (protected actions + role-gated transitions) × roles × allow/deny × sampling, + segregation of duties
+       + field validation and mapping (after shift-left credit) + channel and language extras
+hours  = Σ cases × [ design min + exec min × (cycles + regression × (1 − automated)) × (1 + retest) × environment ] ÷ 60 × (1 + overhead)
+FTE    = hours ÷ ( weeks × days per week × productive hours × blended capacity )
+range  = FTE × (1 ± band)        band: rough ±40% · detailed ±15%</div>
+      <ol class="steps hint">
+        <li>Rough and detailed use the same formula. Rough fills the driver counts from feature size proxies and uses the longer design time per case, because there is no FSD to design from.</li>
+        <li>Field validation is credited by coverage. At 100% the team proved it in L1/L2, so SIT runs one sample per screen (frontend) or per API (backend). At 50–99% half the field cases come back into SIT. Below 50% all of them do.</li>
+        <li>A mutation score below the gate means logic defects reach SIT. Business-rule cases go up and the retest rate rises.</li>
+        <li>Roles use a role × guarded-action matrix with risk-based sampling, never roles × every case. Guarded actions are the protected actions outside workflows plus the role-gated workflow transitions. Each approval workflow adds segregation-of-duties cases.</li>
+        <li>Business rules split into critical and standard. Critical rules always run the full decision table in SIT. Standard rules are credited by business rule unit tests: one wiring case each when proven, half the table at 50–99%, the full table below 50%. Rules that vary by product, segment or currency are sampled pairwise.</li>
+        <li>Each extra channel or language adds a sampled share of screen and journey cases, not a full copy of the suite. Environment availability stretches execution time. Regression automation shrinks only the regression pass; building and maintaining that automation is not counted here.</li>
+        <li>Mutation testing itself is never counted as SIT work. It is automated and owned by the delivery team; it only changes how much SIT has to repeat.</li>
+      </ol>
+    </div>
+  </section>
+  <section class="panel" id="standards">
+    <div class="panel-h"><div><p class="eyebrow">Basis</p><h2>Standards and rationale</h2></div><span class="chip unc">Defaults are heuristics</span></div>
+    <div class="panel-b">
+      <p class="hint">No global standard prescribes numbers such as cases per API or minutes per case. Standards define the methods; the numbers come from your own history. This model follows recognised methods and labels every number as a heuristic until a team calibrates it.</p>
+
+      <h3>Techniques and references the model relies on</h3>
+      <div class="scroll"><table class="refs">
+        <thead><tr><th>Part of the model</th><th>Standard or reference</th><th>What it contributes</th></tr></thead>
+        <tbody>
+          <tr><td>Cases per driver</td><td><b>ISO/IEC/IEEE 29119-4:2021</b> test design techniques <sup><a href="#ref-1">1</a></sup></td><td>Equivalence partitioning, boundary value analysis, decision table testing, state transition testing and combinatorial techniques. The per-driver defaults approximate the smallest case set these techniques produce.</td></tr>
+          <tr><td>Overall approach</td><td><b>ISTQB Foundation 4.0</b> estimation techniques <sup><a href="#ref-2">2</a></sup></td><td>Four recognised methods: ratio-based, extrapolation, Wideband Delphi and three-point. This model is ratio-based; the other three are how you calibrate it.</td></tr>
+          <tr><td>Effort structure</td><td><b>TMap Test Point Analysis (TPA)</b> <sup><a href="#ref-3">3</a></sup></td><td>Size × environment factor × productivity factor, plus an allowance for planning and control (about 10%). The capacity factors (0.7–1.2×) and the 15% overhead follow the same shape.</td></tr>
+          <tr><td>Uncertainty ranges</td><td><b>Cone of Uncertainty</b>, Boehm and McConnell <sup><a href="#ref-4">4</a></sup></td><td>Estimate error narrows by stage: 0.25×–4× at initial concept, 0.5×–2× at approved product definition, 0.67×–1.5× at requirements complete.</td></tr>
+          <tr><td>Role sampling</td><td><b>NIST combinatorial testing research</b>, Kuhn et al. <sup><a href="#ref-5">5</a></sup></td><td>Most failures are triggered by one or two interacting factors, which justifies sampling the role × action matrix. NIST also warns that pairs alone are not always enough.</td></tr>
+          <tr><td>Cross-check</td><td><b>Capers Jones rule of thumb</b> <sup><a href="#ref-6">6</a></sup></td><td>Test cases ≈ function points<sup>1.2</sup>. Needs an IFPUG or COSMIC function point count. Seen in secondary sources; check the original text before citing.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Where each default comes from</h3>
+      <div class="scroll"><table class="refs">
+        <thead><tr><th>Default</th><th>Derivation</th><th>Basis</th></tr></thead>
+        <tbody>
+          <tr><td>API endpoint 4 / 6 / 10 cases</td><td>Happy path, two invalid classes, one auth case, one or two boundary or error cases</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>Screen 5 / 8 / 12 cases</td><td>Display, actions, navigation, error states</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>Integration 6 / 10 / 16 cases</td><td>Happy path, negative, timeout, retry, data mismatch, reconciliation</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>Business rule 2 / 4 / 8 cases</td><td>Average branches in a decision table</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>Field 3 frontend + 3 backend</td><td>Required, min/max boundary, format, special characters, duplicate; matches the field validation matrix</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>Batch job or file interface 5 / 8 / 12</td><td>Happy path, empty input, partial failure and restart, cut-off timing, rejects and duplicates, reconciliation</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>Event or message topic 4 / 6 / 9</td><td>Publish and consume, ordering, duplicate delivery, poison message and dead-letter queue, replay</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>Workflow: 3 / 6 / 10 transitions, +30% invalid</td><td>One case per valid transition plus invalid transitions (state transition testing, ISO/IEC/IEEE 29119-4)</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>50% of transitions role-gated</td><td>Submit, approve, reject and release are usually permission-checked, so they join the role × action matrix</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>2 segregation-of-duties cases per approval workflow</td><td>The maker cannot approve their own request; a second user with the checker role can</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>30% critical rules, 1 wiring case per proven standard rule</td><td>Regulatory and money-moving rules are always tested in full; other rules need one end-to-end case when L1 proves the logic</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>40% of rules vary, 30% variant sampling</td><td>Rules that differ by product, segment or currency, sampled pairwise instead of every combination</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>Extra channel 50%, extra language 20%</td><td>Sampled cross-channel and translation checks, not a full copy of the suite</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>Environment 1.0 / 1.1 / 1.25 / 1.4×</td><td>Shaped on the TPA environment factor: waits for shared downstream systems and core-banking test windows</td><td><span class="chip warn">Method-based · calibrate</span></td></tr>
+          <tr><td>Regression automation</td><td>Reduces the manual regression pass only; automation build and maintenance are outside this estimate</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>Role sampling 50%</td><td>Pairwise-style reduction; use the full matrix for high-risk actions such as approvals and payments</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>Mutation gate 70%</td><td>DE Quality Recommendations</td><td><span class="chip team">Internal standard</span></td></tr>
+          <tr><td>Mapping checks 2 per API, 2 per event topic</td><td>One field-mapping check and one format check (money, dates, enums) per response or payload</td><td><span class="chip warn">Method-based</span></td></tr>
+          <tr><td>Frontend unit gate 80%, +20% screen cases</td><td>Mirrors common coverage gates; UI logic defects otherwise surface as screen defects in SIT</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>Stryker gate 60%, +15% screen cases</td><td>Stryker's default low threshold; weak frontend tests let logic defects through</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>Execution 10 / 20 / 40 min, design 15 / 25 min</td><td>Common practitioner ranges</td><td><span class="chip bad">Judgment · calibrate first</span></td></tr>
+          <tr><td>2 cycles, 30% regression, 20% retest</td><td>Practitioner convention</td><td><span class="chip bad">Judgment · calibrate after cycle 1</span></td></tr>
+          <tr><td>6 productive hours per day</td><td>Common focus-factor convention; easy to measure from timesheets</td><td><span class="chip bad">Judgment</span></td></tr>
+          <tr><td>Overhead 15%, capacity 0.7 / 1.0 / 1.2×</td><td>Shaped on TPA environment and productivity factors</td><td><span class="chip warn">Method-based</span></td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Ranges against the cone of uncertainty</h3>
+      <div class="scroll"><table class="refs">
+        <thead><tr><th>Stage</th><th>Cone range</th><th class="n">This model now</th></tr></thead>
+        <tbody>
+          <tr><td>Rough · no FSD (approved product definition)</td><td>0.5× – 2× &nbsp;(−50% / +100%)</td><td class="n" id="coneRough"></td></tr>
+          <tr><td>Detailed · FSD (requirements complete)</td><td>0.67× – 1.5× &nbsp;(−33% / +50%)</td><td class="n" id="coneDet"></td></tr>
+        </tbody>
+      </table></div>
+      <p class="hint" id="coneNote"></p>
+
+      <h3>How to calibrate, using the ISTQB techniques</h3>
+      <ol class="steps hint">
+        <li><b>Ratio-based:</b> run this model on one or two completed projects and compare it with their actual cases and hours. Adjust cases per driver until it lands within range.</li>
+        <li><b>Extrapolation:</b> after the first SIT cycle, replace execution minutes per case, retest rate and productive hours with what the team measured.</li>
+        <li><b>Three-point:</b> where there is no data yet, ask three senior testers for optimistic (a), most likely (m) and pessimistic (b) minutes per case and use E = (a + 4m + b) ÷ 6.</li>
+        <li><b>Wideband Delphi:</b> agree cases per driver across QE leads in short rounds, then export the result as the shared calibration profile.</li>
+      </ol>
+
+      <h3>Wording for a Biz Case or QBR</h3>
+      <p class="callout" id="bizWording">The case-count method follows ISO/IEC/IEEE 29119-4 test design techniques and ISTQB ratio-based estimation. The effort structure is modelled on TMap Test Point Analysis, and the ranges follow the cone of uncertainty. The numeric defaults are uncalibrated heuristics and will be replaced with actuals after the first SIT cycle.</p>
+      <div class="row-actions"><button class="btn" id="copyWording">Copy wording</button><span class="toast" id="wordToast" role="status"></span></div>
+
+      <h3>References</h3>
+      <ol class="reflist small">
+        <li id="ref-1">ISO/IEC/IEEE 29119-4:2021, Software and systems engineering — Software testing — Part 4: Test techniques. <a href="https://iteh.eu/catalog/standards/iso/20536fd0-e74a-4b3c-8285-af54a8441204/iso-iec-ieee-29119-4-2021" target="_blank" rel="noopener">Catalogue entry</a></li>
+        <li id="ref-2">ISTQB Certified Tester Foundation Level 4.0, section 5.1.4 Estimation techniques. <a href="https://ryan-blunden.github.io/istqb-foundations-4.0-notes/guides/managing-test-activities/estimation-techniques" target="_blank" rel="noopener">Study notes</a> · <a href="https://www.quality.org/article/test-estimation-techniques" target="_blank" rel="noopener">CQI | IRCA overview</a></li>
+        <li id="ref-3">TMap, Test Point Analysis. <a href="https://www.tmap.net/?p=1263" target="_blank" rel="noopener">tmap.net</a> · <a href="https://www.tmap.net/?p=967" target="_blank" rel="noopener">Estimation based on test object size</a></li>
+        <li id="ref-4">Construx (McConnell), The Cone of Uncertainty. <a href="https://www.construx.com/wp-content/uploads/2019/02/CxWhitePaper_ConeOfUncertainty.pdf" target="_blank" rel="noopener">White paper (PDF)</a>. The original ranges came from expert judgment, not measured data.</li>
+        <li id="ref-5">NIST, Interactions involved in software failures. <a href="https://csrc.nist.gov/projects/automated-combinatorial-testing-for-software/combinatorial-methods-in-testing/interactions-involved-in-software-failures" target="_blank" rel="noopener">csrc.nist.gov</a> · <a href="https://csrc.nist.gov/projects/automated-combinatorial-testing-for-software/faqs" target="_blank" rel="noopener">FAQ</a></li>
+        <li id="ref-6">Capers Jones sizing rules of thumb, as summarised in <a href="https://files.ifi.uzh.ch/rerg/amadeus/teaching/seminars/seminar_ws0203/Slides_6.pdf" target="_blank" rel="noopener">University of Zurich seminar slides (PDF)</a>. Original: Jones, <i>Applied Software Measurement</i>.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<script type="application/json" id="i18n-vi">{"title":"Mô hình ước lượng SIT","units":{"\u0001Quality engineering · SIT planning":"Quality engineering · Lập kế hoạch SIT","\u0001SIT Sizing Model":"Mô hình ước lượng SIT","\u0001Estimate SIT test cases, effort and FTE for a Biz Case or QBR. Start rough from feature sizes, refine with FSD counts, and see which assumptions move the number.":"Ước tính số test case, công sức và FTE cho SIT để đưa vào Biz Case hoặc QBR. Bắt đầu sơ bộ từ kích cỡ tính năng, tinh chỉnh bằng số liệu từ FSD, và xem giả định nào làm thay đổi kết quả.","span,b\u0001Planning range only. Defaults are uncalibrated heuristics until your team replaces them with actuals. Confirm FTE and timelines with the accountable delivery owner. The example scope below is synthetic.":"<span><b>Chỉ là khoảng ước tính để lập kế hoạch.<\/b> Các giá trị mặc định là heuristic chưa hiệu chỉnh cho đến khi team thay bằng số liệu thực tế. Xác nhận FTE và tiến độ với người chịu trách nhiệm delivery. Phạm vi ví dụ bên dưới là dữ liệu giả lập.<\/span>","span\u0001Rough scope":"<span class=\"dot\" style=\"background:var(--rough)\"><\/span>Phạm vi sơ bộ","span\u0001Detailed scope (FSD)":"<span class=\"dot\" style=\"background:var(--detail)\"><\/span>Phạm vi chi tiết (FSD)","\u0001Window, team and environment":"Thời gian, team và môi trường","\u0001Shift-left evidence":"Bằng chứng shift-left","\u0001No FSD yet. List the features or epics, give each a T-shirt size and complexity. Each size expands into screens, fields, APIs, integrations, rules, journeys, batch and file interfaces, events and workflows using the feature proxies under Assumptions. Channels and languages apply to the whole scope.":"Chưa có FSD. Liệt kê các tính năng hoặc epic, gán cho mỗi mục một kích cỡ (T-shirt size) và độ phức tạp. Mỗi kích cỡ được quy đổi thành màn hình, trường, API, tích hợp, quy tắc, journey, batch và giao diện file, event và workflow theo hệ số quy đổi trong mục Giả định. Kênh và ngôn ngữ áp dụng cho toàn bộ phạm vi.","\u0001Feature or epic":"Tính năng hoặc epic","\u0001Size":"Kích cỡ","\u0001Complexity":"Độ phức tạp","\u0001Qty":"SL","\u0001Expands to":"Quy đổi thành","\u0001Add feature":"Thêm tính năng","\u0001FSD available. Enter actual counts by complexity. Fields are the input fields across all screens and request payloads. Protected action groups are the distinct permission-checked actions (approve, view balance, export). Count each batch job or file interface, each event or message topic, and each workflow with its own states.":"Đã có FSD. Nhập số lượng thực tế theo độ phức tạp. Trường là các trường nhập liệu trên mọi màn hình và payload request. Nhóm hành động được bảo vệ là các hành động có kiểm tra quyền riêng biệt (phê duyệt, xem số dư, xuất dữ liệu). Đếm từng batch job hoặc giao diện file, từng topic event hoặc message, và từng workflow có trạng thái riêng.","\u0001Driver":"Yếu tố","\u0001Simple":"Đơn giản","\u0001Medium":"Trung bình","\u0001Complex":"Phức tạp","\u0001Total":"Tổng","\u0001Rough said":"Ước tính sơ bộ","\u0001Team mix":"Cơ cấu team","\u0001Hours one FTE can give in the window":"Số giờ một FTE đóng góp trong khung thời gian","\u0001Blended capacity factor for this mix":"Hệ số năng lực bình quân của cơ cấu này","\u0001Level":"Cấp bậc","\u0001Mix":"Tỷ lệ","\u0001Rough FTE":"FTE sơ bộ","\u0001Detailed FTE":"FTE chi tiết","\u0001What the delivery team proves before SIT decides what QE has to repeat by hand in SIT. Enter the team's current or expected gate results. Each row says which L1 tests it measures and what it changes in the estimate.":"Những gì team delivery chứng minh trước SIT sẽ quyết định QE phải làm lại thủ công bao nhiêu trong SIT. Nhập kết quả gate hiện tại hoặc dự kiến của team. Mỗi dòng cho biết nó đo các test L1 nào và thay đổi gì trong ước tính.","\u0001Backend L1":"L1 backend","\u0001L1 mutation score (PIT)":"Điểm mutation L1 (PIT)","\u0001Measures the domain and service unit tests (JUnit 5 + Mockito): do they fail when the logic is wrong?":"Đo các unit test domain và service (JUnit 5 + Mockito): chúng có fail khi logic sai không?","\u0001Bean Validation constraint coverage":"Độ bao phủ ràng buộc Bean Validation","\u0001Jakarta constraints on request DTOs, entities and custom annotations, each with a failing test":"Ràng buộc Jakarta trên request DTO, entity và annotation tuỳ chỉnh, mỗi ràng buộc có một test fail tương ứng","\u0001Mapper and serialization tests":"Test mapper và serialization","\u0001MapStruct or ModelMapper mappers and @JsonTest: field names, money, dates, enums, nulls, hidden internal fields":"Mapper MapStruct hoặc ModelMapper và @JsonTest: tên trường, tiền tệ, ngày tháng, enum, null, trường nội bộ được ẩn","\u0001Line and branch coverage (JaCoCo)":"Độ bao phủ dòng và nhánh (JaCoCo)","\u0001Shows which code the unit tests ran":"Cho biết unit test đã chạy qua phần code nào","\u0001Frontend L1":"L1 frontend","\u0001Frontend field validation coverage":"Độ bao phủ validation trường ở frontend","\u0001Validators and Zod schemas that mirror the backend constraints (field validation matrix)":"Validator và schema Zod phản chiếu ràng buộc của backend (ma trận validation trường)","\u0001Frontend unit tests":"Unit test frontend","\u0001Vitest or Jest on pure TypeScript, pipes, signal stores, hooks, reducers and selectors":"Vitest hoặc Jest trên TypeScript thuần, pipe, signal store, hook, reducer và selector","\u0001Frontend mutation score (Stryker)":"Điểm mutation frontend (Stryker)","\u0001Checks that the frontend unit tests fail when UI logic is wrong":"Kiểm tra unit test frontend có fail khi logic UI sai","\u0001Beyond L1":"Ngoài L1","\u0001L4 end-to-end journeys":"Journey end-to-end L4","\u0001Cross-system journeys run by QE in SIT":"Journey liên hệ thống do QE chạy trong SIT","\u0001What each L1 test spares SIT":"Mỗi test L1 giảm tải gì cho SIT","\u0001L1 test":"Test L1","\u0001What it proves":"Chứng minh điều gì","\u0001Measured by":"Đo bằng","\u0001Effect in this model (defaults)":"Tác động trong mô hình (mặc định)","\u0001Domain and service unit tests (JUnit 5 + Mockito)":"Unit test domain và service (JUnit 5 + Mockito)","\u0001Method logic, calculations, business rules and error paths of one class, with its collaborators mocked":"Logic phương thức, phép tính, quy tắc nghiệp vụ và nhánh lỗi của một class, với các collaborator được mock","\u0001PIT mutation score":"Điểm mutation PIT","\u0001Below the gate: business-rule cases +25% and retest rate 30% instead of 20%":"Dưới gate: case quy tắc nghiệp vụ +25% và tỷ lệ retest 30% thay vì 20%","\u0001Mutation testing (PIT)":"Mutation testing (PIT)","\u0001That the unit tests fail when the code is wrong, which line coverage alone cannot show":"Unit test fail khi code sai, điều mà độ bao phủ dòng không thể cho thấy","\u0001Score ≥ 70% overall, 80% in service and domain packages":"Điểm ≥ 70% toàn bộ, 80% ở package service và domain","\u0001Drives the business-rule and retest effect above":"Quyết định tác động lên quy tắc nghiệp vụ và retest ở trên","\u0001Bean Validation constraint tests":"Test ràng buộc Bean Validation","\u0001Every Jakarta constraint on DTOs, entities and custom annotations rejects bad input":"Mọi ràng buộc Jakarta trên DTO, entity và annotation tuỳ chỉnh đều từ chối đầu vào sai","\u0001Constraint coverage gate, 100%":"Gate độ bao phủ ràng buộc, 100%","\u0001Credits backend field cases: one sample per API, half, or all of them":"Ghi nhận case trường backend: một case mẫu mỗi API, một nửa, hoặc toàn bộ","\u0001Entity, DTO and JSON stay in step: names, money, dates, enums and nulls map correctly and internal fields stay hidden":"Entity, DTO và JSON luôn khớp nhau: tên, tiền tệ, ngày tháng, enum và null được map đúng, trường nội bộ vẫn được ẩn","\u0001Share of mappers and DTOs with tests":"Tỷ lệ mapper và DTO có test","\u0001Credits 2 mapping checks per API endpoint and 2 per event topic":"Ghi nhận 2 lần kiểm tra mapping mỗi API endpoint và 2 lần mỗi topic event","\u0001Rule-level unit tests (limits, fees, rate-limit buckets)":"Unit test ở mức quy tắc (hạn mức, phí, bucket rate-limit)","\u0001Thresholds and calculations such as Bucket4j bucket rules, without Spring":"Ngưỡng và phép tính như quy tắc bucket của Bucket4j, không cần Spring","\u0001Part of the PIT score":"Nằm trong điểm PIT","\u0001Covered by the business-rule effect":"Đã tính trong tác động lên quy tắc nghiệp vụ","\u0001Which code ran during the tests":"Phần code nào đã chạy trong lúc test","\u0001JaCoCo gate":"Gate JaCoCo","\u0001Informational only, so the same tests are not credited twice":"Chỉ để tham khảo, để cùng một bộ test không bị ghi nhận hai lần","\u0001Frontend validators and Zod schemas":"Validator frontend và schema Zod","\u0001The UI rejects what the API rejects, field by field":"UI từ chối đúng những gì API từ chối, theo từng trường","\u0001Field validation matrix coverage, 100%":"Độ bao phủ ma trận validation trường, 100%","\u0001Credits frontend field cases: one sample per screen, half, or all of them":"Ghi nhận case trường frontend: một case mẫu mỗi màn hình, một nửa, hoặc toàn bộ","\u0001Frontend unit tests (Vitest or Jest)":"Unit test frontend (Vitest hoặc Jest)","\u0001Pure TypeScript logic, pipes, signal stores, hooks, reducers and selectors":"Logic TypeScript thuần, pipe, signal store, hook, reducer và selector","\u0001Coverage of UI logic, gate 80%":"Độ bao phủ logic UI, gate 80%","\u0001Below the gate: screen cases +20%":"Dưới gate: case màn hình +20%","\u0001Frontend mutation testing (Stryker)":"Mutation testing frontend (Stryker)","\u0001That the frontend unit tests fail when UI logic is wrong":"Unit test frontend fail khi logic UI sai","\u0001Stryker score, gate 60%":"Điểm Stryker, gate 60%","\u0001Below the gate: screen cases +15%":"Dưới gate: case màn hình +15%","\u0001L2 slices, L3 integration and L4 contract tests also shift work left, but this tab credits only L1 evidence. Their effect shows up in fewer defects and a lower retest rate once you calibrate.":"Slice L2, integration L3 và contract test L4 cũng đẩy công việc sang trái, nhưng tab này chỉ ghi nhận bằng chứng L1. Tác động của chúng sẽ thể hiện qua ít lỗi hơn và tỷ lệ retest thấp hơn khi bạn hiệu chỉnh.","a\u0001Every value starts as an uncalibrated heuristic. Change one to your team's actual and it becomes a team value. Export the profile under Calibration so other teams can reuse it. See Standards and rationale for where each default comes from.":"Mọi giá trị ban đầu đều là heuristic chưa hiệu chỉnh. Khi bạn đổi một giá trị thành số liệu thực tế của team, nó trở thành giá trị của team. Xuất hồ sơ ở mục Hiệu chỉnh để các team khác dùng lại. Xem <a href=\"#standards\" style=\"color:var(--accent)\">Tiêu chuẩn và cơ sở<\/a> để biết nguồn gốc của từng giá trị mặc định.","\u0001Uncalibrated":"Chưa hiệu chỉnh","\u0001Rough vs detailed":"Sơ bộ và chi tiết","\u0001Where the two estimates differ":"Hai ước tính khác nhau ở đâu","span,i,span,i\u0001Rough · no FSDDetailed · FSD":"<span><i style=\"background:var(--rough)\"><\/i>Sơ bộ · chưa có FSD<\/span><span><i style=\"background:var(--detail)\"><\/i>Chi tiết · có FSD<\/span>","\u0001Rough cases":"Case sơ bộ","\u0001Detailed cases":"Case chi tiết","\u0001Δ cases":"Δ case","\u0001Share of gap":"Tỷ trọng chênh lệch","\u0001Sensitivity":"Độ nhạy","\u0001What moves the number":"Điều gì làm thay đổi kết quả","\u0001Detailed":"Chi tiết","\u0001Rough":"Sơ bộ","span,i,span,i,span\u0001Fewer FTEMore FTECentre line = current estimate":"<span><i style=\"background:var(--good)\"><\/i>Ít FTE hơn<\/span><span><i style=\"background:var(--bad)\"><\/i>Nhiều FTE hơn<\/span><span>Vạch giữa = ước tính hiện tại<\/span>","\u0001Shift-left credit":"Ghi nhận shift-left","\u0001What the L1 / L2 gates are worth in SIT":"Giá trị của gate L1 / L2 trong SIT","\u0001Detailed scope, same team and window":"Phạm vi chi tiết, cùng team và khung thời gian","\u0001Calibration":"Hiệu chỉnh","\u0001Profile and actuals":"Hồ sơ và số liệu thực tế","\u0001After each SIT cycle, replace the defaults with what the team measured: minutes per case, retest rate, cases per driver. Export the profile and keep it with the project, or share it so other teams start from calibrated values.":"Sau mỗi chu kỳ SIT, thay các giá trị mặc định bằng số liệu team đo được: số phút mỗi case, tỷ lệ retest, số case mỗi yếu tố. Xuất hồ sơ và lưu cùng dự án, hoặc chia sẻ để các team khác bắt đầu từ giá trị đã hiệu chỉnh.","\u0001Export profile":"Xuất hồ sơ","\u0001Copy QBR summary":"Sao chép tóm tắt QBR","\u0001Reset to defaults":"Đặt lại mặc định","\u0001Profile JSON (exported here, or paste one to import)":"JSON hồ sơ (xuất ra tại đây, hoặc dán vào để nhập)","\u0001Import pasted profile":"Nhập hồ sơ đã dán","\u0001Import from file":"Nhập từ file","\u0001Method":"Phương pháp","\u0001How the estimate is calculated":"Cách tính ước tính","\u0001cases = Σ driver count × cases per driver (by complexity) + field validation cases (after shift-left credit) + role × action-group cases + channel and language extras (sampled share of screen and journey cases) hours = Σ cases × [ design min + exec min × (cycles + regression × (1 − automated)) × (1 + retest) × environment ] ÷ 60 × (1 + overhead) FTE = hours ÷ ( weeks × days per week × productive hours × blended capacity ) range = FTE × (1 ± band) band: rough ±40% · detailed ±15%":"case   = Σ số lượng yếu tố × số case mỗi yếu tố (theo độ phức tạp)\n       + case validation trường (sau ghi nhận shift-left) + case vai trò × nhóm hành động\n       + case bổ sung cho kênh và ngôn ngữ (một phần case màn hình và journey, có lấy mẫu)\ngiờ    = Σ case × [ phút thiết kế + phút thực thi × (số chu kỳ + regression × (1 − tự động hoá)) × (1 + retest) × môi trường ] ÷ 60 × (1 + overhead)\nFTE    = giờ ÷ ( số tuần × số ngày mỗi tuần × giờ hiệu quả × năng lực bình quân )\nkhoảng = FTE × (1 ± biên độ)      biên độ: sơ bộ ±40% · chi tiết ±15%","\u0001Rough and detailed use the same formula. Rough fills the driver counts from feature size proxies and uses the longer design time per case, because there is no FSD to design from.":"Sơ bộ và chi tiết dùng cùng một công thức. Bản sơ bộ lấy số lượng yếu tố từ hệ số quy đổi theo kích cỡ tính năng và dùng thời gian thiết kế mỗi case dài hơn, vì chưa có FSD để thiết kế.","\u0001Field validation is credited by coverage. At 100% the team proved it in L1/L2, so SIT runs one sample per screen (frontend) or per API (backend). At 50–99% half the field cases come back into SIT. Below 50% all of them do.":"Validation trường được ghi nhận theo độ bao phủ. Ở mức 100%, team đã chứng minh trong L1/L2, nên SIT chỉ chạy một case mẫu cho mỗi màn hình (frontend) hoặc mỗi API (backend). Ở mức 50–99%, một nửa số case trường quay lại SIT. Dưới 50%, toàn bộ quay lại.","\u0001A mutation score below the gate means logic defects reach SIT. Business-rule cases go up and the retest rate rises.":"Điểm mutation dưới gate nghĩa là lỗi logic lọt đến SIT. Số case quy tắc nghiệp vụ tăng và tỷ lệ retest cũng tăng.","\u0001Roles use a role × protected-action matrix with risk-based sampling, never roles × every case.":"Vai trò được tính theo ma trận vai trò × hành động được bảo vệ, có lấy mẫu theo rủi ro, không bao giờ là vai trò × mọi case.","\u0001Each extra channel or language adds a sampled share of screen and journey cases, not a full copy of the suite. Environment availability stretches execution time. Regression automation shrinks only the regression pass; building and maintaining that automation is not counted here.":"Mỗi kênh hoặc ngôn ngữ bổ sung thêm một phần case màn hình và journey có lấy mẫu, không nhân bản toàn bộ bộ test. Mức sẵn sàng của môi trường kéo dài thời gian thực thi. Tự động hoá regression chỉ giảm lượt regression; công xây dựng và bảo trì tự động hoá không được tính ở đây.","\u0001Mutation testing itself is never counted as SIT work. It is automated and owned by the delivery team; it only changes how much SIT has to repeat.":"Bản thân mutation testing không bao giờ được tính là công việc SIT. Nó được tự động hoá và do team delivery sở hữu; nó chỉ thay đổi lượng việc SIT phải làm lại.","\u0001Basis":"Cơ sở","\u0001Standards and rationale":"Tiêu chuẩn và cơ sở","\u0001Defaults are heuristics":"Giá trị mặc định là heuristic","\u0001No global standard prescribes numbers such as cases per API or minutes per case. Standards define the methods; the numbers come from your own history. This model follows recognised methods and labels every number as a heuristic until a team calibrates it.":"Không có tiêu chuẩn toàn cầu nào quy định các con số như số case mỗi API hay số phút mỗi case. Tiêu chuẩn định nghĩa phương pháp; con số đến từ lịch sử của chính bạn. Mô hình này tuân theo các phương pháp được công nhận và gắn nhãn mọi con số là heuristic cho đến khi team hiệu chỉnh.","\u0001Techniques and references the model relies on":"Kỹ thuật và tài liệu tham chiếu mô hình dựa vào","\u0001Part of the model":"Thành phần của mô hình","\u0001Standard or reference":"Tiêu chuẩn hoặc tài liệu","\u0001What it contributes":"Đóng góp","\u0001Cases per driver":"Số case mỗi yếu tố","b,sup,a\u0001ISO/IEC/IEEE 29119-4:2021 test design techniques 1":"Kỹ thuật thiết kế test <b>ISO/IEC/IEEE 29119-4:2021<\/b> <sup><a href=\"#ref-1\">1<\/a><\/sup>","\u0001Equivalence partitioning, boundary value analysis, decision table testing, state transition testing and combinatorial techniques. The per-driver defaults approximate the smallest case set these techniques produce.":"Phân vùng tương đương, phân tích giá trị biên, kiểm thử bảng quyết định, kiểm thử chuyển trạng thái và kỹ thuật tổ hợp. Giá trị mặc định cho từng yếu tố xấp xỉ bộ case nhỏ nhất mà các kỹ thuật này tạo ra.","\u0001Overall approach":"Cách tiếp cận tổng thể","b,sup,a\u0001ISTQB Foundation 4.0 estimation techniques 2":"Kỹ thuật ước lượng <b>ISTQB Foundation 4.0<\/b> <sup><a href=\"#ref-2\">2<\/a><\/sup>","\u0001Four recognised methods: ratio-based, extrapolation, Wideband Delphi and three-point. This model is ratio-based; the other three are how you calibrate it.":"Bốn phương pháp được công nhận: dựa trên tỷ lệ, ngoại suy, Wideband Delphi và ba điểm. Mô hình này dựa trên tỷ lệ; ba phương pháp còn lại là cách bạn hiệu chỉnh nó.","\u0001Effort structure":"Cấu trúc công sức","\u0001Size × environment factor × productivity factor, plus an allowance for planning and control (about 10%). The capacity factors (0.7–1.2×) and the 15% overhead follow the same shape.":"Quy mô × hệ số môi trường × hệ số năng suất, cộng thêm phần dự phòng cho lập kế hoạch và kiểm soát (khoảng 10%). Hệ số năng lực (0.7–1.2×) và overhead 15% theo cùng cấu trúc này.","\u0001Uncertainty ranges":"Khoảng bất định","b,sup,a\u0001Cone of Uncertainty, Boehm and McConnell 4":"<b>Cone of Uncertainty<\/b> (nón bất định), Boehm và McConnell <sup><a href=\"#ref-4\">4<\/a><\/sup>","\u0001Estimate error narrows by stage: 0.25×–4× at initial concept, 0.5×–2× at approved product definition, 0.67×–1.5× at requirements complete.":"Sai số ước tính thu hẹp theo giai đoạn: 0.25×–4× ở ý tưởng ban đầu, 0.5×–2× khi định nghĩa sản phẩm được duyệt, 0.67×–1.5× khi yêu cầu hoàn tất.","\u0001Role sampling":"Lấy mẫu vai trò","b,sup,a\u0001NIST combinatorial testing research, Kuhn et al. 5":"<b>Nghiên cứu kiểm thử tổ hợp của NIST<\/b>, Kuhn và cộng sự <sup><a href=\"#ref-5\">5<\/a><\/sup>","\u0001Most failures are triggered by one or two interacting factors, which justifies sampling the role × action matrix. NIST also warns that pairs alone are not always enough.":"Phần lớn lỗi được kích hoạt bởi một hoặc hai yếu tố tương tác, điều này biện minh cho việc lấy mẫu ma trận vai trò × hành động. NIST cũng cảnh báo rằng chỉ xét từng cặp không phải lúc nào cũng đủ.","\u0001Cross-check":"Đối chiếu","b,sup,a\u0001Capers Jones rule of thumb 6":"<b>Quy tắc kinh nghiệm của Capers Jones<\/b> <sup><a href=\"#ref-6\">6<\/a><\/sup>","sup\u0001Test cases ≈ function points1.2. Needs an IFPUG or COSMIC function point count. Seen in secondary sources; check the original text before citing.":"Số test case ≈ function point<sup>1.2<\/sup>. Cần số function point theo IFPUG hoặc COSMIC. Mới thấy ở nguồn thứ cấp; hãy kiểm tra văn bản gốc trước khi trích dẫn.","\u0001Where each default comes from":"Nguồn gốc của từng giá trị mặc định","\u0001Default":"Mặc định","\u0001Derivation":"Cách suy ra","\u0001API endpoint 4 / 6 / 10 cases":"API endpoint 4 / 6 / 10 case","\u0001Happy path, two invalid classes, one auth case, one or two boundary or error cases":"Happy path, hai lớp không hợp lệ, một case xác thực, một hoặc hai case biên hoặc lỗi","span\u0001Method-based":"<span class=\"chip warn\">Dựa trên phương pháp<\/span>","\u0001Screen 5 / 8 / 12 cases":"Màn hình 5 / 8 / 12 case","\u0001Display, actions, navigation, error states":"Hiển thị, thao tác, điều hướng, trạng thái lỗi","\u0001Integration 6 / 10 / 16 cases":"Tích hợp 6 / 10 / 16 case","\u0001Happy path, negative, timeout, retry, data mismatch, reconciliation":"Happy path, negative, timeout, retry, lệch dữ liệu, đối soát","\u0001Business rule 2 / 4 / 8 cases":"Quy tắc nghiệp vụ 2 / 4 / 8 case","\u0001Average branches in a decision table":"Số nhánh trung bình trong một bảng quyết định","\u0001Field 3 frontend + 3 backend":"Trường: 3 frontend + 3 backend","\u0001Required, min/max boundary, format, special characters, duplicate; matches the field validation matrix":"Bắt buộc, biên min/max, định dạng, ký tự đặc biệt, trùng lặp; khớp với ma trận validation trường","\u0001Batch job or file interface 5 / 8 / 12":"Batch job hoặc giao diện file 5 / 8 / 12","\u0001Happy path, empty input, partial failure and restart, cut-off timing, rejects and duplicates, reconciliation":"Happy path, đầu vào rỗng, lỗi giữa chừng và chạy lại, thời điểm cut-off, bản ghi bị từ chối và trùng lặp, đối soát","\u0001Event or message topic 4 / 6 / 9":"Topic event hoặc message 4 / 6 / 9","\u0001Publish and consume, ordering, duplicate delivery, poison message and dead-letter queue, replay":"Publish và consume, thứ tự, gửi trùng, poison message và dead-letter queue, replay","\u0001One case per valid transition plus invalid transitions (state transition testing, ISO/IEC/IEEE 29119-4)":"Một case cho mỗi chuyển trạng thái hợp lệ, cộng các chuyển trạng thái không hợp lệ (kiểm thử chuyển trạng thái, ISO/IEC/IEEE 29119-4)","\u0001Extra channel 50%, extra language 20%":"Kênh bổ sung 50%, ngôn ngữ bổ sung 20%","\u0001Sampled cross-channel and translation checks, not a full copy of the suite":"Kiểm tra liên kênh và bản dịch có lấy mẫu, không nhân bản toàn bộ bộ test","span\u0001Judgment":"<span class=\"chip bad\">Phán đoán<\/span>","\u0001Environment 1.0 / 1.1 / 1.25 / 1.4×":"Môi trường 1.0 / 1.1 / 1.25 / 1.4×","\u0001Shaped on the TPA environment factor: waits for shared downstream systems and core-banking test windows":"Dựa trên hệ số môi trường của TPA: thời gian chờ hệ thống downstream dùng chung và khung giờ test core banking","span\u0001Method-based · calibrate":"<span class=\"chip warn\">Dựa trên phương pháp · cần hiệu chỉnh<\/span>","\u0001Regression automation":"Tự động hoá regression","\u0001Reduces the manual regression pass only; automation build and maintenance are outside this estimate":"Chỉ giảm lượt regression thủ công; công xây dựng và bảo trì tự động hoá nằm ngoài ước tính này","\u0001Role sampling 50%":"Lấy mẫu vai trò 50%","\u0001Pairwise-style reduction; use the full matrix for high-risk actions such as approvals and payments":"Giảm theo kiểu pairwise; dùng toàn bộ ma trận cho các hành động rủi ro cao như phê duyệt và thanh toán","\u0001Mutation gate 70%":"Gate mutation 70%","span\u0001Internal standard":"<span class=\"chip team\">Tiêu chuẩn nội bộ<\/span>","\u0001Mapping checks 2 per API, 2 per event topic":"Kiểm tra mapping 2 mỗi API, 2 mỗi topic event","\u0001One field-mapping check and one format check (money, dates, enums) per response or payload":"Một lần kiểm tra mapping trường và một lần kiểm tra định dạng (tiền tệ, ngày tháng, enum) cho mỗi response hoặc payload","\u0001Frontend unit gate 80%, +20% screen cases":"Gate unit frontend 80%, +20% case màn hình","\u0001Mirrors common coverage gates; UI logic defects otherwise surface as screen defects in SIT":"Theo các gate độ bao phủ phổ biến; nếu không, lỗi logic UI sẽ lộ ra thành lỗi màn hình trong SIT","\u0001Stryker gate 60%, +15% screen cases":"Gate Stryker 60%, +15% case màn hình","\u0001Stryker's default low threshold; weak frontend tests let logic defects through":"Ngưỡng thấp mặc định của Stryker; test frontend yếu để lọt lỗi logic","\u0001Execution 10 / 20 / 40 min, design 15 / 25 min":"Thực thi 10 / 20 / 40 phút, thiết kế 15 / 25 phút","\u0001Common practitioner ranges":"Khoảng giá trị phổ biến trong thực tế","span\u0001Judgment · calibrate first":"<span class=\"chip bad\">Phán đoán · hiệu chỉnh trước tiên<\/span>","\u00012 cycles, 30% regression, 20% retest":"2 chu kỳ, 30% regression, 20% retest","\u0001Practitioner convention":"Quy ước thực tế","span\u0001Judgment · calibrate after cycle 1":"<span class=\"chip bad\">Phán đoán · hiệu chỉnh sau chu kỳ 1<\/span>","\u00016 productive hours per day":"6 giờ hiệu quả mỗi ngày","\u0001Common focus-factor convention; easy to measure from timesheets":"Quy ước focus factor phổ biến; dễ đo từ timesheet","\u0001Overhead 15%, capacity 0.7 / 1.0 / 1.2×":"Overhead 15%, năng lực 0.7 / 1.0 / 1.2×","\u0001Shaped on TPA environment and productivity factors":"Dựa trên hệ số môi trường và năng suất của TPA","\u0001Ranges against the cone of uncertainty":"Khoảng ước tính so với nón bất định","\u0001Stage":"Giai đoạn","\u0001Cone range":"Khoảng theo nón","\u0001This model now":"Mô hình hiện tại","\u0001Rough · no FSD (approved product definition)":"Sơ bộ · chưa có FSD (định nghĩa sản phẩm đã duyệt)","\u0001Detailed · FSD (requirements complete)":"Chi tiết · có FSD (yêu cầu hoàn tất)","\u0001How to calibrate, using the ISTQB techniques":"Cách hiệu chỉnh theo các kỹ thuật ISTQB","b\u0001Ratio-based: run this model on one or two completed projects and compare it with their actual cases and hours. Adjust cases per driver until it lands within range.":"<b>Dựa trên tỷ lệ:<\/b> chạy mô hình này trên một hoặc hai dự án đã hoàn thành và so sánh với số case và số giờ thực tế. Điều chỉnh số case mỗi yếu tố cho đến khi kết quả nằm trong khoảng.","b\u0001Extrapolation: after the first SIT cycle, replace execution minutes per case, retest rate and productive hours with what the team measured.":"<b>Ngoại suy:<\/b> sau chu kỳ SIT đầu tiên, thay số phút thực thi mỗi case, tỷ lệ retest và số giờ hiệu quả bằng số liệu team đo được.","b\u0001Three-point: where there is no data yet, ask three senior testers for optimistic (a), most likely (m) and pessimistic (b) minutes per case and use E = (a + 4m + b) ÷ 6.":"<b>Ba điểm:<\/b> khi chưa có dữ liệu, hỏi ba tester senior về số phút mỗi case ở mức lạc quan (a), khả dĩ nhất (m) và bi quan (b), rồi dùng E = (a + 4m + b) ÷ 6.","b\u0001Wideband Delphi: agree cases per driver across QE leads in short rounds, then export the result as the shared calibration profile.":"<b>Wideband Delphi:<\/b> thống nhất số case mỗi yếu tố giữa các QE lead qua vài vòng ngắn, rồi xuất kết quả thành hồ sơ hiệu chỉnh dùng chung.","\u0001Wording for a Biz Case or QBR":"Đoạn văn cho Biz Case hoặc QBR","\u0001The case-count method follows ISO/IEC/IEEE 29119-4 test design techniques and ISTQB ratio-based estimation. The effort structure is modelled on TMap Test Point Analysis, and the ranges follow the cone of uncertainty. The numeric defaults are uncalibrated heuristics and will be replaced with actuals after the first SIT cycle.":"Phương pháp đếm case tuân theo các kỹ thuật thiết kế test của ISO/IEC/IEEE 29119-4 và cách ước lượng dựa trên tỷ lệ của ISTQB. Cấu trúc công sức được mô phỏng theo TMap Test Point Analysis, và khoảng ước tính theo nón bất định. Các giá trị mặc định là heuristic chưa hiệu chỉnh và sẽ được thay bằng số liệu thực tế sau chu kỳ SIT đầu tiên.","\u0001Copy wording":"Sao chép đoạn văn","\u0001References":"Tài liệu tham khảo","a\u0001ISO/IEC/IEEE 29119-4:2021, Software and systems engineering — Software testing — Part 4: Test techniques. Catalogue entry":"ISO/IEC/IEEE 29119-4:2021, Software and systems engineering — Software testing — Part 4: Test techniques. <a href=\"https://iteh.eu/catalog/standards/iso/20536fd0-e74a-4b3c-8285-af54a8441204/iso-iec-ieee-29119-4-2021\" target=\"_blank\" rel=\"noopener\">Trang danh mục<\/a>","a,a\u0001ISTQB Certified Tester Foundation Level 4.0, section 5.1.4 Estimation techniques. Study notes · CQI | IRCA overview":"ISTQB Certified Tester Foundation Level 4.0, mục 5.1.4 Estimation techniques. <a href=\"https://ryan-blunden.github.io/istqb-foundations-4.0-notes/guides/managing-test-activities/estimation-techniques\" target=\"_blank\" rel=\"noopener\">Ghi chú ôn tập<\/a> · <a href=\"https://www.quality.org/article/test-estimation-techniques\" target=\"_blank\" rel=\"noopener\">Tổng quan của CQI | IRCA<\/a>","a,a\u0001TMap, Test Point Analysis. tmap.net · Estimation based on test object size":"TMap, Test Point Analysis. <a href=\"https://www.tmap.net/?p=1263\" target=\"_blank\" rel=\"noopener\">tmap.net<\/a> · <a href=\"https://www.tmap.net/?p=967\" target=\"_blank\" rel=\"noopener\">Ước lượng theo quy mô đối tượng test<\/a>","a\u0001Construx (McConnell), The Cone of Uncertainty. White paper (PDF). The original ranges came from expert judgment, not measured data.":"Construx (McConnell), The Cone of Uncertainty. <a href=\"https://www.construx.com/wp-content/uploads/2019/02/CxWhitePaper_ConeOfUncertainty.pdf\" target=\"_blank\" rel=\"noopener\">White paper (PDF)<\/a>. Các khoảng ban đầu đến từ đánh giá của chuyên gia, không phải dữ liệu đo lường.","a,i\u0001Capers Jones sizing rules of thumb, as summarised in University of Zurich seminar slides (PDF). Original: Jones, Applied Software Measurement.":"Quy tắc kinh nghiệm về quy mô của Capers Jones, theo bản tóm tắt trong <a href=\"https://files.ifi.uzh.ch/rerg/amadeus/teaching/seminars/seminar_ws0203/Slides_6.pdf\" target=\"_blank\" rel=\"noopener\">slide seminar của Đại học Zurich (PDF)<\/a>. Bản gốc: Jones, <i>Applied Software Measurement<\/i>."},"texts":{"Assumptions":"Giả định","Channels":"Kênh","Channels (web, iOS, Android)":"Kênh (web, iOS, Android)","Environment availability":"Mức sẵn sàng của môi trường","Estimate":"Ước tính","Input fields (total)":"Trường nhập liệu (tổng)","Languages":"Ngôn ngữ","Profile name":"Tên hồ sơ","Protected action groups":"Nhóm hành động được bảo vệ","QE runs L4 in SIT":"QE chạy L4 trong SIT","Regression automated (%)":"Regression tự động hoá (%)","SIT window (weeks)":"Khung thời gian SIT (tuần)","Swing":"Biên độ dao động","User roles":"Vai trò người dùng"},"js":{"Simple":"Đơn giản","Medium":"Trung bình","Complex":"Phức tạp","Total":"Tổng","Size":"Kích cỡ","Complexity":"Độ phức tạp","Dedicated or stubbed":"Riêng hoặc dùng stub","Mostly available":"Phần lớn sẵn sàng","Shared, real downstream":"Dùng chung, downstream thật","Shared core-banking windows":"Khung giờ core banking dùng chung","Dedicated":"Riêng","Mostly up":"Phần lớn sẵn","Shared real":"Chung, thật","Core windows":"Khung core","API endpoints":"API endpoint","Screens":"Màn hình","Integrations":"Tích hợp","Business rules":"Quy tắc nghiệp vụ","L4 · E2E journeys":"L4 · Journey E2E","Batch jobs and file interfaces":"Batch job và giao diện file","Events and messages":"Event và message","Workflows (state machines)":"Workflow (máy trạng thái)","Field validation · frontend":"Validation trường · frontend","Roles and authorization":"Vai trò và phân quyền","Channels and languages":"Kênh và ngôn ngữ","Fields":"Trường","APIs":"API","Integr.":"Tích hợp","Rules":"Quy tắc","Journeys":"Journey","Events":"Event","Workflows":"Workflow","Action grp":"Nhóm HĐ","Cases per driver":"Số case mỗi yếu tố","Validation and authorization":"Validation và phân quyền","Channels, languages and environment":"Kênh, ngôn ngữ và môi trường","Shift-left rules":"Quy tắc shift-left","Effort":"Công sức","Capacity":"Năng lực","Uncertainty":"Độ bất định","Rough-mode feature proxies (per feature of that size)":"Hệ số quy đổi tính năng ở chế độ sơ bộ (cho mỗi tính năng có kích cỡ đó)","Screen":"Màn hình","Integration (happy, negative, timeout, retry, mismatch, reconciliation)":"Tích hợp (happy, negative, timeout, retry, lệch dữ liệu, đối soát)","Business rule (decision-table branches)":"Quy tắc nghiệp vụ (nhánh bảng quyết định)","Batch job or file interface (happy, empty, restart, cut-off, rejects, reconciliation)":"Batch job hoặc giao diện file (happy, rỗng, chạy lại, cut-off, từ chối, đối soát)","Event or message topic (ordering, duplicate, poison / DLQ, replay)":"Topic event hoặc message (thứ tự, trùng lặp, poison / DLQ, replay)","Workflow (valid and invalid state transitions)":"Workflow (chuyển trạng thái hợp lệ và không hợp lệ)","L4 E2E journey":"Journey E2E L4","Frontend cases per field, no gate":"Case frontend mỗi trường, chưa đạt gate","Backend cases per field, no gate":"Case backend mỗi trường, chưa đạt gate","Frontend sample cases per screen, gate met":"Case mẫu frontend mỗi màn hình, đã đạt gate","Backend sample cases per API, gate met":"Case mẫu backend mỗi API, đã đạt gate","Share pulled into SIT at 50–99% coverage":"Tỷ lệ quay lại SIT khi độ bao phủ 50–99%","Cases per role × action group (allow + deny)":"Case mỗi vai trò × nhóm hành động (cho phép + từ chối)","Role sampling, risk-based or pairwise":"Lấy mẫu vai trò, theo rủi ro hoặc pairwise","Extra cases per additional channel, share of screen and journey cases":"Case bổ sung cho mỗi kênh thêm, theo tỷ lệ case màn hình và journey","Extra cases per additional language, share of screen cases":"Case bổ sung cho mỗi ngôn ngữ thêm, theo tỷ lệ case màn hình","Execution time multiplier by environment availability":"Hệ số nhân thời gian thực thi theo mức sẵn sàng của môi trường","Mutation score gate":"Gate điểm mutation","Extra business-rule cases below the gate":"Case quy tắc nghiệp vụ tăng thêm khi dưới gate","Defect retest rate below the gate":"Tỷ lệ retest lỗi khi dưới gate","Execution minutes per case, incl. data setup":"Phút thực thi mỗi case, gồm chuẩn bị dữ liệu","Design minutes per case, with FSD":"Phút thiết kế mỗi case, có FSD","Design minutes per case, without FSD":"Phút thiết kế mỗi case, chưa có FSD","Full SIT cycles":"Số chu kỳ SIT đầy đủ","Regression pass, share of cases":"Lượt regression, tỷ lệ case","Defect retest rate":"Tỷ lệ retest lỗi","Environment downtime and overhead":"Môi trường gián đoạn và overhead","Productive hours per FTE per day":"Giờ hiệu quả mỗi FTE mỗi ngày","Working days per week":"Số ngày làm việc mỗi tuần","Capacity factor by level (mid = 1.0)":"Hệ số năng lực theo cấp bậc (mid = 1.0)","Range, rough mode (±)":"Biên độ, chế độ sơ bộ (±)","Range, detailed mode (±)":"Biên độ, chế độ chi tiết (±)","Size {s}":"Kích cỡ {s}","cases":"case","min":"phút","cycles":"chu kỳ","h":"giờ","days":"ngày","Cases per integration":"Số case mỗi tích hợp","Cases per API endpoint":"Số case mỗi API endpoint","Cases per screen":"Số case mỗi màn hình","Cases per business rule":"Số case mỗi quy tắc nghiệp vụ","Cases per E2E journey":"Số case mỗi journey E2E","Cases per batch job or file":"Số case mỗi batch job hoặc file","Cases per event or message topic":"Số case mỗi topic event hoặc message","Cases per workflow":"Số case mỗi workflow","Extra cases per channel or language":"Case bổ sung mỗi kênh hoặc ngôn ngữ","Environment availability factor":"Hệ số sẵn sàng của môi trường","Field validation cases per field":"Case validation mỗi trường","Role sampling":"Lấy mẫu vai trò","Execution minutes per case":"Phút thực thi mỗi case","Design minutes per case":"Phút thiết kế mỗi case","SIT cycles":"Số chu kỳ SIT","Environment and overhead":"Môi trường và overhead","Productive hours per day":"Giờ hiệu quả mỗi ngày","Capacity per FTE level":"Năng lực theo cấp bậc FTE","Feature size proxies":"Hệ số quy đổi kích cỡ tính năng","Not a profile.":"Đây không phải hồ sơ.","The JSON has no \"assumptions\" section.":"JSON không có phần \"assumptions\".","Feature name":"Tên tính năng","Quantity":"Số lượng","Remove {n}":"Xoá {n}","Remove":"Xoá","Reset":"Đặt lại","Uncalibrated":"Chưa hiệu chỉnh","Team value":"Giá trị của team","Uncalibrated defaults":"Mặc định chưa hiệu chỉnh","Paste an exported profile here, then Import.":"Dán hồ sơ đã xuất vào đây, rồi bấm Nhập.","Rough · no FSD":"Sơ bộ · chưa có FSD","Detailed · with FSD":"Chi tiết · có FSD","Gap, detailed − rough":"Chênh lệch, chi tiết − sơ bộ","{s}{c} cases · {p}":"{s}{c} case · {p}","{label} drive {p}% of the gap":"{label} chiếm {p}% chênh lệch","{label} drives {p}% of the gap":"{label} chiếm {p}% chênh lệch","Rough and detailed agree":"Sơ bộ và chi tiết khớp nhau","Calibration":"Hiệu chỉnh","of {n}":"trên {n}","assumptions are still uncalibrated defaults":"giả định vẫn là mặc định chưa hiệu chỉnh"," · profile “{p}”":" · hồ sơ “{p}”","{n} uncalibrated":"{n} chưa hiệu chỉnh","{a} scr · {b} fld · {c} API · {d} int · {e} rules · {f} batch · {g} evt · {h} wf":"{a} MH · {b} trường · {c} API · {d} TH · {e} QT · {f} batch · {g} event · {h} WF","Rough said {f} fields, {r} roles, {a} action groups, {c} channels and {l} languages.":"Bản sơ bộ ước tính {f} trường, {r} vai trò, {a} nhóm hành động, {c} kênh và {l} ngôn ngữ.","{h} h  ({w} wk × {d} d × {p} h)":"{h} giờ  ({w} tuần × {d} ngày × {p} giờ)","Mix adds up to 100%.":"Tổng tỷ lệ là 100%.","Mix adds up to {n}%. The model normalises it to 100%.":"Tổng tỷ lệ là {n}%. Mô hình tự chuẩn hoá về 100%.","{env}: execution time × {f}.":"{env}: thời gian thực thi × {f}.","{a}% of the regression pass is automated, so manual regression covers {m}% of cases instead of {r}%.":"{a}% lượt regression đã được tự động hoá, nên regression thủ công chỉ còn {m}% số case thay vì {r}%.","The regression pass is fully manual.":"Lượt regression hoàn toàn thủ công.","Gate met":"Đạt gate","Business-rule cases and retest rate stay at base.":"Case quy tắc nghiệp vụ và tỷ lệ retest giữ ở mức cơ sở.","Below {g}% gate":"Dưới gate {g}%","Business-rule cases +{u}%, retest rate {w}% instead of {r}%.":"Case quy tắc nghiệp vụ +{u}%, tỷ lệ retest {w}% thay vì {r}%.","Counted":"Có tính","{n} journey cases in the detailed estimate.":"{n} case journey trong ước tính chi tiết.","Not counted":"Không tính","Journeys are excluded from SIT sizing.":"Journey không được tính vào ước lượng SIT.","{n} of {t} values calibrated":"Đã hiệu chỉnh {n} trên {t} giá trị","range {lo} – {hi} FTE (±{b}%)":"khoảng {lo} – {hi} FTE (±{b}%)","{c} cases · {h} h · <span style=\"white-space:nowrap\">{w} weeks<\/span>":"{c} case · {h} giờ · <span style=\"white-space:nowrap\">{w} tuần<\/span>","100% · credited":"100% · được ghi nhận","SIT runs {n} sample case per API.":"SIT chạy {n} case mẫu cho mỗi API.","SIT runs {n} sample case per screen.":"SIT chạy {n} case mẫu cho mỗi màn hình.","50–99% · partial":"50–99% · một phần","{p}% of field cases come back into SIT.":"{p}% case trường quay lại SIT.","Below 50%":"Dưới 50%","SIT repeats all {n} cases per field by hand.":"SIT làm lại thủ công toàn bộ {n} case mỗi trường.","Rough and detailed estimates match.":"Ước tính sơ bộ và chi tiết khớp nhau.","The detailed estimate is <b>{n} FTE higher<\/b> than rough.":"Ước tính chi tiết <b>cao hơn {n} FTE<\/b> so với sơ bộ.","The detailed estimate is <b>{n} FTE lower<\/b> than rough.":"Ước tính chi tiết <b>thấp hơn {n} FTE<\/b> so với sơ bộ.","{a} ({ap}%) and {b} ({bp}%) explain most of it.":"{a} ({ap}%) và {b} ({bp}%) giải thích phần lớn chênh lệch.","Rough uses {r} design minutes per case against {d} with an FSD, so the same scope costs more per case before the FSD exists.":"Bản sơ bộ dùng {r} phút thiết kế mỗi case so với {d} phút khi có FSD, nên cùng phạm vi sẽ tốn công hơn cho mỗi case khi chưa có FSD.","Each assumption is moved {s}% up and down while everything else stays fixed. Current {mode} estimate: <b class=\"mono\">{f} FTE<\/b>. Calibrate the top rows first: <b>{t}<\/b> alone swings the answer between {lo} and {hi} FTE.":"Mỗi giả định được tăng và giảm {s}% trong khi mọi yếu tố khác giữ nguyên. Ước tính {mode} hiện tại: <b class=\"mono\">{f} FTE<\/b>. Hãy hiệu chỉnh các dòng trên cùng trước: chỉ riêng <b>{t}<\/b> đã làm kết quả dao động từ {lo} đến {hi} FTE.","detailed":"chi tiết","rough":"sơ bộ"," and ":" và ","All gates met":"Đạt mọi gate","Current evidence":"Bằng chứng hiện tại","No gates":"Không có gate","Nothing proven before SIT":"Chưa chứng minh gì trước SIT","{n} cases":"{n} case","Closing the remaining gates would free about <b>{a} FTE<\/b> ({c} fewer manual cases) for this scope. Against no gates at all, the shift-left investment is worth <b>{b} FTE<\/b>.":"Hoàn thành các gate còn lại sẽ giải phóng khoảng <b>{a} FTE<\/b> (bớt {c} case thủ công) cho phạm vi này. So với không có gate nào, khoản đầu tư shift-left có giá trị <b>{b} FTE<\/b>.","All gates are met. Compared with no gates, the shift-left work saves about <b>{b} FTE<\/b> ({c} fewer manual cases) for this scope.":"Đã đạt mọi gate. So với không có gate, công việc shift-left tiết kiệm khoảng <b>{b} FTE<\/b> (bớt {c} case thủ công) cho phạm vi này.","The {w} ranges are narrower than the cone suggests.":"Biên độ {w} hẹp hơn mức nón bất định gợi ý.","The {w} range is narrower than the cone suggests.":"Biên độ {w} hẹp hơn mức nón bất định gợi ý.","The model uses symmetric ranges, so for a conservative upper bound set Range, rough to 100% and Range, detailed to 50% under Assumptions. Estimates tend to overrun more than underrun, so read the upper bound as the planning risk.":"Mô hình dùng biên độ đối xứng, nên để có cận trên thận trọng, hãy đặt \"Biên độ, chế độ sơ bộ\" thành 100% và \"Biên độ, chế độ chi tiết\" thành 50% trong mục Giả định. Ước tính thường vượt nhiều hơn là hụt, nên hãy coi cận trên là rủi ro khi lập kế hoạch.","Both ranges are at least as wide as the cone suggests on the upside.":"Cả hai biên độ đều rộng ít nhất bằng mức nón bất định gợi ý ở phía trên.","Selected in the box. Press Ctrl/Cmd + C to copy.":"Đã chọn trong ô. Nhấn Ctrl/Cmd + C để sao chép.","Profile copied and shown in the box. Save it as a .json file.":"Đã sao chép hồ sơ và hiển thị trong ô. Hãy lưu thành file .json.","Profile imported: {p}.":"Đã nhập hồ sơ: {p}.","Profile imported.":"Đã nhập hồ sơ.","Could not import: {e} Check that you pasted the whole exported profile.":"Không nhập được: {e} Hãy kiểm tra bạn đã dán toàn bộ hồ sơ đã xuất.","The text is not valid JSON.":"Nội dung không phải JSON hợp lệ.","Paste a profile into the box first.":"Hãy dán hồ sơ vào ô trước.","Reset to defaults":"Đặt lại mặc định","Click again to reset everything":"Bấm lần nữa để đặt lại toàn bộ","Reset to uncalibrated defaults and the example scope.":"Đã đặt lại về mặc định chưa hiệu chỉnh và phạm vi ví dụ.","SIT sizing (planning range, not a commitment)":"Ước lượng SIT (khoảng để lập kế hoạch, không phải cam kết)"," · profile: {p}":" · hồ sơ: {p}","• Rough, no FSD: {lo}–{hi} FTE (mid {m}), ~{c} cases, {h} h":"• Sơ bộ, chưa có FSD: {lo}–{hi} FTE (giữa {m}), ~{c} case, {h} giờ","• Detailed, with FSD: {lo}–{hi} FTE (mid {m}), ~{c} cases, {h} h":"• Chi tiết, có FSD: {lo}–{hi} FTE (giữa {m}), ~{c} case, {h} giờ","• Gap: {s}{n} FTE":"• Chênh lệch: {s}{n} FTE","; {label} drive {p}% of it":"; {label} chiếm {p}%","; {label} drives {p}% of it":"; {label} chiếm {p}%","• SIT window {w} weeks; team mix {j}/{m}/{s} junior/mid/senior":"• Khung thời gian SIT {w} tuần; cơ cấu team {j}/{m}/{s} junior/mid/senior","• Environment: {e}; regression automated {a}%; detailed scope on {c} channels and {l} languages":"• Môi trường: {e}; regression tự động hoá {a}%; phạm vi chi tiết trên {c} kênh và {l} ngôn ngữ","• {u} of {t} assumptions are uncalibrated defaults. Confirm with the delivery owner before committing.":"• {u} trên {t} giả định là mặc định chưa hiệu chỉnh. Xác nhận với người chịu trách nhiệm delivery trước khi cam kết.","QBR summary copied.":"Đã sao chép tóm tắt QBR.","Selected. Press Ctrl/Cmd + C to copy.":"Đã chọn. Nhấn Ctrl/Cmd + C để sao chép.","Copied.":"Đã sao chép.","New feature":"Tính năng mới","Mapping and serialization":"Mapping và serialization","Mapping and format checks per API endpoint, not proven in L1":"Kiểm tra mapping và định dạng mỗi API endpoint, chưa chứng minh ở L1","Payload mapping checks per event or message topic, not proven in L1":"Kiểm tra mapping payload mỗi topic event hoặc message, chưa chứng minh ở L1","Frontend unit test coverage gate":"Gate độ bao phủ unit test frontend","Extra screen cases below the frontend unit gate":"Case màn hình tăng thêm khi dưới gate unit frontend","Frontend mutation score gate (Stryker)":"Gate điểm mutation frontend (Stryker)","Extra screen cases below the frontend mutation gate":"Case màn hình tăng thêm khi dưới gate mutation frontend","SIT does not re-check field mapping or JSON formats.":"SIT không cần kiểm tra lại mapping trường hay định dạng JSON.","{p}% of mapping checks come back into SIT: {n} cases.":"{p}% lần kiểm tra mapping quay lại SIT: {n} case.","SIT checks every API response and event payload by hand: {n} cases.":"SIT kiểm tra thủ công mọi response API và payload event: {n} case.","Meets 80%":"Đạt 80%","Below 80%":"Dưới 80%","Informational, not credited. Coverage shows the code ran; the mutation score shows the tests catch bugs, so only mutation changes the estimate.":"Chỉ để tham khảo, không được ghi nhận. Độ bao phủ cho thấy code đã chạy; điểm mutation cho thấy test bắt được lỗi, nên chỉ mutation làm thay đổi ước tính.","Screen cases stay at base.":"Case màn hình giữ ở mức cơ sở.","Screen cases +{u}%: UI logic defects reach SIT.":"Case màn hình +{u}%: lỗi logic UI lọt đến SIT.","No extra screen cases.":"Không thêm case màn hình.","Screen cases +{u}%: weak frontend tests let defects through.":"Case màn hình +{u}%: test frontend yếu để lọt lỗi.","Every backend and frontend L1 gate passes":"Mọi gate L1 của backend và frontend đều đạt","Mutation {m}%, BE {b}%, FE {f}%, mapping {p}%, FE unit {u}%, Stryker {s}%":"Mutation {m}%, BE {b}%, FE {f}%, mapping {p}%, unit FE {u}%, Stryker {s}%","• Shift-left evidence: mutation {m}%, BE validation {b}%, FE validation {f}%, mapping tests {p}%, FE unit {u}%, FE mutation {s}%":"• Bằng chứng shift-left: mutation {m}%, validation BE {b}%, validation FE {f}%, test mapping {p}%, unit FE {u}%, mutation FE {s}%"}}</script>
+<script>
+(function(){
+"use strict";
+/* ---------- i18n core ---------- */
+var LANG='en', HOOKS=[];
+var DICT=(function(){ try{ return JSON.parse(document.getElementById('i18n-vi').textContent); }catch(e){ return {units:{},texts:{},js:{}}; } })();
+function tr(s){ return (LANG==='vi' && DICT.js && DICT.js[s]!==undefined) ? DICT.js[s] : s; }
+function trf(s,v){ return tr(s).replace(/\{(\w+)\}/g,function(m,k){ return v[k]!==undefined?v[k]:m; }); }
+function onLang(fn){ HOOKS.push(fn); }
+
+var CX=['Simple','Medium','Complex'], SIZES=['S','M','L','XL'];
+var ENV=['Dedicated or stubbed','Mostly available','Shared, real downstream','Shared core-banking windows'], ENV_SHORT=['Dedicated','Mostly up','Shared real','Core windows'];
+var DRV=[{k:'api',label:'API endpoints'},{k:'screen',label:'Screens'},{k:'integration',label:'Integrations'},{k:'rule',label:'Business rules'},{k:'workflow',label:'Workflows (state machines)'},{k:'batch',label:'Batch jobs and file interfaces'},{k:'event',label:'Events and messages'},{k:'journey',label:'L4 · E2E journeys'}];
+var GROUPS=[
+  {k:'api',label:'API endpoints'},{k:'screen',label:'Screens'},{k:'integration',label:'Integrations'},
+  {k:'rule',label:'Business rules'},{k:'workflow',label:'Workflows (state machines)'},
+  {k:'batch',label:'Batch jobs and file interfaces'},{k:'event',label:'Events and messages'},{k:'journey',label:'L4 · E2E journeys'},
+  {k:'fieldFE',label:'Field validation · frontend'},{k:'fieldBE',label:'Request / Bean Validation · backend'},{k:'mapping',label:'Mapping and serialization'},
+  {k:'role',label:'Roles and authorization'},{k:'sod',label:'Segregation of duties (maker-checker)'},{k:'channel',label:'Channels and languages'}];
+var PROXY_KEYS=[['screen','Screens'],['field','Fields'],['api','APIs'],['integration','Integr.'],['rule','Rules'],['journey','Journeys'],['batch','Batch'],['event','Events'],['workflow','Workflows'],['actions','Action grp']];
+
+var DEFAULTS={
+  cases:{api:[4,6,10],screen:[5,8,12],integration:[6,10,16],rule:[2,4,8],journey:[3,5,8],batch:[5,8,12],event:[4,6,9]},
+  fieldFE:3, fieldBE:3, sampleFE:1, sampleBE:1, partialShare:0.5,
+  roleCasesPerPair:2, roleSampling:0.5,
+  channelShare:0.5, languageShare:0.2, envFactor:[1.0,1.1,1.25,1.4],
+  mutationGate:70, ruleUplift:0.25, retestWeak:0.30,
+  transitions:[3,6,10], invalidShare:0.30, gatedShare:0.50, sodCases:2, roughApprovalShare:0.50,
+  criticalShare:0.30, wiringCases:1, variantShare:0.40, variantSampling:0.30,
+  mappingPerApi:2, mappingPerEvent:2, feUnitGate:80, feLogicUplift:0.20, feMutGate:60, feMutUplift:0.15,
+  minutes:[10,20,40], designFSD:15, designNoFSD:25, cycles:2, regression:0.30, retest:0.20, overhead:0.15,
+  hoursPerDay:6, daysPerWeek:5, capacity:[0.7,1.0,1.2],
+  band:{rough:0.40, detailed:0.15},
+  proxies:{
+    S:{screen:1,field:6,api:2,integration:0,rule:2,journey:1,batch:0,event:0,workflow:0,actions:1},
+    M:{screen:2,field:15,api:4,integration:1,rule:5,journey:1,batch:1,event:1,workflow:1,actions:2},
+    L:{screen:4,field:30,api:8,integration:2,rule:10,journey:2,batch:1,event:2,workflow:1,actions:3},
+    XL:{screen:7,field:55,api:14,integration:3,rule:18,journey:3,batch:2,event:4,workflow:2,actions:5}}
+};
+var SAMPLE_SCOPE={
+  features:[
+    {name:'Example · Customer onboarding',size:'L',cx:1,qty:1},
+    {name:'Example · Account maintenance',size:'M',cx:0,qty:1},
+    {name:'Example · Fund transfer',size:'L',cx:2,qty:1},
+    {name:'Example · Notifications',size:'S',cx:0,qty:1},
+    {name:'Example · Back-office approvals',size:'M',cx:1,qty:1}],
+  roughRoles:5, roughChannels:2, roughLanguages:2, roughVariants:2,
+  detail:{api:[8,14,8],screen:[5,8,3],integration:[1,4,4],rule:[10,18,12],journey:[2,4,3],batch:[1,2,1],event:[2,3,1],workflow:[1,2,1],fields:140,roles:6,actions:14,approvals:2,critical:12,variants:3,channels:2,languages:2},
+  team:{weeks:6,mix:{junior:30,mid:50,senior:20},env:1,automation:0},
+  evidence:{mutation:62,valBE:100,valFE:80,mapCov:70,jacoco:82,feUnit:75,feMut:55,ruleCov:60},
+  includeL4:true
+};
+var META=[
+  {grp:'Cases per driver',rows:[
+    {p:'cases.api',label:'API endpoint',cols:CX,unit:'cases'},
+    {p:'cases.screen',label:'Screen',cols:CX,unit:'cases'},
+    {p:'cases.integration',label:'Integration (happy, negative, timeout, retry, mismatch, reconciliation)',cols:CX,unit:'cases'},
+    {p:'cases.batch',label:'Batch job or file interface (happy, empty, restart, cut-off, rejects, reconciliation)',cols:CX,unit:'cases'},
+    {p:'cases.event',label:'Event or message topic (ordering, duplicate, poison / DLQ, replay)',cols:CX,unit:'cases'},
+    {p:'cases.journey',label:'L4 E2E journey',cols:CX,unit:'cases'}]},
+  {grp:'Business rules',rows:[
+    {p:'cases.rule',label:'Decision-table cases per rule',cols:CX,unit:'cases'},
+    {p:'criticalShare',label:'Critical-rule share, rough mode (the FSD gives the count)',pct:1},
+    {p:'wiringCases',label:'Wiring cases per standard rule proven in L1',unit:'cases'},
+    {p:'variantShare',label:'Share of rules that vary by product, segment or currency',pct:1},
+    {p:'variantSampling',label:'Variant sampling (pairwise)',pct:1}]},
+  {grp:'Roles, authorization and workflows',rows:[
+    {p:'transitions',label:'Transitions per workflow',cols:CX,unit:'transitions'},
+    {p:'invalidShare',label:'Invalid-transition cases, share of transitions',pct:1},
+    {p:'gatedShare',label:'Share of transitions that are role-gated',pct:1},
+    {p:'roleCasesPerPair',label:'Cases per role × guarded action (allow + deny)',unit:'cases'},
+    {p:'roleSampling',label:'Role sampling, risk-based or pairwise',pct:1},
+    {p:'sodCases',label:'Segregation-of-duties cases per approval workflow',unit:'cases'},
+    {p:'roughApprovalShare',label:'Share of workflows with maker-checker approval, rough mode',pct:1}]},
+  {grp:'Validation and mapping',rows:[
+    {p:'fieldFE',label:'Frontend cases per field, no gate',unit:'cases'},
+    {p:'fieldBE',label:'Backend cases per field, no gate',unit:'cases'},
+    {p:'sampleFE',label:'Frontend sample cases per screen, gate met',unit:'cases'},
+    {p:'sampleBE',label:'Backend sample cases per API, gate met',unit:'cases'},
+    {p:'partialShare',label:'Share pulled into SIT at 50–99% coverage',pct:1},
+    {p:'mappingPerApi',label:'Mapping and format checks per API endpoint, not proven in L1',unit:'cases'},
+    {p:'mappingPerEvent',label:'Payload mapping checks per event or message topic, not proven in L1',unit:'cases'}]},
+  {grp:'Channels, languages and environment',rows:[
+    {p:'channelShare',label:'Extra cases per additional channel, share of screen and journey cases',pct:1},
+    {p:'languageShare',label:'Extra cases per additional language, share of screen cases',pct:1},
+    {p:'envFactor',label:'Execution time multiplier by environment availability',cols:ENV_SHORT,unit:'×'}]},
+  {grp:'Shift-left rules',rows:[
+    {p:'mutationGate',label:'Mutation score gate',unit:'%'},
+    {p:'ruleUplift',label:'Extra business-rule cases below the gate',pct:1},
+    {p:'retestWeak',label:'Defect retest rate below the gate',pct:1},
+    {p:'feUnitGate',label:'Frontend unit test coverage gate',unit:'%'},
+    {p:'feLogicUplift',label:'Extra screen cases below the frontend unit gate',pct:1},
+    {p:'feMutGate',label:'Frontend mutation score gate (Stryker)',unit:'%'},
+    {p:'feMutUplift',label:'Extra screen cases below the frontend mutation gate',pct:1}]},
+  {grp:'Effort',rows:[
+    {p:'minutes',label:'Execution minutes per case, incl. data setup',cols:CX,unit:'min'},
+    {p:'designFSD',label:'Design minutes per case, with FSD',unit:'min'},
+    {p:'designNoFSD',label:'Design minutes per case, without FSD',unit:'min'},
+    {p:'cycles',label:'Full SIT cycles',unit:'cycles'},
+    {p:'regression',label:'Regression pass, share of cases',pct:1},
+    {p:'retest',label:'Defect retest rate',pct:1},
+    {p:'overhead',label:'Environment downtime and overhead',pct:1}]},
+  {grp:'Capacity',rows:[
+    {p:'hoursPerDay',label:'Productive hours per FTE per day',unit:'h'},
+    {p:'daysPerWeek',label:'Working days per week',unit:'days'},
+    {p:'capacity',label:'Capacity factor by level (mid = 1.0)',cols:['Junior','Mid','Senior'],unit:'×'}]},
+  {grp:'Uncertainty',rows:[
+    {p:'band.rough',label:'Range, rough mode (±)',pct:1},
+    {p:'band.detailed',label:'Range, detailed mode (±)',pct:1}]},
+  {grp:'Rough-mode feature proxies (per feature of that size)',rows:SIZES.map(function(s){ return {p:'proxies.'+s,label:'Size {s}',size:s,keys:PROXY_KEYS}; })}
+];
+var ROWS=[]; META.forEach(function(g){ g.rows.forEach(function(r){ ROWS.push(r); }); });
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function get(o,p){ return p.split('.').reduce(function(a,k){ return a==null?a:a[k]; },o); }
+function setp(o,p,v){ var ks=p.split('.'), last=ks.pop(), t=ks.reduce(function(a,k){ return a[k]; },o); t[last]=v; }
+function merge(base,over){ if(over==null||typeof over!==typeof base) return base; if(Array.isArray(base)){ return Array.isArray(over)&&over.length===base.length ? over.map(function(v,i){ return typeof v==='number'&&isFinite(v)?v:base[i]; }) : base; }
+  if(typeof base==='object'){ var o={}; Object.keys(base).forEach(function(k){ o[k]=merge(base[k],over[k]); }); return o; }
+  return (typeof over==='number'&&isFinite(over))||typeof over==='string'||typeof over==='boolean' ? over : base; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+function f1(n){ return (Math.round(n*10)/10).toFixed(1); }
+function $(id){ return document.getElementById(id); }
+function rowLabel(r){ return r.size ? trf(r.label,{s:r.size}) : tr(r.label); }
+
+var KEY='sit-sizing-v1';
+var A=clone(DEFAULTS), S=clone(SAMPLE_SCOPE), PROFILE='';
+try{ var saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(saved){ loadProfile(saved); } }catch(e){}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify({assumptions:A,scope:S,profile:PROFILE})); }catch(e){} }
+
+function loadProfile(obj){
+  if(!obj||typeof obj!=='object') throw new Error(tr('Not a profile.'));
+  var asm=obj.assumptions||obj.A; if(!asm) throw new Error(tr('The JSON has no "assumptions" section.'));
+  A=merge(DEFAULTS,asm);
+  if(obj.scope){
+    var sc=obj.scope, base=clone(SAMPLE_SCOPE);
+    var ns=merge(base,sc);
+    ns.features=Array.isArray(sc.features)?sc.features.filter(function(f){ return f&&typeof f==='object'; }).map(function(f){ return {name:String(f.name||'Feature'),size:SIZES.indexOf(f.size)>=0?f.size:'M',cx:[0,1,2].indexOf(+f.cx)>=0?+f.cx:1,qty:Math.max(0,+f.qty||0)}; }):base.features;
+    S=ns;
+  }
+  PROFILE=typeof obj.profile==='string'?obj.profile:'';
+}
+
+/* ---------- model ---------- */
+function counts(mode,A,S){
+  var c={api:[0,0,0],screen:[0,0,0],integration:[0,0,0],rule:[0,0,0],workflow:[0,0,0],batch:[0,0,0],event:[0,0,0],journey:[0,0,0],fields:0,roles:0,actions:0,channels:1,languages:1,critical:0,variants:1,approvals:0};
+  if(mode==='rough'){
+    S.features.forEach(function(f){ var p=A.proxies[f.size], q=+f.qty||0, b=+f.cx||0; if(!p) return;
+      DRV.forEach(function(d){ c[d.k][b]+=(p[d.k]||0)*q; }); c.fields+=p.field*q; c.actions+=p.actions*q; });
+    c.roles=+S.roughRoles||0; c.channels=Math.max(1,+S.roughChannels||1); c.languages=Math.max(1,+S.roughLanguages||1);
+    c.critical=sum3(c.rule)*A.criticalShare; c.variants=Math.max(1,+S.roughVariants||1); c.approvals=Math.round(sum3(c.workflow)*A.roughApprovalShare);
+  } else {
+    DRV.forEach(function(d){ c[d.k]=(S.detail[d.k]||[0,0,0]).map(function(x){ return +x||0; }); });
+    c.fields=+S.detail.fields||0; c.roles=+S.detail.roles||0; c.actions=+S.detail.actions||0; c.channels=Math.max(1,+S.detail.channels||1); c.languages=Math.max(1,+S.detail.languages||1);
+    c.critical=Math.max(0,+S.detail.critical||0); c.variants=Math.max(1,+S.detail.variants||1); c.approvals=Math.max(0,+S.detail.approvals||0);
+  }
+  return c;
+}
+function credit(cov){ return cov>=100?'sample':cov>=50?'partial':'full'; }
+function sum3(a){ return a[0]+a[1]+a[2]; }
+function compute(mode,A,S,E){
+  E=E||S.evidence;
+  var c=counts(mode,A,S), mutOK=E.mutation>=A.mutationGate, retest=mutOK?A.retest:A.retestWeak;
+  var design=mode==='rough'?A.designNoFSD:A.designFSD;
+  var fe=credit(E.valFE), be=credit(E.valBE), mp=credit(+E.mapCov||0), rc=credit(+E.ruleCov||0), g={};
+  function by(d,mul){ return c[d].map(function(n,b){ return n*A.cases[d][b]*(mul||1); }); }
+  function fld(state,per,base,each){ return state==='sample'?base*each:state==='partial'?c.fields*per*A.partialShare:c.fields*per; }
+  var feUnitOK=(+E.feUnit||0)>=A.feUnitGate, feMutOK=(+E.feMut||0)>=A.feMutGate;
+  var feUp=(feUnitOK?0:A.feLogicUplift)+(feMutOK?0:A.feMutUplift);
+  g.api=by('api'); g.screen=by('screen',1+feUp); g.integration=by('integration');
+  g.batch=by('batch'); g.event=by('event'); g.journey=S.includeL4?by('journey'):[0,0,0];
+  /* business rules: critical in full, standard credited by rule unit tests, then mutation and variants */
+  var rTot=sum3(c.rule), crit=Math.min(rTot,c.critical), cf=rTot>0?crit/rTot:0;
+  var vf=1+(c.variants-1)*A.variantShare*A.variantSampling, mu=mutOK?1:1+A.ruleUplift;
+  g.rule=c.rule.map(function(n,b){ var full=A.cases.rule[b], st=n*(1-cf);
+    var std=rc==='sample'?st*A.wiringCases:rc==='partial'?st*full*A.partialShare:st*full;
+    return (n*cf*full+std)*mu*vf; });
+  /* workflows -> transitions; role-gated transitions join the role matrix; approvals add SoD cases */
+  var trans=c.workflow.map(function(n,b){ return n*A.transitions[b]; }), trTot=sum3(trans);
+  g.workflow=trans.map(function(t){ return t*(1+A.invalidShare); });
+  var guarded=c.actions+trTot*A.gatedShare;
+  g.role=[guarded*c.roles*A.roleCasesPerPair*A.roleSampling,0,0];
+  g.sod=[c.approvals*A.sodCases,0,0];
+  var xc=(c.channels-1)*A.channelShare, xl=(c.languages-1)*A.languageShare;
+  g.channel=[0,1,2].map(function(b){ return g.screen[b]*(xc+xl)+g.journey[b]*xc; });
+  g.fieldFE=[fld(fe,A.fieldFE,sum3(c.screen),A.sampleFE),0,0];
+  g.fieldBE=[fld(be,A.fieldBE,sum3(c.api),A.sampleBE),0,0];
+  var mapBase=sum3(c.api)*A.mappingPerApi+sum3(c.event)*A.mappingPerEvent;
+  g.mapping=[mp==='sample'?0:mp==='partial'?mapBase*A.partialShare:mapBase,0,0];
+  var envI=Math.min(3,Math.max(0,+S.team.env||0)), env=A.envFactor[envI], auto=Math.min(100,Math.max(0,+S.team.automation||0))/100;
+  var exec=(A.cycles+A.regression*(1-auto))*(1+retest)*env;
+  var out={mode:mode,c:c,groups:{},cases:0,hours:0,mutOK:mutOK,retest:retest,fe:fe,be:be,env:env,envI:envI,auto:auto,mp:mp,rc:rc,feUnitOK:feUnitOK,feMutOK:feMutOK,execF:exec,design:design,
+    x:{rTot:rTot,crit:crit,std:rTot-crit,vf:vf,mu:mu,trTot:trTot,wfTot:sum3(c.workflow),guarded:guarded,feUp:feUp}};
+  GROUPS.forEach(function(G){
+    var arr=g[G.k].map(function(x){ return Math.max(0,Math.round(x)); }), min=0;
+    arr.forEach(function(n,b){ min+=n*(design+A.minutes[b]*exec); });
+    var h=min/60*(1+A.overhead);
+    out.groups[G.k]={cases:sum3(arr),hours:h}; out.cases+=sum3(arr); out.hours+=h;
+  });
+  var mix=S.team.mix, tot=(+mix.junior||0)+(+mix.mid||0)+(+mix.senior||0);
+  var blended=tot>0?((+mix.junior||0)*A.capacity[0]+(+mix.mid||0)*A.capacity[1]+(+mix.senior||0)*A.capacity[2])/tot:0;
+  var hpf=(+S.team.weeks||0)*A.daysPerWeek*A.hoursPerDay;
+  out.hpf=hpf; out.blended=blended; out.per=hpf*blended;
+  out.fte=out.per>0?out.hours/out.per:0;
+  out.band=mode==='rough'?A.band.rough:A.band.detailed;
+  out.lo=out.fte*(1-out.band); out.hi=out.fte*(1+out.band);
+  out.levels=tot>0?[mix.junior/tot*out.fte,mix.mid/tot*out.fte,mix.senior/tot*out.fte]:[0,0,0];
+  return out;
+}
+function scaleArr(a,k){ return a.map(function(x){ return x*k; }); }
+var SENS=[
+  {label:'Cases per integration',f:function(A,k){ A.cases.integration=scaleArr(A.cases.integration,k); }},
+  {label:'Cases per API endpoint',f:function(A,k){ A.cases.api=scaleArr(A.cases.api,k); }},
+  {label:'Cases per screen',f:function(A,k){ A.cases.screen=scaleArr(A.cases.screen,k); }},
+  {label:'Cases per business rule',f:function(A,k){ A.cases.rule=scaleArr(A.cases.rule,k); }},
+  {label:'Critical-rule share',rough:1,f:function(A,k){ A.criticalShare=Math.min(1,A.criticalShare*k); }},
+  {label:'Rule variant sampling',f:function(A,k){ A.variantSampling=Math.min(1,A.variantSampling*k); }},
+  {label:'Transitions per workflow',f:function(A,k){ A.transitions=scaleArr(A.transitions,k); }},
+  {label:'Role-gated share of transitions',f:function(A,k){ A.gatedShare=Math.min(1,A.gatedShare*k); }},
+  {label:'Cases per E2E journey',f:function(A,k){ A.cases.journey=scaleArr(A.cases.journey,k); }},
+  {label:'Cases per batch job or file',f:function(A,k){ A.cases.batch=scaleArr(A.cases.batch,k); }},
+  {label:'Cases per event or message topic',f:function(A,k){ A.cases.event=scaleArr(A.cases.event,k); }},
+  {label:'Extra cases per channel or language',f:function(A,k){ A.channelShare*=k; A.languageShare*=k; }},
+  {label:'Environment availability factor',f:function(A,k){ A.envFactor=scaleArr(A.envFactor,k); }},
+  {label:'Field validation cases per field',f:function(A,k){ A.fieldFE*=k; A.fieldBE*=k; }},
+  {label:'Role sampling',f:function(A,k){ A.roleSampling*=k; }},
+  {label:'Execution minutes per case',f:function(A,k){ A.minutes=scaleArr(A.minutes,k); }},
+  {label:'Design minutes per case',f:function(A,k){ A.designFSD*=k; A.designNoFSD*=k; }},
+  {label:'SIT cycles',f:function(A,k){ A.cycles*=k; }},
+  {label:'Defect retest rate',f:function(A,k){ A.retest*=k; A.retestWeak*=k; }},
+  {label:'Environment and overhead',f:function(A,k){ A.overhead*=k; }},
+  {label:'Productive hours per day',f:function(A,k){ A.hoursPerDay*=k; }},
+  {label:'Capacity per FTE level',f:function(A,k){ A.capacity=scaleArr(A.capacity,k); }},
+  {label:'Feature size proxies',rough:1,f:function(A,k){ SIZES.forEach(function(s){ Object.keys(A.proxies[s]).forEach(function(x){ A.proxies[s][x]*=k; }); }); }}
+];
+
+/* ---------- rubric and derived rows ---------- */
+var RUBRIC={
+  api:['Read or basic CRUD, few fields, no downstream call','Business logic, one downstream call or a state change','Orchestrates several systems, moves money, or has compensation or rollback paths'],
+  screen:['Display or a simple form with fewer than 10 fields','Form with conditional fields, lookups or several actions','Multi-step wizard, dynamic sections or complex page state'],
+  integration:['One-way call to a stable system that has a sandbox','Request and response with mapping and error codes','Asynchronous or two-way, retries, reconciliation, or a core-banking system with test windows'],
+  rule:['One or two conditions, one outcome','Three or four conditions, or a tiered value','Five or more conditions, several outcomes, or dates and thresholds combined'],
+  workflow:['Up to 3 transitions, linear','4 to 6 transitions with a reject or rework path','7 or more transitions, parallel approvals, timeouts or escalation'],
+  batch:['One file or job with no dependencies','Depends on another job, or has rejects to handle','Chain of jobs with cut-off, restart and reconciliation'],
+  event:['Fire-and-forget notification','Consumer updates state and must ignore duplicates','Ordering matters, saga or compensation, replay'],
+  journey:['One system hop, happy path','Two or three systems','Four or more systems, or money moving end to end']
+};
+function num1(n){ return Math.abs(n-Math.round(n))<1e-9?String(Math.round(n)):(Math.round(n*10)/10).toFixed(1); }
+function pctS(v){ return Math.round(v*100)+'%'; }
+function itemHours(k,b,D){
+  var cases=k==='workflow'?A.transitions[b]*(1+A.invalidShare):A.cases[k][b];
+  return cases*(A.designFSD+A.minutes[b]*D.execF)*(1+A.overhead)/60;
+}
+function renderRubric(D){
+  $('rubric').innerHTML='<table class="rub"><thead><tr><th>'+tr('Driver')+'</th><th>'+tr('Simple')+'</th><th>'+tr('Medium')+'</th><th>'+tr('Complex')+'</th></tr></thead><tbody>'+
+    DRV.map(function(d){ return '<tr><td><b>'+tr(d.label)+'</b></td>'+[0,1,2].map(function(b){
+      return '<td>'+esc(tr(RUBRIC[d.k][b]))+'<div class="icost">'+trf('≈ {h} h per item',{h:f1(itemHours(d.k,b,D))})+'</div></td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table>';
+}
+function renderDerived(D){
+  var c=D.c, x=D.x, G=D.groups, rows=[];
+  var ruleStd=D.rc==='sample'?trf('{w} wiring case each',{w:A.wiringCases}):D.rc==='partial'?trf('{p} of the table',{p:pctS(A.partialShare)}):tr('the full table');
+  rows.push(['rule',trf('({k} critical × full table + {s} standard × {std}) × variants {v}× × mutation {m}×',{k:num1(x.crit),s:num1(x.std),std:ruleStd,v:x.vf.toFixed(2),m:x.mu.toFixed(2)})]);
+  rows.push(['workflow',trf('{w} workflows → {t} transitions × (1 + {i} invalid)',{w:num1(x.wfTot),t:num1(x.trTot),i:pctS(A.invalidShare)})]);
+  function fieldTxt(state,unitTpl,base,each,per){ return state==='sample'?trf(unitTpl,{n:num1(base),e:each}):trf('{f} fields × {p} cases × {s} back in SIT',{f:num1(c.fields),p:per,s:state==='partial'?pctS(A.partialShare):'100%'}); }
+  rows.push(['fieldFE',fieldTxt(D.fe,'{n} screens × {e} sample case (gate met)',sum3(c.screen),A.sampleFE,A.fieldFE)]);
+  rows.push(['fieldBE',fieldTxt(D.be,'{n} APIs × {e} sample case (gate met)',sum3(c.api),A.sampleBE,A.fieldBE)]);
+  rows.push(['mapping',trf('({a} APIs × {pa} + {t} topics × {pt}) × {s} back in SIT',{a:num1(sum3(c.api)),pa:A.mappingPerApi,t:num1(sum3(c.event)),pt:A.mappingPerEvent,s:D.mp==='sample'?'0%':D.mp==='partial'?pctS(A.partialShare):'100%'})]);
+  rows.push(['role',trf('({a} actions + {t} transitions × {g} gated) × {r} roles × {pp} × {sm} sampling',{a:num1(c.actions),t:num1(x.trTot),g:pctS(A.gatedShare),r:num1(c.roles),pp:A.roleCasesPerPair,sm:pctS(A.roleSampling)})]);
+  rows.push(['sod',trf('{n} approval workflows × {c} cases',{n:num1(c.approvals),c:A.sodCases})]);
+  rows.push(['channel',trf('screen and journey cases × ({c} − 1) × {cs} + screen cases × ({l} − 1) × {ls}',{c:c.channels,cs:pctS(A.channelShare),l:c.languages,ls:pctS(A.languageShare)})]);
+  var lab={}; GROUPS.forEach(function(g){ lab[g.k]=g.label; });
+  $('derTable').tBodies[0].innerHTML=rows.map(function(r){ return '<tr><td>'+tr(lab[r[0]])+'</td><td class="formula-cell">'+esc(r[1])+'</td><td class="n">'+fmt(G[r[0]].cases)+'</td></tr>'; }).join('');
+}
+
+/* ---------- calibration state ---------- */
+function isDefault(r){ return JSON.stringify(get(A,r.p))===JSON.stringify(get(DEFAULTS,r.p)); }
+function uncCount(){ return ROWS.filter(isDefault).length; }
+
+/* ---------- inputs ---------- */
+function bindNum(id,getter,setter){ var el=$(id); el.value=getter(); el.addEventListener('input',function(){ var v=parseFloat(el.value); if(!isFinite(v)) return; setter(v); update(); }); }
+
+function renderFeatures(){
+  var tb=$('featTable').tBodies[0];
+  tb.innerHTML=S.features.map(function(f,i){
+    return '<tr data-i="'+i+'"><td><input type="text" class="wide" id="f-name-'+i+'" value="'+esc(f.name)+'" aria-label="'+esc(tr('Feature name'))+'"></td>'+
+      '<td><select id="f-size-'+i+'" aria-label="'+esc(tr('Size'))+'">'+SIZES.map(function(s){ return '<option'+(s===f.size?' selected':'')+'>'+s+'</option>'; }).join('')+'</select></td>'+
+      '<td><select id="f-cx-'+i+'" aria-label="'+esc(tr('Complexity'))+'">'+CX.map(function(s,b){ return '<option value="'+b+'"'+(b===+f.cx?' selected':'')+'>'+tr(s)+'</option>'; }).join('')+'</select></td>'+
+      '<td class="n"><input type="number" id="f-qty-'+i+'" min="0" step="1" value="'+f.qty+'" aria-label="'+esc(tr('Quantity'))+'"></td>'+
+      '<td class="expand" id="f-exp-'+i+'"></td>'+
+      '<td><button class="icon-btn" data-del="'+i+'" aria-label="'+esc(trf('Remove {n}',{n:f.name}))+'" title="'+esc(tr('Remove'))+'">✕</button></td></tr>';
+  }).join('');
+  S.features.forEach(function(f,i){
+    $('f-name-'+i).addEventListener('input',function(e){ f.name=e.target.value; save(); });
+    $('f-size-'+i).addEventListener('change',function(e){ f.size=e.target.value; update(); });
+    $('f-cx-'+i).addEventListener('change',function(e){ f.cx=+e.target.value; update(); });
+    $('f-qty-'+i).addEventListener('input',function(e){ var v=parseFloat(e.target.value); if(isFinite(v)){ f.qty=Math.max(0,v); update(); } });
+  });
+  Array.prototype.forEach.call(tb.querySelectorAll('[data-del]'),function(b){ b.addEventListener('click',function(){ S.features.splice(+b.dataset.del,1); renderFeatures(); update(); }); });
+}
+function renderDetail(){
+  var tb=$('detTable').tBodies[0];
+  tb.innerHTML=DRV.map(function(d){
+    return '<tr id="dr-'+d.k+'"><td>'+tr(d.label)+'</td>'+[0,1,2].map(function(b){ return '<td class="n"><input type="number" min="0" step="1" id="d-'+d.k+'-'+b+'" value="'+S.detail[d.k][b]+'" aria-label="'+esc(tr(d.label)+' '+tr(CX[b]))+'"></td>'; }).join('')+
+      '<td class="n" id="dt-'+d.k+'"></td><td class="n muted" id="dr-r-'+d.k+'"></td></tr>';
+  }).join('');
+  DRV.forEach(function(d){ [0,1,2].forEach(function(b){ $('d-'+d.k+'-'+b).addEventListener('input',function(e){ var v=parseFloat(e.target.value); if(isFinite(v)){ S.detail[d.k][b]=Math.max(0,v); update(); } }); }); });
+}
+function renderAssumptions(){
+  var html=META.map(function(g,gi){
+    return '<div class="agrp"><h3>'+tr(g.grp)+'</h3><div class="scroll"><table><tbody>'+g.rows.map(function(r,ri){
+      var id='a-'+gi+'-'+ri, v=get(A,r.p), ins;
+      if(r.cols){ ins=r.cols.map(function(c,b){ return '<label>'+tr(c)+'<input type="number" step="any" min="0" id="'+id+'-'+b+'" value="'+v[b]+'"></label>'; }).join(''); }
+      else if(r.keys){ ins=r.keys.map(function(k){ return '<label>'+tr(k[1])+'<input type="number" step="any" min="0" id="'+id+'-'+k[0]+'" value="'+v[k[0]]+'" style="width:4.6em"></label>'; }).join(''); }
+      else { ins='<input type="number" step="any" min="0" id="'+id+'" value="'+(r.pct?+(v*100).toFixed(2):v)+'"> <span class="small muted">'+(r.pct?'%':tr(r.unit||''))+'</span>'; }
+      if(r.cols) ins+=' <span class="small muted" style="align-self:end;padding-bottom:6px">'+tr(r.unit||'')+'</span>';
+      return '<tr class="arow" id="'+id+'-row"><td>'+rowLabel(r)+'</td><td><div class="ins">'+ins+'</div></td><td><span id="'+id+'-chip"></span></td><td><button class="link" id="'+id+'-reset" hidden>'+tr('Reset')+'</button></td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+  }).join('');
+  $('asmBody').innerHTML=html;
+  META.forEach(function(g,gi){ g.rows.forEach(function(r,ri){
+    var id='a-'+gi+'-'+ri;
+    function hook(el,apply){ el.addEventListener('input',function(){ var x=parseFloat(el.value); if(!isFinite(x)||x<0) return; apply(x); update(); }); }
+    if(r.cols){ r.cols.forEach(function(c,b){ hook($(id+'-'+b),function(x){ var a=get(A,r.p).slice(); a[b]=x; setp(A,r.p,a); }); }); }
+    else if(r.keys){ r.keys.forEach(function(k){ hook($(id+'-'+k[0]),function(x){ var o=clone(get(A,r.p)); o[k[0]]=x; setp(A,r.p,o); }); }); }
+    else hook($(id),function(x){ setp(A,r.p,r.pct?x/100:x); });
+    $(id+'-reset').addEventListener('click',function(){ setp(A,r.p,clone(get(DEFAULTS,r.p))); renderAssumptions(); update(); });
+  }); });
+}
+function paintAssumptionChips(){
+  META.forEach(function(g,gi){ g.rows.forEach(function(r,ri){
+    var id='a-'+gi+'-'+ri, d=isDefault(r), chip=$(id+'-chip'); if(!chip) return;
+    chip.className='chip '+(d?'unc':'team'); chip.textContent=d?tr('Uncalibrated'):tr('Team value');
+    $(id+'-reset').hidden=d; $(id+'-row').classList.toggle('changed',!d);
+  }); });
+}
+function renderEnvSelect(){ var te=$('t-env'); te.innerHTML=ENV.map(function(e,i){ return '<option value="'+i+'">'+tr(e)+'</option>'; }).join(''); te.value=String(S.team.env); }
+function placeholders(){ $('profName').placeholder=tr('Uncalibrated defaults'); $('io').placeholder=tr('Paste an exported profile here, then Import.'); }
+function bindStatic(){
+  bindNum('roughRoles',function(){ return S.roughRoles; },function(v){ S.roughRoles=Math.max(0,v); });
+  bindNum('d-fields',function(){ return S.detail.fields; },function(v){ S.detail.fields=Math.max(0,v); });
+  bindNum('d-roles',function(){ return S.detail.roles; },function(v){ S.detail.roles=Math.max(0,v); });
+  bindNum('d-actions',function(){ return S.detail.actions; },function(v){ S.detail.actions=Math.max(0,v); });
+  bindNum('roughChannels',function(){ return S.roughChannels; },function(v){ S.roughChannels=Math.max(1,Math.round(v)); });
+  bindNum('roughLanguages',function(){ return S.roughLanguages; },function(v){ S.roughLanguages=Math.max(1,Math.round(v)); });
+  bindNum('d-channels',function(){ return S.detail.channels; },function(v){ S.detail.channels=Math.max(1,Math.round(v)); });
+  bindNum('d-languages',function(){ return S.detail.languages; },function(v){ S.detail.languages=Math.max(1,Math.round(v)); });
+  bindNum('d-approvals',function(){ return S.detail.approvals; },function(v){ S.detail.approvals=Math.max(0,Math.round(v)); });
+  bindNum('d-critical',function(){ return S.detail.critical; },function(v){ S.detail.critical=Math.max(0,Math.round(v)); });
+  bindNum('d-variants',function(){ return S.detail.variants; },function(v){ S.detail.variants=Math.max(1,Math.round(v)); });
+  bindNum('roughVariants',function(){ return S.roughVariants; },function(v){ S.roughVariants=Math.max(1,Math.round(v)); });
+  bindNum('t-auto',function(){ return S.team.automation; },function(v){ S.team.automation=Math.min(100,Math.max(0,v)); });
+  renderEnvSelect(); $('t-env').addEventListener('change',function(e){ S.team.env=+e.target.value; update(); });
+  bindNum('t-weeks',function(){ return S.team.weeks; },function(v){ S.team.weeks=Math.max(0,v); });
+  ['junior','mid','senior'].forEach(function(l){ bindNum('t-'+l,function(){ return S.team.mix[l]; },function(v){ S.team.mix[l]=Math.max(0,v); }); });
+  bindNum('e-mut',function(){ return S.evidence.mutation; },function(v){ S.evidence.mutation=Math.min(100,Math.max(0,v)); });
+  bindNum('e-be',function(){ return S.evidence.valBE; },function(v){ S.evidence.valBE=Math.min(100,Math.max(0,v)); });
+  bindNum('e-fe',function(){ return S.evidence.valFE; },function(v){ S.evidence.valFE=Math.min(100,Math.max(0,v)); });
+  ['mapCov:e-map','jacoco:e-jacoco','feUnit:e-feunit','feMut:e-femut','ruleCov:e-rule'].forEach(function(x){ var p=x.split(':'); bindNum(p[1],function(){ return S.evidence[p[0]]; },function(v){ S.evidence[p[0]]=Math.min(100,Math.max(0,v)); }); });
+  var l4=$('e-l4'); l4.checked=!!S.includeL4; l4.addEventListener('change',function(){ S.includeL4=l4.checked; update(); });
+  $('profName').value=PROFILE; $('profName').addEventListener('input',function(e){ PROFILE=e.target.value; update(); });
+  placeholders();
+}
+function syncStaticValues(){
+  $('roughRoles').value=S.roughRoles; $('d-fields').value=S.detail.fields; $('d-roles').value=S.detail.roles; $('d-actions').value=S.detail.actions;
+  $('t-weeks').value=S.team.weeks; ['junior','mid','senior'].forEach(function(l){ $('t-'+l).value=S.team.mix[l]; });
+  $('e-mut').value=S.evidence.mutation; $('e-be').value=S.evidence.valBE; $('e-fe').value=S.evidence.valFE; $('e-l4').checked=!!S.includeL4; $('profName').value=PROFILE;
+  $('roughChannels').value=S.roughChannels; $('roughLanguages').value=S.roughLanguages; $('d-channels').value=S.detail.channels; $('d-languages').value=S.detail.languages;
+  $('t-env').value=String(S.team.env); $('t-auto').value=S.team.automation;
+  $('e-map').value=S.evidence.mapCov; $('e-jacoco').value=S.evidence.jacoco; $('e-feunit').value=S.evidence.feUnit; $('e-femut').value=S.evidence.feMut; $('e-rule').value=S.evidence.ruleCov;
+  $('d-approvals').value=S.detail.approvals; $('d-critical').value=S.detail.critical; $('d-variants').value=S.detail.variants; $('roughVariants').value=S.roughVariants;
+}
+
+/* ---------- render results ---------- */
+var LAST={};
+function sign(n){ return n>0?'+':n<0?'−':''; }
+function driveText(top,tpl1,tpl2){ return trf(/s$/.test(top.label)?tpl1:tpl2,{label:tr(top.label),p:top.share}); }
+function update(){
+  var R=compute('rough',A,S), D=compute('detailed',A,S); LAST={R:R,D:D};
+  var unc=uncCount(), total=ROWS.length;
+  var gapF=D.fte-R.fte, gapC=D.cases-R.cases, top=topGap(R,D);
+  $('summary').innerHTML=
+    card('rough',tr('Rough · no FSD'),'var(--rough)',R)+
+    card('detail',tr('Detailed · with FSD'),'var(--detail)',D)+
+    '<div class="card gap"><div class="k">'+tr('Gap, detailed − rough')+'</div><div class="big">'+(gapF>=0?'+':'−')+f1(Math.abs(gapF))+'<small>FTE</small></div>'+
+      '<div class="rng">'+trf('{s}{c} cases · {p}',{s:gapC>=0?'+':'−',c:fmt(Math.abs(gapC)),p:R.cases?((gapC>=0?'+':'−')+Math.round(Math.abs(gapC)/R.cases*100)+'%'):''})+'</div>'+
+      '<div class="sub">'+(top?esc(driveText(top,'{label} drive {p}% of the gap','{label} drives {p}% of the gap')):tr('Rough and detailed agree'))+'</div></div>'+
+    '<div class="card cal"><div class="k">'+tr('Calibration')+'</div><div class="big">'+unc+'<small>'+trf('of {n}',{n:total})+'</small></div>'+
+      '<div class="meter" aria-hidden="true"><span style="width:'+(unc/total*100)+'%"></span></div>'+
+      '<div class="sub">'+tr('assumptions are still uncalibrated defaults')+(PROFILE?esc(trf(' · profile “{p}”',{p:PROFILE})):'')+'</div></div>';
+  $('tabUnc').textContent=trf('{n} uncalibrated',{n:unc});
+  S.features.forEach(function(f,i){ var p=A.proxies[f.size], q=+f.qty||0, el=$('f-exp-'+i); if(el&&p) el.textContent=trf('{a} scr · {b} fld · {c} API · {d} int · {e} rules · {f} batch · {g} evt · {h} wf',{a:p.screen*q,b:p.field*q,c:p.api*q,d:p.integration*q,e:p.rule*q,f:p.batch*q,g:p.event*q,h:p.workflow*q}); });
+  DRV.forEach(function(d){ $('dt-'+d.k).textContent=fmt(sum3(D.c[d.k])); $('dr-r-'+d.k).textContent=fmt(sum3(R.c[d.k])); $('dr-'+d.k).style.opacity=(d.k==='journey'&&!S.includeL4)?.45:1; });
+  $('detRoughCmp').textContent=trf('Rough said {f} fields, {r} roles, {a} protected actions, {w} approval workflows, {k} critical rules, {v} variants, {c} channels and {l} languages.',{f:fmt(R.c.fields),r:fmt(R.c.roles),a:fmt(R.c.actions),w:fmt(R.c.approvals),k:fmt(R.c.critical),v:R.c.variants,c:R.c.channels,l:R.c.languages});
+  $('t-hpf').textContent=trf('{h} h  ({w} wk × {d} d × {p} h)',{h:fmt(D.hpf),w:S.team.weeks,d:A.daysPerWeek,p:A.hoursPerDay});
+  $('t-blend').textContent=D.blended.toFixed(2)+' ×';
+  var mixTot=(+S.team.mix.junior||0)+(+S.team.mix.mid||0)+(+S.team.mix.senior||0);
+  $('mixNote').textContent=mixTot===100?tr('Mix adds up to 100%.'):trf('Mix adds up to {n}%. The model normalises it to 100%.',{n:mixTot});
+  $('envNote').textContent=trf('{env}: execution time × {f}.',{env:tr(ENV[D.envI]),f:D.env.toFixed(2)})+' '+(D.auto>0?trf('{a}% of the regression pass is automated, so manual regression covers {m}% of cases instead of {r}%.',{a:Math.round(D.auto*100),m:Math.round(A.regression*(1-D.auto)*100),r:Math.round(A.regression*100)}):tr('The regression pass is fully manual.'));
+  $('lvlTable').tBodies[0].innerHTML=['Junior','Mid','Senior'].map(function(l,i){ var k=['junior','mid','senior'][i]; return '<tr><td>'+tr(l)+' <span class="small muted">('+A.capacity[i]+'×)</span></td><td class="n">'+(mixTot?Math.round(S.team.mix[k]/mixTot*100):0)+'%</td><td class="n">'+f1(R.levels[i])+'</td><td class="n">'+f1(D.levels[i])+'</td></tr>'; }).join('')+
+    '<tr><td><b>'+tr('Total')+'</b></td><td></td><td class="n"><b>'+f1(R.fte)+'</b></td><td class="n"><b>'+f1(D.fte)+'</b></td></tr>';
+  $('eff-mut').innerHTML=D.mutOK?'<span class="chip good">'+tr('Gate met')+'</span> '+tr('Business-rule cases and retest rate stay at base.'):
+    '<span class="chip bad">'+trf('Below {g}% gate',{g:A.mutationGate})+'</span> '+trf('Business-rule cases +{u}%, retest rate {w}% instead of {r}%.',{u:Math.round(A.ruleUplift*100),w:Math.round(A.retestWeak*100),r:Math.round(A.retest*100)});
+  $('eff-be').innerHTML=creditText(D.be,'API',A.sampleBE,A.fieldBE);
+  $('eff-fe').innerHTML=creditText(D.fe,'screen',A.sampleFE,A.fieldFE);
+  $('eff-l4').innerHTML=S.includeL4?'<span class="chip warn">'+tr('Counted')+'</span> '+trf('{n} journey cases in the detailed estimate.',{n:fmt(D.groups.journey.cases)}):'<span class="chip good">'+tr('Not counted')+'</span> '+tr('Journeys are excluded from SIT sizing.');
+  var mc=fmt(D.groups.mapping.cases);
+  $('eff-map').innerHTML=D.mp==='sample'?'<span class="chip good">'+tr('100% · credited')+'</span> '+tr('SIT does not re-check field mapping or JSON formats.'):
+    D.mp==='partial'?'<span class="chip warn">'+tr('50–99% · partial')+'</span> '+trf('{p}% of mapping checks come back into SIT: {n} cases.',{p:Math.round(A.partialShare*100),n:mc}):
+    '<span class="chip bad">'+tr('Below 50%')+'</span> '+trf('SIT checks every API response and event payload by hand: {n} cases.',{n:mc});
+  var jc=+S.evidence.jacoco||0;
+  $('eff-jacoco').innerHTML='<span class="chip '+(jc>=80?'good':'warn')+'">'+tr(jc>=80?'Meets 80%':'Below 80%')+'</span> '+tr('Informational, not credited. Coverage shows the code ran; the mutation score shows the tests catch bugs, so only mutation changes the estimate.');
+  $('eff-feunit').innerHTML=D.feUnitOK?'<span class="chip good">'+tr('Gate met')+'</span> '+tr('Screen cases stay at base.'):
+    '<span class="chip bad">'+trf('Below {g}% gate',{g:A.feUnitGate})+'</span> '+trf('Screen cases +{u}%: UI logic defects reach SIT.',{u:Math.round(A.feLogicUplift*100)});
+  $('eff-femut').innerHTML=D.feMutOK?'<span class="chip good">'+tr('Gate met')+'</span> '+tr('No extra screen cases.'):
+    '<span class="chip bad">'+trf('Below {g}% gate',{g:A.feMutGate})+'</span> '+trf('Screen cases +{u}%: weak frontend tests let defects through.',{u:Math.round(A.feMutUplift*100)});
+  $('eff-rule').innerHTML=D.rc==='sample'?'<span class="chip good">'+tr('100% · credited')+'</span> '+trf('Standard rules: SIT runs {n} wiring case per rule. Critical rules are always tested in full.',{n:A.wiringCases}):
+    D.rc==='partial'?'<span class="chip warn">'+tr('50–99% · partial')+'</span> '+trf('{p}% of standard-rule cases come back into SIT. Critical rules are always tested in full.',{p:Math.round(A.partialShare*100)}):
+    '<span class="chip bad">'+tr('Below 50%')+'</span> '+tr('SIT runs every decision-table case for every rule.');
+  renderDerived(D); renderRubric(D);
+  renderGap(R,D); renderTornado(); renderScen(D); paintAssumptionChips(); cone();
+  var cs=$('calStatus'); cs.className='chip '+(unc===total?'unc':'team'); cs.textContent=unc===total?tr('Uncalibrated defaults'):trf('{n} of {t} values calibrated',{n:total-unc,t:total});
+  save();
+}
+function card(cls,label,color,o){
+  return '<div class="card '+cls+'"><div class="k"><i style="background:'+color+'"></i>'+label+'</div>'+
+    '<div class="big">'+f1(o.fte)+'<small>FTE</small></div>'+
+    '<div class="rng">'+trf('range {lo} – {hi} FTE (±{b}%)',{lo:f1(o.lo),hi:f1(o.hi),b:Math.round(o.band*100)})+'</div>'+
+    '<div class="sub">'+trf('{c} cases · {h} h · <span style="white-space:nowrap">{w} weeks</span>',{c:fmt(o.cases),h:fmt(o.hours),w:S.team.weeks})+'</div></div>';
+}
+function creditText(state,unit,sample,per){
+  if(state==='sample') return '<span class="chip good">'+tr('100% · credited')+'</span> '+trf(unit==='API'?'SIT runs {n} sample case per API.':'SIT runs {n} sample case per screen.',{n:sample});
+  if(state==='partial') return '<span class="chip warn">'+tr('50–99% · partial')+'</span> '+trf('{p}% of field cases come back into SIT.',{p:Math.round(A.partialShare*100)});
+  return '<span class="chip bad">'+tr('Below 50%')+'</span> '+trf('SIT repeats all {n} cases per field by hand.',{n:per});
+}
+function topGap(R,D){
+  var tot=D.hours-R.hours; if(Math.abs(tot)<1e-6) return null;
+  var best=null; GROUPS.forEach(function(G){ var d=D.groups[G.k].hours-R.groups[G.k].hours; if(!best||Math.abs(d)>Math.abs(best.d)) best={label:G.label,d:d}; });
+  best.share=Math.round(best.d/tot*100); return best;
+}
+function renderGap(R,D){
+  var max=1; GROUPS.forEach(function(G){ max=Math.max(max,R.groups[G.k].cases,D.groups[G.k].cases); });
+  var totH=D.hours-R.hours, per=D.per||1;
+  var rows=GROUPS.map(function(G){
+    var r=R.groups[G.k], d=D.groups[G.k], dc=d.cases-r.cases, dh=d.hours-r.hours;
+    var share=Math.abs(totH)>1e-6?Math.round(dh/totH*100):0;
+    return {G:G,r:r,d:d,dc:dc,dh:dh,share:share};
+  });
+  $('gapTable').tBodies[0].innerHTML=rows.map(function(x){
+    return '<tr><td>'+tr(x.G.label)+'</td><td class="n">'+fmt(x.r.cases)+'</td><td class="n">'+fmt(x.d.cases)+'</td>'+
+      '<td><div class="bars"><div class="bar r" style="width:'+(x.r.cases/max*100)+'%"></div><div class="bar d" style="width:'+(x.d.cases/max*100)+'%"></div></div></td>'+
+      '<td class="n '+(x.dc>0?'pos':x.dc<0?'neg':'')+'">'+sign(x.dc)+fmt(Math.abs(x.dc))+'</td>'+
+      '<td class="n '+(x.dh>0?'pos':x.dh<0?'neg':'')+'">'+(x.dh>=0?'+':'−')+f1(Math.abs(x.dh/per))+'</td>'+
+      '<td class="n">'+x.share+'%</td></tr>';
+  }).join('');
+  $('gapTable').tFoot.innerHTML='<tr><td>'+tr('Total')+'</td><td class="n">'+fmt(R.cases)+'</td><td class="n">'+fmt(D.cases)+'</td><td></td><td class="n">'+(D.cases>=R.cases?'+':'−')+fmt(Math.abs(D.cases-R.cases))+'</td><td class="n">'+(D.fte>=R.fte?'+':'−')+f1(Math.abs(D.fte-R.fte))+'</td><td class="n">100%</td></tr>';
+  var sorted=rows.slice().sort(function(a,b){ return Math.abs(b.dh)-Math.abs(a.dh); });
+  var t1=sorted[0], t2=sorted[1];
+  $('gapCallout').innerHTML=Math.abs(totH)<1e-6?tr('Rough and detailed estimates match.'):
+    trf(D.fte>=R.fte?'The detailed estimate is <b>{n} FTE higher</b> than rough.':'The detailed estimate is <b>{n} FTE lower</b> than rough.',{n:f1(Math.abs(D.fte-R.fte))})+' '+
+    trf('{a} ({ap}%) and {b} ({bp}%) explain most of it.',{a:esc(tr(t1.G.label)),ap:t1.share,b:esc(tr(t2.G.label)),bp:t2.share})+' '+
+    trf('Rough uses {r} design minutes per case against {d} with an FSD, so the same scope costs more per case before the FSD exists.',{r:A.designNoFSD,d:A.designFSD});
+}
+function renderTornado(){
+  var mode=$('sMode').value, sw=+$('sSwing').value, base=compute(mode,A,S).fte;
+  var list=SENS.filter(function(s){ return !(s.rough&&mode!=='rough'); }).map(function(s){
+    var a1=clone(A), a2=clone(A); s.f(a1,1-sw); s.f(a2,1+sw);
+    var v1=compute(mode,a1,S).fte, v2=compute(mode,a2,S).fte;
+    return {label:s.label,lo:Math.min(v1,v2),hi:Math.max(v1,v2),span:Math.abs(v2-v1)};
+  }).sort(function(a,b){ return b.span-a.span; });
+  var maxDev=1e-9; list.forEach(function(x){ maxDev=Math.max(maxDev,Math.abs(x.lo-base),Math.abs(x.hi-base)); });
+  function pos(v){ return 50+(v-base)/maxDev*48; }
+  $('torn').innerHTML=list.map(function(x){
+    var lo=pos(x.lo), hi=pos(x.hi);
+    return '<div class="trow"><div>'+tr(x.label)+'</div><div class="track" aria-hidden="true">'+
+      '<span class="lo" style="left:'+Math.min(lo,50)+'%;width:'+Math.max(0,50-lo)+'%"></span>'+
+      '<span class="hi" style="left:50%;width:'+Math.max(0,hi-50)+'%"></span><span class="mid"></span></div>'+
+      '<div class="tval">'+trf('{lo} – {hi} FTE',{lo:f1(x.lo),hi:f1(x.hi)})+'</div></div>';
+  }).join('');
+  var t=list[0];
+  $('tornHint').innerHTML=trf('Each assumption is moved {s}% up and down while everything else stays fixed. Current {mode} estimate: <b class="mono">{f} FTE</b>. Calibrate the top rows first: <b>{t}</b> alone swings the answer between {lo} and {hi} FTE.',
+    {s:Math.round(sw*100),mode:tr(mode),f:f1(base),t:esc(tr(t.label).toLowerCase()),lo:f1(t.lo),hi:f1(t.hi)});
+}
+function renderScen(D){
+  var gate=A.mutationGate;
+  var sc=[
+    {label:tr('All gates met'),sub:tr('Every backend and frontend L1 gate passes'),E:{mutation:Math.max(gate,80),valBE:100,valFE:100,mapCov:100,jacoco:90,feUnit:Math.max(A.feUnitGate,90),feMut:Math.max(A.feMutGate,80),ruleCov:100}},
+    {label:tr('Current evidence'),sub:trf('Mutation {m}%, rules {r}%, BE {b}%, FE {f}%, mapping {p}%, FE unit {u}%, Stryker {s}%',{r:S.evidence.ruleCov,m:S.evidence.mutation,b:S.evidence.valBE,f:S.evidence.valFE,p:S.evidence.mapCov,u:S.evidence.feUnit,s:S.evidence.feMut}),E:S.evidence,cur:1},
+    {label:tr('No gates'),sub:tr('Nothing proven before SIT'),E:{mutation:0,valBE:0,valFE:0,mapCov:0,jacoco:0,feUnit:0,feMut:0,ruleCov:0}}
+  ].map(function(s){ s.o=compute('detailed',A,S,s.E); return s; });
+  var max=Math.max.apply(null,sc.map(function(s){ return s.o.fte; }))||1;
+  $('scen').innerHTML=sc.map(function(s){
+    return '<div class="srow'+(s.cur?' cur':'')+'"><div><div class="lbl">'+s.label+'</div><div class="small muted">'+s.sub+'</div></div>'+
+      '<div class="strack" aria-hidden="true"><span style="width:'+(s.o.fte/max*100)+'%"></span></div>'+
+      '<div class="tval"><b style="color:var(--ink)">'+f1(s.o.fte)+' FTE</b><br>'+trf('{n} cases',{n:fmt(s.o.cases)})+'</div></div>';
+  }).join('');
+  var save1=sc[1].o.fte-sc[0].o.fte, save2=sc[2].o.fte-sc[0].o.fte;
+  $('scenCallout').innerHTML=save1>0.05?
+    trf('Closing the remaining gates would free about <b>{a} FTE</b> ({c} fewer manual cases) for this scope. Against no gates at all, the shift-left investment is worth <b>{b} FTE</b>.',{a:f1(save1),c:fmt(sc[1].o.cases-sc[0].o.cases),b:f1(save2)}):
+    trf('All gates are met. Compared with no gates, the shift-left work saves about <b>{b} FTE</b> ({c} fewer manual cases) for this scope.',{b:f1(save2),c:fmt(sc[2].o.cases-sc[0].o.cases)});
+}
+function cone(){
+  var r=Math.round(A.band.rough*100), d=Math.round(A.band.detailed*100);
+  $('coneRough').textContent='±'+r+'%'; $('coneDet').textContent='±'+d+'%';
+  var tight=[]; if(r<100) tight.push(tr('rough')); if(d<50) tight.push(tr('detailed'));
+  $('coneNote').textContent=tight.length?
+    trf(tight.length>1?'The {w} ranges are narrower than the cone suggests.':'The {w} range is narrower than the cone suggests.',{w:tight.join(tr(' and '))})+' '+
+    tr('The model uses symmetric ranges, so for a conservative upper bound set Range, rough to 100% and Range, detailed to 50% under Assumptions. Estimates tend to overrun more than underrun, so read the upper bound as the planning risk.'):
+    tr('Both ranges are at least as wide as the cone suggests on the upside.');
+}
+
+/* ---------- tabs ---------- */
+var tabs=Array.prototype.slice.call(document.querySelectorAll('.tab'));
+tabs.forEach(function(t){ t.addEventListener('click',function(){ select(t); });
+  t.addEventListener('keydown',function(e){ var i=tabs.indexOf(t); if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ e.preventDefault(); var n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length]; select(n); n.focus(); } }); });
+function select(t){ tabs.forEach(function(x){ var on=x===t; x.setAttribute('aria-selected',on?'true':'false'); x.tabIndex=on?0:-1; $(x.getAttribute('aria-controls')).hidden=!on; }); try{ localStorage.setItem(KEY+'-tab',t.id); }catch(e){} }
+try{ var st=localStorage.getItem(KEY+'-tab'); if(st&&$(st)) select($(st)); else select(tabs[0]); }catch(e){ select(tabs[0]); }
+
+/* ---------- calibration I/O ---------- */
+function toast(msg,bad){ var t=$('toast'); t.textContent=msg; t.style.color=bad?'var(--bad)':''; clearTimeout(toast._t); toast._t=setTimeout(function(){ t.textContent=''; t.style.color=''; },4500); }
+function copy(text,ok){
+  var io=$('io');
+  function fallback(){ io.value=text; io.focus(); io.select(); toast(tr('Selected in the box. Press Ctrl/Cmd + C to copy.')); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ toast(ok); },fallback); } else fallback();
+}
+$('exportBtn').addEventListener('click',function(){
+  var obj={tool:'sit-sizing-model',version:1,profile:PROFILE||'Uncalibrated defaults',savedAt:new Date().toISOString(),calibrated:ROWS.length-uncCount()+' of '+ROWS.length,assumptions:A,scope:S};
+  var txt=JSON.stringify(obj,null,2); $('io').value=txt; copy(txt,tr('Profile copied and shown in the box. Save it as a .json file.'));
+});
+function doImport(text){
+  try{ var obj=JSON.parse(text); loadProfile(obj); renderFeatures(); renderDetail(); renderAssumptions(); syncStaticValues(); update(); toast(PROFILE?trf('Profile imported: {p}.',{p:PROFILE}):tr('Profile imported.')); }
+  catch(e){ toast(trf('Could not import: {e} Check that you pasted the whole exported profile.',{e:(e instanceof SyntaxError)?tr('The text is not valid JSON.'):(e.message||tr('The text is not valid JSON.'))}),true); }
+}
+$('importBtn').addEventListener('click',function(){ var t=$('io').value.trim(); if(!t){ toast(tr('Paste a profile into the box first.')); return; } doImport(t); });
+$('fileIn').addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ $('io').value=r.result; doImport(String(r.result)); }; r.readAsText(f); e.target.value=''; });
+var armed=null;
+function resetLabel(){ var b=$('resetBtn'); b.classList.remove('armed'); b.textContent=tr('Reset to defaults'); }
+$('resetBtn').addEventListener('click',function(){
+  var b=$('resetBtn');
+  if(!armed){ b.classList.add('armed'); b.textContent=tr('Click again to reset everything'); armed=setTimeout(function(){ armed=null; resetLabel(); },3500); return; }
+  clearTimeout(armed); armed=null; resetLabel();
+  A=clone(DEFAULTS); S=clone(SAMPLE_SCOPE); PROFILE=''; renderFeatures(); renderDetail(); renderAssumptions(); syncStaticValues(); update(); toast(tr('Reset to uncalibrated defaults and the example scope.'));
+});
+$('copySummary').addEventListener('click',function(){
+  var R=LAST.R, D=LAST.D, u=uncCount(), top=topGap(R,D);
+  var lines=[
+    tr('SIT sizing (planning range, not a commitment)')+(PROFILE?trf(' · profile: {p}',{p:PROFILE}):''),
+    trf('• Rough, no FSD: {lo}–{hi} FTE (mid {m}), ~{c} cases, {h} h',{lo:f1(R.lo),hi:f1(R.hi),m:f1(R.fte),c:fmt(R.cases),h:fmt(R.hours)}),
+    trf('• Detailed, with FSD: {lo}–{hi} FTE (mid {m}), ~{c} cases, {h} h',{lo:f1(D.lo),hi:f1(D.hi),m:f1(D.fte),c:fmt(D.cases),h:fmt(D.hours)}),
+    trf('• Gap: {s}{n} FTE',{s:D.fte>=R.fte?'+':'−',n:f1(Math.abs(D.fte-R.fte))})+(top?driveText(top,'; {label} drive {p}% of it','; {label} drives {p}% of it'):''),
+    trf('• SIT window {w} weeks; team mix {j}/{m}/{s} junior/mid/senior',{w:S.team.weeks,j:S.team.mix.junior,m:S.team.mix.mid,s:S.team.mix.senior}),
+    trf('• Environment: {e}; regression automated {a}%; detailed scope on {c} channels and {l} languages',{e:tr(ENV[D.envI]),a:Math.round(D.auto*100),c:D.c.channels,l:D.c.languages}),
+    trf('• Shift-left evidence: mutation {m}%, rule tests {r}%, BE validation {b}%, FE validation {f}%, mapping tests {p}%, FE unit {u}%, FE mutation {s}%',{r:S.evidence.ruleCov,m:S.evidence.mutation,b:S.evidence.valBE,f:S.evidence.valFE,p:S.evidence.mapCov,u:S.evidence.feUnit,s:S.evidence.feMut}),
+    trf('• {u} of {t} assumptions are uncalibrated defaults. Confirm with the delivery owner before committing.',{u:u,t:ROWS.length})];
+  copy(lines.join('\n'),tr('QBR summary copied.'));
+});
+$('copyWording').addEventListener('click',function(){
+  var w=$('bizWording'), t=w.textContent, toastEl=$('wordToast');
+  function done(m){ toastEl.textContent=m; setTimeout(function(){ toastEl.textContent=''; },3000); }
+  function fb(){ var r=document.createRange(); r.selectNodeContents(w); var s=getSelection(); s.removeAllRanges(); s.addRange(r); done(tr('Selected. Press Ctrl/Cmd + C to copy.')); }
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function(){ done(tr('Copied.')); },fb); else fb();
+});
+$('sMode').addEventListener('change',renderTornado); $('sSwing').addEventListener('change',renderTornado);
+$('addFeat').addEventListener('click',function(){ S.features.push({name:tr('New feature'),size:'M',cx:1,qty:1}); renderFeatures(); update(); var i=S.features.length-1; $('f-name-'+i).focus(); $('f-name-'+i).select(); });
+
+renderFeatures(); renderDetail(); renderAssumptions(); bindStatic(); update();
+onLang(function(){ renderFeatures(); renderDetail(); renderAssumptions(); renderEnvSelect(); placeholders(); if(!armed) resetLabel(); update(); });
+
+/* ---------- static page translation + EN/VI toggle ---------- */
+(function(){
+  var EXCL={script:1,style:1,textarea:1,head:1,title:1};
+  var PHR={b:1,strong:1,em:1,i:1,a:1,span:1,small:1,sup:1,sub:1,br:1,code:1,abbr:1,u:1,mark:1};
+  var SKIP={summary:1,tabUnc:1,asmBody:1,gapCallout:1,tornHint:1,torn:1,scen:1,scenCallout:1,calStatus:1,mixNote:1,envNote:1,'t-hpf':1,'t-blend':1,'eff-mut':1,'eff-be':1,'eff-fe':1,'eff-l4':1,'eff-map':1,'eff-jacoco':1,'eff-feunit':1,'eff-femut':1,'eff-rule':1,rubric:1,detRoughCmp:1,toast:1,coneRough:1,coneDet:1,coneNote:1,wordToast:1,'t-env':1};
+  var DYN_TABLES={featTable:1,detTable:1,lvlTable:1,gapTable:1,derTable:1};
+  function norm(s){ return s.replace(/\s+/g,' ').trim(); }
+  function skip(c){
+    if(SKIP[c.id]) return true;
+    if(c.classList && c.classList.contains('lang-switch')) return true;
+    if((c.localName==='tbody'||c.localName==='tfoot') && c.parentNode && DYN_TABLES[c.parentNode.id]) return true;
+    return false;
+  }
+  function isUnit(el){
+    var all=el.querySelectorAll('*');
+    for(var i=0;i<all.length;i++){ if(!PHR[all[i].localName] || all[i].id) return false; }
+    return /[A-Za-z]/.test(el.textContent);
+  }
+  function sig(el){ return Array.prototype.map.call(el.querySelectorAll('*'),function(d){ return d.localName; }).join(','); }
+  var units=null, texts=null;
+  function walk(el){
+    for(var c=el.firstChild;c;c=c.nextSibling){
+      if(c.nodeType===3){ if(/[A-Za-z]/.test(c.nodeValue)) texts.push(c); continue; }
+      if(c.nodeType!==1 || EXCL[c.localName] || skip(c)) continue;
+      if(isUnit(c)){ c.__i18nKey=sig(c)+'\u0001'+norm(c.textContent); units.push(c); continue; }
+      walk(c);
+    }
+  }
+  function index(){ units=[]; texts=[]; walk(document.body); texts.forEach(function(n){ n.__i18nKey=norm(n.nodeValue); }); }
+  function toVi(){
+    if(!units) index();
+    units.forEach(function(el){ var vi=DICT.units&&DICT.units[el.__i18nKey]; if(!vi||el.__i18nEn!==undefined) return; el.__i18nEn=el.innerHTML; el.innerHTML=vi; });
+    texts.forEach(function(n){ var vi=DICT.texts&&DICT.texts[n.__i18nKey]; if(!vi||n.__i18nEn!==undefined) return; var v=n.nodeValue; n.__i18nEn=v; n.nodeValue=v.match(/^\s*/)[0]+vi+v.match(/\s*$/)[0]; });
+  }
+  function toEn(){
+    if(!units) return;
+    units.forEach(function(el){ if(el.__i18nEn!==undefined){ el.innerHTML=el.__i18nEn; el.__i18nEn=undefined; } });
+    texts.forEach(function(n){ if(n.__i18nEn!==undefined){ n.nodeValue=n.__i18nEn; n.__i18nEn=undefined; } });
+  }
+  function setLang(lang){
+    if(lang!=='vi') lang='en'; if(lang===LANG) return;
+    if(lang==='vi') toVi(); else toEn();
+    LANG=lang; document.documentElement.lang=lang; document.title=lang==='vi'?(DICT.title||document.title):'SIT Sizing Model';
+    HOOKS.forEach(function(fn){ try{ fn(); }catch(e){} });
+    Array.prototype.forEach.call(document.querySelectorAll('.lang-switch button'),function(b){ b.setAttribute('aria-pressed',b.dataset.lang===lang?'true':'false'); });
+    try{ localStorage.setItem('sit-lang',lang); }catch(e){}
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.lang-switch button'),function(b){ b.addEventListener('click',function(){ setLang(b.dataset.lang); }); });
+  try{ if(localStorage.getItem('sit-lang')==='vi') setLang('vi'); }catch(e){}
+  window.__sitLang=setLang;
+})();
+window.__sit={compute:compute,A:function(){ return A; },S:function(){ return S; }};
+})();
+</script>
+
+</body>
+</html>
