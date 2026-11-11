@@ -280,6 +280,22 @@ ol.steps,ul.steps,.steps.hint{max-width:none}
 /* header intro and note use the full width */
 header.top .lede,header.top .note{max-width:none}
 header.top .note{display:flex}
+
+/* ===== collapsible reference panels ===== */
+.cpanel>.panel-h{cursor:pointer;position:relative;padding-right:56px;padding-bottom:18px;border-radius:var(--r)}
+.cpanel>.panel-h:hover{background:var(--sunk)}
+.cpanel>.panel-h:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cpanel>.panel-h::after{content:"";position:absolute;right:24px;top:50%;width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+.cpanel.collapsed>.panel-h::after{transform:translateY(-50%) rotate(-45deg)}
+.cpanel.collapsed>.panel-b{display:none}
+.cpanel:not(.collapsed)>.panel-h{padding-bottom:0}
+
+/* ===== highlighted guide tip ===== */
+#guide{border-left:4px solid var(--accent)}
+#guide>.panel-h>span.small{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);padding:7px 14px;border-radius:999px}
+#guide>.panel-h>span.small::before{content:"!";display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 .75rem var(--f-body);flex:none}
+@media (prefers-reduced-motion:no-preference){ #guide>.panel-h>span.small{animation:tipPulse 2.4s ease-in-out 3} }
+@keyframes tipPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 35%,transparent)}50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 0%,transparent)}}
 </style>
 </head>
 <body>
@@ -652,7 +668,7 @@ header.top .note{display:flex}
     </div>
   </section>
 
-  <section class="panel">
+  <section class="panel" id="method">
     <div class="panel-h"><div><p class="eyebrow">Method</p><h2>How the estimate is calculated</h2></div></div>
     <div class="panel-b">
       <div class="formula">APPLICATION
@@ -1267,6 +1283,18 @@ function bindDai(){
   PTT.forEach(function(t){ var e=$('pt-'+t[0]); e.checked=!!S.ptTypes[t[0]]; e.addEventListener('change',function(){ S.ptTypes[t[0]]=e.checked; update(); }); });
 }
 function syncDai(){ DAI_NUM.forEach(function(x){ $(x[0]).value=S.detail[x[1]][x[2]]; }); $('t-aiIters').value=S.team.aiIters; $('t-aiSmes').value=S.team.aiSmes; $('e-evalci').checked=!!S.evidence.evalCI; $('dp-dataHeavy').value=S.detail.pt.dataHeavy; $('e-ptreuse').value=S.evidence.ptReuse; $('e-ptci').checked=!!S.evidence.ptCI; $('e-apm').checked=!!S.evidence.apm; PTT.forEach(function(t){ $('pt-'+t[0]).checked=!!S.ptTypes[t[0]]; }); renderDai(); }
+function initCollapsible(){
+  ['method','standards'].forEach(function(id){
+    var sec=$(id); if(!sec) return; var h=sec.querySelector('.panel-h');
+    sec.classList.add('cpanel','collapsed'); h.setAttribute('role','button'); h.tabIndex=0; h.setAttribute('aria-expanded','false');
+    function set(open){ sec.classList.toggle('collapsed',!open); h.setAttribute('aria-expanded',open?'true':'false'); }
+    h.addEventListener('click',function(e){ if(e.target.closest('a,button,input,select')) return; set(sec.classList.contains('collapsed')); });
+    h.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); set(sec.classList.contains('collapsed')); } });
+    sec.__open=function(){ set(true); };
+  });
+  document.addEventListener('click',function(e){ var a=e.target.closest('a[href^="#"]'); if(!a) return; var t=document.getElementById(a.getAttribute('href').slice(1)); var p=t&&t.closest('.cpanel'); if(p&&p.__open) p.__open(); });
+  if(location.hash){ var t=document.getElementById(location.hash.slice(1)); var p=t&&t.closest('.cpanel'); if(p&&p.__open){ p.__open(); setTimeout(function(){ t.scrollIntoView(); },0); } }
+}
 function initDsec(){
   var secs=Array.prototype.slice.call(document.querySelectorAll('#p-detail .dsec')), st={};
   try{ st=JSON.parse(localStorage.getItem('sit-dsec')||'{}'); }catch(e){}
@@ -1765,7 +1793,7 @@ $('copyWording').addEventListener('click',function(){
 $('sMode').addEventListener('change',renderTornado); $('sSwing').addEventListener('change',renderTornado);
 $('addFeat').addEventListener('click',function(){ S.features.push({name:tr('New feature'),type:'app',size:'M',cx:1,qty:1}); renderFeatures(); update(); var i=S.features.length-1; $('f-name-'+i).focus(); $('f-name-'+i).select(); });
 
-renderFeatures(); renderDetail(); renderFieldTypes(); renderDai(); renderAssumptions(); bindStatic(); initDsec(); update();
+renderFeatures(); renderDetail(); renderFieldTypes(); renderDai(); renderAssumptions(); bindStatic(); initDsec(); initCollapsible(); update();
 onLang(function(){ renderFeatures(); renderDetail(); renderFieldTypes(); renderDai(); renderAssumptions(); renderEnvSelect(); renderAiSelect(); applyTips(); placeholders(); if(!armed) resetLabel(); update(); });
 
 /* ---------- static page translation + EN/VI toggle ---------- */
