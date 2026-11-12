@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Revision 4, in delivery. Release 1 steps 1.0–1.6 are done and 1.7 (hardening and pilot) is in progress; release 2 V-01 and P-01 are merged. Notes marked "Step x note" and the ADRs in `sit-sizing-app/docs/adr/` record where the build departed from this text. |
+| **Status** | Revision 4, in delivery. Release 1 (steps 1.0–1.7) and release 2 (V-01, P-01, X-02, N-01, E2E) are merged to main; release 1's external gates (security review, penetration test, VI sign-off, pilot team) are still open per the app README. Release 3 is in progress on `feature/sit-sizing-r3`: P-02, R-01 and E-08 are committed; H-01 and the release 3 part of H-02 remain. Notes marked "Step x note" and the ADRs in `sit-sizing-app/docs/adr/` record where the build departed from this text. |
 | **Changes in revision 3** | Identity provider is self-hosted Keycloak, not a custom build. Plan restructured into three releases. Added non-functional targets, pipeline, observability, backup, engine change policy, notifications, Excel export, portfolio view, governance. |
 | **Changes in revision 4** | API contract follows OpenAPI 3.2 (3.1 fallback, decided by a spike) and is documented with a self-hosted Scalar API Reference (section 9.4, ADR-0003). |
 | **Audience** | Engineering, QE leads, and the AI coding agents that will build it |
