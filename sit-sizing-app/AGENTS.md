@@ -44,6 +44,8 @@ pnpm --filter @sit/web exec vitest run tests/unit/prototype-ui-parity.test.tsx  
 - Every string is in `apps/web/messages/en.json` and `vi.json` (same keys; a test checks). Prototype wording is the reference: reuse its EN text and its VI dictionary entry.
 - Format figures with `lib/format.ts` (prototype rounding), never with `Intl` or `toLocaleString` directly.
 - A change that alters what the editor shows must keep `tests/unit/prototype-ui-parity.test.tsx` green.
+- Server pages that use `getTranslations` or `useTranslations` call `setRequestLocale(locale)` first. Pages render apart from the layout, and without it they fall back to English.
+- Vietnamese changes go through the review round trip (`pnpm i18n:review`, `pnpm i18n:apply`; `docs/i18n/README.md`).
 
 ## Ground rules (design 15.1)
 

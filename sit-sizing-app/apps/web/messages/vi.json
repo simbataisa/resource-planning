@@ -1100,5 +1100,508 @@
       "evidence": "• Bằng chứng shift-left: mutation {m}%, test quy tắc {r}%, validation BE {b}%, validation FE {f}%, test mapping {p}%, unit FE {u}%, mutation FE {s}%",
       "calibration": "• {u} trên {t} giả định là mặc định chưa hiệu chỉnh. Xác nhận với người chịu trách nhiệm delivery trước khi cam kết."
     }
+  },
+  "content": {
+    "guide": {
+      "eyebrow": "Dành cho team QE",
+      "title": "Cách sử dụng công cụ",
+      "note": "Đọc một lần, rồi mở ví dụ minh hoạ trong khi nhập dự án thật",
+      "steps": {
+        "0": "<b>Chọn chế độ.</b> Chưa có FSD: dùng <b>Phạm vi sơ bộ</b>. Đã có FSD: dùng <b>Phạm vi chi tiết</b>. Cả hai luôn được tính, nên các thẻ kết quả và bảng chênh lệch so sánh chúng.",
+        "1": "<b>Phạm vi sơ bộ.</b> Liệt kê tính năng hoặc epic. Với mỗi mục, chọn loại (Ứng dụng, Nền tảng dữ liệu hoặc Sản phẩm AI), kích cỡ T-shirt và độ phức tạp, và tích <b>Cần test hiệu năng</b> khi mục đó phải đạt mục tiêu hiệu năng. Tích các kênh trong phạm vi và nhập vai trò, ngôn ngữ và biến thể.",
+        "2": "<b>Phạm vi chi tiết.</b> Lần lượt đi qua chín mục được đánh số: yếu tố ứng dụng, trường và payload API, vai trò và quy tắc, kênh, nền tảng dữ liệu, sản phẩm AI và kiểm thử hiệu năng. Để 0 cho mục nào thay đổi không có yêu cầu tương ứng. Tiêu đề mỗi mục cho biết tổng của mục đó; Yếu tố suy ra cho thấy cách tính từng dòng, và Hướng dẫn độ phức tạp giải thích Đơn giản, Trung bình và Phức tạp.",
+        "3": "<b>Thời gian, team và môi trường.</b> Số tuần SIT, cơ cấu team, mức sẵn sàng của môi trường, tự động hoá regression, thiết kế test có AI hỗ trợ, số lượt đánh giá AI và số SME gán nhãn. Xem <b>Kiểm tra lịch</b> ở đó: khung giờ batch, thời gian gán nhãn hoặc lịch môi trường hiệu năng có thể giới hạn kế hoạch nhiều hơn FTE.",
+        "4": "<b>Bằng chứng shift-left.</b> Nhập kết quả gate từ pipeline của team delivery: test L1 backend, frontend và mobile, test pipeline dữ liệu và data contract, đánh giá AI trong CI và golden set dùng lại, smoke test hiệu năng, APM và script dùng lại. Dùng giá trị dự kiến cho Biz Case và giá trị thực tế trước khi SIT bắt đầu.",
+        "5": "<b>Đọc kết quả.</b> Bốn thẻ hiển thị FTE sơ bộ và chi tiết dưới dạng khoảng, chênh lệch giữa chúng và số giả định chưa hiệu chỉnh. Tổng gộp SIT, dữ liệu, AI và kiểm thử hiệu năng. Không bao giờ trích dẫn con số đơn lẻ mà thiếu khoảng ước tính.",
+        "6": "<b>Xuất.</b> Sao chép tóm tắt QBR cho bài trình bày và xuất JSON hồ sơ kèm dự án, để ước tính có thể tái lập và hiệu chỉnh sau này."
+      },
+      "where": {
+        "title": "Lấy từng dữ liệu đầu vào ở đâu",
+        "head": {
+          "0": "Đầu vào",
+          "1": "Nguồn",
+          "2": "Gợi ý"
+        },
+        "rows": {
+          "0": {
+            "0": "API endpoint, trường request và response",
+            "1": "OpenAPI spec hoặc tài liệu thiết kế API",
+            "2": "Mỗi trường DTO riêng biệt chỉ đếm một lần; phân loại endpoint theo Hướng dẫn độ phức tạp"
+          },
+          "1": {
+            "0": "Màn hình và trường nhập liệu",
+            "1": "Đặc tả màn hình trong FSD, Figma",
+            "2": "Dùng Trường theo loại khi FSD liệt kê loại trường; nó thay cho cơ cấu điển hình"
+          },
+          "2": {
+            "0": "Tích hợp",
+            "1": "Kiến trúc giải pháp, danh mục giao diện",
+            "2": "Mỗi hệ thống ngoài hoặc hàng đợi là một tích hợp; giao diện core banking có khung giờ test là Phức tạp"
+          },
+          "3": {
+            "0": "Quy tắc nghiệp vụ và quy tắc trọng yếu",
+            "1": "Mục quy tắc trong FSD, tham số sản phẩm",
+            "2": "Kiểm tra ở mức trường không phải quy tắc; chỉ đếm các điều kiện có ngưỡng hoặc kết quả riêng"
+          },
+          "4": {
+            "0": "Workflow và phê duyệt",
+            "1": "Sơ đồ quy trình hoặc trạng thái",
+            "2": "Mỗi máy trạng thái đếm một lần; workflow phê duyệt là những workflow có bước maker-checker"
+          },
+          "5": {
+            "0": "Vai trò và hành động được bảo vệ",
+            "1": "Ma trận phân quyền, thiết kế IAM",
+            "2": "Hành động được bảo vệ không gồm chuyển trạng thái workflow, vì chúng được cộng tự động"
+          },
+          "6": {
+            "0": "Batch job, file, event",
+            "1": "Lịch batch, đặc tả giao diện, danh mục event",
+            "2": "Mỗi job, giao diện file hoặc topic là một dòng"
+          },
+          "7": {
+            "0": "Kênh và ngôn ngữ",
+            "1": "Phạm vi phát hành",
+            "2": "Chỉ tích các nền tảng được phát hành trong phạm vi này"
+          },
+          "8": {
+            "0": "Yếu tố nền tảng dữ liệu",
+            "1": "Đặc tả mapping nguồn–đích, mô hình dữ liệu, danh mục DQ, ma trận truy cập",
+            "2": "Đếm cột mapping từ đặc tả mapping; tập dữ liệu được bảo vệ là những tập có quy tắc dòng, cột hoặc che dữ liệu"
+          },
+          "9": {
+            "0": "Yếu tố sản phẩm AI",
+            "1": "Thiết kế hội thoại hoặc danh sách intent, danh mục cơ sở tri thức, danh sách mẫu tài liệu, danh sách công cụ của agent",
+            "2": "Đếm intent và loại tài liệu OCR theo độ phức tạp; golden set và mẫu phải là dữ liệu giả lập"
+          },
+          "10": {
+            "0": "Kịch bản hiệu năng",
+            "1": "Yêu cầu phi chức năng, khối lượng production và dữ liệu APM, SLA của batch",
+            "2": "Mỗi journey nghiệp vụ, API, batch job hoặc lời gọi AI có mục tiêu hiệu năng là một kịch bản"
+          },
+          "11": {
+            "0": "Bằng chứng shift-left",
+            "1": "Jenkins: báo cáo PIT, JaCoCo, độ bao phủ ràng buộc, Vitest, Stryker, XCTest, Espresso, dbt / Great Expectations, k6 / Gatling",
+            "2": "Hỏi tech lead về dashboard gate; dùng giá trị gate dự kiến khi lập kế hoạch trước"
+          },
+          "12": {
+            "0": "Mức sẵn sàng của môi trường",
+            "1": "Kế hoạch môi trường, lịch test core banking, lịch môi trường hiệu năng",
+            "2": "Nếu SIT phụ thuộc khung giờ core banking dùng chung, hãy chọn phương án đó dù các hệ thống khác là môi trường riêng"
+          }
+        }
+      },
+      "read": {
+        "title": "Cách đọc kết quả",
+        "items": {
+          "0": "<b>Khoảng, không phải một điểm.</b> Sơ bộ là ±40% và chi tiết ±15% theo mặc định; nón bất định gợi ý biên độ rộng hơn ở giai đoạn đầu. Trích dẫn khoảng trong Biz Case và chỉ nêu giá trị giữa khi có khoảng đi kèm.",
+          "1": "<b>Bảng chênh lệch.</b> Cho biết yếu tố nào giải thích khác biệt giữa sơ bộ và chi tiết, gồm cả các dòng dữ liệu, AI và hiệu năng. Chênh lệch lớn ở một yếu tố thường có nghĩa hệ số quy đổi T-shirt cần hiệu chỉnh cho sản phẩm của bạn.",
+          "2": "<b>Độ nhạy.</b> Các dòng trên cùng làm ước tính thay đổi nhiều nhất, nên hãy hiệu chỉnh những giả định đó trước.",
+          "3": "<b>Ghi nhận shift-left.</b> Khác biệt giữa \"Không có gate\" và \"Đạt mọi gate\" là chi phí khi không shift left: một luận điểm Biz Case cho các gate L1.",
+          "4": "<b>Kiểm tra lịch.</b> Khi khung giờ batch, việc gán nhãn của SME hoặc lịch môi trường hiệu năng không vừa khung thời gian, thêm FTE cũng không giúp được; hãy bắt đầu sớm hơn hoặc kéo dài khung thời gian.",
+          "5": "<b>Quản trị.</b> FTE và tiến độ là con số lập kế hoạch. Xác nhận với người chịu trách nhiệm delivery trước khi đưa vào cam kết."
+        }
+      },
+      "calibrate": {
+        "title": "Quy trình hiệu chỉnh sau mỗi chu kỳ SIT",
+        "items": {
+          "0": "Đếm số case SIT thực chạy theo từng yếu tố và so với các dòng suy ra. Điều chỉnh số case mỗi yếu tố cho đến khi mô hình nằm trong khoảng.",
+          "1": "Đo số phút mỗi case từ công cụ quản lý test, tách riêng case chức năng, validation và mobile.",
+          "2": "Lấy tỷ lệ retest từ công cụ quản lý lỗi: số lần retest ÷ số case đã chạy.",
+          "3": "Lấy số giờ hiệu quả mỗi ngày từ timesheet.",
+          "4": "Đếm trường request và response trong một OpenAPI spec để hiệu chỉnh mặc định số trường mỗi endpoint.",
+          "5": "Nền tảng dữ liệu: đo thời gian một chu kỳ nạp từ đầu đến cuối, gồm chuẩn bị dữ liệu và làm mới môi trường.",
+          "6": "Sản phẩm AI: đo thời gian gán nhãn 50 mẫu và một lượt đánh giá có người rà soát.",
+          "7": "Kiểm thử hiệu năng: đo thời gian viết một script cho mỗi mức độ phức tạp và một chu kỳ test–tinh chỉnh đầy đủ.",
+          "8": "Thay đổi giá trị trong mục Giả định, đặt tên hồ sơ, xuất ra và lưu cùng dự án. Ước tính tiếp theo sẽ bắt đầu từ giá trị đã hiệu chỉnh."
+        }
+      },
+      "faq": {
+        "title": "Câu hỏi thường gặp",
+        "items": {
+          "0": {
+            "q": "Vì sao 6 giờ hiệu quả mỗi ngày mà không phải 8?",
+            "a": "Stand-up, phân loại lỗi, báo cáo và chuyển đổi ngữ cảnh chiếm khoảng 2 giờ mỗi ngày. Thời gian chờ môi trường được tính riêng qua hệ số môi trường. Hãy đo từ timesheet và thay đổi trong mục Năng lực."
+          },
+          "1": {
+            "q": "Đơn giản / Trung bình / Phức tạp thay đổi kết quả thế nào?",
+            "a": "Nó quyết định cả số case mỗi hạng mục lẫn số phút thực thi mỗi case (10 / 20 / 40), nên một API phức tạp tốn khoảng 7–8 lần một API đơn giản. Hướng dẫn độ phức tạp (mục 9 của tab Phạm vi chi tiết) giải thích cách phân loại từng yếu tố."
+          },
+          "2": {
+            "q": "Bao nhiêu case validation nếu không đạt gate?",
+            "a": "Mọi trường được test với toàn bộ ma trận theo loại trường, khoảng 12 case mỗi trường mỗi tầng với cơ cấu điển hình. Ở mức bao phủ 50–99%, một nửa quay lại SIT. Các dòng suy ra hiển thị phép tính chính xác cho bằng chứng hiện tại."
+          },
+          "3": {
+            "q": "Vì sao validation backend không được frontend bao phủ?",
+            "a": "Bất kỳ ai cũng có thể gọi API trực tiếp mà bỏ qua UI, và trường request API bao gồm cả những trường không hiển thị trên màn hình. Validation backend dùng các trường request API cộng các case chỉ có ở API như trường lạ và payload quá lớn."
+          },
+          "4": {
+            "q": "Vì sao mutation testing không được tính là công việc SIT?",
+            "a": "Nó được tự động hoá và do team delivery sở hữu. Nó chỉ quyết định SIT phải làm lại bao nhiêu test logic: dưới gate, case quy tắc nghiệp vụ và tỷ lệ retest tăng lên."
+          },
+          "5": {
+            "q": "Vì sao iOS và Android không phải bản sao đầy đủ của case web?",
+            "a": "Kênh mobile chạy lại một phần case màn hình và journey của web (mặc định 60% với app native), thêm các case chỉ có ở mobile như gián đoạn và offline, rồi nhân với ma trận thiết bị. Bản sao đầy đủ sẽ thổi phồng công sức."
+          },
+          "6": {
+            "q": "Nền tảng dữ liệu và sản phẩm AI được ước tính thế nào?",
+            "a": "Đánh dấu tính năng là Nền tảng dữ liệu hoặc Sản phẩm AI trong Phạm vi sơ bộ, và điền các phần Nền tảng dữ liệu và Sản phẩm AI trong Phạm vi chi tiết. Nền tảng dữ liệu được ước tính theo nguồn dữ liệu, pipeline, bảng, cột mapping, quy tắc chất lượng dữ liệu và báo cáo, với số chu kỳ nạp phụ thuộc khung giờ batch. Sản phẩm AI được ước tính theo số mẫu đánh giá có gán nhãn, công rà soát của người cho mỗi lượt đánh giá và phân tích, vì đầu ra của chúng không xác định. Phần kiểm tra lịch cảnh báo khi khung giờ batch hoặc thời gian gán nhãn, chứ không phải FTE, là yếu tố giới hạn kế hoạch."
+          },
+          "7": {
+            "q": "Kiểm thử hiệu năng được ước tính thế nào?",
+            "a": "Đánh dấu tính năng cần kiểm thử hiệu năng trong Phạm vi sơ bộ, hoặc liệt kê kịch bản hiệu năng ở mục 7 của Phạm vi chi tiết. Công sức gồm viết script cho từng kịch bản, mô hình tải, dữ liệu test ở quy mô lớn, môi trường và giám sát, số lượt chạy theo loại test và số chu kỳ test–tinh chỉnh, phân tích và báo cáo. Phần này được cộng vào tổng QE."
+          },
+          "8": {
+            "q": "Có thể tin các giá trị mặc định không?",
+            "a": "Chưa. Mọi giá trị mặc định đều là heuristic và được gắn nhãn chưa hiệu chỉnh cho đến khi team thay bằng giá trị đo được. Mục Tiêu chuẩn và cơ sở giải thích nguồn gốc của từng giá trị."
+          }
+        }
+      },
+      "workedExample": "Ví dụ minh hoạ: ước tính chi tiết hiện tại được tính như thế nào"
+    },
+    "method": {
+      "eyebrow": "Phương pháp",
+      "title": "Cách tính ước tính",
+      "formula": "ỨNG DỤNG\ncase    = Σ yếu tố đếm trực tiếp × số case mỗi yếu tố (theo độ phức tạp)\n        + quy tắc nghiệp vụ: trọng yếu chạy đầy đủ, thông thường được ghi nhận theo unit test quy tắc, × mutation × biến thể\n        + workflow: số chuyển trạng thái × (1 + tỷ lệ không hợp lệ)\n        + vai trò: (hành động được bảo vệ + chuyển trạng thái có kiểm tra vai trò) × số vai trò × cho phép/từ chối × lấy mẫu, + phân tách nhiệm vụ\n        + validation frontend (trường màn hình × ma trận loại trường) + validation backend (trường request API × ma trận + case chỉ có ở API)\n        + mapping (trường response và payload × số kiểm tra), mỗi phần sau ghi nhận shift-left\n        + stack web thứ hai và ngôn ngữ (một phần case màn hình và journey)\n        + mobile: journey web × tỷ lệ + (màn hình web × tỷ lệ + màn hình × case chỉ có ở mobile) × ma trận thiết bị + case phát hành, × 1.3 thực thi\n        + khả năng tiếp cận: màn hình × số case × số kênh\ngiờ     = Σ case × [ phút thiết kế + phút thực thi × (số chu kỳ + regression × (1 − tự động hoá)) × (1 + retest) × môi trường ] ÷ 60\n\nNỀN TẢNG DỮ LIỆU\ncase    = nguồn × case mỗi nguồn (sau ghi nhận data contract) + pipeline × số case + bảng × số case + dimension SCD × case bổ sung\n        + cột mapping × số kiểm tra + quy tắc DQ × số case (cả hai sau ghi nhận test pipeline) + báo cáo × số case\n        + tập dữ liệu được bảo vệ × vai trò truy cập × cho phép/từ chối × lấy mẫu\ngiờ     = Σ test dữ liệu × [ phút thiết kế + phút thực thi × số chu kỳ nạp × (1 + retest) × môi trường ] ÷ 60\n        + báo cáo theo mức công sức ứng dụng + nguồn × giờ chuẩn bị dữ liệu × số chu kỳ nạp\n\nSẢN PHẨM AI\nmẫu     = intent × số câu × ngôn ngữ + nguồn tri thức × số câu hỏi × ngôn ngữ\n        + loại tài liệu OCR × số mẫu + nhóm guardrail × số prompt tấn công\ngiờ     = mẫu × [ phút gán nhãn × (1 − dùng lại) × tỷ lệ QE + số lượt đánh giá × tỷ lệ rà soát × phút rà soát ] ÷ 60\n        + (công cụ agent + bước human-in-the-loop) tính như case theo mức công sức ứng dụng + số lượt đánh giá × giờ phân tích\nSME     = mẫu × phút gán nhãn × (1 − dùng lại) × (1 − tỷ lệ QE)  → kiểm tra lịch, không tính vào FTE của QE\n\nKIỂM THỬ HIỆU NĂNG\ngiờ     = kịch bản × giờ script × (1 − dùng lại) + mô hình tải + dữ liệu test quy mô lớn\n        + môi trường và giám sát (+ kiểm tra trên thiết bị mobile)\n        + Σ loại test (số lượt × giờ mỗi lượt) × số chu kỳ test–tinh chỉnh × (1 + tỷ lệ phân tích) + báo cáo\n\nMỌI HỒ SƠ\nFTE     = (giờ ứng dụng + dữ liệu + AI + hiệu năng) × (1 + overhead) ÷ ( số tuần × số ngày mỗi tuần × giờ hiệu quả × năng lực bình quân )\nkhoảng  = FTE × (1 ± biên độ)      biên độ: sơ bộ ±40% · chi tiết ±15%",
+      "steps": {
+        "0": "Sơ bộ và chi tiết dùng cùng một công thức. Bản sơ bộ lấy số lượng yếu tố từ hệ số quy đổi theo kích cỡ tính năng và dùng thời gian thiết kế mỗi case dài hơn, vì chưa có FSD để thiết kế.",
+        "1": "Validation trường được ghi nhận theo độ bao phủ. Ở mức 100%, team đã chứng minh trong L1/L2, nên SIT chỉ chạy một case mẫu cho mỗi màn hình (frontend) hoặc mỗi API (backend). Ở mức 50–99%, một nửa ma trận theo loại trường quay lại SIT; dưới 50%, toàn bộ quay lại, khoảng 12 case mỗi trường mỗi tầng với cơ cấu điển hình. Validation backend không được frontend bao phủ: nó dựa trên các trường request API, gồm cả những trường không hiển thị trên màn hình, cộng các case chỉ có ở API như trường lạ và payload quá lớn. Mapping được tính theo số trường response và payload. Case validation và mapping dùng mức công sức nhẹ hơn và chỉ một lượt đầy đủ, vì chúng được tạo theo mẫu và chạy data-driven.",
+        "2": "Điểm mutation dưới gate nghĩa là lỗi logic lọt đến SIT. Số case quy tắc nghiệp vụ tăng và tỷ lệ retest cũng tăng.",
+        "3": "Vai trò được tính theo ma trận vai trò × hành động được bảo vệ, có lấy mẫu theo rủi ro, không bao giờ là vai trò × mọi case. Hành động được bảo vệ gồm các hành động ngoài workflow cộng với các chuyển trạng thái workflow có kiểm tra vai trò. Mỗi workflow phê duyệt thêm các case phân tách nhiệm vụ.",
+        "4": "Quy tắc nghiệp vụ được chia thành trọng yếu và thông thường. Quy tắc trọng yếu luôn chạy toàn bộ bảng quyết định trong SIT. Quy tắc thông thường được ghi nhận theo unit test quy tắc nghiệp vụ: mỗi quy tắc một case kết nối khi đã chứng minh, một nửa bảng ở mức 50–99%, toàn bộ bảng khi dưới 50%. Quy tắc thay đổi theo sản phẩm, phân khúc hoặc loại tiền được lấy mẫu pairwise.",
+        "5": "Stack web thứ hai hoặc ngôn ngữ bổ sung thêm một phần case màn hình và journey có lấy mẫu. Kênh iOS và Android native chạy lại một phần case web, thêm case chỉ có ở mobile, nhân với ma trận thiết bị và OS, cộng case phát hành; chúng chạy chậm hơn 1.3×. Khả năng tiếp cận thêm case WCAG cho mỗi màn hình và kênh. Mức sẵn sàng của môi trường kéo dài thời gian thực thi. Tự động hoá regression chỉ giảm lượt regression; công xây dựng và bảo trì tự động hoá không được tính ở đây.",
+        "6": "Nền tảng dữ liệu được ước tính theo nguồn, pipeline, bảng, cột mapping, quy tắc chất lượng dữ liệu và báo cáo. Test dữ liệu là so sánh SQL rẻ, nhưng mỗi chu kỳ nạp phụ thuộc một khung giờ batch, nên phần kiểm tra lịch so sánh số chu kỳ nạp với khung thời gian SIT. Test pipeline (dbt, Great Expectations) và test data contract giảm phần SIT phải làm lại.",
+        "7": "Sản phẩm AI không được ước tính theo case đạt/không đạt, vì đầu ra của chúng không xác định. Chúng được ước tính theo số mẫu đánh giá có gán nhãn, việc người rà soát một phần đầu ra ở mỗi lượt đánh giá, và thời gian phân tích. Phần gán nhãn do SME nghiệp vụ làm được hiển thị trong kiểm tra lịch, không tính vào FTE của QE.",
+        "8": "Kiểm thử hiệu năng được ước tính theo kịch bản có script, số lượt chạy theo loại test và số chu kỳ test–tinh chỉnh, cộng mô hình tải, dữ liệu test ở quy mô lớn, môi trường và giám sát, phân tích và báo cáo. Phần này thuộc tổng QE. Smoke test hiệu năng trong CI, APM / OpenTelemetry và script dùng lại giúp giảm công sức.",
+        "9": "Bản thân mutation testing không bao giờ được tính là công việc SIT. Nó được tự động hoá và do team delivery sở hữu; nó chỉ thay đổi lượng việc SIT phải làm lại."
+      }
+    },
+    "standards": {
+      "eyebrow": "Cơ sở",
+      "title": "Tiêu chuẩn và cơ sở",
+      "chip": "Giá trị mặc định là heuristic",
+      "intro": "Không có tiêu chuẩn toàn cầu nào quy định các con số như số case mỗi API hay số phút mỗi case. Tiêu chuẩn định nghĩa phương pháp; con số đến từ lịch sử của chính bạn. Mô hình này tuân theo các phương pháp được công nhận và gắn nhãn mọi con số là heuristic cho đến khi team hiệu chỉnh.",
+      "headings": {
+        "0": "Kỹ thuật và tài liệu tham chiếu mô hình dựa vào",
+        "1": "Nguồn gốc của từng giá trị mặc định",
+        "2": "Khoảng ước tính so với nón bất định",
+        "3": "Cách hiệu chỉnh theo các kỹ thuật ISTQB",
+        "4": "Đoạn văn cho Biz Case hoặc QBR",
+        "5": "Tài liệu tham khảo"
+      },
+      "techniques": {
+        "head": {
+          "0": "Thành phần của mô hình",
+          "1": "Tiêu chuẩn hoặc tài liệu",
+          "2": "Đóng góp"
+        },
+        "rows": {
+          "0": {
+            "0": "Số case mỗi yếu tố",
+            "1": "Kỹ thuật thiết kế test <b>ISO/IEC/IEEE 29119-4:2021</b> <ref>1</ref>",
+            "2": "Phân vùng tương đương, phân tích giá trị biên, kiểm thử bảng quyết định, kiểm thử chuyển trạng thái và kỹ thuật tổ hợp. Giá trị mặc định cho từng yếu tố xấp xỉ bộ case nhỏ nhất mà các kỹ thuật này tạo ra."
+          },
+          "1": {
+            "0": "Cách tiếp cận tổng thể",
+            "1": "Kỹ thuật ước lượng <b>ISTQB Foundation 4.0</b> <ref>2</ref>",
+            "2": "Bốn phương pháp được công nhận: dựa trên tỷ lệ, ngoại suy, Wideband Delphi và ba điểm. Mô hình này dựa trên tỷ lệ; ba phương pháp còn lại là cách bạn hiệu chỉnh nó."
+          },
+          "2": {
+            "0": "Cấu trúc công sức",
+            "1": "<b>TMap Test Point Analysis (TPA)</b> <ref>3</ref>",
+            "2": "Quy mô × hệ số môi trường × hệ số năng suất, cộng thêm phần dự phòng cho lập kế hoạch và kiểm soát (khoảng 10%). Hệ số năng lực (0.7–1.2×) và overhead 15% theo cùng cấu trúc này."
+          },
+          "3": {
+            "0": "Khoảng bất định",
+            "1": "<b>Cone of Uncertainty</b> (nón bất định), Boehm và McConnell <ref>4</ref>",
+            "2": "Sai số ước tính thu hẹp theo giai đoạn: 0.25×–4× ở ý tưởng ban đầu, 0.5×–2× khi định nghĩa sản phẩm được duyệt, 0.67×–1.5× khi yêu cầu hoàn tất."
+          },
+          "4": {
+            "0": "Lấy mẫu vai trò",
+            "1": "<b>Nghiên cứu kiểm thử tổ hợp của NIST</b>, Kuhn và cộng sự <ref>5</ref>",
+            "2": "Phần lớn lỗi được kích hoạt bởi một hoặc hai yếu tố tương tác, điều này biện minh cho việc lấy mẫu ma trận vai trò × hành động. NIST cũng cảnh báo rằng chỉ xét từng cặp không phải lúc nào cũng đủ."
+          },
+          "5": {
+            "0": "Đối chiếu",
+            "1": "<b>Quy tắc kinh nghiệm của Capers Jones</b> <ref>6</ref>",
+            "2": "Số test case ≈ function point<sup>1.2</sup>. Cần số function point theo IFPUG hoặc COSMIC. Mới thấy ở nguồn thứ cấp; hãy kiểm tra văn bản gốc trước khi trích dẫn."
+          },
+          "6": {
+            "0": "Kiểm thử hiệu năng",
+            "1": "Hiệu quả hiệu năng theo <b>ISO/IEC 25010</b>; giáo trình <b>ISTQB Performance Testing</b>",
+            "2": "Thời gian phản hồi, sử dụng tài nguyên và năng lực xử lý là các đặc tính chất lượng; các loại test load, stress, soak, spike, khả năng mở rộng và mô hình tải."
+          },
+          "7": {
+            "0": "Nền tảng dữ liệu",
+            "1": "<b>Kiểm thử mapping nguồn–đích và đối soát</b> (thực hành phổ biến trong ngành)",
+            "2": "Cột mapping, đối soát số dòng mỗi bảng và quy tắc chất lượng dữ liệu quyết định ước tính dữ liệu; không có tiêu chuẩn ISO nào quy định các con số."
+          },
+          "8": {
+            "0": "Kiểm thử sản phẩm AI",
+            "1": "Kiểm thử hệ thống dựa trên AI <b>ISO/IEC TR 29119-11:2020</b> <ref>7</ref>",
+            "2": "Bài toán test oracle: đầu ra AI được đánh giá theo bộ dữ liệu có gán nhãn và ngưỡng, thay vì một kết quả mong đợi duy nhất."
+          },
+          "9": {
+            "0": "Guardrail cho AI",
+            "1": "<b>OWASP Top 10 for LLM Applications</b> <ref>8</ref>, hồ sơ AI tạo sinh <b>NIST AI 600-1</b> <ref>9</ref>",
+            "2": "Các nhóm guardrail cần red-team, như prompt injection, lộ thông tin nhạy cảm và lộ system prompt."
+          }
+        }
+      },
+      "defaults": {
+        "head": {
+          "0": "Mặc định",
+          "1": "Cách suy ra",
+          "2": "Cơ sở"
+        },
+        "rows": {
+          "0": {
+            "value": "API endpoint 4 / 6 / 10 case",
+            "derivation": "Happy path, hai lớp không hợp lệ, một case xác thực, một hoặc hai case biên hoặc lỗi",
+            "basis": "Dựa trên phương pháp"
+          },
+          "1": {
+            "value": "Màn hình 5 / 8 / 12 case",
+            "derivation": "Hiển thị, thao tác, điều hướng, trạng thái lỗi",
+            "basis": "Dựa trên phương pháp"
+          },
+          "2": {
+            "value": "Tích hợp 6 / 10 / 16 case",
+            "derivation": "Happy path, negative, timeout, retry, lệch dữ liệu, đối soát",
+            "basis": "Dựa trên phương pháp"
+          },
+          "3": {
+            "value": "Quy tắc nghiệp vụ 2 / 4 / 8 case",
+            "derivation": "Số nhánh trung bình trong một bảng quyết định",
+            "basis": "Dựa trên phương pháp"
+          },
+          "4": {
+            "value": "Validation trường 3–18 case mỗi trường mỗi tầng, theo loại trường (≈12 với cơ cấu điển hình)",
+            "derivation": "Null, rỗng, khoảng trắng, min, max, biên, kiểu, định dạng, enum, trùng lặp, ký tự đặc biệt, unicode và injection, theo ma trận validation trường (phân vùng tương đương và phân tích giá trị biên)",
+            "basis": "Dựa trên phương pháp"
+          },
+          "5": {
+            "value": "Công sức validation: 2 phút thiết kế, 3 phút thực thi trên UI hoặc 2 phút qua API, một lượt đầy đủ",
+            "derivation": "Case được tạo theo mẫu cho từng loại trường và chạy data-driven, sau đó chỉ retest các case lỗi",
+            "basis": "Phán đoán · hiệu chỉnh trước tiên"
+          },
+          "6": {
+            "value": "Batch job hoặc giao diện file 5 / 8 / 12",
+            "derivation": "Happy path, đầu vào rỗng, lỗi giữa chừng và chạy lại, thời điểm cut-off, bản ghi bị từ chối và trùng lặp, đối soát",
+            "basis": "Dựa trên phương pháp"
+          },
+          "7": {
+            "value": "Topic event hoặc message 4 / 6 / 9",
+            "derivation": "Publish và consume, thứ tự, gửi trùng, poison message và dead-letter queue, replay",
+            "basis": "Dựa trên phương pháp"
+          },
+          "8": {
+            "value": "Workflow: 3 / 6 / 10 chuyển trạng thái, +30% không hợp lệ",
+            "derivation": "Một case cho mỗi chuyển trạng thái hợp lệ, cộng các chuyển trạng thái không hợp lệ (kiểm thử chuyển trạng thái, ISO/IEC/IEEE 29119-4)",
+            "basis": "Dựa trên phương pháp"
+          },
+          "9": {
+            "value": "50% chuyển trạng thái có kiểm tra vai trò",
+            "derivation": "Gửi, phê duyệt, từ chối và giải ngân thường có kiểm tra quyền, nên được đưa vào ma trận vai trò × hành động",
+            "basis": "Phán đoán"
+          },
+          "10": {
+            "value": "2 case phân tách nhiệm vụ cho mỗi workflow phê duyệt",
+            "derivation": "Người tạo không thể tự phê duyệt yêu cầu của mình; một người dùng khác có vai trò kiểm soát thì được phép",
+            "basis": "Phán đoán"
+          },
+          "11": {
+            "value": "30% quy tắc trọng yếu, 1 case kết nối cho mỗi quy tắc thông thường đã chứng minh",
+            "derivation": "Quy tắc theo quy định và liên quan dòng tiền luôn được test đầy đủ; các quy tắc khác chỉ cần một case end-to-end khi L1 đã chứng minh logic",
+            "basis": "Phán đoán"
+          },
+          "12": {
+            "value": "40% quy tắc có biến thể, lấy mẫu biến thể 30%",
+            "derivation": "Quy tắc khác nhau theo sản phẩm, phân khúc hoặc loại tiền, lấy mẫu pairwise thay vì mọi tổ hợp",
+            "basis": "Phán đoán"
+          },
+          "13": {
+            "value": "Tỷ lệ theo kênh: stack web thứ hai 40%, iOS 60%, Android 60%; ngôn ngữ bổ sung 20%",
+            "derivation": "App native chạy lại một phần có lấy mẫu của case màn hình và journey web, không phải bản sao đầy đủ; stack web thứ hai dùng chung phần lớn logic",
+            "basis": "Phán đoán"
+          },
+          "14": {
+            "value": "Case chỉ có ở mobile 4 / 6 / 9 mỗi màn hình mobile",
+            "derivation": "Gián đoạn (cuộc gọi, thông báo), chạy nền và quay lại, offline và mạng yếu, xoay màn hình, điều hướng lùi, hỏi quyền, sinh trắc học hoặc PIN, deep link",
+            "basis": "Dựa trên phương pháp"
+          },
+          "15": {
+            "value": "3 tổ hợp thiết bị và OS, +20% mỗi tổ hợp thêm; 30% case mobile cần thiết kế mới",
+            "derivation": "Lấy mẫu pairwise thiết bị và phiên bản OS thay vì mọi tổ hợp (quy tắc tương tác của NIST)",
+            "basis": "Phán đoán"
+          },
+          "16": {
+            "value": "6 case phát hành mỗi nền tảng mobile, thực thi mobile 1.3×",
+            "derivation": "Cài đặt, nâng cấp với dữ liệu có sẵn, gỡ cài đặt và chấp nhận bản build lên store; chuẩn bị thiết bị và build lại app làm chậm chạy thủ công",
+            "basis": "Phán đoán"
+          },
+          "17": {
+            "value": "Khả năng tiếp cận 2 case mỗi màn hình mỗi kênh",
+            "derivation": "Nhãn cho trình đọc màn hình và thứ tự bàn phím hoặc focus theo yêu cầu WCAG 2.x; thường là yêu cầu pháp lý với ngân hàng",
+            "basis": "Dựa trên phương pháp"
+          },
+          "18": {
+            "value": "Môi trường 1.0 / 1.1 / 1.25 / 1.4×",
+            "derivation": "Dựa trên hệ số môi trường của TPA: thời gian chờ hệ thống downstream dùng chung và khung giờ test core banking",
+            "basis": "Dựa trên phương pháp · cần hiệu chỉnh"
+          },
+          "19": {
+            "value": "Tự động hoá regression",
+            "derivation": "Chỉ giảm lượt regression thủ công; công xây dựng và bảo trì tự động hoá nằm ngoài ước tính này",
+            "basis": "Phán đoán"
+          },
+          "20": {
+            "value": "Lấy mẫu vai trò 50%",
+            "derivation": "Giảm theo kiểu pairwise; dùng toàn bộ ma trận cho các hành động rủi ro cao như phê duyệt và thanh toán",
+            "basis": "Phán đoán"
+          },
+          "21": {
+            "value": "Gate mutation 70%",
+            "derivation": "DE Quality Recommendations",
+            "basis": "Tiêu chuẩn nội bộ"
+          },
+          "22": {
+            "value": "Mapping: 1 lần kiểm tra mỗi trường response hoặc payload, cộng kiểm tra định dạng cho 40% số trường",
+            "derivation": "Kiểm tra khứ hồi mọi giá trị, cộng định dạng tiền tệ, ngày tháng và enum; xử lý null nằm trong kiểm tra khứ hồi",
+            "basis": "Dựa trên phương pháp"
+          },
+          "23": {
+            "value": "Trường request 5 / 10 / 20, trường response 8 / 15 / 30 mỗi endpoint, 30% DTO dùng lại, 12 trường mỗi event",
+            "derivation": "Chỉ dùng khi FSD hoặc OpenAPI spec không có số lượng; DTO dùng chung chỉ đếm một lần",
+            "basis": "Phán đoán · đếm thử một OpenAPI spec"
+          },
+          "24": {
+            "value": "4 case chỉ có ở API cho mỗi endpoint",
+            "derivation": "Trường lạ hoặc thừa (mass assignment), sai content type, payload quá lớn, thiếu body; UI không bao giờ gửi những yêu cầu này (OWASP API Security Top 10)",
+            "basis": "Dựa trên phương pháp"
+          },
+          "25": {
+            "value": "Gate unit frontend 80%, +20% case màn hình",
+            "derivation": "Theo các gate độ bao phủ phổ biến; nếu không, lỗi logic UI sẽ lộ ra thành lỗi màn hình trong SIT",
+            "basis": "Phán đoán"
+          },
+          "26": {
+            "value": "Gate Stryker 60%, +15% case màn hình",
+            "derivation": "Ngưỡng thấp mặc định của Stryker; test frontend yếu để lọt lỗi logic",
+            "basis": "Phán đoán"
+          },
+          "27": {
+            "value": "Thực thi 10 / 20 / 40 phút, thiết kế 15 / 25 phút",
+            "derivation": "Khoảng giá trị phổ biến trong thực tế",
+            "basis": "Phán đoán · hiệu chỉnh trước tiên"
+          },
+          "28": {
+            "value": "2 chu kỳ, 30% regression, 20% retest",
+            "derivation": "Quy ước thực tế",
+            "basis": "Phán đoán · hiệu chỉnh sau chu kỳ 1"
+          },
+          "29": {
+            "value": "6 giờ hiệu quả mỗi ngày",
+            "derivation": "Quy ước focus factor phổ biến (75% của ngày làm 8 giờ): phần còn lại dành cho stand-up, phân loại lỗi, báo cáo và chuyển đổi ngữ cảnh; thời gian chờ môi trường đã tính trong hệ số môi trường. Dễ đo từ timesheet",
+            "basis": "Phán đoán"
+          },
+          "30": {
+            "value": "Thiết kế test có AI hỗ trợ: giảm 0% / 20% / 40% thời gian thiết kế",
+            "derivation": "Chỉ áp dụng cho thiết kế case và dữ liệu test giả lập, không áp dụng cho thực thi hay thời gian chờ môi trường; mặc định tắt cho đến khi một pilot đo được mức tiết kiệm",
+            "basis": "Phán đoán · đo qua pilot"
+          },
+          "31": {
+            "value": "Dữ liệu: 3 / 4 / 6 mỗi nguồn, 4 / 6 / 9 mỗi pipeline, 2 / 3 / 4 mỗi bảng, 1.5 mỗi cột mapping, 2 mỗi quy tắc DQ",
+            "derivation": "Tính đầy đủ, thay đổi schema, chế độ nạp, chạy lại, đối soát, kiểm tra giá trị nguồn–đích",
+            "basis": "Phán đoán"
+          },
+          "32": {
+            "value": "Công sức dữ liệu: 10 phút thiết kế, 5 phút mỗi chu kỳ nạp, 3 chu kỳ, 2 giờ chuẩn bị dữ liệu mỗi nguồn mỗi chu kỳ",
+            "derivation": "Test dữ liệu là so sánh SQL, chạy rẻ nhưng phụ thuộc khung giờ batch và việc làm mới dữ liệu",
+            "basis": "Phán đoán · hiệu chỉnh trước tiên"
+          },
+          "33": {
+            "value": "AI: 20 / 35 / 50 câu mỗi intent, 15 câu hỏi mỗi nguồn, 50 / 100 / 200 mẫu OCR, 40 prompt mỗi guardrail",
+            "derivation": "Kích thước golden set đủ lớn để đo độ chính xác theo từng intent hoặc loại tài liệu với độ tin cậy hữu ích",
+            "basis": "Phán đoán"
+          },
+          "34": {
+            "value": "Công sức AI: 2–6 phút gán nhãn mỗi mẫu, rà soát thủ công 20% (có tự động) hoặc 60% mỗi lượt, 6 giờ phân tích mỗi lượt, 50% gán nhãn do QE làm",
+            "derivation": "Gán nhãn golden set là chi phí chính; đánh giá tự động giảm công rà soát nhưng vẫn cần người kiểm tra một phần mẫu",
+            "basis": "Phán đoán · đo qua pilot"
+          },
+          "35": {
+            "value": "Hiệu năng: 4 / 8 / 16 giờ viết script mỗi kịch bản, 3 chu kỳ test–tinh chỉnh, phân tích bằng 50% thời gian chạy",
+            "derivation": "Mỗi chu kỳ: load 3 × 4 giờ, stress 2 × 4 giờ, soak 1 × 12 giờ, spike 1 × 2 giờ; 24 giờ thiết lập môi trường và giám sát khi chưa có APM, 8 giờ khi đã có",
+            "basis": "Phán đoán · hiệu chỉnh trước tiên"
+          },
+          "36": {
+            "value": "Overhead 15%, năng lực 0.7 / 1.0 / 1.2×",
+            "derivation": "Dựa trên hệ số môi trường và năng suất của TPA",
+            "basis": "Dựa trên phương pháp"
+          }
+        }
+      },
+      "cone": {
+        "head": {
+          "0": "Giai đoạn",
+          "1": "Khoảng theo nón",
+          "2": "Mô hình hiện tại"
+        },
+        "rows": {
+          "0": {
+            "stage": "Sơ bộ · chưa có FSD (định nghĩa sản phẩm đã duyệt)",
+            "range": "0.5× – 2× (−50% / +100%)"
+          },
+          "1": {
+            "stage": "Chi tiết · có FSD (yêu cầu hoàn tất)",
+            "range": "0.67× – 1.5× (−33% / +50%)"
+          }
+        }
+      },
+      "calibrate": {
+        "0": "<b>Dựa trên tỷ lệ:</b> chạy mô hình này trên một hoặc hai dự án đã hoàn thành và so sánh với số case và số giờ thực tế. Điều chỉnh số case mỗi yếu tố cho đến khi kết quả nằm trong khoảng.",
+        "1": "<b>Ngoại suy:</b> sau chu kỳ SIT đầu tiên, thay số phút thực thi mỗi case, tỷ lệ retest và số giờ hiệu quả bằng số liệu team đo được.",
+        "2": "<b>Ba điểm:</b> khi chưa có dữ liệu, hỏi ba tester senior về số phút mỗi case ở mức lạc quan (a), khả dĩ nhất (m) và bi quan (b), rồi dùng E = (a + 4m + b) ÷ 6.",
+        "3": "<b>Wideband Delphi:</b> thống nhất số case mỗi yếu tố giữa các QE lead qua vài vòng ngắn, rồi xuất kết quả thành hồ sơ hiệu chỉnh dùng chung."
+      },
+      "wording": "Phương pháp đếm case tuân theo các kỹ thuật thiết kế test của ISO/IEC/IEEE 29119-4 và cách ước lượng dựa trên tỷ lệ của ISTQB. Cấu trúc công sức được mô phỏng theo TMap Test Point Analysis, và khoảng ước tính theo nón bất định. Các giá trị mặc định là heuristic chưa hiệu chỉnh và sẽ được thay bằng số liệu thực tế sau chu kỳ SIT đầu tiên.",
+      "copyWording": "Sao chép đoạn văn",
+      "refs": {
+        "0": "ISO/IEC/IEEE 29119-4:2021, Software and systems engineering — Software testing — Part 4: Test techniques. <a1>Trang danh mục</a1>",
+        "1": "ISTQB Certified Tester Foundation Level 4.0, mục 5.1.4 Estimation techniques. <a1>Ghi chú ôn tập</a1> · <a2>Tổng quan của CQI | IRCA</a2>",
+        "2": "TMap, Test Point Analysis. <a1>tmap.net</a1> · <a2>Ước lượng theo quy mô đối tượng test</a2>",
+        "3": "Construx (McConnell), The Cone of Uncertainty. <a1>White paper (PDF)</a1>. Các khoảng ban đầu đến từ đánh giá của chuyên gia, không phải dữ liệu đo lường.",
+        "4": "NIST, Interactions involved in software failures. <a1>csrc.nist.gov</a1> · <a2>FAQ</a2>",
+        "5": "Quy tắc kinh nghiệm về quy mô của Capers Jones, theo bản tóm tắt trong <a1>slide seminar của Đại học Zurich (PDF)</a1>. Bản gốc: Jones, <i>Applied Software Measurement</i>.",
+        "6": "ISO/IEC TR 29119-11:2020, Software and systems engineering — Software testing — Part 11: Guidelines on the testing of AI-based systems. <a1>iso.org</a1>",
+        "7": "OWASP, Top 10 for LLM Applications 2025. <a1>genai.owasp.org</a1>",
+        "8": "NIST AI 600-1, Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile (tháng 7/2024). <a1>NIST (PDF)</a1>"
+      }
+    },
+    "nav": {
+      "guide": "Hướng dẫn",
+      "method": "Phương pháp",
+      "standards": "Tiêu chuẩn"
+    },
+    "guidePage": {
+      "workedExampleNote": "Mở một ước lượng để xem ví dụ tính toán của nó: phần diễn giải cập nhật khi bạn thay đổi dữ liệu đầu vào."
+    },
+    "cone": {
+      "one": "Biên độ {w} hẹp hơn mức nón bất định gợi ý.",
+      "many": "Biên độ {w} hẹp hơn mức nón bất định gợi ý.",
+      "symmetric": "Mô hình dùng biên độ đối xứng, nên để có cận trên thận trọng, hãy đặt \"Biên độ, chế độ sơ bộ\" thành 100% và \"Biên độ, chế độ chi tiết\" thành 50% trong mục Giả định. Ước tính thường vượt nhiều hơn là hụt, nên hãy coi cận trên là rủi ro khi lập kế hoạch.",
+      "wide": "Cả hai biên độ đều rộng ít nhất bằng mức nón bất định gợi ý ở phía trên.",
+      "rough": "sơ bộ",
+      "detailed": "chi tiết",
+      "and": " và ",
+      "defaultsNote": "\"Mô hình hiện tại\" hiển thị khoảng mặc định. Mỗi ước lượng có thể thay đổi chúng trong mục Giả định."
+    },
+    "copied": "Đã sao chép.",
+    "copyFailed": "Đã chọn. Nhấn Ctrl/Cmd + C để sao chép.",
+    "tones": {
+      "warn": "Dựa trên phương pháp",
+      "bad": "Phán đoán",
+      "team": "Tiêu chuẩn nội bộ"
+    }
   }
 }

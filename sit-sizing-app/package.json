@@ -38,7 +38,9 @@
     "openapi:generate": "pnpm --filter @sit/web openapi:generate",
     "openapi:check": "pnpm --filter @sit/web openapi:check",
     "test:idp": "pnpm --filter @sit/web test:idp",
-    "dev:keycloak-reset": "node scripts/ensure-dev-env.mjs && node scripts/dev-keycloak-reset.mjs"
+    "dev:keycloak-reset": "node scripts/ensure-dev-env.mjs && node scripts/dev-keycloak-reset.mjs",
+    "i18n:review": "node scripts/i18n-review.mjs export",
+    "i18n:apply": "node scripts/i18n-review.mjs apply"
   },
   "devDependencies": {
     "@types/node": "catalog:",

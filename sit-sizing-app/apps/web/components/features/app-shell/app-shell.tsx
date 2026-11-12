@@ -5,19 +5,30 @@ import { useTranslations } from 'next-intl';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
-import { LanguageSwitch } from './language-switch';
+import type { Locale } from '@/lib/i18n';
+import { AdoptProfileLocale, LanguageSwitch } from './language-switch';
 
 export interface AppShellProps {
   /** Display name of the signed-in user; null shows a sign-in button. */
   userName: string | null;
+  /** Language saved to the user's profile. */
+  profileLocale?: Locale | null;
+  /** True when this browser already has a language choice (cookie). */
+  localeChosen?: boolean;
   children: ReactNode;
 }
 
 /** Header, navigation, language switch and session menu around every signed-in page (U-04). */
-export function AppShell({ userName, children }: AppShellProps) {
+export function AppShell({
+  userName,
+  profileLocale = null,
+  localeChosen = true,
+  children,
+}: AppShellProps) {
   const t = useTranslations();
   return (
     <div className="flex min-h-dvh flex-col">
+      <AdoptProfileLocale profileLocale={profileLocale} localeChosen={localeChosen} />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:shadow-card"
@@ -34,12 +45,21 @@ export function AppShell({ userName, children }: AppShellProps) {
             <Link href="/projects" className="font-medium hover:underline">
               {t('app.projects')}
             </Link>
+            <Link href="/guide" className="hover:underline">
+              {t('content.nav.guide')}
+            </Link>
+            <Link href="/method" className="hover:underline">
+              {t('content.nav.method')}
+            </Link>
+            <Link href="/standards" className="hover:underline">
+              {t('content.nav.standards')}
+            </Link>
             <a href="/api/v1/docs" className="text-muted-foreground hover:underline">
               {t('app.apiDocs')}
             </a>
           </nav>
           <div className="ml-auto flex items-center gap-3">
-            <LanguageSwitch />
+            <LanguageSwitch saveToProfile={Boolean(userName)} />
             {userName ? (
               <div
                 aria-label={t('app.sessionMenu')}

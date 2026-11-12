@@ -12,6 +12,7 @@ import {
   type DraftPatch,
   type EstimateCreate,
   type LockRequest,
+  type MeUpdate,
   type MembersPut,
   type PageQuery,
   type ProjectCreate,
@@ -32,6 +33,7 @@ const ProfileList = z.object({ items: z.array(Profile) });
 export function createApi(http: AxiosInstance = defaultHttp) {
   return {
     me: () => getParsed(http, '/me', Me),
+    updateMe: (body: In<typeof MeUpdate>) => sendParsed(http, 'patch', '/me', body, Me),
     projects: {
       list: (q?: Partial<PageQuery>) => getParsed(http, '/projects', ProjectPage, q),
       get: (projectId: string) => getParsed(http, `/projects/${projectId}`, ProjectDetail),

@@ -9,6 +9,15 @@ import { qk } from './keys';
 
 /** Query hooks: the only way components talk to the API (design 9.3). */
 export const useMe = () => useQuery({ queryKey: qk.me, queryFn: api.me });
+
+/** Saves the user's language to their profile (design 8.5). */
+export function useUpdateLocale() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (locale: 'en' | 'vi') => api.updateMe({ locale }),
+    onSuccess: (me) => qc.setQueryData(qk.me, me),
+  });
+}
 export const useProjects = () =>
   useQuery({ queryKey: qk.projects(), queryFn: () => api.projects.list() });
 export const useProject = (id: string) =>

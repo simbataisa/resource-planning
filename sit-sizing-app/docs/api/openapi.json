@@ -1856,6 +1856,87 @@
             "devUser": []
           }
         ]
+      },
+      "patch": {
+        "operationId": "updateMe",
+        "tags": [
+          "Session"
+        ],
+        "summary": "Save the current user's language",
+        "description": "The language the app opens in when the browser has no language choice yet. Minimum role: USER.",
+        "x-required-role": "USER",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The signed-in user with the saved language",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                },
+                "example": {
+                  "id": "clx0synthuser0001",
+                  "displayName": "Synthetic Estimator",
+                  "email": "estimator@example.invalid",
+                  "globalRole": "USER",
+                  "locale": "vi",
+                  "memberships": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeUpdate"
+              },
+              "example": {
+                "locale": "vi"
+              }
+            }
+          }
+        }
       }
     },
     "/openapi.json": {
@@ -5415,6 +5496,24 @@
               "role": "QE_LEAD"
             }
           ]
+        }
+      },
+      "MeUpdate": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "vi"
+            ]
+          }
+        },
+        "required": [
+          "locale"
+        ],
+        "example": {
+          "locale": "vi"
         }
       },
       "Profile": {

@@ -1100,5 +1100,508 @@
       "evidence": "• Shift-left evidence: mutation {m}%, rule tests {r}%, BE validation {b}%, FE validation {f}%, mapping tests {p}%, FE unit {u}%, FE mutation {s}%",
       "calibration": "• {u} of {t} assumptions are uncalibrated defaults. Confirm with the delivery owner before committing."
     }
+  },
+  "content": {
+    "guide": {
+      "eyebrow": "For the QE team",
+      "title": "How to use this tool",
+      "note": "Read once, then keep the worked example open while you enter a real project",
+      "steps": {
+        "0": "<b>Pick the mode.</b> No FSD yet: use <b>Rough scope</b>. FSD available: use <b>Detailed scope</b>. Both are always calculated, so the cards and the gap table compare them.",
+        "1": "<b>Rough scope.</b> List the features or epics. For each, choose the type (Application, Data platform or AI product), T-shirt size and complexity, and tick <b>Perf-critical</b> when it must meet performance targets. Tick the channels in scope and set roles, languages and variants.",
+        "2": "<b>Detailed scope.</b> Work through the nine numbered sections: application drivers, fields and API payloads, roles and rules, channels, data platform, AI product and performance testing. Leave a section at 0 when the change has no such requirements. Each header shows what the section adds up to; Derived drivers shows how every calculated row is built, and the Complexity guide explains Simple, Medium and Complex.",
+        "3": "<b>Window, team and environment.</b> SIT weeks, team mix, environment availability, regression automation, AI-assisted test design, AI evaluation runs and SMEs for labelling. Read the <b>Calendar check</b> there: batch windows, labelling lead time or performance environment slots can limit the plan more than FTE.",
+        "4": "<b>Shift-left evidence.</b> Enter gate results from the delivery team's pipelines: backend, frontend and mobile L1 tests, data pipeline and contract tests, AI evaluation in CI and reused golden sets, performance smoke tests, APM and reused scripts. Use expected values for a Biz Case and actual values before SIT starts.",
+        "5": "<b>Read the result.</b> The four cards show rough and detailed FTE as ranges, the gap between them and how many assumptions are still uncalibrated. The total combines SIT, data, AI and performance testing. Never quote the single figure without its range.",
+        "6": "<b>Export.</b> Copy the QBR summary for the deck and export the profile JSON with the project, so the estimate can be reproduced and calibrated later."
+      },
+      "where": {
+        "title": "Where to get each input",
+        "head": {
+          "0": "Input",
+          "1": "Source",
+          "2": "Tip"
+        },
+        "rows": {
+          "0": {
+            "0": "API endpoints, request and response fields",
+            "1": "OpenAPI spec or API design document",
+            "2": "Count unique DTO fields once; classify endpoints with the Complexity guide"
+          },
+          "1": {
+            "0": "Screens and input fields",
+            "1": "FSD screen specifications, Figma",
+            "2": "Use Fields by type when the FSD lists field types; it replaces the typical mix"
+          },
+          "2": {
+            "0": "Integrations",
+            "1": "Solution architecture, interface catalogue",
+            "2": "Each external system or queue is one integration; a core-banking interface with test windows is Complex"
+          },
+          "3": {
+            "0": "Business rules and critical rules",
+            "1": "FSD rules section, product parameters",
+            "2": "Field-level checks are not rules; count conditions with their own thresholds or outcomes"
+          },
+          "4": {
+            "0": "Workflows and approvals",
+            "1": "Process or state diagrams",
+            "2": "Count each state machine once; approval workflows are those with maker-checker steps"
+          },
+          "5": {
+            "0": "Roles and protected actions",
+            "1": "Authorization matrix, IAM design",
+            "2": "Protected actions exclude workflow transitions, which are added automatically"
+          },
+          "6": {
+            "0": "Batch jobs, files, events",
+            "1": "Batch schedule, interface specs, event catalogue",
+            "2": "One row per job, file interface or topic"
+          },
+          "7": {
+            "0": "Channels and languages",
+            "1": "Release scope",
+            "2": "Tick only the platforms released in this scope"
+          },
+          "8": {
+            "0": "Data platform drivers",
+            "1": "Source-to-target mapping spec, data model, DQ catalogue, access matrix",
+            "2": "Count mapped columns from the mapping spec; secured datasets are those with row, column or masking rules"
+          },
+          "9": {
+            "0": "AI product drivers",
+            "1": "Conversation design or intent list, knowledge base inventory, document samples list, agent tool list",
+            "2": "Count intents and OCR document types by complexity; golden sets and samples must be synthetic"
+          },
+          "10": {
+            "0": "Performance scenarios",
+            "1": "Non-functional requirements, production volumes and APM data, batch SLAs",
+            "2": "One scenario per business journey, API, batch job or AI call that has a performance target"
+          },
+          "11": {
+            "0": "Shift-left evidence",
+            "1": "Jenkins: PIT, JaCoCo, constraint coverage, Vitest, Stryker, XCTest, Espresso, dbt / Great Expectations, k6 / Gatling reports",
+            "2": "Ask the tech lead for the gate dashboard; use expected gate values when planning ahead"
+          },
+          "12": {
+            "0": "Environment availability",
+            "1": "Environment plan, core-banking test calendar, performance environment schedule",
+            "2": "If SIT depends on shared core-banking windows, choose that option even if other systems are dedicated"
+          }
+        }
+      },
+      "read": {
+        "title": "How to read the output",
+        "items": {
+          "0": "<b>Range, not a point.</b> Rough is ±40% and detailed ±15% by default; the cone of uncertainty suggests wider bands early on. Quote the range in a Biz Case and the mid value only with the range beside it.",
+          "1": "<b>Gap table.</b> Shows which drivers explain the difference between rough and detailed, including data, AI and performance rows. A big gap on one driver usually means the T-shirt proxies need calibrating for your product.",
+          "2": "<b>Sensitivity.</b> The top rows move the estimate most, so calibrate those assumptions first.",
+          "3": "<b>Shift-left credit.</b> The difference between \"No gates\" and \"All gates met\" is the cost of not shifting left: a Biz Case argument for the L1 gates.",
+          "4": "<b>Calendar check.</b> When batch windows, SME labelling or performance environment slots do not fit the window, adding FTE will not help; start earlier or extend the window.",
+          "5": "<b>Governance.</b> The FTE and timeline are planning figures. Confirm them with the accountable delivery owner before they go into a commitment."
+        }
+      },
+      "calibrate": {
+        "title": "Calibration routine after each SIT cycle",
+        "items": {
+          "0": "Count the SIT cases actually run per driver and compare them with the derived rows. Adjust cases per driver until the model lands within range.",
+          "1": "Measure minutes per case from the test management tool, separately for functional, validation and mobile cases.",
+          "2": "Take the retest rate from the defect tool: retests ÷ cases run.",
+          "3": "Take productive hours per day from timesheets.",
+          "4": "Count request and response fields in one OpenAPI spec to calibrate the per-endpoint field defaults.",
+          "5": "Data platform: time one load cycle end to end, including data preparation and environment refresh.",
+          "6": "AI product: time the labelling of 50 samples and one evaluation run with human review.",
+          "7": "Performance testing: time one script build per complexity and one full test-and-tune cycle.",
+          "8": "Change the values under Assumptions, name the profile, export it and store it with the project. The next estimate starts from calibrated values."
+        }
+      },
+      "faq": {
+        "title": "Frequently asked questions",
+        "items": {
+          "0": {
+            "q": "Why 6 productive hours per day, not 8?",
+            "a": "Stand-ups, defect triage, reporting and context switching take about 2 hours of every day. Environment waits are counted separately through the environment factor. Measure it from timesheets and change it under Capacity."
+          },
+          "1": {
+            "q": "How does Simple / Medium / Complex change the number?",
+            "a": "It sets both the cases per item and the execution minutes per case (10 / 20 / 40), so one complex API costs roughly 7–8 times a simple one. The Complexity guide (section 9 of the Detailed scope tab) explains how to classify each driver."
+          },
+          "2": {
+            "q": "How many validation cases if the gate is missed?",
+            "a": "Every field is tested with the full field-type matrix, about 12 cases per field per layer for a typical mix. At 50–99% coverage half of them come back into SIT. The derived rows show the exact calculation for the current evidence."
+          },
+          "3": {
+            "q": "Why is backend validation not covered by the frontend?",
+            "a": "Anyone can call the API directly and skip the UI, and API request fields include fields no screen shows. Backend validation uses the API request fields plus API-only cases such as unknown fields and oversized payloads."
+          },
+          "4": {
+            "q": "Why does mutation testing not count as SIT work?",
+            "a": "It is automated and owned by the delivery team. It only decides how much logic testing SIT must repeat: below the gate, business-rule cases and the retest rate go up."
+          },
+          "5": {
+            "q": "Why are iOS and Android not a full copy of the web cases?",
+            "a": "Mobile channels re-run a share of the web screen and journey cases (60% by default for native apps), add mobile-only cases such as interrupts and offline, and multiply by the device matrix. A full copy would overstate the effort."
+          },
+          "6": {
+            "q": "How are data platforms and AI products estimated?",
+            "a": "Mark the features as Data platform or AI product in Rough scope, and fill the Data platform and AI product sections in Detailed scope. Data platforms are sized by feeds, pipelines, tables, mapped columns, data quality rules and reports, with load cycles bound to batch windows. AI products are sized by labelled evaluation samples, human review per evaluation run and analysis, because their outputs are not deterministic. The calendar check warns when batch windows or labelling lead time, not FTE, limit the plan."
+          },
+          "7": {
+            "q": "How is performance testing estimated?",
+            "a": "Mark features as performance-critical in Rough scope, or list performance scenarios in section 7 of Detailed scope. Effort comes from scripting each scenario, the workload model, test data at volume, environment and monitoring, runs per test type and test-and-tune cycles, analysis and reporting. It is added to the combined QE total."
+          },
+          "8": {
+            "q": "Can I trust the defaults?",
+            "a": "Not yet. Every default is a heuristic and is labelled uncalibrated until your team replaces it with a measured value. The Standards and rationale section explains where each one comes from."
+          }
+        }
+      },
+      "workedExample": "Worked example: how the current detailed estimate is built"
+    },
+    "method": {
+      "eyebrow": "Method",
+      "title": "How the estimate is calculated",
+      "formula": "APPLICATION\ncases   = Σ counted driver × cases per driver (by complexity)\n        + business rules: critical in full, standard credited by rule unit tests, × mutation × variants\n        + workflows: transitions × (1 + invalid share)\n        + roles: (protected actions + role-gated transitions) × roles × allow/deny × sampling, + segregation of duties\n        + frontend validation (screen fields × field-type matrix) + backend validation (API request fields × matrix + API-only cases)\n        + mapping (response and payload fields × checks), each after shift-left credit\n        + second web stack and languages (share of screen and journey cases)\n        + mobile: web journeys × share + (web screens × share + screens × mobile-only cases) × device matrix + release cases, × 1.3 execution\n        + accessibility: screens × cases × channels\nhours   = Σ cases × [ design min + exec min × (cycles + regression × (1 − automated)) × (1 + retest) × environment ] ÷ 60\n\nDATA PLATFORM\ncases   = feeds × cases per feed (after data contract credit) + pipelines × cases + tables × cases + SCD dimensions × extra cases\n        + mapped columns × checks + DQ rules × cases (both after pipeline-test credit) + reports × cases\n        + secured datasets × access roles × allow/deny × sampling\nhours   = Σ data tests × [ design min + exec min × load cycles × (1 + retest) × environment ] ÷ 60\n        + reports at application rates + feeds × preparation hours × load cycles\n\nAI PRODUCT\nsamples = intents × utterances × languages + knowledge sources × questions × languages\n        + OCR document types × samples + guardrail categories × adversarial prompts\nhours   = samples × [ labelling min × (1 − reused) × QE share + evaluation runs × review share × review min ] ÷ 60\n        + (agent tools + human-in-the-loop steps) as cases at application rates + evaluation runs × analysis hours\nSME     = samples × labelling min × (1 − reused) × (1 − QE share)  → calendar check, not QE FTE\n\nPERFORMANCE TESTING\nhours   = scenarios × scripting h × (1 − reused) + workload model + test data at volume\n        + environment and monitoring (+ mobile device checks)\n        + Σ test types (runs × hours per run) × test-and-tune cycles × (1 + analysis share) + report\n\nALL PROFILES\nFTE     = (application + data + AI + performance hours) × (1 + overhead) ÷ ( weeks × days per week × productive hours × blended capacity )\nrange   = FTE × (1 ± band)        band: rough ±40% · detailed ±15%",
+      "steps": {
+        "0": "Rough and detailed use the same formula. Rough fills the driver counts from feature size proxies and uses the longer design time per case, because there is no FSD to design from.",
+        "1": "Field validation is credited by coverage. At 100% the team proved it in L1/L2, so SIT runs one sample per screen (frontend) or per API (backend). At 50–99% half the field-type matrix comes back into SIT; below 50% all of it does, about 12 cases per field per layer for a typical mix. Backend validation is not covered by the frontend: it uses the API request fields, which include fields no screen shows, plus API-only cases such as unknown fields and oversized payloads. Mapping is sized by response and payload fields. Validation and mapping cases use their own lighter effort rates and one full pass, because they are templated and data-driven.",
+        "2": "A mutation score below the gate means logic defects reach SIT. Business-rule cases go up and the retest rate rises.",
+        "3": "Roles use a role × guarded-action matrix with risk-based sampling, never roles × every case. Guarded actions are the protected actions outside workflows plus the role-gated workflow transitions. Each approval workflow adds segregation-of-duties cases.",
+        "4": "Business rules split into critical and standard. Critical rules always run the full decision table in SIT. Standard rules are credited by business rule unit tests: one wiring case each when proven, half the table at 50–99%, the full table below 50%. Rules that vary by product, segment or currency are sampled pairwise.",
+        "5": "A second web stack or an extra language adds a sampled share of screen and journey cases. Native iOS and Android channels re-run a share of the web cases, add mobile-only cases, multiply by the device and OS matrix and add release cases; they run 1.3× slower. Accessibility adds WCAG cases per screen and channel. Environment availability stretches execution time. Regression automation shrinks only the regression pass; building and maintaining that automation is not counted here.",
+        "6": "Data platforms are sized by feeds, pipelines, tables, mapped columns, data quality rules and reports. Data tests are cheap SQL comparisons, but each load cycle is bound to a batch window, so the calendar check compares load cycles with the SIT window. Pipeline tests (dbt, Great Expectations) and data contract tests reduce what SIT repeats.",
+        "7": "AI products are not sized as pass/fail cases, because their outputs are not deterministic. They are sized by labelled evaluation samples, a human review of part of the outputs on every evaluation run, and analysis time. Labelling shared with business SMEs is shown in the calendar check, not in QE FTE.",
+        "8": "Performance testing is sized by scripted scenarios, runs per test type and test-and-tune cycles, plus workload modelling, test data at volume, environment and monitoring, analysis and reporting. It is part of the combined QE total. Performance smoke tests in CI, APM / OpenTelemetry and reused scripts reduce the effort.",
+        "9": "Mutation testing itself is never counted as SIT work. It is automated and owned by the delivery team; it only changes how much SIT has to repeat."
+      }
+    },
+    "standards": {
+      "eyebrow": "Basis",
+      "title": "Standards and rationale",
+      "chip": "Defaults are heuristics",
+      "intro": "No global standard prescribes numbers such as cases per API or minutes per case. Standards define the methods; the numbers come from your own history. This model follows recognised methods and labels every number as a heuristic until a team calibrates it.",
+      "headings": {
+        "0": "Techniques and references the model relies on",
+        "1": "Where each default comes from",
+        "2": "Ranges against the cone of uncertainty",
+        "3": "How to calibrate, using the ISTQB techniques",
+        "4": "Wording for a Biz Case or QBR",
+        "5": "References"
+      },
+      "techniques": {
+        "head": {
+          "0": "Part of the model",
+          "1": "Standard or reference",
+          "2": "What it contributes"
+        },
+        "rows": {
+          "0": {
+            "0": "Cases per driver",
+            "1": "<b>ISO/IEC/IEEE 29119-4:2021</b> test design techniques <ref>1</ref>",
+            "2": "Equivalence partitioning, boundary value analysis, decision table testing, state transition testing and combinatorial techniques. The per-driver defaults approximate the smallest case set these techniques produce."
+          },
+          "1": {
+            "0": "Overall approach",
+            "1": "<b>ISTQB Foundation 4.0</b> estimation techniques <ref>2</ref>",
+            "2": "Four recognised methods: ratio-based, extrapolation, Wideband Delphi and three-point. This model is ratio-based; the other three are how you calibrate it."
+          },
+          "2": {
+            "0": "Effort structure",
+            "1": "<b>TMap Test Point Analysis (TPA)</b> <ref>3</ref>",
+            "2": "Size × environment factor × productivity factor, plus an allowance for planning and control (about 10%). The capacity factors (0.7–1.2×) and the 15% overhead follow the same shape."
+          },
+          "3": {
+            "0": "Uncertainty ranges",
+            "1": "<b>Cone of Uncertainty</b>, Boehm and McConnell <ref>4</ref>",
+            "2": "Estimate error narrows by stage: 0.25×–4× at initial concept, 0.5×–2× at approved product definition, 0.67×–1.5× at requirements complete."
+          },
+          "4": {
+            "0": "Role sampling",
+            "1": "<b>NIST combinatorial testing research</b>, Kuhn et al. <ref>5</ref>",
+            "2": "Most failures are triggered by one or two interacting factors, which justifies sampling the role × action matrix. NIST also warns that pairs alone are not always enough."
+          },
+          "5": {
+            "0": "Cross-check",
+            "1": "<b>Capers Jones rule of thumb</b> <ref>6</ref>",
+            "2": "Test cases ≈ function points<sup>1.2</sup>. Needs an IFPUG or COSMIC function point count. Seen in secondary sources; check the original text before citing."
+          },
+          "6": {
+            "0": "Performance testing",
+            "1": "<b>ISO/IEC 25010</b> performance efficiency; <b>ISTQB Performance Testing</b> syllabus",
+            "2": "Time behaviour, resource use and capacity as quality characteristics; load, stress, soak, spike and scalability test types and the workload model."
+          },
+          "7": {
+            "0": "Data platform",
+            "1": "<b>Source-to-target mapping and reconciliation testing</b> (industry practice)",
+            "2": "Mapped columns, row-count reconciliation per table and data quality rules drive the data estimate; no ISO standard prescribes the numbers."
+          },
+          "8": {
+            "0": "AI product testing",
+            "1": "<b>ISO/IEC TR 29119-11:2020</b> testing of AI-based systems <ref>7</ref>",
+            "2": "The test oracle problem: AI outputs are evaluated against labelled datasets and thresholds rather than single expected results."
+          },
+          "9": {
+            "0": "AI guardrails",
+            "1": "<b>OWASP Top 10 for LLM Applications</b> <ref>8</ref>, <b>NIST AI 600-1</b> generative AI profile <ref>9</ref>",
+            "2": "Guardrail categories to red-team, such as prompt injection, sensitive information disclosure and system prompt leakage."
+          }
+        }
+      },
+      "defaults": {
+        "head": {
+          "0": "Default",
+          "1": "Derivation",
+          "2": "Basis"
+        },
+        "rows": {
+          "0": {
+            "value": "API endpoint 4 / 6 / 10 cases",
+            "derivation": "Happy path, two invalid classes, one auth case, one or two boundary or error cases",
+            "basis": "Method-based"
+          },
+          "1": {
+            "value": "Screen 5 / 8 / 12 cases",
+            "derivation": "Display, actions, navigation, error states",
+            "basis": "Method-based"
+          },
+          "2": {
+            "value": "Integration 6 / 10 / 16 cases",
+            "derivation": "Happy path, negative, timeout, retry, data mismatch, reconciliation",
+            "basis": "Method-based"
+          },
+          "3": {
+            "value": "Business rule 2 / 4 / 8 cases",
+            "derivation": "Average branches in a decision table",
+            "basis": "Method-based"
+          },
+          "4": {
+            "value": "Field validation 3–18 cases per field and layer, by field type (≈12 for a typical mix)",
+            "derivation": "Null, empty, space, min, max, boundary, type, format, enum, duplicate, special, unicode and injection, per the field validation matrix (equivalence partitioning and boundary value analysis)",
+            "basis": "Method-based"
+          },
+          "5": {
+            "value": "Validation effort: 2 min design, 3 min UI or 2 min API execution, one full pass",
+            "derivation": "Cases are templated per field type and run data-driven, then only failures are retested",
+            "basis": "Judgment · calibrate first"
+          },
+          "6": {
+            "value": "Batch job or file interface 5 / 8 / 12",
+            "derivation": "Happy path, empty input, partial failure and restart, cut-off timing, rejects and duplicates, reconciliation",
+            "basis": "Method-based"
+          },
+          "7": {
+            "value": "Event or message topic 4 / 6 / 9",
+            "derivation": "Publish and consume, ordering, duplicate delivery, poison message and dead-letter queue, replay",
+            "basis": "Method-based"
+          },
+          "8": {
+            "value": "Workflow: 3 / 6 / 10 transitions, +30% invalid",
+            "derivation": "One case per valid transition plus invalid transitions (state transition testing, ISO/IEC/IEEE 29119-4)",
+            "basis": "Method-based"
+          },
+          "9": {
+            "value": "50% of transitions role-gated",
+            "derivation": "Submit, approve, reject and release are usually permission-checked, so they join the role × action matrix",
+            "basis": "Judgment"
+          },
+          "10": {
+            "value": "2 segregation-of-duties cases per approval workflow",
+            "derivation": "The maker cannot approve their own request; a second user with the checker role can",
+            "basis": "Judgment"
+          },
+          "11": {
+            "value": "30% critical rules, 1 wiring case per proven standard rule",
+            "derivation": "Regulatory and money-moving rules are always tested in full; other rules need one end-to-end case when L1 proves the logic",
+            "basis": "Judgment"
+          },
+          "12": {
+            "value": "40% of rules vary, 30% variant sampling",
+            "derivation": "Rules that differ by product, segment or currency, sampled pairwise instead of every combination",
+            "basis": "Judgment"
+          },
+          "13": {
+            "value": "Channel shares: second web stack 40%, iOS 60%, Android 60%; extra language 20%",
+            "derivation": "Native apps re-run a sampled share of the web screen and journey cases, not a full copy; a second web stack shares most logic",
+            "basis": "Judgment"
+          },
+          "14": {
+            "value": "Mobile-only cases 4 / 6 / 9 per mobile screen",
+            "derivation": "Interrupts (call, notification), background and foreground, offline and poor network, rotation, back navigation, permission prompts, biometrics or PIN, deep links",
+            "basis": "Method-based"
+          },
+          "15": {
+            "value": "3 device and OS combinations, +20% per extra combination; 30% of mobile cases need new design",
+            "derivation": "Pairwise sample of devices and OS versions rather than every combination (NIST interaction rule)",
+            "basis": "Judgment"
+          },
+          "16": {
+            "value": "6 release cases per mobile platform, mobile execution 1.3×",
+            "derivation": "Install, upgrade with existing data, uninstall and store build acceptance; device setup and app rebuilds slow manual runs",
+            "basis": "Judgment"
+          },
+          "17": {
+            "value": "Accessibility 2 cases per screen per channel",
+            "derivation": "Screen reader labels and keyboard or focus order, as WCAG 2.x requires; often regulatory for banking",
+            "basis": "Method-based"
+          },
+          "18": {
+            "value": "Environment 1.0 / 1.1 / 1.25 / 1.4×",
+            "derivation": "Shaped on the TPA environment factor: waits for shared downstream systems and core-banking test windows",
+            "basis": "Method-based · calibrate"
+          },
+          "19": {
+            "value": "Regression automation",
+            "derivation": "Reduces the manual regression pass only; automation build and maintenance are outside this estimate",
+            "basis": "Judgment"
+          },
+          "20": {
+            "value": "Role sampling 50%",
+            "derivation": "Pairwise-style reduction; use the full matrix for high-risk actions such as approvals and payments",
+            "basis": "Judgment"
+          },
+          "21": {
+            "value": "Mutation gate 70%",
+            "derivation": "DE Quality Recommendations",
+            "basis": "Internal standard"
+          },
+          "22": {
+            "value": "Mapping: 1 check per response or payload field, plus a format check for 40% of fields",
+            "derivation": "Round trip of every value, plus money, date and enum formats; null handling is part of the round trip",
+            "basis": "Method-based"
+          },
+          "23": {
+            "value": "Request fields 5 / 10 / 20, response fields 8 / 15 / 30 per endpoint, 30% DTO reuse, 12 fields per event",
+            "derivation": "Used only when the FSD or OpenAPI spec gives no count; shared DTOs are counted once",
+            "basis": "Judgment · count one OpenAPI spec"
+          },
+          "24": {
+            "value": "4 API-only cases per endpoint",
+            "derivation": "Unknown or extra field (mass assignment), wrong content type, oversized payload, missing body; the UI never sends these (OWASP API Security Top 10)",
+            "basis": "Method-based"
+          },
+          "25": {
+            "value": "Frontend unit gate 80%, +20% screen cases",
+            "derivation": "Mirrors common coverage gates; UI logic defects otherwise surface as screen defects in SIT",
+            "basis": "Judgment"
+          },
+          "26": {
+            "value": "Stryker gate 60%, +15% screen cases",
+            "derivation": "Stryker's default low threshold; weak frontend tests let logic defects through",
+            "basis": "Judgment"
+          },
+          "27": {
+            "value": "Execution 10 / 20 / 40 min, design 15 / 25 min",
+            "derivation": "Common practitioner ranges",
+            "basis": "Judgment · calibrate first"
+          },
+          "28": {
+            "value": "2 cycles, 30% regression, 20% retest",
+            "derivation": "Practitioner convention",
+            "basis": "Judgment · calibrate after cycle 1"
+          },
+          "29": {
+            "value": "6 productive hours per day",
+            "derivation": "Common focus-factor convention (75% of an 8-hour day): the rest goes to stand-ups, defect triage, reporting and context switching; environment waits are covered by the environment factor. Easy to measure from timesheets",
+            "basis": "Judgment"
+          },
+          "30": {
+            "value": "AI-assisted test design: 0% / 20% / 40% less design time",
+            "derivation": "Applies to designing cases and synthetic test data only, not to execution or environment waits; off by default until a pilot measures it",
+            "basis": "Judgment · measure in a pilot"
+          },
+          "31": {
+            "value": "Data: 3 / 4 / 6 per feed, 4 / 6 / 9 per pipeline, 2 / 3 / 4 per table, 1.5 per mapped column, 2 per DQ rule",
+            "derivation": "Completeness, schema drift, load modes, restart, reconciliation, source-to-target value checks",
+            "basis": "Judgment"
+          },
+          "32": {
+            "value": "Data effort: 10 min design, 5 min per load cycle, 3 cycles, 2 h data preparation per feed per cycle",
+            "derivation": "Data tests are SQL comparisons, cheap to run but bound to batch windows and data refreshes",
+            "basis": "Judgment · calibrate first"
+          },
+          "33": {
+            "value": "AI: 20 / 35 / 50 utterances per intent, 15 questions per source, 50 / 100 / 200 OCR samples, 40 prompts per guardrail",
+            "derivation": "Golden-set sizes large enough to measure accuracy per intent or document type with useful confidence",
+            "basis": "Judgment"
+          },
+          "34": {
+            "value": "AI effort: 2–6 min labelling per sample, 20% (automated) or 60% human review per run, 6 h analysis per run, 50% of labelling by QE",
+            "derivation": "Labelling the golden set is the main cost; automated evaluation reduces review but a person still checks a sample",
+            "basis": "Judgment · measure in a pilot"
+          },
+          "35": {
+            "value": "Performance: 4 / 8 / 16 h scripting per scenario, 3 test-and-tune cycles, analysis 50% of execution",
+            "derivation": "Load 3 × 4 h, stress 2 × 4 h, soak 1 × 12 h, spike 1 × 2 h per cycle; 24 h environment and monitoring setup without APM, 8 h with it",
+            "basis": "Judgment · calibrate first"
+          },
+          "36": {
+            "value": "Overhead 15%, capacity 0.7 / 1.0 / 1.2×",
+            "derivation": "Shaped on TPA environment and productivity factors",
+            "basis": "Method-based"
+          }
+        }
+      },
+      "cone": {
+        "head": {
+          "0": "Stage",
+          "1": "Cone range",
+          "2": "This model now"
+        },
+        "rows": {
+          "0": {
+            "stage": "Rough · no FSD (approved product definition)",
+            "range": "0.5× – 2× (−50% / +100%)"
+          },
+          "1": {
+            "stage": "Detailed · FSD (requirements complete)",
+            "range": "0.67× – 1.5× (−33% / +50%)"
+          }
+        }
+      },
+      "calibrate": {
+        "0": "<b>Ratio-based:</b> run this model on one or two completed projects and compare it with their actual cases and hours. Adjust cases per driver until it lands within range.",
+        "1": "<b>Extrapolation:</b> after the first SIT cycle, replace execution minutes per case, retest rate and productive hours with what the team measured.",
+        "2": "<b>Three-point:</b> where there is no data yet, ask three senior testers for optimistic (a), most likely (m) and pessimistic (b) minutes per case and use E = (a + 4m + b) ÷ 6.",
+        "3": "<b>Wideband Delphi:</b> agree cases per driver across QE leads in short rounds, then export the result as the shared calibration profile."
+      },
+      "wording": "The case-count method follows ISO/IEC/IEEE 29119-4 test design techniques and ISTQB ratio-based estimation. The effort structure is modelled on TMap Test Point Analysis, and the ranges follow the cone of uncertainty. The numeric defaults are uncalibrated heuristics and will be replaced with actuals after the first SIT cycle.",
+      "copyWording": "Copy wording",
+      "refs": {
+        "0": "ISO/IEC/IEEE 29119-4:2021, Software and systems engineering — Software testing — Part 4: Test techniques. <a1>Catalogue entry</a1>",
+        "1": "ISTQB Certified Tester Foundation Level 4.0, section 5.1.4 Estimation techniques. <a1>Study notes</a1> · <a2>CQI | IRCA overview</a2>",
+        "2": "TMap, Test Point Analysis. <a1>tmap.net</a1> · <a2>Estimation based on test object size</a2>",
+        "3": "Construx (McConnell), The Cone of Uncertainty. <a1>White paper (PDF)</a1>. The original ranges came from expert judgment, not measured data.",
+        "4": "NIST, Interactions involved in software failures. <a1>csrc.nist.gov</a1> · <a2>FAQ</a2>",
+        "5": "Capers Jones sizing rules of thumb, as summarised in <a1>University of Zurich seminar slides (PDF)</a1>. Original: Jones, <i>Applied Software Measurement</i>.",
+        "6": "ISO/IEC TR 29119-11:2020, Software and systems engineering — Software testing — Part 11: Guidelines on the testing of AI-based systems. <a1>iso.org</a1>",
+        "7": "OWASP, Top 10 for LLM Applications 2025. <a1>genai.owasp.org</a1>",
+        "8": "NIST AI 600-1, Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile (July 2024). <a1>NIST (PDF)</a1>"
+      }
+    },
+    "nav": {
+      "guide": "Guide",
+      "method": "Method",
+      "standards": "Standards"
+    },
+    "guidePage": {
+      "workedExampleNote": "Open an estimate to see its worked example: the trace updates as you change inputs."
+    },
+    "cone": {
+      "one": "The {w} range is narrower than the cone suggests.",
+      "many": "The {w} ranges are narrower than the cone suggests.",
+      "symmetric": "The model uses symmetric ranges, so for a conservative upper bound set Range, rough to 100% and Range, detailed to 50% under Assumptions. Estimates tend to overrun more than underrun, so read the upper bound as the planning risk.",
+      "wide": "Both ranges are at least as wide as the cone suggests on the upside.",
+      "rough": "rough",
+      "detailed": "detailed",
+      "and": " and ",
+      "defaultsNote": "\"This model now\" shows the default ranges. Each estimate can change them under Assumptions."
+    },
+    "copied": "Copied.",
+    "copyFailed": "Selected. Press Ctrl/Cmd + C to copy.",
+    "tones": {
+      "warn": "Method-based",
+      "bad": "Judgment",
+      "team": "Internal standard"
+    }
   }
 }

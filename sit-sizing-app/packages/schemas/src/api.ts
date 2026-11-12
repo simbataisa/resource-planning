@@ -55,6 +55,11 @@ export const Me = UserRef.extend({
 }).meta({ id: 'Me' });
 export type Me = z.infer<typeof Me>;
 
+/** The user's own preferences (design 8.5: the language is saved to the profile). */
+export const MeUpdate = z
+  .object({ locale: z.enum(['en', 'vi']) })
+  .meta({ id: 'MeUpdate', example: { locale: 'vi' } });
+
 // ---------- projects ----------
 export const ProjectKey = z
   .string()

@@ -11,6 +11,8 @@ vi.mock(
   '@/i18n/navigation',
   async () => (await import('@/tests/support/navigation-mock')).navigationMock,
 );
+const updateLocale = vi.hoisted(() => ({ mutate: vi.fn() }));
+vi.mock('@/lib/query/hooks', () => ({ useUpdateLocale: () => updateLocale }));
 
 describe('AppShell (U-04)', () => {
   it('shows navigation, the user and sign-out, with a skip link', async () => {
@@ -49,5 +51,26 @@ describe('AppShell (U-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Tiếng Việt' }));
     expect(router.replace).toHaveBeenCalledWith('/projects', { locale: 'vi' });
     expect(document.cookie).toContain('sit-locale=vi');
+    expect(updateLocale.mutate).toHaveBeenCalledWith('vi');
+  });
+
+  it('opens in the profile language when this browser has not chosen one', () => {
+    router.replace.mockClear();
+    renderWithIntl(
+      <AppShell userName="Synthetic Viewer" profileLocale="vi" localeChosen={false}>
+        x
+      </AppShell>,
+    );
+    expect(router.replace).toHaveBeenCalledWith('/projects', { locale: 'vi' });
+  });
+
+  it('keeps the browser choice over the profile language', () => {
+    router.replace.mockClear();
+    renderWithIntl(
+      <AppShell userName="Synthetic Viewer" profileLocale="vi" localeChosen>
+        x
+      </AppShell>,
+    );
+    expect(router.replace).not.toHaveBeenCalled();
   });
 });

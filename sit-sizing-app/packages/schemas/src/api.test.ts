@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DraftPatch, MembersPut, PageQuery, ProjectCreate, ProjectUpdate } from './api';
+import { DraftPatch, MeUpdate, MembersPut, PageQuery, ProjectCreate, ProjectUpdate } from './api';
 
 describe('API request schemas', () => {
   it('ProjectCreate: key is upper-case letters and digits, 2–16 characters', () => {
@@ -35,5 +35,11 @@ describe('API request schemas', () => {
     expect(PageQuery.parse({ limit: '10' })).toEqual({ limit: 10 });
     expect(PageQuery.parse({})).toEqual({ limit: 50 });
     expect(PageQuery.safeParse({ limit: '500' }).success).toBe(false);
+  });
+
+  it('MeUpdate accepts only the supported languages', () => {
+    expect(MeUpdate.safeParse({ locale: 'vi' }).success).toBe(true);
+    expect(MeUpdate.safeParse({ locale: 'fr' }).success).toBe(false);
+    expect(MeUpdate.safeParse({}).success).toBe(false);
   });
 });

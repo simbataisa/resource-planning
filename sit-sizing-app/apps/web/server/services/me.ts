@@ -1,4 +1,5 @@
-import type { Me } from '@sit/schemas';
+import type { Me, MeUpdate } from '@sit/schemas';
+import type { z } from 'zod';
 import type { CurrentUser } from '../auth/current-user';
 import { db } from '../db';
 
@@ -21,4 +22,10 @@ export async function getMe(user: CurrentUser): Promise<Me> {
       role: m.role,
     })),
   };
+}
+
+/** Saves the user's language (design 8.5) and returns the updated profile. */
+export async function updateMe(user: CurrentUser, input: z.output<typeof MeUpdate>): Promise<Me> {
+  await db().user.update({ where: { id: user.id }, data: { locale: input.locale } });
+  return getMe({ ...user, locale: input.locale });
 }

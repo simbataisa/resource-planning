@@ -589,6 +589,9 @@ Rules: durations of 150–350 ms, no animation on first paint of data tables, an
 
 ### 8.5 Internationalisation
 
+> **Step 1.6 note:** EN and VI messages are generated from the prototype (its EN text and VI dictionary); the guide, method and standards pages are ported from its panels. `PATCH /api/v1/me` saves the language. CI checks keys, placeholders, tags, compilation and untranslated copies; the Vietnamese review uses `pnpm i18n:review` / `pnpm i18n:apply` (`docs/i18n/README.md`).
+
+
 - next-intl with `en` and `vi`; locale in the URL (`/vi/estimates/...`) and saved to the user profile.
 - Migrate `sit-sizing-reference/vi-translations.json`. Its keys are English sentences; convert them to stable message IDs (`editor.detailed.sections.fields.title`) with a one-off script, and keep EN and VI files in sync with a CI check that fails on missing keys.
 - Numbers: keep `1,255` and `11.8` formatting in both languages for now, as in the prototype (Q6).
