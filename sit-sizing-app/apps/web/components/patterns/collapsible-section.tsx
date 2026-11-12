@@ -48,7 +48,7 @@ export function CollapsibleSection({
         className,
       )}
     >
-      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 px-4 py-3 select-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 px-4 py-3 select-none [&::-webkit-details-marker]:hidden">
         <ChevronRight
           aria-hidden="true"
           className="size-4 shrink-0 transition-transform group-open:rotate-90"

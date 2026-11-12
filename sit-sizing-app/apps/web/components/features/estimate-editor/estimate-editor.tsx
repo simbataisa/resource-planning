@@ -294,9 +294,9 @@ function EditorLayout({
       />
       {notice}
       <SummaryCards />
-      <section aria-label={t('editor.inputs')} className="rounded-lg border bg-card p-4">
-        <Tabs defaultValue="rough">
-          <TabsList className="flex h-auto flex-wrap justify-start">
+      <section aria-label={t('editor.inputs')} className="rounded-lg border bg-card shadow-card">
+        <Tabs defaultValue="rough" className="gap-0">
+          <TabsList className="px-3.5 pt-3.5">
             <TabsTrigger value="rough">
               <Dot className="bg-rough" />
               {t('editor.tabs.rough')}
@@ -309,7 +309,7 @@ function EditorLayout({
             <TabsTrigger value="evidence">{t('editor.tabs.evidence')}</TabsTrigger>
             <TabsTrigger value="assumptions">
               {t('editor.tabs.assumptions')}
-              <Badge variant="warn" className="ml-1">
+              <Badge variant="unc" className="ml-1.5">
                 {t('editor.tabs.uncalibrated', { n: uncalibrated })}
               </Badge>
             </TabsTrigger>
@@ -338,11 +338,11 @@ function EditorLayout({
 }
 
 const Dot = ({ className }: { className: string }) => (
-  <span aria-hidden="true" className={`inline-block size-2 rounded-full ${className}`} />
+  <span aria-hidden="true" className={`inline-block size-2 rounded-[2px] ${className}`} />
 );
 
 const Panel = ({ value, children }: { value: string; children: ReactNode }) => (
-  <TabsContent value={value} className="pt-4">
+  <TabsContent value={value} className="px-5 pt-4 pb-5">
     {children}
   </TabsContent>
 );

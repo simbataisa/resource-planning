@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   colorTokens,
+  contrastExceptions,
   contrastPairs,
   nonTextPairs,
   contrastRatio,
@@ -27,6 +28,19 @@ describe('tokens', () => {
       const ratio = contrastRatio(colorTokens[theme][text], colorTokens[theme][bg]);
       expect(ratio, `${theme}: ${text} on ${bg} = ${ratio.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it.each(['light', 'dark'] as const)('%s theme: approved exceptions still meet 3:1', (theme) => {
+    for (const [text, bg] of contrastExceptions) {
+      const ratio = contrastRatio(colorTokens[theme][text], colorTokens[theme][bg]);
+      expect(ratio, `${theme}: ${text} on ${bg} = ${ratio.toFixed(2)}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('an exception is never also listed as a 4.5:1 pair', () => {
+    const key = ([a, b]: readonly [string, string]) => `${a}/${b}`;
+    const strict = new Set(contrastPairs.map(key));
+    expect(contrastExceptions.map(key).filter((k) => strict.has(k))).toEqual([]);
   });
 
   it.each(['light', 'dark'] as const)('%s theme: non-text parts meet 3:1', (theme) => {

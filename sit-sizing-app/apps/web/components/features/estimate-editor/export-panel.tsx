@@ -8,6 +8,7 @@ import { Assumptions, EstimateInputs } from '@sit/schemas';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Eyebrow } from '@/components/patterns/eyebrow';
 import { formatFte as f1, formatInt as fmt } from '@/lib/format';
 import { useEditor } from './store';
 import { useCalendarText } from './use-calendar-text';
@@ -123,12 +124,10 @@ export function ExportPanel({
   }
 
   return (
-    <section className="grid gap-4 rounded-lg border bg-card p-5">
-      <header>
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {t('eyebrow')}
-        </p>
-        <h2 className="text-lg font-semibold">{t('title')}</h2>
+    <section className="grid gap-4 rounded-lg border bg-card p-5 shadow-card">
+      <header className="grid gap-1.5">
+        <Eyebrow>{t('eyebrow')}</Eyebrow>
+        <h2 className="text-[1.6rem] font-light">{t('title')}</h2>
       </header>
       <p className="max-w-3xl text-sm text-muted-foreground">{t('hint')}</p>
       <div className="flex flex-wrap gap-2">

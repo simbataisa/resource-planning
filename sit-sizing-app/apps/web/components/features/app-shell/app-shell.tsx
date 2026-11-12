@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Eyebrow } from '@/components/patterns/eyebrow';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/lib/i18n';
 import { AdoptProfileLocale, LanguageSwitch } from './language-switch';
@@ -37,9 +38,9 @@ export function AppShell({
       </a>
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-          <Link href="/projects" className="grid leading-tight">
-            <span className="text-xs text-muted-foreground">{t('app.tagline')}</span>
-            <span className="text-lg font-semibold text-primary">{t('app.name')}</span>
+          <Link href="/projects" className="grid gap-0.5 leading-tight">
+            <Eyebrow className="text-[0.7rem]">{t('app.tagline')}</Eyebrow>
+            <span className="text-xl font-light text-foreground">{t('app.name')}</span>
           </Link>
           <nav aria-label={t('app.mainNav')} className="flex items-center gap-4 text-sm">
             <Link href="/projects" className="font-medium hover:underline">

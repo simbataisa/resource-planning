@@ -146,7 +146,7 @@ export function TeamTab() {
           </p>
         </div>
         <h3 className="text-base font-semibold">{t('calendar')}</h3>
-        <p className="rounded-md border-l-4 border-warn bg-warn-soft px-4 py-3 text-sm">
+        <p className="rounded-r-lg border-l-4 border-detailed bg-detailed-soft px-3.5 py-2.5 text-[0.98rem]">
           {calendar || t('calNone')}
         </p>
       </div>
@@ -204,9 +204,9 @@ export function TeamTab() {
 
 function Stat({ label, children }: { label: string; children: string }) {
   return (
-    <div className="grid gap-1 rounded-lg border bg-muted/40 px-4 py-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <b className="font-semibold tabular-nums">{children}</b>
+    <div className="grid gap-0.5 rounded-lg border bg-muted px-3 py-2.5">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <b className="font-mono text-[1.05rem] tabular-nums">{children}</b>
     </div>
   );
 }

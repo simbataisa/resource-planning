@@ -4,6 +4,7 @@
  */
 export {
   colorTokens,
+  contrastExceptions,
   contrastPairs,
   nonTextPairs,
   motion,

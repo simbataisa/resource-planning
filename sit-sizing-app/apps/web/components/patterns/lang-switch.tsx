@@ -39,7 +39,7 @@ export function LangSwitch({ label, value, options, onChange, className }: LangS
             aria-pressed={active}
             onClick={() => !active && onChange(o.value)}
             className={cn(
-              'rounded-sm px-2.5 py-1 text-xs font-semibold transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
+              'rounded-sm px-2.5 py-1 text-xs font-semibold transition-colors',
               active
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-muted',

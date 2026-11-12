@@ -541,7 +541,7 @@ What happens to saved estimates when a formula or default changes:
 
 ## 8. UI architecture and design system
 
-> **Step 1.4 note (ADR-0005):** `packages/tokens` now carries TCB-DS (`tcb-ds/`, captured from the public techcombank.com site; Q1 answered for release 1), with WCAG AA adjustments marked in `tokens.ts`. Rough and detailed keep the prototype's gold and navy series colours. The app uses the system font stack, not the SF Pro web fonts (licence).
+> **Step 1.4 note (ADR-0005):** the app uses the TCB-DS red `#ED1C24` in the HTML prototype's theme (red top bar, primary actions, focus and selected tab; light headings; gold rough and navy detailed). Q1 is answered for release 1. Status text is darkened for WCAG AA; red button and link text is an approved exception (4.0:1, min 3:1 tested). System fonts only; no logo for now.
 
 
 ### 8.1 Component layers
@@ -1033,7 +1033,7 @@ Give each session: the task ID and acceptance line from the table, links to this
 
 | # | Question | Why it matters | Default if unanswered |
 |---|---|---|---|
-| Q1 | Where is the official TCB-DS source (tokens, components, usage rules), and can it be added to the repository? | Blocks U-01 | **Answered for release 1:** `tcb-ds/` (captured from the public site), adopted in `packages/tokens` (ADR-0005 amendment) |
+| Q1 | Where is the official TCB-DS source (tokens, components, usage rules), and can it be added to the repository? | Blocks U-01 | **Answered for release 1:** TCB-DS red in the prototype's theme (ADR-0005 amendment) |
 | Q2 | Is self-hosted Keycloak with local accounts acceptable to information security? Will sign-in with corporate credentials be required later? | Go/no-go for the identity approach | Keycloak with local accounts; federation ready, not configured |
 | Q3 | Session lifetimes and MFA policy: who must use a second factor? | Realm configuration | 8-hour idle, 12-hour maximum; TOTP required for admins, optional for others |
 | Q9 | How are accounts created: admin-created, email invitation, or bulk import? Is an outbound mail service available? | Account lifecycle and reset flow | Admin-created with email invitation |

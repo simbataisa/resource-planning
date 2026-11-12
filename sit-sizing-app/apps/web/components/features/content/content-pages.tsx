@@ -58,7 +58,7 @@ function tags(links: readonly string[] = []) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="grid gap-3">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <h2 className="pt-1.5 text-base font-semibold">{title}</h2>
       {children}
     </section>
   );
@@ -97,7 +97,7 @@ export function GuidePage() {
   const rich = (key: string) => t.rich(key, tags());
   return (
     <div className="grid max-w-4xl gap-6">
-      <PageHeader title={t('title')} description={t('note')} />
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('note')} />
       <ol className="ml-5 grid list-decimal gap-2 text-sm leading-relaxed">
         {keys(7).map((k) => (
           <li key={k}>{rich(`steps.${k}`)}</li>
@@ -143,8 +143,8 @@ export function MethodPage() {
   const rich = (key: string) => t.rich(key, tags());
   return (
     <div className="grid max-w-4xl gap-6">
-      <PageHeader title={t('title')} description={t('eyebrow')} />
-      <pre className="overflow-x-auto rounded-lg border bg-card p-4 font-mono text-xs leading-relaxed">
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} />
+      <pre className="overflow-x-auto rounded-lg border bg-muted px-3.5 py-3 font-mono text-[0.86rem] leading-[1.7]">
         {t('formula')}
       </pre>
       <ol className="ml-5 grid list-decimal gap-2 text-sm leading-relaxed">
@@ -173,9 +173,9 @@ export function StandardsPage() {
   return (
     <div className="grid max-w-5xl gap-8">
       <PageHeader
+        eyebrow={t('eyebrow')}
         title={t('title')}
-        description={t('eyebrow')}
-        actions={<Badge variant="warn">{t('chip')}</Badge>}
+        actions={<Badge variant="unc">{t('chip')}</Badge>}
       />
       <p className="text-sm text-muted-foreground">{rich('intro')}</p>
       <Section title={t('headings.0')}>
@@ -215,7 +215,7 @@ export function StandardsPage() {
         </ol>
       </Section>
       <Section title={t('headings.4')}>
-        <p className="rounded-md border-l-4 border-primary bg-muted/50 px-4 py-3 text-sm">
+        <p className="rounded-r-lg border-l-4 border-detailed bg-detailed-soft px-3.5 py-2.5 text-[0.98rem]">
           {t('wording')}
         </p>
         <CopyText

@@ -14,9 +14,13 @@ export interface ComparisonBarsProps {
 export function ComparisonBars({ label, rough, detailed, max, className }: ComparisonBarsProps) {
   const pct = (v: number) => `${max > 0 ? Math.max(0, Math.min(100, (v / max) * 100)) : 0}%`;
   return (
-    <div role="img" aria-label={label} className={cn('grid w-full min-w-24 gap-1', className)}>
-      <span className="block h-1.5 rounded-full bg-rough" style={{ width: pct(rough) }} />
-      <span className="block h-1.5 rounded-full bg-detailed" style={{ width: pct(detailed) }} />
+    <div
+      role="img"
+      aria-label={label}
+      className={cn('grid w-full min-w-[110px] gap-[3px]', className)}
+    >
+      <span className="block h-[7px] rounded-[3px] bg-rough" style={{ width: pct(rough) }} />
+      <span className="block h-[7px] rounded-[3px] bg-detailed" style={{ width: pct(detailed) }} />
     </div>
   );
 }

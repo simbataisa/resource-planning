@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { useCountUp } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
-export type StatTone = 'neutral' | 'rough' | 'detailed';
+export type StatTone = 'neutral' | 'rough' | 'detailed' | 'warn';
 
 export interface StatCardProps {
   label: string;
@@ -22,8 +22,20 @@ export interface StatCardProps {
   className?: string;
 }
 
-const toneBar: Record<StatTone, string> = {
-  neutral: 'bg-border',
+/** The prototype's summary cards: a 4px top edge and the figure in the tone's colour. */
+const toneEdge: Record<StatTone, string> = {
+  neutral: 'border-t-border-strong',
+  rough: 'border-t-rough',
+  detailed: 'border-t-detailed',
+  warn: 'border-t-warn',
+};
+const toneFigure: Record<StatTone, string> = {
+  neutral: 'text-foreground',
+  rough: 'text-rough',
+  detailed: 'text-detailed',
+  warn: 'text-warn',
+};
+const toneMarker: Partial<Record<StatTone, string>> = {
   rough: 'bg-rough',
   detailed: 'bg-detailed',
 };
@@ -42,19 +54,24 @@ export function StatCard({
   className,
 }: StatCardProps) {
   const shown = useCountUp(value);
+  const marker = toneMarker[tone];
   return (
-    <Card className={cn('relative gap-2 overflow-hidden px-5', className)}>
-      <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', toneBar[tone])} />
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="text-3xl font-semibold tabular-nums">
+    <Card className={cn('gap-1.5 border-t-4 px-[18px] py-4', toneEdge[tone], className)}>
+      <p className="flex items-center gap-2 text-[0.72rem] font-semibold tracking-[1.5px] text-muted-foreground uppercase">
+        {marker ? (
+          <i aria-hidden="true" className={cn('inline-block size-2.5 rounded-[2px]', marker)} />
+        ) : null}
+        {label}
+      </p>
+      <p className={cn('text-[2.3rem] leading-[1.05] font-light tabular-nums', toneFigure[tone])}>
         <span aria-hidden="true">{format(shown)}</span>
         <span className="sr-only">{format(value)}</span>
         {unit ? (
-          <small className="ml-1 text-base font-normal text-muted-foreground">{unit}</small>
+          <small className="ml-1 text-[0.95rem] font-semibold text-muted-foreground">{unit}</small>
         ) : null}
       </p>
-      {range ? <p className="text-sm">{range}</p> : null}
-      {detail ? <p className="text-xs text-muted-foreground">{detail}</p> : null}
+      {range ? <p className="font-mono text-[0.86rem]">{range}</p> : null}
+      {detail ? <div className="text-sm text-muted-foreground">{detail}</div> : null}
     </Card>
   );
 }

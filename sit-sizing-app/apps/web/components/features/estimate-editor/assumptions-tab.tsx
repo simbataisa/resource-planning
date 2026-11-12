@@ -26,11 +26,11 @@ export function AssumptionsTab() {
     <div className="grid gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-3xl text-sm text-muted-foreground">{t('hint')}</p>
-        <Badge variant="warn">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
+        <Badge variant="unc">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
       </div>
       {ASSUMPTION_META.map((g) => (
         <section key={g.group} className="grid gap-2">
-          <h3 className="text-base font-semibold">{t(`groups.${g.group}`)}</h3>
+          <h3 className="pt-1.5 text-base font-semibold">{t(`groups.${g.group}`)}</h3>
           <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableBody>
@@ -38,7 +38,12 @@ export function AssumptionsTab() {
                   const isDefault = isDefaultRow(A, DEFAULTS, r.path);
                   const name = label(r.label);
                   return (
-                    <TableRow key={r.path} className={cn(!isDefault && 'bg-good-soft/40')}>
+                    <TableRow
+                      key={r.path}
+                      className={cn(
+                        !isDefault && '[&>td:first-child]:shadow-[inset_3px_0_0_var(--good)]',
+                      )}
+                    >
                       <TableCell className="w-2/5 align-top whitespace-normal">{name}</TableCell>
                       <TableCell>
                         <RowInputs
@@ -50,7 +55,7 @@ export function AssumptionsTab() {
                         />
                       </TableCell>
                       <TableCell className="w-32 align-top">
-                        <Badge variant={isDefault ? 'warn' : 'good'}>
+                        <Badge variant={isDefault ? 'unc' : 'team'}>
                           {isDefault ? t('uncalibrated') : t('teamValue')}
                         </Badge>
                       </TableCell>

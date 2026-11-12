@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { ASSUMPTION_PATHS, topGap, type ModeResult } from '@sit/engine';
-import { Card } from '@/components/ui/card';
 import { StatCard } from '@/components/patterns/stat-card';
 import { formatFte, formatInt, signed } from '@/lib/format';
 import { useEditor } from './store';
@@ -57,22 +56,27 @@ export function SummaryCards() {
         range={t('gapCases', { s: gapC >= 0 ? '+' : '−', c: formatInt(Math.abs(gapC)), p: pct })}
         detail={driver}
       />
-      <Card className="relative gap-2 px-5">
-        <p className="text-sm font-medium text-muted-foreground">{t('calibration')}</p>
-        <p className="text-3xl font-semibold tabular-nums">
-          {uncalibrated}
-          <small className="ml-1 text-base font-normal text-muted-foreground">
-            {t('of', { n: total })}
-          </small>
-        </p>
-        <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-muted">
-          <span
-            className="block h-full rounded-full bg-warn"
-            style={{ width: `${(uncalibrated / total) * 100}%` }}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">{t('uncalibrated')}</p>
-      </Card>
+      <StatCard
+        label={t('calibration')}
+        value={uncalibrated}
+        unit={t('of', { n: total })}
+        tone="warn"
+        format={(n) => String(Math.round(n))}
+        detail={
+          <div className="grid gap-1.5">
+            <div
+              aria-hidden="true"
+              className="h-2 overflow-hidden rounded-full border border-border bg-muted"
+            >
+              <span
+                className="block h-full bg-warn"
+                style={{ width: `${(uncalibrated / total) * 100}%` }}
+              />
+            </div>
+            <p>{t('uncalibrated')}</p>
+          </div>
+        }
+      />
     </section>
   );
 }

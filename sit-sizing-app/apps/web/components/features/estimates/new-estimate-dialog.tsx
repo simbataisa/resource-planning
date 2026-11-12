@@ -93,7 +93,7 @@ export function NewEstimateDialog({ projectId }: { projectId: string }) {
             {(['example', 'blank'] as const).map((value) => (
               <label
                 key={value}
-                className="flex cursor-pointer items-start gap-3 rounded-md border p-3 has-[:checked]:border-primary has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50"
+                className="flex cursor-pointer items-start gap-3 rounded-md border p-3 has-[:checked]:border-primary has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring"
               >
                 <input
                   type="radio"

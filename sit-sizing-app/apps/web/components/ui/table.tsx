@@ -32,7 +32,7 @@ export function TableFooter({ className, ...props }: ComponentProps<'tfoot'>) {
   return (
     <tfoot
       data-slot="table-footer"
-      className={cn('border-t bg-muted/50 font-medium', className)}
+      className={cn('border-t border-border-strong font-bold', className)}
       {...props}
     />
   );
@@ -53,7 +53,8 @@ export function TableHead({ className, ...props }: ComponentProps<'th'>) {
     <th
       data-slot="table-head"
       className={cn(
-        'h-10 px-2 text-left align-middle font-medium whitespace-normal text-muted-foreground',
+        // The prototype's table heads: small caps on the sunk grey.
+        'h-9 bg-muted px-2.5 text-left align-middle text-[0.74rem] font-semibold tracking-[0.06em] whitespace-normal text-muted-foreground uppercase',
         className,
       )}
       {...props}
@@ -62,7 +63,13 @@ export function TableHead({ className, ...props }: ComponentProps<'th'>) {
 }
 
 export function TableCell({ className, ...props }: ComponentProps<'td'>) {
-  return <td data-slot="table-cell" className={cn('p-2 align-middle', className)} {...props} />;
+  return (
+    <td
+      data-slot="table-cell"
+      className={cn('px-2.5 py-[7px] align-middle', className)}
+      {...props}
+    />
+  );
 }
 
 export function TableCaption({ className, ...props }: ComponentProps<'caption'>) {

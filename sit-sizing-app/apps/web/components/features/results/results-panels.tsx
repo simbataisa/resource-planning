@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/table';
 import { CollapsibleSection } from '@/components/patterns/collapsible-section';
 import { ComparisonBars } from '@/components/patterns/comparison-bars';
+import { Eyebrow } from '@/components/patterns/eyebrow';
 import { Field } from '@/components/patterns/field';
 import { TornadoChart } from '@/components/patterns/tornado-chart';
 import { formatFte as f1, formatInt as fmt, num1, pctS } from '@/lib/format';
@@ -44,13 +45,11 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="grid gap-4 rounded-lg border bg-card p-5">
+    <section className="grid gap-4 rounded-lg border bg-card p-5 shadow-card">
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {eyebrow}
-          </p>
-          <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="grid gap-1.5">
+          <Eyebrow>{eyebrow}</Eyebrow>
+          <h2 className="text-[1.6rem] font-light">{title}</h2>
         </div>
         {aside}
       </header>
@@ -59,8 +58,11 @@ function Panel({
   );
 }
 
-const Callout = ({ children }: { children: ReactNode }) => (
-  <p className="rounded-md border-l-4 border-primary bg-muted/50 px-4 py-3 text-sm">{children}</p>
+/** The prototype's callout: navy left edge on the soft detailed background. */
+export const Callout = ({ children }: { children: ReactNode }) => (
+  <p className="rounded-r-lg border-l-4 border-detailed bg-detailed-soft px-3.5 py-2.5 text-[0.98rem]">
+    {children}
+  </p>
 );
 
 /** Results below the inputs (design 7): gap table, sensitivity, scenarios, worked example. */
@@ -135,8 +137,12 @@ function GapPanel() {
             {rows.map((r) => (
               <TableRow key={r.group}>
                 <TableCell>{tg(r.group)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(r.roughCases)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(r.detailedCases)}</TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {fmt(r.roughCases)}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {fmt(r.detailedCases)}
+                </TableCell>
                 <TableCell className="min-w-32">
                   <ComparisonBars
                     label={t('barsLabel', {
@@ -149,29 +155,29 @@ function GapPanel() {
                     max={max}
                   />
                 </TableCell>
-                <TableCell className={cn('text-right tabular-nums', tone(r.deltaCases))}>
+                <TableCell className={cn('text-right font-mono tabular-nums', tone(r.deltaCases))}>
                   {sign(r.deltaCases)}
                   {fmt(Math.abs(r.deltaCases))}
                 </TableCell>
-                <TableCell className={cn('text-right tabular-nums', tone(r.deltaHours))}>
+                <TableCell className={cn('text-right font-mono tabular-nums', tone(r.deltaHours))}>
                   {r.deltaHours >= 0 ? '+' : '−'}
                   {f1(Math.abs(r.deltaHours / per))}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{r.share}%</TableCell>
+                <TableCell className="text-right font-mono tabular-nums">{r.share}%</TableCell>
               </TableRow>
             ))}
           </TableBody>
           <TableFooter>
             <TableRow>
               <TableCell>{t('total')}</TableCell>
-              <TableCell className="text-right tabular-nums">{fmt(R.cases)}</TableCell>
-              <TableCell className="text-right tabular-nums">{fmt(D.cases)}</TableCell>
+              <TableCell className="text-right font-mono tabular-nums">{fmt(R.cases)}</TableCell>
+              <TableCell className="text-right font-mono tabular-nums">{fmt(D.cases)}</TableCell>
               <TableCell />
-              <TableCell className="text-right tabular-nums">
+              <TableCell className="text-right font-mono tabular-nums">
                 {D.cases >= R.cases ? '+' : '−'}
                 {fmt(Math.abs(D.cases - R.cases))}
               </TableCell>
-              <TableCell className="text-right tabular-nums">
+              <TableCell className="text-right font-mono tabular-nums">
                 {D.fte >= R.fte ? '+' : '−'}
                 {f1(Math.abs(D.fte - R.fte))}
               </TableCell>
@@ -307,20 +313,25 @@ function ScenarioPanel() {
             key={s.key}
             className={cn(
               'grid items-center gap-3 rounded-md px-3 py-2 sm:grid-cols-[minmax(0,18rem)_1fr_auto]',
-              s.key === 'current' && 'bg-muted/60 ring-1 ring-border',
+              s.key === 'current' && 'bg-muted/60',
             )}
           >
             <div>
-              <p className="text-sm font-medium">{t(s.key)}</p>
+              <p className={cn('text-sm', s.key === 'current' ? 'font-bold' : 'font-medium')}>
+                {t(s.key)}
+              </p>
               <p className="text-xs text-muted-foreground">{sub[s.key]}</p>
             </div>
-            <span aria-hidden="true" className="h-3 rounded-sm bg-muted">
+            <span
+              aria-hidden="true"
+              className="h-[26px] overflow-hidden rounded-[5px] border border-border bg-muted"
+            >
               <span
-                className="block h-full rounded-sm bg-detailed"
+                className={cn('block h-full bg-detailed', s.key !== 'current' && 'opacity-85')}
                 style={{ width: `${(s.result.fte / max) * 100}%` }}
               />
             </span>
-            <p className="text-right text-sm tabular-nums">
+            <p className="text-right font-mono text-sm tabular-nums">
               <b>{t('fte', { n: f1(s.result.fte) })}</b>
               <br />
               <span className="text-xs text-muted-foreground">

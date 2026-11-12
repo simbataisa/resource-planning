@@ -30,22 +30,29 @@ The design asks for a layered component base themed with TCB-DS. The TCB-DS sour
 - Brand red stays available as `brand` for highlights. The primary action colour is navy, because white text on the brand red is below AA.
 - `pnpm-workspace.yaml` installs Linux builds of native packages too (`supportedArchitectures`), so the same `node_modules` runs tests in Linux sandboxes and containers.
 
-## Amendment: TCB-DS adopted (2026-11-12)
+## Amendment: TCB-DS red in the prototype's theme (2026-11-12)
 
-The product owner provided TCB-DS (`../tcb-ds`, also available as the `tcb-ds` skill) and chose to adopt it before step 1.7.
+The product owner provided TCB-DS (a package captured from the public techcombank.com site) and decided:
 
-- **Source.** TCB-DS was captured from the public techcombank.com website (`tcb-ds/context/source-context.md`), not from an internal component library. It is accepted as the answer to Q1 for release 1. If an internal TCB-DS library appears later, only `tokens.ts` changes.
-- **Mapping.**
-  - Surfaces and rules: white cards on the mist-grey canvas `#F5F6F8`, ink text `#212121`, `#DEDEDE` rules, 8px radius, a flatter card shadow.
-  - Strong actions are black (`primary`). In dark mode they invert.
-  - Red `#ED1C24` is the `brand` and focus-ring colour, used for active and brand signals only.
-  - Status colours follow TCB-DS's success, warning and error set.
-  - The dark theme follows `tcb-ds/system/variables.dark.css`.
-- **AA departures, marked "AA:" in `tokens.ts`:**
-  - Red behind white text uses TCB-DS's active red `#C70E1B` (5.9:1) instead of `#ED1C24` (4.0:1).
-  - Status text uses darker shades of the TCB-DS hues.
-  - Form-field outlines use `#8C8C8C`, because `#DEDEDE` gives 1.3:1 and WCAG 1.4.11 asks for 3:1.
-  - A new test checks the 3:1 non-text contrast of field outlines, the focus ring and the series colours.
-- **Chart series.** Rough (gold) and detailed (navy) keep the prototype's colours, so the meaning of the two series does not change for users of the HTML tool.
-- **Fonts.** TCB-DS ships SF Pro Display web fonts. Apple's licence does not normally allow embedding them on a website, so the app keeps the system font stack, which shows SF Pro on Apple devices. The font files are not copied into the app.
-- **Logo.** The Techcombank marks in `tcb-ds/logos` are not used until brand owners approve their use in an internal tool.
+1. Use the TCB-DS red `#ED1C24`.
+2. Follow the theme of the HTML prototype (`SIT_Sizing_Model.html`).
+3. Keep the system font stack, and do not use the Techcombank logo for now.
+
+The TCB-DS package itself stays outside the repository. This answers Q1 for release 1.
+
+**What the theme looks like:**
+
+- **Page and cards.** A 4px red bar across the top of the page. Ink `#212121` text on the page grey `#F5F6F8`. White cards with 1px `#DEDEDE` rules and a soft shadow, 8px radius.
+- **Red elements.** Primary buttons, links, focus outlines (2px), the selected tab's underline and caption labels (with a short red rule) are red. The button hover is `#C8141C`.
+- **Type.** Headings and headline figures are light (300). Labels, table heads and chips are small caps; figures in tables and ranges are monospace.
+- **Summary cards.** A 4px coloured top edge: gold for rough, navy for detailed, grey for the gap, gold-brown for calibration.
+- **Fields and chips.** Fields and table heads sit on a grey fill (`#F1F1F1`). Chips are pills, and "Uncalibrated" has a dashed edge.
+- **Callouts.** A navy left edge on the soft detailed background.
+- **Dark theme.** The prototype's dark palette.
+
+**Accessibility (WCAG 2.2 AA), all in `packages/tokens/src/tokens.ts` and its tests:**
+
+- **Approved exception.** White text on `#ED1C24` is 4.0:1, and red link or caption text on white is about 4.0:1. AA asks for 4.5:1 for normal-size text. The product owner accepted this for the brand red, as the prototype uses it. `contrastExceptions` lists these pairs, and the test still requires 3:1 for them.
+- **Darker than the prototype.** Status text uses darker shades so it reads at 4.5:1: bad `#C8141C`, good `#18733C`, warn `#7A5F1E`. Field outlines are `#8C8C8C` instead of `#C4C4C4`, to reach the 3:1 that interface parts need. A test checks field outlines, the focus ring and the series colours at 3:1.
+
+**Fonts.** The font stack is the prototype's: `-apple-system`, SF Pro Text/Display (local only), Helvetica Neue, Arial. No web font files are shipped (SF Pro licence). Monospace uses JetBrains Mono or SF Mono only when the device already has them.

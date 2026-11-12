@@ -40,18 +40,21 @@ export function TornadoChart({ label, rows, base, className }: TornadoChartProps
             <span className="truncate" title={r.label}>
               {r.label}
             </span>
-            <span aria-hidden="true" className="relative h-3 rounded-sm bg-muted">
+            <span
+              aria-hidden="true"
+              className="relative h-[18px] rounded-[4px] border border-border bg-muted"
+            >
               <span
-                className="absolute inset-y-0 rounded-l-sm bg-good"
+                className="absolute inset-y-0.5 rounded-[3px] bg-good"
                 style={{ left: `${Math.min(lo, 50)}%`, width: `${Math.max(0, 50 - lo)}%` }}
               />
               <span
-                className="absolute inset-y-0 rounded-r-sm bg-bad"
+                className="absolute inset-y-0.5 rounded-[3px] bg-bad"
                 style={{ left: '50%', width: `${Math.max(0, hi - 50)}%` }}
               />
-              <span className="absolute inset-y-[-2px] left-1/2 w-px bg-foreground" />
+              <span className="absolute -inset-y-[3px] left-1/2 w-0.5 bg-foreground opacity-55" />
             </span>
-            <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+            <span className="text-right font-mono text-xs whitespace-nowrap text-muted-foreground tabular-nums">
               {r.valueText}
             </span>
           </li>

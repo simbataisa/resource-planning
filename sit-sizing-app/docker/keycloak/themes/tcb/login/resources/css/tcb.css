@@ -1,23 +1,26 @@
-/* TCB login theme: TCB-DS values (packages/tokens, ADR-0005). Black primary actions, red
-   focus and accents, ink text, mist-grey page, 8px radius. System fonts (no SF Pro files). */
+/* TCB login theme: the app's theme (packages/tokens, ADR-0005). TCB-DS red #ed1c24 for the
+   top bar, primary button and focus; ink text on the page grey; 8px radius; system fonts. */
 :root {
-  --tcb-primary: #212121;
-  --tcb-brand: #ed1c24;
+  --tcb-red: #ed1c24;
+  --tcb-red-hover: #c8141c;
   --tcb-ink: #212121;
   --tcb-page: #f5f6f8;
-  --tcb-border: #dedede;
   --tcb-radius: 0.5rem;
-  --pf-v5-global--primary-color--100: var(--tcb-primary);
-  --pf-v5-global--primary-color--200: #000000;
-  --pf-v5-global--link--Color: var(--tcb-ink);
-  --pf-v5-global--link--Color--hover: #c70e1b;
+  --pf-v5-global--primary-color--100: var(--tcb-red);
+  --pf-v5-global--primary-color--200: var(--tcb-red-hover);
+  --pf-v5-global--link--Color: var(--tcb-red);
+  --pf-v5-global--link--Color--hover: var(--tcb-red-hover);
   --pf-v5-global--BorderRadius--sm: var(--tcb-radius);
   --pf-v5-global--BackgroundColor--200: var(--tcb-page);
   --pf-v5-global--FontFamily--text:
-    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
+    Arial, sans-serif;
   --pf-v5-global--FontFamily--heading: var(--pf-v5-global--FontFamily--text);
 }
+body {
+  border-top: 4px solid var(--tcb-red);
+}
 :focus-visible {
-  outline: 2px solid var(--tcb-brand);
+  outline: 2px solid var(--tcb-red);
   outline-offset: 2px;
 }

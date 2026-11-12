@@ -19,7 +19,8 @@ export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrim
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        'inline-flex h-9 w-fit flex-wrap items-center justify-center rounded-lg bg-muted p-[3px] text-muted-foreground',
+        // The prototype's tabs: a rule under the row, the selected tab underlined in red.
+        'flex w-full flex-wrap items-end gap-1 border-b border-border text-muted-foreground',
         className,
       )}
       {...props}
@@ -32,9 +33,9 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsP
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        'inline-flex h-full flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors',
-        'focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
-        'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+        '-mb-px inline-flex items-center gap-1.5 rounded-t-md border-b-[3px] border-transparent px-3 pt-2 pb-[9px] text-[0.92rem] font-medium whitespace-nowrap transition-colors hover:bg-muted hover:text-foreground',
+        'disabled:pointer-events-none disabled:opacity-50',
+        'data-[state=active]:border-brand data-[state=active]:font-semibold data-[state=active]:text-foreground',
         className,
       )}
       {...props}
