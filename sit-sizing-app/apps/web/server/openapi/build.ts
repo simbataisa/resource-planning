@@ -171,6 +171,11 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
         description: 'The editable draft (with its edit lock) and saved, immutable versions.',
       },
       {
+        name: 'Actuals',
+        description:
+          'What SIT cycles measured, against approved versions, with variance (release 3).',
+      },
+      {
         name: 'Assumption profiles',
         description: 'Named sets of the 142 model assumptions, global or per project.',
       },

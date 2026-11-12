@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  ActualsCreate,
   DraftPatch,
   EstimateCreate,
   ProfileCreate,
@@ -163,5 +164,28 @@ export function useMarkNotifications() {
   return {
     read: useMutation({ mutationFn: (id: string) => api.notifications.read(id), onSuccess: done }),
     readAll: useMutation({ mutationFn: () => api.notifications.readAll(), onSuccess: done }),
+  };
+}
+
+/** SIT cycles recorded against a version, with their variance (P-02). */
+export const useActuals = (estimateId: string, n: number) =>
+  useQuery({
+    queryKey: qk.actuals(estimateId, n),
+    queryFn: () => api.estimates.actuals(estimateId, n),
+  });
+
+export function useRecordActuals(estimateId: string, n: number) {
+  const qc = useQueryClient();
+  const refresh = () => qc.invalidateQueries({ queryKey: qk.actuals(estimateId, n) });
+  return {
+    record: useMutation({
+      mutationFn: (body: z.input<typeof ActualsCreate>) =>
+        api.estimates.recordActuals(estimateId, n, body),
+      onSuccess: refresh,
+    }),
+    remove: useMutation({
+      mutationFn: (id: string) => api.estimates.deleteActuals(estimateId, n, id),
+      onSuccess: refresh,
+    }),
   };
 }

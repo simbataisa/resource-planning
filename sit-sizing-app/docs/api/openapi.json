@@ -24,6 +24,10 @@
       "description": "The editable draft (with its edit lock) and saved, immutable versions."
     },
     {
+      "name": "Actuals",
+      "description": "What SIT cycles measured, against approved versions, with variance (release 3)."
+    },
+    {
       "name": "Assumption profiles",
       "description": "Named sets of the 142 model assumptions, global or per project."
     },
@@ -2323,6 +2327,383 @@
         ]
       }
     },
+    "/estimates/{estimateId}/versions/{number}/actuals": {
+      "get": {
+        "operationId": "listActuals",
+        "tags": [
+          "Actuals"
+        ],
+        "summary": "SIT cycles recorded against a version, with variance",
+        "description": "Variance compares each cycle with the detailed estimate (actual − estimate). Rates sit next to the assumption they inform; nothing changes a profile automatically. Minimum role: VIEWER.",
+        "x-required-role": "VIEWER",
+        "parameters": [
+          {
+            "name": "estimateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "description": "Opaque identifier (cuid)",
+              "example": "clx0synthetic0001"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded cycles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActualsList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to you)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "recordActuals",
+        "tags": [
+          "Actuals"
+        ],
+        "summary": "Record what one SIT cycle measured",
+        "description": "Only against an approved (or since superseded) version: 409 NOT_APPROVED otherwise. One record per cycle label: 409 CYCLE_EXISTS. Minimum role: ESTIMATOR.",
+        "x-required-role": "ESTIMATOR",
+        "parameters": [
+          {
+            "name": "estimateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "description": "Opaque identifier (cuid)",
+              "example": "clx0synthetic0001"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The recorded cycle with its variance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Actuals"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role does not allow this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to you)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualsCreate"
+              },
+              "example": {
+                "cycleLabel": "SIT cycle 1 · synthetic",
+                "data": {
+                  "executedCases": 3900,
+                  "totalHours": 3800,
+                  "executionHours": 1400,
+                  "retestedCases": 700
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/estimates/{estimateId}/versions/{number}/actuals/{actualsId}": {
+      "delete": {
+        "operationId": "deleteActuals",
+        "tags": [
+          "Actuals"
+        ],
+        "summary": "Remove a mistaken record",
+        "description": "The person who recorded it, or a QE Lead of the project. Minimum role: ESTIMATOR.",
+        "x-required-role": "ESTIMATOR",
+        "parameters": [
+          {
+            "name": "estimateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "description": "Opaque identifier (cuid)",
+              "example": "clx0synthetic0001"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "actualsId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "description": "Opaque identifier (cuid)",
+              "example": "clx0synthetic0001"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role does not allow this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to you)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ]
+      }
+    },
     "/estimates/{estimateId}/compare": {
       "get": {
         "operationId": "compareVersions",
@@ -3864,6 +4245,233 @@
   },
   "components": {
     "schemas": {
+      "Actuals": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "Opaque identifier (cuid)",
+            "example": "clx0synthetic0001"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "cycleLabel": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ActualsData"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recordedBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "Opaque identifier (cuid)",
+                "example": "clx0synthetic0001"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+              }
+            },
+            "required": [
+              "id",
+              "displayName",
+              "email"
+            ],
+            "additionalProperties": false
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "variance": {
+            "$ref": "#/components/schemas/Variance"
+          }
+        },
+        "required": [
+          "id",
+          "versionNumber",
+          "cycleLabel",
+          "data",
+          "note",
+          "recordedBy",
+          "recordedAt",
+          "variance"
+        ],
+        "additionalProperties": false
+      },
+      "ActualsCreate": {
+        "type": "object",
+        "properties": {
+          "cycleLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "data": {
+            "$ref": "#/components/schemas/ActualsData"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "cycleLabel",
+          "data"
+        ],
+        "example": {
+          "cycleLabel": "SIT cycle 1 · synthetic",
+          "data": {
+            "executedCases": 3900,
+            "totalHours": 3800,
+            "executionHours": 1400,
+            "retestedCases": 700
+          }
+        }
+      },
+      "ActualsData": {
+        "type": "object",
+        "properties": {
+          "executedCases": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "totalHours": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "executionHours": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "designedCases": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "designHours": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "retestedCases": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "productiveHoursPerDay": {
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 24
+          },
+          "groups": {
+            "default": [],
+            "maxItems": 60,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "group": {
+                  "type": "string",
+                  "enum": [
+                    "api",
+                    "screen",
+                    "integration",
+                    "rule",
+                    "workflow",
+                    "batch",
+                    "event",
+                    "journey",
+                    "fieldFE",
+                    "fieldBE",
+                    "mapping",
+                    "role",
+                    "sod",
+                    "channel",
+                    "mobile",
+                    "a11y",
+                    "dataSource",
+                    "dataPipeline",
+                    "dataModel",
+                    "dataMapping",
+                    "dataQuality",
+                    "dataReport",
+                    "dataAccess",
+                    "dataPrep",
+                    "aiIntent",
+                    "aiRag",
+                    "aiOcr",
+                    "aiGuard",
+                    "aiTool",
+                    "aiHitl",
+                    "aiEval",
+                    "ptDesign",
+                    "ptEnv",
+                    "ptRun"
+                  ]
+                },
+                "cases": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000
+                },
+                "hours": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000000
+                }
+              },
+              "required": [
+                "group",
+                "cases",
+                "hours"
+              ]
+            }
+          }
+        },
+        "required": [
+          "executedCases",
+          "totalHours"
+        ]
+      },
+      "ActualsList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Actuals"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
       "ApiError": {
         "type": "object",
         "properties": {
@@ -12090,6 +12698,149 @@
         "example": {
           "note": "Synthetic: scope agreed with the delivery lead"
         }
+      },
+      "Variance": {
+        "type": "object",
+        "properties": {
+          "totals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "estimate": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "actual": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "delta": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "pct": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "estimate",
+                "actual",
+                "delta",
+                "pct"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "estimate": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "actual": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "delta": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "pct": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "estimate",
+                "actual",
+                "delta",
+                "pct"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "minutesPerCase",
+                    "designMinutesPerCase",
+                    "retestRate",
+                    "productiveHoursPerDay"
+                  ]
+                },
+                "path": {
+                  "type": "string"
+                },
+                "assumption": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  ]
+                },
+                "actual": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "path",
+                "assumption",
+                "actual"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "totals",
+          "groups",
+          "rates"
+        ],
+        "additionalProperties": false
       },
       "Version": {
         "type": "object",

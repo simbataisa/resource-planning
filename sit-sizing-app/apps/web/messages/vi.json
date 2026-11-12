@@ -1675,7 +1675,8 @@
       "none": "Hai phiên bản có cùng dữ liệu đầu vào và giả định.",
       "truncated": "Chỉ liệt kê 500 thay đổi đầu tiên.",
       "empty": "(không có)"
-    }
+    },
+    "actuals": "Số liệu thực tế"
   },
   "profiles": {
     "title": "Hồ sơ giả định",
@@ -1807,6 +1808,64 @@
       "APPROVED": "{actor} đã phê duyệt {estimate} v{version} ({project}).",
       "RETURNED": "{actor} đã trả lại {estimate} v{version} ({project}) kèm ghi chú.",
       "PROFILE_PUBLISHED": "{actor} đã phát hành hồ sơ giả định {profile} ({project})."
+    }
+  },
+  "actuals": {
+    "back": "Quay lại {name}",
+    "title": "Số liệu thực tế cho phiên bản {n}",
+    "description": "Những gì mỗi chu kỳ SIT đo được, bên cạnh ước tính đã phê duyệt này.",
+    "notApproved": "Số liệu thực tế được ghi nhận cho phiên bản đã phê duyệt. Hãy phê duyệt phiên bản này trước.",
+    "emptyTitle": "Chưa ghi nhận chu kỳ nào",
+    "emptyBody": "Sau mỗi chu kỳ SIT, ghi nhận số liệu đo được để xem chênh lệch so với ước tính.",
+    "cycle": "Chu kỳ SIT",
+    "recorded": "{name} ghi nhận, {when}",
+    "remove": "Xoá",
+    "keep": "Giữ lại",
+    "confirmRemove": "Xoá bản ghi này",
+    "measure": "Chỉ số",
+    "estimate": "Ước tính",
+    "actual": "Thực tế",
+    "variance": "Chênh lệch",
+    "totals": {
+      "cases": "Ca kiểm thử",
+      "hours": "Giờ"
+    },
+    "ratesTitle": "Tỷ lệ đo được và giả định liên quan",
+    "ratesHint": "So sánh từng tỷ lệ đo được với giá trị phiên bản này dùng. Nếu team đồng ý, đưa giá trị đo được vào hồ sơ giả định với chu kỳ này là nguồn, rồi phát hành. Không có gì tự động thay đổi.",
+    "rate": "Tỷ lệ",
+    "assumption": "Giả định",
+    "inVersion": "Trong phiên bản này",
+    "measured": "Đo được",
+    "notMeasured": "Chưa đo",
+    "rates": {
+      "minutesPerCase": "Phút thực thi mỗi case",
+      "designMinutesPerCase": "Phút thiết kế mỗi case",
+      "retestRate": "Tỷ lệ retest",
+      "productiveHoursPerDay": "Giờ hiệu quả mỗi ngày"
+    },
+    "toProfiles": "Mở hồ sơ giả định",
+    "form": {
+      "title": "Ghi nhận một chu kỳ",
+      "hint": "Dùng số liệu đo của chính team. Bắt buộc nhập số ca kiểm thử và tổng giờ; các mục còn lại cho ra tỷ lệ đo được.",
+      "cycleLabel": "Tên chu kỳ",
+      "optional": "(không bắt buộc)",
+      "executedCases": "Số ca kiểm thử đã thực thi",
+      "totalHours": "Tổng giờ SIT",
+      "executionHours": "Giờ thực thi",
+      "designedCases": "Số ca kiểm thử đã thiết kế",
+      "designHours": "Giờ thiết kế",
+      "retestedCases": "Số ca chạy lại sau khi sửa lỗi",
+      "productiveHoursPerDay": "Giờ hiệu quả mỗi ngày",
+      "groups": "Chia theo nhóm (không bắt buộc)",
+      "groupCases": "Số ca",
+      "groupHours": "Số giờ",
+      "removeGroup": "Xoá",
+      "addGroup": "Thêm nhóm",
+      "pickGroup": "Chọn nhóm",
+      "note": "Ghi chú (không bắt buộc)",
+      "submit": "Ghi nhận chu kỳ",
+      "labelRequired": "Nhập tên chu kỳ.",
+      "totalsRequired": "Nhập số ca kiểm thử đã thực thi và tổng giờ SIT."
     }
   }
 }

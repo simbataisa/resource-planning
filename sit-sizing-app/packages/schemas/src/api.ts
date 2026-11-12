@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Assumptions } from './assumptions';
 import { EstimateInputs } from './inputs';
-import { EstimateResult } from './result';
+import { EstimateResult, GroupKey } from './result';
 
 /**
  * REST API request and response shapes (design 9). These schemas are the API
@@ -403,6 +403,98 @@ export type NotificationItem = z.infer<typeof NotificationItem>;
 export const NotificationList = z
   .object({ items: z.array(NotificationItem), unread: z.number().int() })
   .meta({ id: 'NotificationList' });
+
+// ---------- actuals (release 3, P-02) ----------
+const count = z.number().int().min(0).max(1_000_000);
+const hours = z.number().min(0).max(1_000_000);
+
+/** What one SIT cycle measured (design 7: cases, hours, minutes per case, retest rate, productive hours). */
+export const ActualsData = z
+  .object({
+    /** Distinct test cases executed in the cycle (first pass). */
+    executedCases: count,
+    /** All SIT effort in the cycle, in hours: design, execution, retest, coordination. */
+    totalHours: hours,
+    /** Execution time only, including data set-up. Gives minutes per case. */
+    executionHours: hours.optional(),
+    /** Cases designed in the cycle, with the hours spent designing them. */
+    designedCases: count.optional(),
+    designHours: hours.optional(),
+    /** Cases run again to confirm defect fixes. Gives the retest rate. */
+    retestedCases: count.optional(),
+    /** Measured productive hours per person per day. */
+    productiveHoursPerDay: z.number().min(0.5).max(24).optional(),
+    /** Optional split by group, for the groups the team tracked. */
+    groups: z
+      .array(z.object({ group: GroupKey, cases: count, hours }))
+      .max(60)
+      .refine((g) => new Set(g.map((x) => x.group)).size === g.length, {
+        message: 'Each group can appear only once.',
+      })
+      .default([]),
+  })
+  .refine((d) => (d.designHours === undefined) === (d.designedCases === undefined), {
+    path: ['designHours'],
+    message: 'Give design hours and designed cases together.',
+  })
+  .meta({ id: 'ActualsData' });
+export type ActualsData = z.infer<typeof ActualsData>;
+
+export const ActualsCreate = z
+  .object({
+    cycleLabel: z.string().trim().min(1).max(80),
+    data: ActualsData,
+    note: z.string().trim().max(2000).optional(),
+  })
+  .meta({
+    id: 'ActualsCreate',
+    example: {
+      cycleLabel: 'SIT cycle 1 · synthetic',
+      data: { executedCases: 3900, totalHours: 3800, executionHours: 1400, retestedCases: 700 },
+    },
+  });
+
+/** One compared figure. `pct` is null when the estimate is zero. */
+export const VarianceRow = z.object({
+  key: z.string(),
+  estimate: z.number().nullable(),
+  actual: z.number().nullable(),
+  delta: z.number().nullable(),
+  pct: z.number().nullable(),
+});
+/** A measured rate next to the assumption it informs (a person decides whether to change it). */
+export const RateRow = z.object({
+  key: z.enum(['minutesPerCase', 'designMinutesPerCase', 'retestRate', 'productiveHoursPerDay']),
+  /** The assumption's dotted path, as in profiles. */
+  path: z.string(),
+  /** The version's value; cases-by-complexity triples are shown as they are. */
+  assumption: z.union([z.number(), z.array(z.number())]),
+  actual: z.number().nullable(),
+});
+export const Variance = z
+  .object({
+    totals: z.array(VarianceRow),
+    groups: z.array(VarianceRow),
+    rates: z.array(RateRow),
+  })
+  .meta({ id: 'Variance' });
+export type Variance = z.infer<typeof Variance>;
+
+export const Actuals = z
+  .object({
+    id: Id,
+    versionNumber: z.number().int(),
+    cycleLabel: z.string(),
+    data: ActualsData,
+    note: z.string().nullable(),
+    recordedBy: UserRef,
+    recordedAt: IsoDateTime,
+    variance: Variance,
+  })
+  .meta({ id: 'Actuals' });
+export type Actuals = z.infer<typeof Actuals>;
+
+export const ActualsList = z.object({ items: z.array(Actuals) }).meta({ id: 'ActualsList' });
 
 // ---------- misc ----------
 export const Health = z

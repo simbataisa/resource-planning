@@ -128,6 +128,13 @@ export function VersionHistory({ estimate, open }: { estimate: EstimateDetail; o
                   </Button>
                 </>
               ) : null}
+              {v.status === 'APPROVED' || v.status === 'SUPERSEDED' ? (
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/estimates/${estimate.id}/versions/${v.number}/actuals`}>
+                    {t('actuals')}
+                  </Link>
+                </Button>
+              ) : null}
               {v.status !== 'DRAFT' && !hasDraft && may('draft.create') && !estimate.archived ? (
                 <Button
                   size="sm"
