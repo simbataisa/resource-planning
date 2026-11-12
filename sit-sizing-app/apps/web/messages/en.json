@@ -7,12 +7,18 @@
     "projects": "Projects",
     "apiDocs": "API reference",
     "language": "Language",
-    "sessionMenu": "Account",
-    "signedInAs": "Signed in as {name}",
     "profiles": "Profiles",
     "portfolio": "Portfolio",
     "audit": "Audit log",
-    "users": "Users"
+    "users": "Users",
+    "navGroups": {
+      "work": "Work",
+      "admin": "Admin",
+      "reference": "Reference"
+    },
+    "toggleNav": "Toggle sidebar",
+    "closeNav": "Close navigation",
+    "accountMenu": "Account menu for {name}"
   },
   "common": {
     "loading": "Loading…",

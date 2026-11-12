@@ -7,12 +7,18 @@
     "projects": "Dự án",
     "apiDocs": "Tài liệu API",
     "language": "Ngôn ngữ",
-    "sessionMenu": "Tài khoản",
-    "signedInAs": "Đang đăng nhập với {name}",
     "profiles": "Hồ sơ",
     "portfolio": "Danh mục",
     "audit": "Nhật ký",
-    "users": "Người dùng"
+    "users": "Người dùng",
+    "navGroups": {
+      "work": "Công việc",
+      "admin": "Quản trị",
+      "reference": "Tham khảo"
+    },
+    "toggleNav": "Ẩn hoặc hiện thanh bên",
+    "closeNav": "Đóng điều hướng",
+    "accountMenu": "Menu tài khoản của {name}"
   },
   "common": {
     "loading": "Đang tải…",

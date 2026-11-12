@@ -2,15 +2,38 @@
 
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { LogOut } from 'lucide-react';
+import { ChevronsUpDown, ExternalLink, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
 import { Eyebrow } from '@/components/patterns/eyebrow';
-import { Link } from '@/i18n/navigation';
+import { Link, usePathname } from '@/i18n/navigation';
 import type { Locale } from '@/lib/i18n';
-import { AdminNavLinks } from '../admin/admin-nav';
+import { AdminNavGroup } from '../admin/admin-nav';
 import { NotificationBell } from '../notifications/notification-bell';
-import { PortfolioNavLink } from '../portfolio/portfolio-page';
+import { PortfolioNavItem } from '../portfolio/portfolio-page';
 import { AdoptProfileLocale, LanguageSwitch } from './language-switch';
+import { NAV_ICONS, SECTION_LABEL, sectionFor } from './nav-items';
+import { SidebarNavLink } from './sidebar-nav-link';
 
 export interface AppShellProps {
   /** Display name of the signed-in user; null shows a sign-in button. */
@@ -19,19 +42,23 @@ export interface AppShellProps {
   profileLocale?: Locale | null;
   /** True when this browser already has a language choice (cookie). */
   localeChosen?: boolean;
+  /** Sidebar expanded on first render (from the sidebar_state cookie). */
+  sidebarOpen?: boolean;
   children: ReactNode;
 }
 
-/** Header, navigation, language switch and session menu around every signed-in page (U-04). */
+/** Sidebar navigation, top bar and footer around every signed-in page (U-04, ADR-0015). */
 export function AppShell({
   userName,
   profileLocale = null,
   localeChosen = true,
+  sidebarOpen = true,
   children,
 }: AppShellProps) {
   const t = useTranslations();
+  const section = sectionFor(usePathname());
   return (
-    <div className="flex min-h-dvh flex-col">
+    <SidebarProvider defaultOpen={sidebarOpen}>
       <AdoptProfileLocale profileLocale={profileLocale} localeChosen={localeChosen} />
       <a
         href="#main"
@@ -39,69 +66,131 @@ export function AppShell({
       >
         {t('app.skipToContent')}
       </a>
-      <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-          <Link href="/projects" className="grid gap-0.5 leading-tight">
+      <Sidebar
+        collapsible="icon"
+        mobileTitle={t('app.mainNav')}
+        mobileCloseLabel={t('app.closeNav')}
+      >
+        <SidebarHeader>
+          <Link
+            href="/projects"
+            className="grid gap-0.5 px-2 py-1 leading-tight group-data-[collapsible=icon]:hidden"
+          >
             <Eyebrow className="text-[0.7rem]">{t('app.tagline')}</Eyebrow>
             <span className="text-xl font-light text-foreground">{t('app.name')}</span>
           </Link>
-          <nav aria-label={t('app.mainNav')} className="flex items-center gap-4 text-sm">
-            <Link href="/projects" className="font-medium hover:underline">
-              {t('app.projects')}
-            </Link>
-            <Link href="/profiles" className="hover:underline">
-              {t('app.profiles')}
-            </Link>
-            <PortfolioNavLink />
-            <AdminNavLinks />
-            <Link href="/guide" className="hover:underline">
-              {t('content.nav.guide')}
-            </Link>
-            <Link href="/method" className="hover:underline">
-              {t('content.nav.method')}
-            </Link>
-            <Link href="/standards" className="hover:underline">
-              {t('content.nav.standards')}
-            </Link>
-            <a href="/api/v1/docs" className="text-muted-foreground hover:underline">
-              {t('app.apiDocs')}
-            </a>
+        </SidebarHeader>
+        <SidebarContent>
+          <nav aria-label={t('app.mainNav')}>
+            <SidebarGroup>
+              <SidebarGroupLabel>{t('app.navGroups.work')}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarNavLink
+                    href="/projects"
+                    label={t('app.projects')}
+                    icon={NAV_ICONS.projects}
+                    active={section === 'projects'}
+                  />
+                  <SidebarNavLink
+                    href="/profiles"
+                    label={t('app.profiles')}
+                    icon={NAV_ICONS.profiles}
+                    active={section === 'profiles'}
+                  />
+                  <PortfolioNavItem active={section === 'portfolio'} />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            <AdminNavGroup active={section} />
+            <SidebarGroup>
+              <SidebarGroupLabel>{t('app.navGroups.reference')}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarNavLink
+                    href="/guide"
+                    label={t('content.nav.guide')}
+                    icon={NAV_ICONS.guide}
+                    active={section === 'guide'}
+                  />
+                  <SidebarNavLink
+                    href="/method"
+                    label={t('content.nav.method')}
+                    icon={NAV_ICONS.method}
+                    active={section === 'method'}
+                  />
+                  <SidebarNavLink
+                    href="/standards"
+                    label={t('content.nav.standards')}
+                    icon={NAV_ICONS.standards}
+                    active={section === 'standards'}
+                  />
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={t('app.apiDocs')}>
+                      <a href="/api/v1/docs">
+                        <NAV_ICONS.apiDocs aria-hidden="true" />
+                        <span>{t('app.apiDocs')}</span>
+                        <ExternalLink aria-hidden="true" className="ml-auto size-3" />
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </nav>
-          <div className="ml-auto flex items-center gap-3">
+        </SidebarContent>
+        <SidebarFooter>
+          <div className="group-data-[collapsible=icon]:hidden">
             <LanguageSwitch saveToProfile={Boolean(userName)} />
-            {userName ? (
-              <div
-                aria-label={t('app.sessionMenu')}
-                role="group"
-                className="flex items-center gap-2"
-              >
-                <NotificationBell />
-                <span className="hidden text-sm text-muted-foreground sm:inline">
-                  {t('app.signedInAs', { name: userName })}
-                </span>
-                <Button asChild variant="outline" size="sm">
+          </div>
+          {userName ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton aria-label={t('app.accountMenu', { name: userName })}>
+                  <span className="grid size-4 place-items-center rounded-full bg-muted text-[0.6rem] font-semibold">
+                    {userName.charAt(0)}
+                  </span>
+                  <span className="truncate">{userName}</span>
+                  <ChevronsUpDown aria-hidden="true" className="ml-auto" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="min-w-56">
+                <DropdownMenuItem asChild>
                   <a href="/api/auth/signout">
                     <LogOut aria-hidden="true" />
                     {t('auth.signOut')}
                   </a>
-                </Button>
-              </div>
-            ) : (
-              <Button asChild size="sm">
-                <a href="/api/auth/signin">{t('auth.signIn')}</a>
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
-      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-        {children}
-      </main>
-      <footer className="border-t py-4">
-        <p className="mx-auto max-w-7xl px-4 text-xs text-muted-foreground">
-          {t('common.disclaimer')}
-        </p>
-      </footer>
-    </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild size="sm" className="group-data-[collapsible=icon]:hidden">
+              <a href="/api/auth/signin">{t('auth.signIn')}</a>
+            </Button>
+          )}
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-12 items-center gap-3 border-b bg-card px-4">
+          <SidebarTrigger label={t('app.toggleNav')} />
+          {section ? (
+            <span className="text-sm font-medium text-foreground">{t(SECTION_LABEL[section])}</span>
+          ) : null}
+          {userName ? (
+            <div className="ml-auto">
+              <NotificationBell />
+            </div>
+          ) : null}
+        </header>
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
+          {children}
+        </main>
+        <footer className="border-t py-4">
+          <p className="mx-auto max-w-7xl px-4 text-xs text-muted-foreground">
+            {t('common.disclaimer')}
+          </p>
+        </footer>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

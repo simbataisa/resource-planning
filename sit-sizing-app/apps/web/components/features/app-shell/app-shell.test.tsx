@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { expectNoAxeViolations } from '@/tests/support/axe';
@@ -20,23 +20,50 @@ vi.mock('@/lib/query/hooks', () => ({
 }));
 
 describe('AppShell (U-04)', () => {
-  it('shows navigation, the user and sign-out, with a skip link', async () => {
+  it('shows grouped navigation, the account menu and a skip link', async () => {
+    const user = userEvent.setup();
     const { container } = renderWithIntl(
       <AppShell userName="Synthetic Estimator">
         <h1>Body</h1>
       </AppShell>,
     );
-    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
-    expect(screen.getByText('Signed in as Synthetic Estimator')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Sign out' })).toHaveAttribute(
+    const nav = screen.getByRole('navigation', { name: 'Main' });
+    for (const name of ['Projects', 'Profiles', 'Guide', 'Method', 'Standards']) {
+      expect(within(nav).getByRole('link', { name })).toBeInTheDocument();
+    }
+    expect(within(nav).getByRole('link', { name: 'API reference' })).toHaveAttribute(
       'href',
-      '/api/auth/signout',
+      '/api/v1/docs',
     );
+    expect(within(nav).getByRole('link', { name: 'Projects' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(within(nav).getByText('Work')).toBeInTheDocument();
+    expect(within(nav).getByText('Reference')).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByText('Projects')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Toggle sidebar' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute(
       'href',
       '#main',
     );
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main');
     await expectNoAxeViolations(container);
+    await user.click(screen.getByRole('button', { name: 'Account menu for Synthetic Estimator' }));
+    expect(screen.getByRole('menuitem', { name: 'Sign out' })).toHaveAttribute(
+      'href',
+      '/api/auth/signout',
+    );
+  });
+
+  it('signed out shows sign-in and no account menu', () => {
+    renderWithIntl(<AppShell userName={null}>x</AppShell>);
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
+      'href',
+      '/api/auth/signin',
+    );
+    expect(screen.queryByRole('button', { name: /Account menu/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Notifications/ })).toBeNull();
   });
 
   it('offers sign-in when nobody is signed in, in Vietnamese', () => {
@@ -45,6 +72,26 @@ describe('AppShell (U-04)', () => {
       'href',
       '/api/auth/signin',
     );
+  });
+
+  it('choosing a link closes the mobile sheet', async () => {
+    const original = window.matchMedia;
+    window.matchMedia = vi.fn((query: string) => ({
+      matches: true,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+    try {
+      const user = userEvent.setup();
+      renderWithIntl(<AppShell userName="Synthetic Estimator">x</AppShell>);
+      await user.click(screen.getByRole('button', { name: 'Toggle sidebar' }));
+      const sheet = screen.getByRole('dialog', { name: 'Main' });
+      await user.click(within(sheet).getByRole('link', { name: 'Profiles' }));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    } finally {
+      window.matchMedia = original;
+    }
   });
 
   it('switches language, remembering the choice', async () => {

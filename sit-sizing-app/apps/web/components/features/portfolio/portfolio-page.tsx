@@ -27,6 +27,8 @@ import { principalFromMe } from '@/lib/me';
 import { useMe, usePortfolio, useProjects } from '@/lib/query/hooks';
 import { can } from '@/lib/rbac';
 import { cn } from '@/lib/utils';
+import { NAV_ICONS } from '../app-shell/nav-items';
+import { SidebarNavLink } from '../app-shell/sidebar-nav-link';
 import { useQueryState } from '../shared/use-query-state';
 
 type Status = Portfolio['status'];
@@ -255,8 +257,8 @@ function PortfolioTable({ p }: { p: Portfolio }) {
   );
 }
 
-/** Header link, shown to QE Leads and Admins only (the API enforces it too). */
-export function PortfolioNavLink() {
+/** Sidebar item, shown to QE Leads and Admins only (the API enforces it too). */
+export function PortfolioNavItem({ active }: { active: boolean }) {
   const t = useTranslations('app');
   const me = useMe();
   const principal = me.data ? principalFromMe(me.data) : null;
@@ -265,8 +267,11 @@ export function PortfolioNavLink() {
     (principal.globalRole === 'ADMIN' ||
       Object.keys(principal.memberships).some((id) => can(principal, 'portfolio.read', id)));
   return show ? (
-    <Link href="/portfolio" className="hover:underline">
-      {t('portfolio')}
-    </Link>
+    <SidebarNavLink
+      href="/portfolio"
+      label={t('portfolio')}
+      icon={NAV_ICONS.portfolio}
+      active={active}
+    />
   ) : null;
 }

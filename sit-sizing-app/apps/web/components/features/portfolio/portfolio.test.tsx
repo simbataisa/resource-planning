@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Portfolio, PortfolioRow } from '@sit/schemas';
 import { expectNoAxeViolations } from '@/tests/support/axe';
 import { renderWithIntl } from '@/tests/support/intl';
-import { PortfolioNavLink, PortfolioPage } from './portfolio-page';
+import { InSidebar } from '@/tests/support/sidebar';
+import { PortfolioNavItem, PortfolioPage } from './portfolio-page';
 
 vi.mock(
   '@/i18n/navigation',
@@ -139,21 +140,27 @@ describe('PortfolioPage (R-01)', () => {
     expect(screen.getByText('Nothing to roll up yet')).toBeTruthy();
   });
 
-  it('is for QE Leads and Admins; the header link follows the same rule', () => {
+  it('is for QE Leads and Admins; the sidebar item follows the same rule', () => {
     hooks.useMe.mockReturnValue(me('ESTIMATOR'));
     const { unmount } = renderWithIntl(
       <>
         <PortfolioPage />
-        <PortfolioNavLink />
+        <InSidebar menu>
+          <PortfolioNavItem active={false} />
+        </InSidebar>
       </>,
     );
     expect(screen.getByText('The portfolio is for QE Leads and Admins.')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Portfolio' })).toBeNull();
     unmount();
     hooks.useMe.mockReturnValue(me('QE_LEAD'));
-    renderWithIntl(<PortfolioNavLink />);
-    expect(screen.getByRole('link', { name: 'Portfolio' }).getAttribute('href')).toBe(
-      '/en/portfolio',
+    renderWithIntl(
+      <InSidebar menu>
+        <PortfolioNavItem active />
+      </InSidebar>,
     );
+    const link = screen.getByRole('link', { name: 'Portfolio' });
+    expect(link.getAttribute('href')).toBe('/en/portfolio');
+    expect(link).toHaveAttribute('aria-current', 'page');
   });
 });

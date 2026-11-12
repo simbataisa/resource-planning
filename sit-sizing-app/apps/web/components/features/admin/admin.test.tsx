@@ -5,7 +5,8 @@ import type { AdminUser, AuditEventItem, ProjectDetail } from '@sit/schemas';
 import { ApiClientError } from '@/lib/http';
 import { expectNoAxeViolations } from '@/tests/support/axe';
 import { renderWithIntl } from '@/tests/support/intl';
-import { AdminNavLinks } from './admin-nav';
+import { InSidebar } from '@/tests/support/sidebar';
+import { AdminNavGroup } from './admin-nav';
 import { AuditPage } from './audit-page';
 import { MembersPanel } from './members-panel';
 import { UsersPage } from './users-page';
@@ -231,21 +232,43 @@ describe('MembersPanel (H-01)', () => {
   });
 });
 
-describe('AdminNavLinks', () => {
+describe('AdminNavGroup', () => {
+  const renderGroup = () =>
+    renderWithIntl(
+      <InSidebar>
+        <AdminNavGroup active={null} />
+      </InSidebar>,
+    );
+
   it('shows the audit log to QE Leads and users to Admins only', () => {
     hooks.useMe.mockReturnValue(me('USER'));
-    const { unmount } = renderWithIntl(<AdminNavLinks />);
+    const { unmount } = renderGroup();
+    expect(screen.getByText('Admin')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Audit log' })).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Users' })).toBeNull();
     unmount();
     hooks.useMe.mockReturnValue(me('ADMIN', 'ESTIMATOR'));
-    const second = renderWithIntl(<AdminNavLinks />);
+    renderGroup();
     expect(screen.getByRole('link', { name: 'Users' }).getAttribute('href')).toBe(
       '/en/admin/users',
     );
-    second.unmount();
+  });
+
+  it('admin group is hidden when no admin item is visible', () => {
     hooks.useMe.mockReturnValue(me('USER', 'ESTIMATOR'));
-    renderWithIntl(<AdminNavLinks />);
+    renderGroup();
+    expect(screen.queryByText('Admin')).toBeNull();
     expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('marks the active admin item', () => {
+    hooks.useMe.mockReturnValue(me('ADMIN'));
+    renderWithIntl(
+      <InSidebar>
+        <AdminNavGroup active="audit" />
+      </InSidebar>,
+    );
+    expect(screen.getByRole('link', { name: 'Audit log' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Users' })).not.toHaveAttribute('aria-current');
   });
 });
