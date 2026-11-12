@@ -34,6 +34,7 @@ import { DraftToolbar } from './draft-toolbar';
 import { EvidenceTab } from './evidence-tab';
 import { ExportPanel, prototypeProfileJson } from './export-panel';
 import { RoughScopeTab } from './rough-scope-tab';
+import { EngineNotice } from './engine-notice';
 import { EditorProvider, useEditor } from './store';
 import { SummaryCards } from './summary-cards';
 import { TeamTab } from './team-tab';
@@ -135,16 +136,23 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
         estimate={estimate}
         version={version}
         notice={
-          <SessionNotice
-            estimate={estimate}
-            version={version}
-            mayEdit={mayEdit}
-            lockState={effective}
-            canCreateDraft={principal ? can(principal, 'draft.create', pid) : false}
-            canTakeover={principal ? can(principal, 'draft.lock.takeover', pid) : false}
-            onTakeover={() => acquire(true)}
-            onReload={() => void reload()}
-          />
+          <>
+            <SessionNotice
+              estimate={estimate}
+              version={version}
+              mayEdit={mayEdit}
+              lockState={effective}
+              canCreateDraft={principal ? can(principal, 'draft.create', pid) : false}
+              canTakeover={principal ? can(principal, 'draft.lock.takeover', pid) : false}
+              onTakeover={() => acquire(true)}
+              onReload={() => void reload()}
+            />
+            <EngineNotice
+              estimate={estimate}
+              version={version}
+              canCreateDraft={principal ? can(principal, 'draft.create', pid) : false}
+            />
+          </>
         }
         toolbar={
           effective === 'mine' ? (

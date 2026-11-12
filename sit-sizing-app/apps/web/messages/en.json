@@ -9,7 +9,10 @@
     "language": "Language",
     "sessionMenu": "Account",
     "signedInAs": "Signed in as {name}",
-    "profiles": "Profiles"
+    "profiles": "Profiles",
+    "portfolio": "Portfolio",
+    "audit": "Audit log",
+    "users": "Users"
   },
   "common": {
     "loading": "Loading…",
@@ -1675,7 +1678,8 @@
       "none": "The two versions have the same inputs and assumptions.",
       "truncated": "Only the first 500 changes are listed.",
       "empty": "(none)"
-    }
+    },
+    "actuals": "Actuals"
   },
   "profiles": {
     "title": "Assumption profiles",
@@ -1807,6 +1811,198 @@
       "APPROVED": "{actor} approved {estimate} v{version} ({project}).",
       "RETURNED": "{actor} returned {estimate} v{version} ({project}) with a note.",
       "PROFILE_PUBLISHED": "{actor} published the assumption profile {profile} ({project})."
+    }
+  },
+  "actuals": {
+    "back": "Back to {name}",
+    "title": "Actuals for version {n}",
+    "description": "What each SIT cycle measured, next to this approved estimate.",
+    "notApproved": "Actuals are recorded against an approved version. Approve this version first.",
+    "emptyTitle": "No cycles recorded yet",
+    "emptyBody": "After an SIT cycle, record what it measured to see the variance against the estimate.",
+    "cycle": "SIT cycle",
+    "recorded": "Recorded by {name}, {when}",
+    "remove": "Remove",
+    "keep": "Keep",
+    "confirmRemove": "Remove this record",
+    "measure": "Measure",
+    "estimate": "Estimate",
+    "actual": "Actual",
+    "variance": "Variance",
+    "totals": {
+      "cases": "Test cases",
+      "hours": "Hours"
+    },
+    "ratesTitle": "Measured rates and the assumptions they inform",
+    "ratesHint": "Compare each measured rate with the value this version used. If the team agrees, put the measured value in an assumption profile with this cycle as the source, then publish it. Nothing changes automatically.",
+    "rate": "Rate",
+    "assumption": "Assumption",
+    "inVersion": "In this version",
+    "measured": "Measured",
+    "notMeasured": "Not measured",
+    "rates": {
+      "minutesPerCase": "Execution minutes per case",
+      "designMinutesPerCase": "Design minutes per case",
+      "retestRate": "Retest rate",
+      "productiveHoursPerDay": "Productive hours per day"
+    },
+    "toProfiles": "Open assumption profiles",
+    "form": {
+      "title": "Record a cycle",
+      "hint": "Use the team's own measurements. Test cases and total hours are required; the rest gives the measured rates.",
+      "cycleLabel": "Cycle name",
+      "optional": "(optional)",
+      "executedCases": "Test cases executed",
+      "totalHours": "Total SIT hours",
+      "executionHours": "Execution hours",
+      "designedCases": "Test cases designed",
+      "designHours": "Design hours",
+      "retestedCases": "Cases retested after fixes",
+      "productiveHoursPerDay": "Productive hours per day",
+      "groups": "Split by group (optional)",
+      "groupCases": "Cases",
+      "groupHours": "Hours",
+      "removeGroup": "Remove",
+      "addGroup": "Add a group",
+      "pickGroup": "Choose a group",
+      "note": "Note (optional)",
+      "submit": "Record cycle",
+      "labelRequired": "Enter a name for the cycle.",
+      "totalsRequired": "Enter the test cases executed and the total SIT hours."
+    }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "description": "Estimates across your projects for the QBR: one row per estimate, with subtotals per project and the total.",
+    "csv": "Download CSV",
+    "forbidden": "The portfolio is for QE Leads and Admins.",
+    "statusLabel": "Versions",
+    "statusApproved": "Approved versions",
+    "statusLatest": "Newest saved version of each estimate",
+    "projects": "Projects",
+    "projectsHint": "None ticked: all the projects you lead.",
+    "emptyTitle": "Nothing to roll up yet",
+    "emptyApproved": "No estimate in these projects has an approved version. Switch to the newest saved versions to see work in progress.",
+    "emptyLatest": "No estimate in these projects has a saved version yet.",
+    "totalsLabel": "Portfolio totals",
+    "subtotal": "Subtotal",
+    "subtotalOf": "Subtotal · {project}",
+    "total": "Total",
+    "rangeNote": "Ranges add low with low and high with high: they assume the estimates move together, which gives the widest honest range for the portfolio. Figures are the stored results of each version.",
+    "cards": {
+      "detailed": "Detailed · with FSD",
+      "rough": "Rough · no FSD",
+      "range": "range {lo} – {hi} FTE",
+      "detail": "{c} cases · {h} h",
+      "estimates": "Estimates",
+      "estimatesDetail": "in the selected projects",
+      "calibration": "Using calibrated values",
+      "of": "of {n}",
+      "calibrationDetail": "estimates with at least one of the {n} assumptions calibrated"
+    },
+    "cols": {
+      "project": "Project",
+      "estimate": "Estimate",
+      "version": "Version",
+      "status": "Status",
+      "profile": "Assumption profile",
+      "uncalibrated": "Uncalibrated",
+      "fte": "Detailed FTE",
+      "lo": "FTE low",
+      "hi": "FTE high",
+      "range": "Range (FTE)",
+      "cases": "Cases",
+      "hours": "Hours",
+      "roughFte": "Rough FTE"
+    }
+  },
+  "engine": {
+    "title": "Computed with engine {old}",
+    "body": "This version keeps the result that engine {old} computed. The current engine is {current}. Recompute as a new draft to see what the change does to the numbers; this version stays as it is.",
+    "recompute": "Recompute as new draft",
+    "recomputing": "Recomputing…",
+    "draftExists": "Finish or save the open draft first, then recompute from this version.",
+    "badge": "engine {old}",
+    "badgeTitle": "Computed with engine {old}, not the current one"
+  },
+  "audit": {
+    "title": "Audit log",
+    "description": "Who did what and when, newest first. Each record keeps the request reference for support.",
+    "forbidden": "The audit log is for QE Leads (their projects) and Admins.",
+    "project": "Project",
+    "allProjects": "All projects and global events",
+    "action": "Action",
+    "anyAction": "Any action",
+    "actions": {
+      "estimate": "Estimates",
+      "estimate_version": "Versions and approvals",
+      "estimate_draft": "Drafts and locks",
+      "profile": "Assumption profiles",
+      "actuals": "Actuals",
+      "project": "Projects and members",
+      "user": "Users and sign-in"
+    },
+    "from": "From",
+    "to": "To",
+    "emptyTitle": "No events",
+    "emptyBody": "Nothing matches these filters.",
+    "more": "Show older events",
+    "cols": {
+      "when": "When",
+      "who": "Who",
+      "action": "Action",
+      "project": "Project",
+      "detail": "Details"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Users",
+      "description": "Everyone who has signed in, with their project roles.",
+      "forbidden": "Only Admins can manage users.",
+      "keycloakNote": "Accounts, passwords and the Admin role are managed in Keycloak: add or remove someone from the group sit-sizing-admins there, and it applies at their next sign-in. Here you can deactivate someone in this app; they are refused straight away.",
+      "search": "Search by name or e-mail",
+      "emptyTitle": "No users found",
+      "emptyBody": "People appear here after their first sign-in.",
+      "admin": "Admin",
+      "user": "User",
+      "active": "Active",
+      "inactive": "Deactivated",
+      "you": "You",
+      "deactivate": "Deactivate",
+      "activate": "Reactivate",
+      "confirmDeactivate": "Deactivate {name}",
+      "confirmActivate": "Reactivate {name}",
+      "cancel": "Cancel",
+      "more": "Show more",
+      "cols": {
+        "name": "Name",
+        "role": "Global role",
+        "projects": "Projects",
+        "lastSignIn": "Last sign-in",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "members": {
+      "title": "Members",
+      "person": "Person",
+      "role": "Project role",
+      "actions": "Actions",
+      "pending": "Not signed in yet",
+      "roleFor": "Project role for {who}",
+      "removeWho": "Remove {who}",
+      "email": "Work e-mail",
+      "newRole": "Role",
+      "add": "Add",
+      "hint": "People can be added once they have signed in to SIT Sizing. A project needs at least one QE Lead.",
+      "save": "Save members",
+      "saving": "Saving…",
+      "discard": "Discard changes",
+      "badEmail": "Enter a work e-mail address.",
+      "duplicate": "This person is already in the list.",
+      "needLead": "Keep at least one QE Lead.",
+      "notSignedIn": "These people have not signed in yet: {emails}. Ask them to sign in once, then add them."
     }
   }
 }

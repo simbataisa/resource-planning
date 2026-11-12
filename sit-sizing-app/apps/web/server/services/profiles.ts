@@ -2,7 +2,6 @@ import { DEFAULT_ASSUMPTIONS } from '@sit/engine';
 import type { Prisma } from '@sit/db';
 import {
   Assumptions,
-  type EstimateInputs,
   type ProfileApply,
   type ProfileCreate,
   type ProfileListQuery,
@@ -26,6 +25,7 @@ import { enqueue } from '../notifications/outbox';
 import { recordAudit } from '../repositories/audit';
 import { VERSION_FULL_INCLUDE } from '../repositories/includes';
 import { ensure, estimateFor, notFound, projectFor, type RequestMeta } from './access';
+import { readStored } from '../stored';
 import { requireOwnLockedDraft, snapshotData } from './versions';
 
 /**
@@ -267,7 +267,7 @@ export async function applyProfile(
     const updated = await tx.estimateVersion.updateMany({
       where: { id: draft.id, rowVersion: input.rowVersion, status: 'DRAFT' },
       data: {
-        ...snapshotData(draft.inputs as unknown as EstimateInputs, assumptions),
+        ...snapshotData(readStored(draft).inputs, assumptions),
         profileId: p.id,
         rowVersion: { increment: 1 },
         lockExpiresAt: lockExpiry(now),

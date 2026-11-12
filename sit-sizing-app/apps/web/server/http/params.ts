@@ -7,3 +7,5 @@ export const EstimateParams = z.object({ estimateId: Id });
 export const VersionParams = z.object({ estimateId: Id, number: z.coerce.number().int().min(1) });
 export const ProfileParams = z.object({ profileId: Id });
 export const NotificationParams = z.object({ notificationId: Id });
+export const ActualsParams = VersionParams.extend({ actualsId: Id });
+export const UserParams = z.object({ userId: Id });

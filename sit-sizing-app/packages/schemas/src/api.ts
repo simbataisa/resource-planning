@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Assumptions } from './assumptions';
 import { EstimateInputs } from './inputs';
-import { EstimateResult } from './result';
+import { EstimateResult, GroupKey } from './result';
 
 /**
  * REST API request and response shapes (design 9). These schemas are the API
@@ -10,8 +10,7 @@ import { EstimateResult } from './result';
  * Examples use synthetic data only.
  */
 
-/** Version of the EstimateInputs payload shape stored in EstimateVersion.schemaVersion. */
-export const INPUTS_SCHEMA_VERSION = 1;
+export { INPUTS_SCHEMA_VERSION } from './upgrade';
 
 export const Id = z
   .string()
@@ -403,6 +402,213 @@ export type NotificationItem = z.infer<typeof NotificationItem>;
 export const NotificationList = z
   .object({ items: z.array(NotificationItem), unread: z.number().int() })
   .meta({ id: 'NotificationList' });
+
+// ---------- actuals (release 3, P-02) ----------
+const count = z.number().int().min(0).max(1_000_000);
+const hours = z.number().min(0).max(1_000_000);
+
+/** What one SIT cycle measured (design 7: cases, hours, minutes per case, retest rate, productive hours). */
+export const ActualsData = z
+  .object({
+    /** Distinct test cases executed in the cycle (first pass). */
+    executedCases: count,
+    /** All SIT effort in the cycle, in hours: design, execution, retest, coordination. */
+    totalHours: hours,
+    /** Execution time only, including data set-up. Gives minutes per case. */
+    executionHours: hours.optional(),
+    /** Cases designed in the cycle, with the hours spent designing them. */
+    designedCases: count.optional(),
+    designHours: hours.optional(),
+    /** Cases run again to confirm defect fixes. Gives the retest rate. */
+    retestedCases: count.optional(),
+    /** Measured productive hours per person per day. */
+    productiveHoursPerDay: z.number().min(0.5).max(24).optional(),
+    /** Optional split by group, for the groups the team tracked. */
+    groups: z
+      .array(z.object({ group: GroupKey, cases: count, hours }))
+      .max(60)
+      .refine((g) => new Set(g.map((x) => x.group)).size === g.length, {
+        message: 'Each group can appear only once.',
+      })
+      .default([]),
+  })
+  .refine((d) => (d.designHours === undefined) === (d.designedCases === undefined), {
+    path: ['designHours'],
+    message: 'Give design hours and designed cases together.',
+  })
+  .meta({ id: 'ActualsData' });
+export type ActualsData = z.infer<typeof ActualsData>;
+
+export const ActualsCreate = z
+  .object({
+    cycleLabel: z.string().trim().min(1).max(80),
+    data: ActualsData,
+    note: z.string().trim().max(2000).optional(),
+  })
+  .meta({
+    id: 'ActualsCreate',
+    example: {
+      cycleLabel: 'SIT cycle 1 · synthetic',
+      data: { executedCases: 3900, totalHours: 3800, executionHours: 1400, retestedCases: 700 },
+    },
+  });
+
+/** One compared figure. `pct` is null when the estimate is zero. */
+export const VarianceRow = z.object({
+  key: z.string(),
+  estimate: z.number().nullable(),
+  actual: z.number().nullable(),
+  delta: z.number().nullable(),
+  pct: z.number().nullable(),
+});
+/** A measured rate next to the assumption it informs (a person decides whether to change it). */
+export const RateRow = z.object({
+  key: z.enum(['minutesPerCase', 'designMinutesPerCase', 'retestRate', 'productiveHoursPerDay']),
+  /** The assumption's dotted path, as in profiles. */
+  path: z.string(),
+  /** The version's value; cases-by-complexity triples are shown as they are. */
+  assumption: z.union([z.number(), z.array(z.number())]),
+  actual: z.number().nullable(),
+});
+export const Variance = z
+  .object({
+    totals: z.array(VarianceRow),
+    groups: z.array(VarianceRow),
+    rates: z.array(RateRow),
+  })
+  .meta({ id: 'Variance' });
+export type Variance = z.infer<typeof Variance>;
+
+export const Actuals = z
+  .object({
+    id: Id,
+    versionNumber: z.number().int(),
+    cycleLabel: z.string(),
+    data: ActualsData,
+    note: z.string().nullable(),
+    recordedBy: UserRef,
+    recordedAt: IsoDateTime,
+    variance: Variance,
+  })
+  .meta({ id: 'Actuals' });
+export type Actuals = z.infer<typeof Actuals>;
+
+export const ActualsList = z.object({ items: z.array(Actuals) }).meta({ id: 'ActualsList' });
+
+// ---------- portfolio (release 3, R-01) ----------
+export const PortfolioQuery = z
+  .object({
+    /** Comma-separated project ids; default: every project the caller leads (Admin: all). */
+    projectIds: z
+      .string()
+      .optional()
+      .transform((s) => (s ? [...new Set(s.split(',').filter(Boolean))] : undefined))
+      .pipe(z.array(Id).max(100).optional()),
+    /** approved: the approved version of each estimate (QBR). latest: the newest saved version. */
+    status: z.enum(['approved', 'latest']).default('approved'),
+  })
+  .meta({ id: 'PortfolioQuery' });
+
+export const PortfolioRow = z.object({
+  projectId: Id,
+  projectKey: z.string(),
+  projectName: z.string(),
+  estimateId: Id,
+  estimateName: z.string(),
+  versionNumber: z.number().int(),
+  status: VersionStatus,
+  approvedAt: IsoDateTime.nullable(),
+  profileName: z.string().nullable(),
+  engineVersion: z.string(),
+  /** Detailed mode, from the version's stored result. */
+  fte: z.number(),
+  lo: z.number(),
+  hi: z.number(),
+  cases: z.number().int(),
+  hours: z.number(),
+  roughFte: z.number(),
+  uncalibrated: z.number().int(),
+});
+export type PortfolioRow = z.infer<typeof PortfolioRow>;
+
+export const PortfolioTotals = z.object({
+  estimates: z.number().int(),
+  fte: z.number(),
+  lo: z.number(),
+  hi: z.number(),
+  cases: z.number().int(),
+  hours: z.number(),
+  roughFte: z.number(),
+  /** Estimates whose assumptions are all still defaults. */
+  onDefaults: z.number().int(),
+});
+export type PortfolioTotals = z.infer<typeof PortfolioTotals>;
+
+export const Portfolio = z
+  .object({
+    status: z.enum(['approved', 'latest']),
+    projects: z.array(
+      z.object({
+        projectId: Id,
+        projectKey: z.string(),
+        projectName: z.string(),
+        rows: z.array(PortfolioRow),
+        subtotal: PortfolioTotals,
+      }),
+    ),
+    total: PortfolioTotals,
+    /** Assumption rows per estimate, for the calibration share. */
+    assumptionRows: z.number().int(),
+  })
+  .meta({ id: 'Portfolio' });
+export type Portfolio = z.infer<typeof Portfolio>;
+
+// ---------- admin and audit (release 3, H-01) ----------
+export const AuditQuery = PageQuery.extend({
+  /** Required for QE Leads (a project they lead); Admins may leave it out for all projects. */
+  projectId: Id.optional(),
+  entity: z.string().max(40).optional(),
+  /** Exact action, or a prefix ending in a dot, e.g. "estimate.version." */
+  action: z.string().max(80).optional(),
+  actorId: Id.optional(),
+  from: z.iso.date().optional(),
+  to: z.iso.date().optional(),
+}).meta({ id: 'AuditQuery' });
+
+export const AuditEventItem = z
+  .object({
+    id: Id,
+    at: IsoDateTime,
+    actor: UserRef,
+    action: z.string(),
+    entity: z.string(),
+    entityId: z.string(),
+    project: z.object({ id: Id, key: z.string(), name: z.string() }).nullable(),
+    detail: z.record(z.string(), z.unknown()),
+    requestId: z.string().nullable(),
+  })
+  .meta({ id: 'AuditEvent' });
+export type AuditEventItem = z.infer<typeof AuditEventItem>;
+export const AuditPage = page(AuditEventItem).meta({ id: 'AuditPage' });
+
+export const UserListQuery = PageQuery.extend({
+  /** Name or e-mail contains. */
+  q: z.string().trim().max(120).optional(),
+}).meta({ id: 'UserListQuery' });
+
+export const AdminUser = UserRef.extend({
+  /** From the Keycloak group sit-sizing-admins at each sign-in; read-only here. */
+  globalRole: GlobalRole,
+  active: z.boolean(),
+  createdAt: IsoDateTime,
+  lastLoginAt: IsoDateTime.nullable(),
+  memberships: z.array(z.object({ projectId: Id, projectKey: z.string(), role: ProjectRole })),
+}).meta({ id: 'AdminUser' });
+export type AdminUser = z.infer<typeof AdminUser>;
+export const UserPage = page(AdminUser).meta({ id: 'UserPage' });
+
+/** Only activation is managed in the app; identity and the Admin role live in Keycloak. */
+export const UserUpdate = z.object({ active: z.boolean() }).meta({ id: 'UserUpdate' });
 
 // ---------- misc ----------
 export const Health = z

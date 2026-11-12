@@ -15,6 +15,7 @@ import type { CurrentUser } from '../auth/current-user';
 import { clock } from '../clock';
 import { db, type DbOrTx } from '../db';
 import { versionDto } from '../dto';
+import { readStored } from '../stored';
 import { decideLock, holdsLock, lockExpiry } from '../domain/lock';
 import { HttpError } from '../http/route';
 import { recordAudit } from '../repositories/audit';
@@ -100,10 +101,10 @@ export async function createDraft(
         number: (last?.number ?? 0) + 1,
         status: 'DRAFT',
         // Recompute: the source may have been saved by an older engine (design 6.6).
-        ...snapshotData(
-          source.inputs as unknown as EstimateInputs,
-          source.assumptions as unknown as Assumptions,
-        ),
+        ...(() => {
+          const stored = readStored(source);
+          return snapshotData(stored.inputs, stored.assumptions);
+        })(),
         profileId: source.profileId,
         createdById: user.id,
         lockedById: user.id,
@@ -216,8 +217,9 @@ export async function patchDraft(
         rowVersion: draft.rowVersion,
       });
     }
-    const inputs = input.inputs ?? (draft.inputs as unknown as EstimateInputs);
-    const assumptions = input.assumptions ?? (draft.assumptions as unknown as Assumptions);
+    const stored = input.inputs && input.assumptions ? null : readStored(draft);
+    const inputs = input.inputs ?? stored!.inputs;
+    const assumptions = input.assumptions ?? stored!.assumptions;
     const now = clock.now();
     const updated = await tx.estimateVersion.updateMany({
       where: { id: draft.id, rowVersion: input.rowVersion, status: 'DRAFT' },
@@ -252,10 +254,10 @@ export async function saveVersion(
       where: { id: draft.id, rowVersion: draft.rowVersion, status: 'DRAFT' },
       data: {
         // Recompute at freeze time so the stored result matches the current engine.
-        ...snapshotData(
-          draft.inputs as unknown as EstimateInputs,
-          draft.assumptions as unknown as Assumptions,
-        ),
+        ...(() => {
+          const stored = readStored(draft);
+          return snapshotData(stored.inputs, stored.assumptions);
+        })(),
         status: 'SAVED',
         note: input.note ?? draft.note,
         rowVersion: { increment: 1 },

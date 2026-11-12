@@ -3,7 +3,6 @@ import type {
   Assumptions,
   EditLock,
   Estimate,
-  EstimateInputs,
   EstimateResult,
   Profile,
   ProfileDetail,
@@ -14,6 +13,7 @@ import type {
   VersionSummary,
 } from '@sit/schemas';
 import { activeHolder } from './domain/lock';
+import { readStored } from './stored';
 
 /** Row shapes as returned by the includes in repositories/includes.ts. */
 interface UserRow {
@@ -123,12 +123,16 @@ export function lockDto(
   return { holder: userRef(v.lockedBy), expiresAt: iso(v.lockExpiresAt), mine: holder === userId };
 }
 
-/** JSON columns were validated with Zod before they were written (design 5.2.1). */
+/**
+ * Inputs and assumptions are upgraded from their stored schema version on read (E-08);
+ * the stored result is what was computed at save time, with its engine version.
+ */
 export function versionDto(v: FullVersionRow, userId: string, now: Date): Version {
+  const stored = readStored(v);
   return {
     ...versionSummaryDto(v),
-    inputs: v.inputs as EstimateInputs,
-    assumptions: v.assumptions as Assumptions,
+    inputs: stored.inputs,
+    assumptions: stored.assumptions,
     result: v.result as EstimateResult,
     profileId: v.profileId,
     schemaVersion: v.schemaVersion,

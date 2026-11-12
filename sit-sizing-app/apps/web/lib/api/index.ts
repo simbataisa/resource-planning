@@ -1,7 +1,13 @@
 import {
+  AdminUser,
+  AuditPage,
+  UserPage,
+  Actuals,
+  ActualsList,
   Estimate,
   EstimateDetail,
   Me,
+  Portfolio,
   NotificationList,
   page,
   Profile,
@@ -10,6 +16,7 @@ import {
   ProjectDetail,
   Version,
   VersionCompare,
+  type ActualsCreate,
   type DraftCreate,
   type DraftPatch,
   type EstimateCreate,
@@ -81,9 +88,31 @@ export function createApi(http: AxiosInstance = defaultHttp) {
       /** Replace the draft's assumptions with a published profile (P-01). */
       applyProfile: (estimateId: string, body: In<typeof ProfileApply>) =>
         sendParsed(http, 'post', `/estimates/${estimateId}/draft/profile`, body, Version),
+      /** SIT cycles recorded against a version (release 3, P-02). */
+      actuals: (estimateId: string, n: number) =>
+        getParsed(http, `/estimates/${estimateId}/versions/${n}/actuals`, ActualsList),
+      recordActuals: (estimateId: string, n: number, body: In<typeof ActualsCreate>) =>
+        sendParsed(http, 'post', `/estimates/${estimateId}/versions/${n}/actuals`, body, Actuals),
+      deleteActuals: async (estimateId: string, n: number, id: string) => {
+        await http.delete(`/estimates/${estimateId}/versions/${n}/actuals/${id}`);
+      },
       compare: (estimateId: string, a: number, b: number) =>
         getParsed(http, `/estimates/${estimateId}/compare`, VersionCompare, { a, b }),
     },
+    /** Admin and audit (release 3, H-01). */
+    audit: (q: Record<string, string | number | undefined>) =>
+      getParsed(http, '/audit', AuditPage, q),
+    users: {
+      list: (q: { q?: string; cursor?: string }) => getParsed(http, '/users', UserPage, q),
+      setActive: (id: string, active: boolean) =>
+        sendParsed(http, 'patch', `/users/${id}`, { active }, AdminUser),
+    },
+    /** Portfolio roll-up for the QBR (release 3, R-01). */
+    portfolio: (q: { projectIds?: string[]; status: 'approved' | 'latest' }) =>
+      getParsed(http, '/portfolio', Portfolio, {
+        status: q.status,
+        ...(q.projectIds?.length ? { projectIds: q.projectIds.join(',') } : {}),
+      }),
     /** In-app notifications (release 2, N-01). */
     notifications: {
       list: () => getParsed(http, '/notifications', NotificationList),

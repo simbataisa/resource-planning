@@ -1,0 +1,667 @@
+{
+  "description": "A version stored with schemaVersion 1 (release 1), as Postgres jsonb returns it: the worked example with default assumptions. Do not edit: upgrades must keep reading it.",
+  "schemaVersion": 1,
+  "engineVersion": "1.0.0",
+  "inputs": {
+    "a11y": true,
+    "team": {
+      "ai": 0,
+      "env": 1,
+      "mix": {
+        "mid": 50,
+        "junior": 30,
+        "senior": 20
+      },
+      "weeks": 6,
+      "aiSmes": 2,
+      "aiIters": 4,
+      "automation": 0
+    },
+    "detail": {
+      "ai": {
+        "ocr": [
+          0,
+          0,
+          0
+        ],
+        "rag": 3,
+        "hitl": 2,
+        "guard": 6,
+        "tools": 3,
+        "intent": [
+          3,
+          4,
+          2
+        ]
+      },
+      "pt": {
+        "scen": [
+          2,
+          4,
+          2
+        ],
+        "dataHeavy": 2
+      },
+      "api": [
+        8,
+        14,
+        8
+      ],
+      "data": {
+        "dq": 24,
+        "scd": 1,
+        "feed": [
+          1,
+          1,
+          0
+        ],
+        "pipe": [
+          1,
+          2,
+          1
+        ],
+        "table": [
+          3,
+          4,
+          2
+        ],
+        "report": [
+          1,
+          1,
+          1
+        ],
+        "columns": 140,
+        "secured": 3,
+        "accessRoles": 4
+      },
+      "rule": [
+        10,
+        18,
+        12
+      ],
+      "batch": [
+        1,
+        2,
+        1
+      ],
+      "event": [
+        2,
+        3,
+        1
+      ],
+      "roles": 6,
+      "fields": 140,
+      "screen": [
+        5,
+        8,
+        3
+      ],
+      "actions": 14,
+      "journey": [
+        2,
+        4,
+        3
+      ],
+      "critical": 12,
+      "variants": 3,
+      "workflow": [
+        1,
+        2,
+        1
+      ],
+      "approvals": 2,
+      "languages": 2,
+      "reqFields": 0,
+      "fieldTypes": {
+        "url": 0,
+        "date": 0,
+        "enum": 0,
+        "file": 0,
+        "iban": 0,
+        "text": 0,
+        "email": 0,
+        "image": 0,
+        "phone": 0,
+        "radio": 0,
+        "account": 0,
+        "boolean": 0,
+        "decimal": 0,
+        "integer": 0,
+        "taxCode": 0,
+        "checkbox": 0,
+        "currency": 0,
+        "datetime": 0,
+        "password": 0,
+        "citizenId": 0,
+        "percentage": 0
+      },
+      "respFields": 0,
+      "integration": [
+        1,
+        4,
+        4
+      ]
+    },
+    "ptTypes": {
+      "load": true,
+      "soak": true,
+      "spike": true,
+      "stress": true,
+      "failover": false
+    },
+    "channels": {
+      "ios": true,
+      "web2": false,
+      "android": true
+    },
+    "evidence": {
+      "apm": true,
+      "ptCI": false,
+      "dqCov": 50,
+      "feMut": 55,
+      "valBE": 100,
+      "valFE": 80,
+      "evalCI": true,
+      "feUnit": 75,
+      "jacoco": 82,
+      "mapCov": 70,
+      "iosUnit": 65,
+      "ptReuse": 0,
+      "ruleCov": 60,
+      "mutation": 62,
+      "androidUnit": 72,
+      "contractCov": 40,
+      "goldenReuse": 0
+    },
+    "features": [
+      {
+        "cx": 1,
+        "pt": true,
+        "qty": 1,
+        "name": "Example · Customer onboarding",
+        "size": "L"
+      },
+      {
+        "cx": 0,
+        "qty": 1,
+        "name": "Example · Account maintenance",
+        "size": "M"
+      },
+      {
+        "cx": 2,
+        "pt": true,
+        "qty": 1,
+        "name": "Example · Fund transfer",
+        "size": "L"
+      },
+      {
+        "cx": 0,
+        "qty": 1,
+        "name": "Example · Notifications",
+        "size": "S"
+      },
+      {
+        "cx": 1,
+        "qty": 1,
+        "name": "Example · Back-office approvals",
+        "size": "M"
+      },
+      {
+        "cx": 1,
+        "qty": 1,
+        "name": "Example · Transaction data mart",
+        "size": "M",
+        "type": "data"
+      },
+      {
+        "cx": 1,
+        "pt": true,
+        "qty": 1,
+        "name": "Example · Customer service chatbot",
+        "size": "M",
+        "type": "ai"
+      }
+    ],
+    "includeL4": true,
+    "roughRoles": 5,
+    "roughVariants": 2,
+    "roughLanguages": 2
+  },
+  "assumptions": {
+    "dDq": 2,
+    "band": {
+      "rough": 0.4,
+      "detailed": 0.15
+    },
+    "dCol": 1.5,
+    "dScd": 2,
+    "aiAdv": 40,
+    "aiUtt": [
+      20,
+      35,
+      50
+    ],
+    "cases": {
+      "api": [
+        4,
+        6,
+        10
+      ],
+      "rule": [
+        2,
+        4,
+        8
+      ],
+      "batch": [
+        5,
+        8,
+        12
+      ],
+      "event": [
+        4,
+        6,
+        9
+      ],
+      "screen": [
+        5,
+        8,
+        12
+      ],
+      "journey": [
+        3,
+        5,
+        8
+      ],
+      "integration": [
+        6,
+        10,
+        16
+      ]
+    },
+    "dFeed": [
+      3,
+      4,
+      6
+    ],
+    "dPipe": [
+      4,
+      6,
+      9
+    ],
+    "aiRagQ": 15,
+    "cycles": 2,
+    "dTable": [
+      2,
+      3,
+      4
+    ],
+    "ftypes": {
+      "url": {
+        "mix": 0,
+        "cases": 14
+      },
+      "date": {
+        "mix": 10,
+        "cases": 14
+      },
+      "enum": {
+        "mix": 15,
+        "cases": 3
+      },
+      "file": {
+        "mix": 0,
+        "cases": 16
+      },
+      "iban": {
+        "mix": 0,
+        "cases": 16
+      },
+      "text": {
+        "mix": 30,
+        "cases": 15
+      },
+      "email": {
+        "mix": 2,
+        "cases": 15
+      },
+      "image": {
+        "mix": 0,
+        "cases": 16
+      },
+      "phone": {
+        "mix": 3,
+        "cases": 16
+      },
+      "radio": {
+        "mix": 3,
+        "cases": 3
+      },
+      "account": {
+        "mix": 4,
+        "cases": 16
+      },
+      "boolean": {
+        "mix": 3,
+        "cases": 4
+      },
+      "decimal": {
+        "mix": 15,
+        "cases": 16
+      },
+      "integer": {
+        "mix": 5,
+        "cases": 13
+      },
+      "taxCode": {
+        "mix": 3,
+        "cases": 16
+      },
+      "checkbox": {
+        "mix": 4,
+        "cases": 3
+      },
+      "currency": {
+        "mix": 0,
+        "cases": 18
+      },
+      "datetime": {
+        "mix": 0,
+        "cases": 14
+      },
+      "password": {
+        "mix": 0,
+        "cases": 17
+      },
+      "citizenId": {
+        "mix": 3,
+        "cases": 18
+      },
+      "percentage": {
+        "mix": 0,
+        "cases": 16
+      }
+    },
+    "ptRuns": {
+      "load": 3,
+      "soak": 1,
+      "spike": 1,
+      "stress": 2,
+      "failover": 1
+    },
+    "retest": 0.2,
+    "dReport": [
+      4,
+      6,
+      8
+    ],
+    "minutes": [
+      10,
+      20,
+      40
+    ],
+    "proxies": {
+      "L": {
+        "api": 8,
+        "rule": 10,
+        "batch": 1,
+        "event": 2,
+        "field": 30,
+        "screen": 4,
+        "actions": 3,
+        "journey": 2,
+        "workflow": 1,
+        "integration": 2
+      },
+      "M": {
+        "api": 4,
+        "rule": 5,
+        "batch": 1,
+        "event": 1,
+        "field": 15,
+        "screen": 2,
+        "actions": 2,
+        "journey": 1,
+        "workflow": 1,
+        "integration": 1
+      },
+      "S": {
+        "api": 2,
+        "rule": 2,
+        "batch": 0,
+        "event": 0,
+        "field": 6,
+        "screen": 1,
+        "actions": 1,
+        "journey": 1,
+        "workflow": 0,
+        "integration": 0
+      },
+      "XL": {
+        "api": 14,
+        "rule": 18,
+        "batch": 2,
+        "event": 4,
+        "field": 55,
+        "screen": 7,
+        "actions": 5,
+        "journey": 3,
+        "workflow": 2,
+        "integration": 3
+      }
+    },
+    "aproxies": {
+      "L": {
+        "ocr": 2,
+        "rag": 5,
+        "hitl": 3,
+        "guard": 6,
+        "tools": 5,
+        "intent": 15
+      },
+      "M": {
+        "ocr": 1,
+        "rag": 3,
+        "hitl": 2,
+        "guard": 6,
+        "tools": 3,
+        "intent": 8
+      },
+      "S": {
+        "ocr": 0,
+        "rag": 1,
+        "hitl": 1,
+        "guard": 4,
+        "tools": 1,
+        "intent": 3
+      },
+      "XL": {
+        "ocr": 4,
+        "rag": 8,
+        "hitl": 4,
+        "guard": 8,
+        "tools": 8,
+        "intent": 25
+      }
+    },
+    "capacity": [
+      0.7,
+      1,
+      1.2
+    ],
+    "dataExec": 5,
+    "dproxies": {
+      "L": {
+        "dq": 40,
+        "scd": 3,
+        "feed": 4,
+        "pipe": 6,
+        "table": 15,
+        "report": 4,
+        "columns": 260,
+        "secured": 5
+      },
+      "M": {
+        "dq": 20,
+        "scd": 1,
+        "feed": 2,
+        "pipe": 3,
+        "table": 8,
+        "report": 2,
+        "columns": 120,
+        "secured": 3
+      },
+      "S": {
+        "dq": 6,
+        "scd": 0,
+        "feed": 1,
+        "pipe": 1,
+        "table": 3,
+        "report": 1,
+        "columns": 40,
+        "secured": 1
+      },
+      "XL": {
+        "dq": 80,
+        "scd": 5,
+        "feed": 7,
+        "pipe": 10,
+        "table": 28,
+        "report": 8,
+        "columns": 480,
+        "secured": 8
+      }
+    },
+    "dtoReuse": 0.3,
+    "overhead": 0.15,
+    "ptCycles": 3,
+    "ptEnvApm": 8,
+    "ptNfrPer": 2,
+    "ptReport": 16,
+    "ptScript": [
+      4,
+      8,
+      16
+    ],
+    "sampleBE": 1,
+    "sampleFE": 1,
+    "sodCases": 2,
+    "a11yCases": 2,
+    "designFSD": 15,
+    "envFactor": [
+      1,
+      1.1,
+      1.25,
+      1.4
+    ],
+    "feMutGate": 60,
+    "ptDataPer": 4,
+    "ptEnvDays": 2,
+    "reqFields": [
+      5,
+      10,
+      20
+    ],
+    "valCycles": 1,
+    "valDesign": 2,
+    "valExecUI": 3,
+    "aiLabelAdv": 2,
+    "aiLabelOcr": 4,
+    "aiLabelRag": 6,
+    "aiLabelUtt": 2,
+    "dataCycles": 3,
+    "dataDesign": 10,
+    "dataSample": 0.1,
+    "feUnitGate": 80,
+    "gatedShare": 0.5,
+    "mobileExec": 1.3,
+    "ptAnalysis": 0.5,
+    "ptCyclesCI": 2,
+    "ptEnvHours": 24,
+    "ptNfrFixed": 16,
+    "ptRunHours": {
+      "load": 4,
+      "soak": 12,
+      "spike": 2,
+      "stress": 4,
+      "failover": 4
+    },
+    "regression": 0.3,
+    "respFields": [
+      8,
+      15,
+      30
+    ],
+    "retestWeak": 0.3,
+    "ruleUplift": 0.25,
+    "valExecAPI": 2,
+    "aiDesignCut": [
+      0,
+      0.2,
+      0.4
+    ],
+    "aiHitlCases": 4,
+    "aiReviewMin": 2,
+    "aiToolCases": 8,
+    "daysPerWeek": 5,
+    "designNoFSD": 25,
+    "deviceExtra": 0.2,
+    "eventFields": 12,
+    "feMutUplift": 0.15,
+    "formatShare": 0.4,
+    "hoursPerDay": 6,
+    "mapPerField": 1,
+    "mobileCases": [
+      4,
+      6,
+      9
+    ],
+    "ptDataFixed": 8,
+    "ptRoughScen": {
+      "L": 3,
+      "M": 2,
+      "S": 1,
+      "XL": 5
+    },
+    "transitions": [
+      3,
+      6,
+      10
+    ],
+    "wiringCases": 1,
+    "aiOcrSamples": [
+      50,
+      100,
+      200
+    ],
+    "aiReviewAuto": 0.2,
+    "apiOnlyCases": 4,
+    "deviceCombos": 3,
+    "invalidShare": 0.3,
+    "mobileUplift": 0.2,
+    "mutationGate": 70,
+    "partialShare": 0.5,
+    "qeLabelShare": 0.5,
+    "releaseCases": 6,
+    "roleSampling": 0.5,
+    "variantShare": 0.4,
+    "channelShares": {
+      "ios": 0.6,
+      "web2": 0.4,
+      "android": 0.6
+    },
+    "criticalShare": 0.3,
+    "dataPrepHours": 2,
+    "feLogicUplift": 0.2,
+    "languageShare": 0.2,
+    "ptMobileFixed": 8,
+    "aiReviewManual": 0.6,
+    "mobileUnitGate": 70,
+    "aiAnalysisHours": 6,
+    "dAccessSampling": 0.5,
+    "variantSampling": 0.3,
+    "dataDaysPerCycle": 2,
+    "roleCasesPerPair": 2,
+    "mobileDesignShare": 0.3,
+    "roughApprovalShare": 0.5
+  }
+}

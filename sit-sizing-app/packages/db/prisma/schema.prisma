@@ -221,14 +221,16 @@ model Actuals {
   id           String   @id @default(cuid())
   versionId    String
   cycleLabel   String   @db.VarChar(80)
-  /// Cases, hours and rates per group
+  /// zod: ActualsData (cases, hours, rates, per group)
   data         Json
+  note         String?  @db.VarChar(2000)
   recordedById String
   recordedAt   DateTime @default(now())
 
   version    EstimateVersion @relation(fields: [versionId], references: [id])
   recordedBy User            @relation(fields: [recordedById], references: [id])
 
+  @@unique([versionId, cycleLabel])
   @@index([versionId])
 }
 

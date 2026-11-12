@@ -9,7 +9,10 @@
     "language": "Ngôn ngữ",
     "sessionMenu": "Tài khoản",
     "signedInAs": "Đang đăng nhập với {name}",
-    "profiles": "Hồ sơ"
+    "profiles": "Hồ sơ",
+    "portfolio": "Danh mục",
+    "audit": "Nhật ký",
+    "users": "Người dùng"
   },
   "common": {
     "loading": "Đang tải…",
@@ -1675,7 +1678,8 @@
       "none": "Hai phiên bản có cùng dữ liệu đầu vào và giả định.",
       "truncated": "Chỉ liệt kê 500 thay đổi đầu tiên.",
       "empty": "(không có)"
-    }
+    },
+    "actuals": "Số liệu thực tế"
   },
   "profiles": {
     "title": "Hồ sơ giả định",
@@ -1807,6 +1811,198 @@
       "APPROVED": "{actor} đã phê duyệt {estimate} v{version} ({project}).",
       "RETURNED": "{actor} đã trả lại {estimate} v{version} ({project}) kèm ghi chú.",
       "PROFILE_PUBLISHED": "{actor} đã phát hành hồ sơ giả định {profile} ({project})."
+    }
+  },
+  "actuals": {
+    "back": "Quay lại {name}",
+    "title": "Số liệu thực tế cho phiên bản {n}",
+    "description": "Những gì mỗi chu kỳ SIT đo được, bên cạnh ước tính đã phê duyệt này.",
+    "notApproved": "Số liệu thực tế được ghi nhận cho phiên bản đã phê duyệt. Hãy phê duyệt phiên bản này trước.",
+    "emptyTitle": "Chưa ghi nhận chu kỳ nào",
+    "emptyBody": "Sau mỗi chu kỳ SIT, ghi nhận số liệu đo được để xem chênh lệch so với ước tính.",
+    "cycle": "Chu kỳ SIT",
+    "recorded": "{name} ghi nhận, {when}",
+    "remove": "Xoá",
+    "keep": "Giữ lại",
+    "confirmRemove": "Xoá bản ghi này",
+    "measure": "Chỉ số",
+    "estimate": "Ước tính",
+    "actual": "Thực tế",
+    "variance": "Chênh lệch",
+    "totals": {
+      "cases": "Ca kiểm thử",
+      "hours": "Giờ"
+    },
+    "ratesTitle": "Tỷ lệ đo được và giả định liên quan",
+    "ratesHint": "So sánh từng tỷ lệ đo được với giá trị phiên bản này dùng. Nếu team đồng ý, đưa giá trị đo được vào hồ sơ giả định với chu kỳ này là nguồn, rồi phát hành. Không có gì tự động thay đổi.",
+    "rate": "Tỷ lệ",
+    "assumption": "Giả định",
+    "inVersion": "Trong phiên bản này",
+    "measured": "Đo được",
+    "notMeasured": "Chưa đo",
+    "rates": {
+      "minutesPerCase": "Phút thực thi mỗi case",
+      "designMinutesPerCase": "Phút thiết kế mỗi case",
+      "retestRate": "Tỷ lệ retest",
+      "productiveHoursPerDay": "Giờ hiệu quả mỗi ngày"
+    },
+    "toProfiles": "Mở hồ sơ giả định",
+    "form": {
+      "title": "Ghi nhận một chu kỳ",
+      "hint": "Dùng số liệu đo của chính team. Bắt buộc nhập số ca kiểm thử và tổng giờ; các mục còn lại cho ra tỷ lệ đo được.",
+      "cycleLabel": "Tên chu kỳ",
+      "optional": "(không bắt buộc)",
+      "executedCases": "Số ca kiểm thử đã thực thi",
+      "totalHours": "Tổng giờ SIT",
+      "executionHours": "Giờ thực thi",
+      "designedCases": "Số ca kiểm thử đã thiết kế",
+      "designHours": "Giờ thiết kế",
+      "retestedCases": "Số ca chạy lại sau khi sửa lỗi",
+      "productiveHoursPerDay": "Giờ hiệu quả mỗi ngày",
+      "groups": "Chia theo nhóm (không bắt buộc)",
+      "groupCases": "Số ca",
+      "groupHours": "Số giờ",
+      "removeGroup": "Xoá",
+      "addGroup": "Thêm nhóm",
+      "pickGroup": "Chọn nhóm",
+      "note": "Ghi chú (không bắt buộc)",
+      "submit": "Ghi nhận chu kỳ",
+      "labelRequired": "Nhập tên chu kỳ.",
+      "totalsRequired": "Nhập số ca kiểm thử đã thực thi và tổng giờ SIT."
+    }
+  },
+  "portfolio": {
+    "title": "Danh mục",
+    "description": "Các ước tính trong các dự án của bạn cho QBR: mỗi ước tính một dòng, kèm tổng phụ theo dự án và tổng cộng.",
+    "csv": "Tải CSV",
+    "forbidden": "Danh mục dành cho QE Lead và Quản trị viên.",
+    "statusLabel": "Phiên bản",
+    "statusApproved": "Phiên bản đã phê duyệt",
+    "statusLatest": "Phiên bản đã lưu mới nhất của mỗi ước tính",
+    "projects": "Dự án",
+    "projectsHint": "Không chọn: tất cả dự án bạn phụ trách.",
+    "emptyTitle": "Chưa có gì để tổng hợp",
+    "emptyApproved": "Chưa có ước tính nào trong các dự án này được phê duyệt. Chuyển sang phiên bản đã lưu mới nhất để xem công việc đang làm.",
+    "emptyLatest": "Chưa có ước tính nào trong các dự án này có phiên bản đã lưu.",
+    "totalsLabel": "Tổng của danh mục",
+    "subtotal": "Tổng phụ",
+    "subtotalOf": "Tổng phụ · {project}",
+    "total": "Tổng cộng",
+    "rangeNote": "Khoảng ước lượng cộng cận dưới với cận dưới và cận trên với cận trên: giả định các ước tính biến động cùng chiều, cho khoảng rộng nhất một cách trung thực. Số liệu là kết quả đã lưu của từng phiên bản.",
+    "cards": {
+      "detailed": "Chi tiết · có FSD",
+      "rough": "Sơ bộ · chưa có FSD",
+      "range": "khoảng {lo} – {hi} FTE",
+      "detail": "{c} ca · {h} giờ",
+      "estimates": "Ước tính",
+      "estimatesDetail": "trong các dự án đã chọn",
+      "calibration": "Dùng giá trị đã hiệu chỉnh",
+      "of": "trên {n}",
+      "calibrationDetail": "ước tính có ít nhất một trong {n} giả định đã hiệu chỉnh"
+    },
+    "cols": {
+      "project": "Dự án",
+      "estimate": "Ước tính",
+      "version": "Phiên bản",
+      "status": "Trạng thái",
+      "profile": "Hồ sơ giả định",
+      "uncalibrated": "Chưa hiệu chỉnh",
+      "fte": "FTE chi tiết",
+      "lo": "FTE thấp",
+      "hi": "FTE cao",
+      "range": "Khoảng (FTE)",
+      "cases": "Số ca",
+      "hours": "Số giờ",
+      "roughFte": "FTE sơ bộ"
+    }
+  },
+  "engine": {
+    "title": "Được tính bằng engine {old}",
+    "body": "Phiên bản này giữ kết quả do engine {old} tính. Engine hiện tại là {current}. Tính lại thành bản nháp mới để xem thay đổi ảnh hưởng thế nào đến số liệu; phiên bản này vẫn giữ nguyên.",
+    "recompute": "Tính lại thành bản nháp mới",
+    "recomputing": "Đang tính lại…",
+    "draftExists": "Hãy hoàn tất hoặc lưu bản nháp đang mở trước, rồi tính lại từ phiên bản này.",
+    "badge": "engine {old}",
+    "badgeTitle": "Được tính bằng engine {old}, không phải engine hiện tại"
+  },
+  "audit": {
+    "title": "Nhật ký kiểm tra",
+    "description": "Ai đã làm gì và khi nào, mới nhất trước. Mỗi bản ghi giữ mã yêu cầu để hỗ trợ tra cứu.",
+    "forbidden": "Nhật ký kiểm tra dành cho QE Lead (dự án của họ) và Quản trị viên.",
+    "project": "Dự án",
+    "allProjects": "Tất cả dự án và sự kiện chung",
+    "action": "Hành động",
+    "anyAction": "Mọi hành động",
+    "actions": {
+      "estimate": "Ước tính",
+      "estimate_version": "Phiên bản và phê duyệt",
+      "estimate_draft": "Bản nháp và khoá chỉnh sửa",
+      "profile": "Hồ sơ giả định",
+      "actuals": "Số liệu thực tế",
+      "project": "Dự án và thành viên",
+      "user": "Người dùng và đăng nhập"
+    },
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "emptyTitle": "Không có sự kiện",
+    "emptyBody": "Không có gì khớp với bộ lọc này.",
+    "more": "Xem sự kiện cũ hơn",
+    "cols": {
+      "when": "Thời điểm",
+      "who": "Người thực hiện",
+      "action": "Hành động",
+      "project": "Dự án",
+      "detail": "Chi tiết"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Người dùng",
+      "description": "Tất cả người đã đăng nhập, kèm vai trò trong các dự án.",
+      "forbidden": "Chỉ Quản trị viên quản lý người dùng.",
+      "keycloakNote": "Tài khoản, mật khẩu và vai trò Quản trị viên được quản lý trong Keycloak: thêm hoặc bỏ người dùng khỏi nhóm sit-sizing-admins ở đó, thay đổi có hiệu lực ở lần đăng nhập kế tiếp. Tại đây bạn có thể vô hiệu hoá người dùng trong ứng dụng này; họ bị từ chối ngay lập tức.",
+      "search": "Tìm theo tên hoặc e-mail",
+      "emptyTitle": "Không tìm thấy người dùng",
+      "emptyBody": "Người dùng xuất hiện ở đây sau lần đăng nhập đầu tiên.",
+      "admin": "Quản trị viên",
+      "user": "Người dùng",
+      "active": "Đang hoạt động",
+      "inactive": "Đã vô hiệu hoá",
+      "you": "Bạn",
+      "deactivate": "Vô hiệu hoá",
+      "activate": "Kích hoạt lại",
+      "confirmDeactivate": "Vô hiệu hoá {name}",
+      "confirmActivate": "Kích hoạt lại {name}",
+      "cancel": "Huỷ",
+      "more": "Xem thêm",
+      "cols": {
+        "name": "Tên",
+        "role": "Vai trò chung",
+        "projects": "Dự án",
+        "lastSignIn": "Đăng nhập gần nhất",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      }
+    },
+    "members": {
+      "title": "Thành viên",
+      "person": "Người",
+      "role": "Vai trò trong dự án",
+      "actions": "Thao tác",
+      "pending": "Chưa đăng nhập",
+      "roleFor": "Vai trò trong dự án của {who}",
+      "removeWho": "Xoá {who}",
+      "email": "E-mail công việc",
+      "newRole": "Vai trò",
+      "add": "Thêm",
+      "hint": "Chỉ thêm được người đã đăng nhập SIT Sizing ít nhất một lần. Mỗi dự án cần ít nhất một QE Lead.",
+      "save": "Lưu thành viên",
+      "saving": "Đang lưu…",
+      "discard": "Bỏ thay đổi",
+      "badEmail": "Nhập địa chỉ e-mail công việc.",
+      "duplicate": "Người này đã có trong danh sách.",
+      "needLead": "Giữ ít nhất một QE Lead.",
+      "notSignedIn": "Những người này chưa đăng nhập: {emails}. Hãy nhờ họ đăng nhập một lần rồi thêm lại."
     }
   }
 }

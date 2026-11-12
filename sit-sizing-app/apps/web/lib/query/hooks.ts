@@ -1,7 +1,8 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  ActualsCreate,
   DraftPatch,
   EstimateCreate,
   ProfileCreate,
@@ -164,4 +165,67 @@ export function useMarkNotifications() {
     read: useMutation({ mutationFn: (id: string) => api.notifications.read(id), onSuccess: done }),
     readAll: useMutation({ mutationFn: () => api.notifications.readAll(), onSuccess: done }),
   };
+}
+
+/** SIT cycles recorded against a version, with their variance (P-02). */
+export const useActuals = (estimateId: string, n: number) =>
+  useQuery({
+    queryKey: qk.actuals(estimateId, n),
+    queryFn: () => api.estimates.actuals(estimateId, n),
+  });
+
+export function useRecordActuals(estimateId: string, n: number) {
+  const qc = useQueryClient();
+  const refresh = () => qc.invalidateQueries({ queryKey: qk.actuals(estimateId, n) });
+  return {
+    record: useMutation({
+      mutationFn: (body: z.input<typeof ActualsCreate>) =>
+        api.estimates.recordActuals(estimateId, n, body),
+      onSuccess: refresh,
+    }),
+    remove: useMutation({
+      mutationFn: (id: string) => api.estimates.deleteActuals(estimateId, n, id),
+      onSuccess: refresh,
+    }),
+  };
+}
+
+/** Portfolio roll-up (R-01). */
+export const usePortfolio = (q: { projectIds?: string[]; status: 'approved' | 'latest' }) =>
+  useQuery({ queryKey: qk.portfolio(q), queryFn: () => api.portfolio(q) });
+
+/** Audit events, newest first, a page at a time (H-01). */
+export const useAudit = (q: Record<string, string | undefined>) =>
+  useInfiniteQuery({
+    queryKey: qk.audit(q),
+    queryFn: ({ pageParam }) => api.audit({ ...q, cursor: pageParam, limit: 50 }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+
+/** Everyone who has signed in (Admin), a page at a time. */
+export const useUsers = (search: string) =>
+  useInfiniteQuery({
+    queryKey: qk.users({ search }),
+    queryFn: ({ pageParam }) => api.users.list({ q: search || undefined, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+
+export function useSetUserActive() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; active: boolean }) => api.users.setActive(v.id, v.active),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}
+
+/** Replace a project's members (existing PUT /projects/{id}/members). */
+export function usePutMembers(projectId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (members: { email: string; role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' }[]) =>
+      api.projects.putMembers(projectId, { members }),
+    onSuccess: (p) => qc.setQueryData(qk.project(projectId), p),
+  });
 }

@@ -16,3 +16,10 @@ export {
   ModeSummary,
 } from './result';
 export * from './api';
+export {
+  StoredPayloadError,
+  UPGRADES,
+  upgradeStored,
+  type StoredPayload,
+  type UpgradeStep,
+} from './upgrade';
