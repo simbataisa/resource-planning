@@ -9,7 +9,8 @@
     "language": "Ngôn ngữ",
     "sessionMenu": "Tài khoản",
     "signedInAs": "Đang đăng nhập với {name}",
-    "profiles": "Hồ sơ"
+    "profiles": "Hồ sơ",
+    "portfolio": "Danh mục"
   },
   "common": {
     "loading": "Đang tải…",
@@ -1866,6 +1867,51 @@
       "submit": "Ghi nhận chu kỳ",
       "labelRequired": "Nhập tên chu kỳ.",
       "totalsRequired": "Nhập số ca kiểm thử đã thực thi và tổng giờ SIT."
+    }
+  },
+  "portfolio": {
+    "title": "Danh mục",
+    "description": "Các ước tính trong các dự án của bạn cho QBR: mỗi ước tính một dòng, kèm tổng phụ theo dự án và tổng cộng.",
+    "csv": "Tải CSV",
+    "forbidden": "Danh mục dành cho QE Lead và Quản trị viên.",
+    "statusLabel": "Phiên bản",
+    "statusApproved": "Phiên bản đã phê duyệt",
+    "statusLatest": "Phiên bản đã lưu mới nhất của mỗi ước tính",
+    "projects": "Dự án",
+    "projectsHint": "Không chọn: tất cả dự án bạn phụ trách.",
+    "emptyTitle": "Chưa có gì để tổng hợp",
+    "emptyApproved": "Chưa có ước tính nào trong các dự án này được phê duyệt. Chuyển sang phiên bản đã lưu mới nhất để xem công việc đang làm.",
+    "emptyLatest": "Chưa có ước tính nào trong các dự án này có phiên bản đã lưu.",
+    "totalsLabel": "Tổng của danh mục",
+    "subtotal": "Tổng phụ",
+    "subtotalOf": "Tổng phụ · {project}",
+    "total": "Tổng cộng",
+    "rangeNote": "Khoảng ước lượng cộng cận dưới với cận dưới và cận trên với cận trên: giả định các ước tính biến động cùng chiều, cho khoảng rộng nhất một cách trung thực. Số liệu là kết quả đã lưu của từng phiên bản.",
+    "cards": {
+      "detailed": "Chi tiết · có FSD",
+      "rough": "Sơ bộ · chưa có FSD",
+      "range": "khoảng {lo} – {hi} FTE",
+      "detail": "{c} ca · {h} giờ",
+      "estimates": "Ước tính",
+      "estimatesDetail": "trong các dự án đã chọn",
+      "calibration": "Dùng giá trị đã hiệu chỉnh",
+      "of": "trên {n}",
+      "calibrationDetail": "ước tính có ít nhất một trong {n} giả định đã hiệu chỉnh"
+    },
+    "cols": {
+      "project": "Dự án",
+      "estimate": "Ước tính",
+      "version": "Phiên bản",
+      "status": "Trạng thái",
+      "profile": "Hồ sơ giả định",
+      "uncalibrated": "Chưa hiệu chỉnh",
+      "fte": "FTE chi tiết",
+      "lo": "FTE thấp",
+      "hi": "FTE cao",
+      "range": "Khoảng (FTE)",
+      "cases": "Số ca",
+      "hours": "Số giờ",
+      "roughFte": "FTE sơ bộ"
     }
   }
 }

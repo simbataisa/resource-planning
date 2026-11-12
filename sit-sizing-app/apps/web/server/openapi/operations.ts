@@ -31,6 +31,8 @@ import {
   ActualsList,
   Actuals,
   CompareQuery,
+  Portfolio,
+  PortfolioQuery,
   NotificationList,
   ExportQuery,
 } from '@sit/schemas';
@@ -520,6 +522,36 @@ export const OPERATIONS: Operation[] = [
     bodyExample: { profileId: 'cm0profile0000000000000', rowVersion: 3 },
     success: { status: 200, description: 'The updated draft', schema: Version },
     errors: [...WRITE, 422],
+  },
+  {
+    method: 'get',
+    path: '/portfolio',
+    operationId: 'getPortfolio',
+    tag: 'Portfolio',
+    minRole: 'QE_LEAD',
+    summary: 'Roll-up of estimates across projects for the QBR',
+    description:
+      "One row per estimate: its approved version (status=approved) or newest saved version (status=latest), from the stored result. Totals are the sums of the rows; ranges sum low with low and high with high. QE Leads see the projects they lead (another project's id is a 404); Admins see all.",
+    query: PortfolioQuery,
+    success: {
+      status: 200,
+      description: 'Projects with subtotals, and the total',
+      schema: Portfolio,
+    },
+    errors: [400, 401, 403, 404],
+  },
+  {
+    method: 'get',
+    path: '/portfolio/export',
+    operationId: 'exportPortfolio',
+    tag: 'Portfolio',
+    minRole: 'QE_LEAD',
+    summary: 'The portfolio as CSV',
+    description:
+      'Same rows, subtotals and total as GET /portfolio. Optional lang=en|vi for headers.',
+    query: PortfolioQuery,
+    success: { status: 200, description: 'CSV attachment', files: ['text/csv'] },
+    errors: [400, 401, 403, 404],
   },
   {
     method: 'get',

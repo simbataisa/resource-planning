@@ -4,6 +4,7 @@ import {
   Estimate,
   EstimateDetail,
   Me,
+  Portfolio,
   NotificationList,
   page,
   Profile,
@@ -95,6 +96,12 @@ export function createApi(http: AxiosInstance = defaultHttp) {
       compare: (estimateId: string, a: number, b: number) =>
         getParsed(http, `/estimates/${estimateId}/compare`, VersionCompare, { a, b }),
     },
+    /** Portfolio roll-up for the QBR (release 3, R-01). */
+    portfolio: (q: { projectIds?: string[]; status: 'approved' | 'latest' }) =>
+      getParsed(http, '/portfolio', Portfolio, {
+        status: q.status,
+        ...(q.projectIds?.length ? { projectIds: q.projectIds.join(',') } : {}),
+      }),
     /** In-app notifications (release 2, N-01). */
     notifications: {
       list: () => getParsed(http, '/notifications', NotificationList),

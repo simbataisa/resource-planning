@@ -15,6 +15,7 @@ const updateLocale = vi.hoisted(() => ({ mutate: vi.fn() }));
 vi.mock('@/lib/query/hooks', () => ({
   useUpdateLocale: () => updateLocale,
   useNotifications: () => ({ data: { items: [], unread: 0 } }),
+  useMe: () => ({ data: undefined }),
   useMarkNotifications: () => ({ read: { mutate: vi.fn() }, readAll: { mutate: vi.fn() } }),
 }));
 

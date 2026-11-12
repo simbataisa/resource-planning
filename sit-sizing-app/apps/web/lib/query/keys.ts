@@ -9,6 +9,7 @@ export const qk = {
   compare: (estimateId: string, a: number, b: number) => ['compare', estimateId, a, b] as const,
   actuals: (estimateId: string, n: number) => ['actuals', estimateId, n] as const,
   notifications: ['notifications'] as const,
+  portfolio: (q: object) => ['portfolio', q] as const,
   profiles: (projectId?: string) => ['profiles', projectId ?? null] as const,
   profile: (id: string) => ['profile', id] as const,
 };

@@ -36,6 +36,7 @@ const EXPECTED: Record<Action, { VIEWER: boolean; ESTIMATOR: boolean; QE_LEAD: b
   'profile.project.manage': { VIEWER: false, ESTIMATOR: false, QE_LEAD: true },
   'actuals.read': { VIEWER: true, ESTIMATOR: true, QE_LEAD: true },
   'actuals.record': { VIEWER: false, ESTIMATOR: true, QE_LEAD: true },
+  'portfolio.read': { VIEWER: false, ESTIMATOR: false, QE_LEAD: true },
   'audit.read.project': { VIEWER: false, ESTIMATOR: false, QE_LEAD: true },
   'audit.read.all': { VIEWER: false, ESTIMATOR: false, QE_LEAD: false },
   'user.manage': { VIEWER: false, ESTIMATOR: false, QE_LEAD: false },

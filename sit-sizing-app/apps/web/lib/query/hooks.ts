@@ -189,3 +189,7 @@ export function useRecordActuals(estimateId: string, n: number) {
     }),
   };
 }
+
+/** Portfolio roll-up (R-01). */
+export const usePortfolio = (q: { projectIds?: string[]; status: 'approved' | 'latest' }) =>
+  useQuery({ queryKey: qk.portfolio(q), queryFn: () => api.portfolio(q) });

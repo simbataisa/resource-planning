@@ -9,7 +9,8 @@
     "language": "Language",
     "sessionMenu": "Account",
     "signedInAs": "Signed in as {name}",
-    "profiles": "Profiles"
+    "profiles": "Profiles",
+    "portfolio": "Portfolio"
   },
   "common": {
     "loading": "Loading…",
@@ -1866,6 +1867,51 @@
       "submit": "Record cycle",
       "labelRequired": "Enter a name for the cycle.",
       "totalsRequired": "Enter the test cases executed and the total SIT hours."
+    }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "description": "Estimates across your projects for the QBR: one row per estimate, with subtotals per project and the total.",
+    "csv": "Download CSV",
+    "forbidden": "The portfolio is for QE Leads and Admins.",
+    "statusLabel": "Versions",
+    "statusApproved": "Approved versions",
+    "statusLatest": "Newest saved version of each estimate",
+    "projects": "Projects",
+    "projectsHint": "None ticked: all the projects you lead.",
+    "emptyTitle": "Nothing to roll up yet",
+    "emptyApproved": "No estimate in these projects has an approved version. Switch to the newest saved versions to see work in progress.",
+    "emptyLatest": "No estimate in these projects has a saved version yet.",
+    "totalsLabel": "Portfolio totals",
+    "subtotal": "Subtotal",
+    "subtotalOf": "Subtotal · {project}",
+    "total": "Total",
+    "rangeNote": "Ranges add low with low and high with high: they assume the estimates move together, which gives the widest honest range for the portfolio. Figures are the stored results of each version.",
+    "cards": {
+      "detailed": "Detailed · with FSD",
+      "rough": "Rough · no FSD",
+      "range": "range {lo} – {hi} FTE",
+      "detail": "{c} cases · {h} h",
+      "estimates": "Estimates",
+      "estimatesDetail": "in the selected projects",
+      "calibration": "Using calibrated values",
+      "of": "of {n}",
+      "calibrationDetail": "estimates with at least one of the {n} assumptions calibrated"
+    },
+    "cols": {
+      "project": "Project",
+      "estimate": "Estimate",
+      "version": "Version",
+      "status": "Status",
+      "profile": "Assumption profile",
+      "uncalibrated": "Uncalibrated",
+      "fte": "Detailed FTE",
+      "lo": "FTE low",
+      "hi": "FTE high",
+      "range": "Range (FTE)",
+      "cases": "Cases",
+      "hours": "Hours",
+      "roughFte": "Rough FTE"
     }
   }
 }

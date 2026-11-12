@@ -48,6 +48,9 @@ export const PERMISSIONS = {
   'actuals.read': { scope: 'project', role: 'VIEWER' },
   'actuals.record': { scope: 'project', role: 'ESTIMATOR' },
 
+  /** Portfolio roll-up (release 3, R-01): QE Leads for their projects, Admins for all. */
+  'portfolio.read': { scope: 'project', role: 'QE_LEAD' },
+
   'audit.read.project': { scope: 'project', role: 'QE_LEAD' },
   'audit.read.all': { scope: 'global', role: 'ADMIN' },
   'user.manage': { scope: 'global', role: 'ADMIN' },

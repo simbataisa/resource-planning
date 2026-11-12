@@ -28,6 +28,10 @@
       "description": "What SIT cycles measured, against approved versions, with variance (release 3)."
     },
     {
+      "name": "Portfolio",
+      "description": "Totals across projects for the QBR, with calibration status (release 3)."
+    },
+    {
       "name": "Assumption profiles",
       "description": "Named sets of the 142 model assumptions, global or per project."
     },
@@ -3654,6 +3658,235 @@
             }
           }
         }
+      }
+    },
+    "/portfolio": {
+      "get": {
+        "operationId": "getPortfolio",
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Roll-up of estimates across projects for the QBR",
+        "description": "One row per estimate: its approved version (status=approved) or newest saved version (status=latest), from the stored result. Totals are the sums of the rows; ranges sum low with low and high with high. QE Leads see the projects they lead (another project's id is a 404); Admins see all. Minimum role: QE_LEAD.",
+        "x-required-role": "QE_LEAD",
+        "parameters": [
+          {
+            "name": "projectIds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "approved",
+              "type": "string",
+              "enum": [
+                "approved",
+                "latest"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projects with subtotals, and the total",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Portfolio"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role does not allow this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to you)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ]
+      }
+    },
+    "/portfolio/export": {
+      "get": {
+        "operationId": "exportPortfolio",
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "The portfolio as CSV",
+        "description": "Same rows, subtotals and total as GET /portfolio. Optional lang=en|vi for headers. Minimum role: QE_LEAD.",
+        "x-required-role": "QE_LEAD",
+        "parameters": [
+          {
+            "name": "projectIds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "approved",
+              "type": "string",
+              "enum": [
+                "approved",
+                "latest"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV attachment",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role does not allow this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to you)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ]
       }
     },
     "/notifications": {
@@ -7975,6 +8208,263 @@
         "required": [
           "actorName",
           "projectName"
+        ],
+        "additionalProperties": false
+      },
+      "Portfolio": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "latest"
+            ]
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "projectId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40,
+                  "description": "Opaque identifier (cuid)",
+                  "example": "clx0synthetic0001"
+                },
+                "projectKey": {
+                  "type": "string"
+                },
+                "projectName": {
+                  "type": "string"
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40,
+                        "description": "Opaque identifier (cuid)",
+                        "example": "clx0synthetic0001"
+                      },
+                      "projectKey": {
+                        "type": "string"
+                      },
+                      "projectName": {
+                        "type": "string"
+                      },
+                      "estimateId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40,
+                        "description": "Opaque identifier (cuid)",
+                        "example": "clx0synthetic0001"
+                      },
+                      "estimateName": {
+                        "type": "string"
+                      },
+                      "versionNumber": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "DRAFT",
+                          "SAVED",
+                          "SUBMITTED",
+                          "APPROVED",
+                          "SUPERSEDED"
+                        ]
+                      },
+                      "approvedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "profileName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "engineVersion": {
+                        "type": "string"
+                      },
+                      "fte": {
+                        "type": "number"
+                      },
+                      "lo": {
+                        "type": "number"
+                      },
+                      "hi": {
+                        "type": "number"
+                      },
+                      "cases": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "hours": {
+                        "type": "number"
+                      },
+                      "roughFte": {
+                        "type": "number"
+                      },
+                      "uncalibrated": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "projectId",
+                      "projectKey",
+                      "projectName",
+                      "estimateId",
+                      "estimateName",
+                      "versionNumber",
+                      "status",
+                      "approvedAt",
+                      "profileName",
+                      "engineVersion",
+                      "fte",
+                      "lo",
+                      "hi",
+                      "cases",
+                      "hours",
+                      "roughFte",
+                      "uncalibrated"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "subtotal": {
+                  "type": "object",
+                  "properties": {
+                    "estimates": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "fte": {
+                      "type": "number"
+                    },
+                    "lo": {
+                      "type": "number"
+                    },
+                    "hi": {
+                      "type": "number"
+                    },
+                    "cases": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "hours": {
+                      "type": "number"
+                    },
+                    "roughFte": {
+                      "type": "number"
+                    },
+                    "onDefaults": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "estimates",
+                    "fte",
+                    "lo",
+                    "hi",
+                    "cases",
+                    "hours",
+                    "roughFte",
+                    "onDefaults"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "projectId",
+                "projectKey",
+                "projectName",
+                "rows",
+                "subtotal"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "object",
+            "properties": {
+              "estimates": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "fte": {
+                "type": "number"
+              },
+              "lo": {
+                "type": "number"
+              },
+              "hi": {
+                "type": "number"
+              },
+              "cases": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "hours": {
+                "type": "number"
+              },
+              "roughFte": {
+                "type": "number"
+              },
+              "onDefaults": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "estimates",
+              "fte",
+              "lo",
+              "hi",
+              "cases",
+              "hours",
+              "roughFte",
+              "onDefaults"
+            ],
+            "additionalProperties": false
+          },
+          "assumptionRows": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "status",
+          "projects",
+          "total",
+          "assumptionRows"
         ],
         "additionalProperties": false
       },

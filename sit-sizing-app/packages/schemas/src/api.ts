@@ -496,6 +496,74 @@ export type Actuals = z.infer<typeof Actuals>;
 
 export const ActualsList = z.object({ items: z.array(Actuals) }).meta({ id: 'ActualsList' });
 
+// ---------- portfolio (release 3, R-01) ----------
+export const PortfolioQuery = z
+  .object({
+    /** Comma-separated project ids; default: every project the caller leads (Admin: all). */
+    projectIds: z
+      .string()
+      .optional()
+      .transform((s) => (s ? [...new Set(s.split(',').filter(Boolean))] : undefined))
+      .pipe(z.array(Id).max(100).optional()),
+    /** approved: the approved version of each estimate (QBR). latest: the newest saved version. */
+    status: z.enum(['approved', 'latest']).default('approved'),
+  })
+  .meta({ id: 'PortfolioQuery' });
+
+export const PortfolioRow = z.object({
+  projectId: Id,
+  projectKey: z.string(),
+  projectName: z.string(),
+  estimateId: Id,
+  estimateName: z.string(),
+  versionNumber: z.number().int(),
+  status: VersionStatus,
+  approvedAt: IsoDateTime.nullable(),
+  profileName: z.string().nullable(),
+  engineVersion: z.string(),
+  /** Detailed mode, from the version's stored result. */
+  fte: z.number(),
+  lo: z.number(),
+  hi: z.number(),
+  cases: z.number().int(),
+  hours: z.number(),
+  roughFte: z.number(),
+  uncalibrated: z.number().int(),
+});
+export type PortfolioRow = z.infer<typeof PortfolioRow>;
+
+export const PortfolioTotals = z.object({
+  estimates: z.number().int(),
+  fte: z.number(),
+  lo: z.number(),
+  hi: z.number(),
+  cases: z.number().int(),
+  hours: z.number(),
+  roughFte: z.number(),
+  /** Estimates whose assumptions are all still defaults. */
+  onDefaults: z.number().int(),
+});
+export type PortfolioTotals = z.infer<typeof PortfolioTotals>;
+
+export const Portfolio = z
+  .object({
+    status: z.enum(['approved', 'latest']),
+    projects: z.array(
+      z.object({
+        projectId: Id,
+        projectKey: z.string(),
+        projectName: z.string(),
+        rows: z.array(PortfolioRow),
+        subtotal: PortfolioTotals,
+      }),
+    ),
+    total: PortfolioTotals,
+    /** Assumption rows per estimate, for the calibration share. */
+    assumptionRows: z.number().int(),
+  })
+  .meta({ id: 'Portfolio' });
+export type Portfolio = z.infer<typeof Portfolio>;
+
 // ---------- misc ----------
 export const Health = z
   .object({ status: z.literal('ok'), version: z.string(), uptimeSeconds: z.number() })
