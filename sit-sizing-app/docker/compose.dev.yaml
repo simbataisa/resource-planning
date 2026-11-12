@@ -9,9 +9,17 @@ services:
     command:
       - sh
       - -c
-      - pnpm install --frozen-lockfile --store-dir /pnpm/store && exec pnpm --filter @sit/web dev --webpack --hostname 0.0.0.0 --port 3000
+      # Logs why the dev server stopped before Docker restarts it (it restarts itself on
+      # config changes and near its memory limit; a clean exit 0 is otherwise silent).
+      - >-
+        pnpm install --frozen-lockfile --store-dir /pnpm/store &&
+        pnpm --filter @sit/web dev --webpack --hostname 0.0.0.0 --port 3000;
+        code=$$?; echo "[dev] next dev exited with code $$code at $$(date -u +%FT%TZ)"; exit $$code
     environment:
       NODE_ENV: development
+      # On-demand compilation of every route needs more than Node's default heap; below the
+      # limit Next restarts the dev server by itself.
+      NODE_OPTIONS: --max-old-space-size=4096
       # Bind mounts on Docker Desktop / Rancher Desktop for macOS do not reliably deliver file
       # events into the container, so hot reload polls. Webpack's watcher supports polling;
       # `pnpm dev` on the host keeps Turbopack.
@@ -32,6 +40,28 @@ services:
       - pnpm-store:/pnpm/store
     healthcheck:
       start_period: 120s
+
+  worker:
+    # Same bind mount and node_modules volumes as web; web installs them first.
+    image: sit-sizing-web:dev
+    command: ['node_modules/.bin/tsx', 'watch', 'worker/main.ts']
+    environment:
+      NODE_ENV: development
+    user: !reset null
+    read_only: false
+    tmpfs: !reset []
+    volumes:
+      - ..:/repo
+      - nm-root:/repo/node_modules
+      - nm-web:/repo/apps/web/node_modules
+      - nm-engine:/repo/packages/engine/node_modules
+      - nm-schemas:/repo/packages/schemas/node_modules
+      - nm-tokens:/repo/packages/tokens/node_modules
+      - nm-config:/repo/packages/config/node_modules
+      - nm-db:/repo/packages/db/node_modules
+    depends_on:
+      web:
+        condition: service_healthy
 
 volumes:
   nm-root:

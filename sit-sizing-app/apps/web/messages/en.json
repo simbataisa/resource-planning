@@ -8,7 +8,8 @@
     "apiDocs": "API reference",
     "language": "Language",
     "sessionMenu": "Account",
-    "signedInAs": "Signed in as {name}"
+    "signedInAs": "Signed in as {name}",
+    "profiles": "Profiles"
   },
   "common": {
     "loading": "Loading…",
@@ -1099,6 +1100,21 @@
       "scope": "• Scope includes: {p}",
       "evidence": "• Shift-left evidence: mutation {m}%, rule tests {r}%, BE validation {b}%, FE validation {f}%, mapping tests {p}%, FE unit {u}%, FE mutation {s}%",
       "calibration": "• {u} of {t} assumptions are uncalibrated defaults. Confirm with the delivery owner before committing."
+    },
+    "sheets": {
+      "title": "Spreadsheets",
+      "xlsx": "Excel workbook",
+      "csv": "Download CSV",
+      "csvTable": "CSV table",
+      "tables": {
+        "gap": "Gap by group",
+        "drivers": "Drivers",
+        "assumptions": "Assumptions",
+        "inputs": "Inputs",
+        "summary": "Summary"
+      },
+      "hint": "Built from the last saved state of this version, with the same numbers as the screen.",
+      "waiting": "Waiting for autosave before you can download."
     }
   },
   "content": {
@@ -1602,6 +1618,195 @@
       "warn": "Method-based",
       "bad": "Judgment",
       "team": "Internal standard"
+    }
+  },
+  "versions": {
+    "eyebrow": "Versions",
+    "title": "Version history",
+    "current": "Open",
+    "by": "{name}, {when}",
+    "submittedBy": "Submitted by {name}, {when}",
+    "approvedBy": "Approved by {name}, {when}",
+    "submit": "Submit for approval",
+    "approve": "Approve",
+    "return": "Return with a note",
+    "restore": "Restore as new draft",
+    "submitTitle": "Submit version {n} for approval",
+    "submitBody": "A QE Lead who did not write or submit this version reviews it.",
+    "approveTitle": "Approve version {n}",
+    "approveBody": "The approved version becomes the reference for this estimate. A previously approved version is marked superseded.",
+    "returnTitle": "Return version {n}",
+    "returnBody": "Say what should change. The version goes back to Saved; the estimator starts a new draft from it.",
+    "noteOptional": "Note (optional)",
+    "noteRequired": "What should change",
+    "noteMissing": "Enter what should change.",
+    "confirm": "Confirm",
+    "sodHint": "You wrote or submitted this version, so another QE Lead must approve it.",
+    "pending": "Another version is waiting for approval.",
+    "error": "That did not work. Reload the page and try again.",
+    "reviews": "Review notes",
+    "reviewKind": {
+      "COMMENT": "Note",
+      "RETURN": "Returned",
+      "APPROVE": "Approved"
+    },
+    "compareA": "Compare version",
+    "compareB": "with version",
+    "compare": "Compare",
+    "cmp": {
+      "title": "Version {a} compared with {b}",
+      "back": "Back to the estimate",
+      "results": "Results",
+      "mode": "Estimate",
+      "measure": "Measure",
+      "rough": "Rough",
+      "detailed": "Detailed",
+      "fte": "FTE",
+      "cases": "Cases",
+      "hours": "Hours",
+      "delta": "Change",
+      "groups": "Detailed cases by driver",
+      "group": "Driver",
+      "changes": "Changed inputs and assumptions",
+      "area": "Where",
+      "path": "Value",
+      "inputs": "Scope and team",
+      "assumptions": "Assumptions",
+      "none": "The two versions have the same inputs and assumptions.",
+      "truncated": "Only the first 500 changes are listed.",
+      "empty": "(none)"
+    }
+  },
+  "profiles": {
+    "title": "Assumption profiles",
+    "description": "Named sets of the 142 assumptions. Publish a profile to use it in estimates; published profiles never change.",
+    "showFor": "Show",
+    "globalOnly": "Global profiles",
+    "globalAnd": "Global and {project}",
+    "emptyTitle": "No profiles here",
+    "emptyBody": "QE Leads can create project profiles; Admins manage global ones.",
+    "name": "Name",
+    "scope": "Scope",
+    "statusLabel": "Status",
+    "uncalibratedCol": "Uncalibrated",
+    "published": "Published",
+    "scopes": {
+      "GLOBAL": "Global",
+      "PROJECT": "Project"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
+      "RETIRED": "Retired"
+    },
+    "new": "New profile",
+    "clone": "Clone",
+    "copyOf": "Copy of {name}",
+    "cloneTitle": "Clone profile",
+    "newTitle": "New profile",
+    "newDescription": "The new profile starts as a draft. Edit its values and calibration notes, then publish it.",
+    "nameRequired": "Enter a name.",
+    "projectScope": "Project: {project}",
+    "basedOn": "Start from",
+    "engineDefaults": "Engine defaults (uncalibrated)",
+    "create": "Create profile",
+    "back": "All profiles",
+    "saving": "Saving…",
+    "save": "Save changes",
+    "saveFirst": "Save your changes first.",
+    "publish": "Publish",
+    "retire": "Retire",
+    "draftNotice": "Draft: change values and add a source for each calibrated value, then publish. Estimates can only use published profiles.",
+    "readOnlyNotice": "Read-only, published {when}. Clone it to make changes; estimates that use it keep their values.",
+    "publishTitle": "Publish this profile?",
+    "publishBody": "After publishing, the values cannot change and estimates in scope can use the profile.",
+    "retireTitle": "Retire this profile?",
+    "retireBody": "New estimates can no longer use it. Estimates that already copied its values keep them.",
+    "sourceFor": "Calibration source for {label}",
+    "sourcePlaceholder": "Source, e.g. SIT cycle 2026-Q3",
+    "measuredFor": "Measured on, for {label}",
+    "fieldProfile": "Assumption profile",
+    "fieldProfileHint": "Published profiles for this project. You can apply another one later.",
+    "defaultProfile": "Default global profile",
+    "apply": {
+      "current": "Assumptions come from the profile <link>{name}</link>.",
+      "none": "These assumptions are not linked to a profile.",
+      "choose": "Apply a published profile",
+      "pick": "Choose a profile",
+      "apply": "Apply profile",
+      "waitForSave": "Wait for autosave to finish.",
+      "confirmTitle": "Replace all assumptions?",
+      "confirmBody": "Every assumption in this draft will be replaced by the values of {name}. Your scope stays the same. Changes you made to assumptions are lost."
+    },
+    "valuesTitle": "Assumption values"
+  },
+  "export": {
+    "disclaimer": "Planning range, not a commitment. Confirm FTE and timelines with the accountable delivery owner.",
+    "inputsNote": "Every input of this version as a path and value. Counts are synthetic or business names only; no customer data.",
+    "sheets": {
+      "summary": "Summary",
+      "drivers": "Drivers",
+      "gap": "Gap by group",
+      "assumptions": "Assumptions",
+      "inputs": "Inputs"
+    },
+    "cols": {
+      "item": "Item",
+      "rough": "Rough",
+      "detailed": "Detailed",
+      "driver": "Driver",
+      "group": "Group",
+      "total": "Total",
+      "roughCases": "Rough cases",
+      "detailedCases": "Detailed cases",
+      "deltaCases": "Δ cases",
+      "roughHours": "Rough hours",
+      "detailedHours": "Detailed hours",
+      "deltaHours": "Δ hours",
+      "share": "Share of hours gap",
+      "assumption": "Assumption",
+      "path": "Path",
+      "value": "Value",
+      "default": "Default",
+      "status": "Status"
+    },
+    "summary": {
+      "estimate": "Estimate",
+      "project": "Project",
+      "version": "Version",
+      "profile": "Assumption profile",
+      "engine": "Engine version",
+      "exportedAt": "Exported at (UTC)",
+      "uncalibrated": "Uncalibrated assumptions",
+      "fte": "FTE",
+      "fteLow": "FTE, low",
+      "fteHigh": "FTE, high",
+      "cases": "Test cases",
+      "hours": "Hours",
+      "weeks": "SIT window (weeks)"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bellUnread": "Notifications, {n} unread",
+    "markAll": "Mark all as read",
+    "empty": "No notifications yet.",
+    "unreadLabel": "Unread:",
+    "globalScope": "global",
+    "open": "Open in SIT Sizing",
+    "noteLabel": "Note",
+    "emailFooter": "You get this email because of your role in SIT Sizing. Figures are a planning range, not a commitment.",
+    "subject": {
+      "SUBMITTED": "Approval needed: {estimate} v{version}",
+      "APPROVED": "Approved: {estimate} v{version}",
+      "RETURNED": "Returned: {estimate} v{version}",
+      "PROFILE_PUBLISHED": "New assumption profile: {profile}"
+    },
+    "body": {
+      "SUBMITTED": "{actor} submitted {estimate} v{version} ({project}) for approval.",
+      "APPROVED": "{actor} approved {estimate} v{version} ({project}).",
+      "RETURNED": "{actor} returned {estimate} v{version} ({project}) with a note.",
+      "PROFILE_PUBLISHED": "{actor} published the assumption profile {profile} ({project})."
     }
   }
 }

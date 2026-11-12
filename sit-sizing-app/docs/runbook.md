@@ -173,12 +173,15 @@ Server environments apply realm changes with a reviewed import job (to be added 
 ## 6. End-to-end tests (step 1.7)
 
 ```bash
-pnpm dev:up        # the stack must be running
-pnpm test:e2e      # Playwright in your installed Google Chrome; report in reports/e2e/html
+pnpm test:e2e      # the gate: production build in its own stack, then Playwright in your Chrome
+pnpm test:e2e:dev  # quick iteration against the running dev stack (pnpm dev:up); not a gate
+pnpm test:e2e:report  # open the last HTML report (traces and screenshots of failures)
 ```
 
-- **Sign-in.** A setup step signs in through Keycloak as `dev-estimator` (password from `.env`, never printed) and the tests reuse that session.
-- **Suite.** The smoke suite:
+- **Why the gate uses the production build.** `next dev` compiles every page on first request and restarts itself on config changes or near its memory limit. Under a full suite that means minute-long gaps at random points, so failures depend on timing rather than on the code. `pnpm test:e2e` builds the web image and runs `deploy/ci/smoke.sh` with `E2E_RUNNER=host`: the same stack CI uses, as compose project `sit-ci-local` on ports 23000 (web), 28080 (Keycloak) and 28025 (Mailpit). It has fresh random secrets and the synthetic seed, and is removed afterwards. It can run while `pnpm dev:up` is running.
+- **Dev server restarts.** The dev container logs `[dev] next dev exited with code …` before Docker restarts it. If restarts are frequent, check `pnpm dev:logs` for "approaching the used memory threshold" or "Found a change in". The container already gets a 4 GB heap (`NODE_OPTIONS` in `compose.dev.yaml`).
+- **Sign-in.** A setup step signs in through Keycloak as `dev-estimator` and `dev-lead` (password from `.env` or the stack's generated env, never printed), and the tests reuse those sessions.
+- **Suite.** `release2.spec.ts` covers the release 2 exit criteria: approval end to end with notices and email, a published profile used by a new estimate, and the Excel export equal to the screen. The smoke suite:
   - creates an estimate from the worked example and checks the prototype's numbers;
   - edits a quantity and checks autosave;
   - exports the profile and saves a version;
@@ -221,3 +224,21 @@ pnpm test:e2e      # Playwright in your installed Google Chrome; report in repor
 | Date | Environment | Result | By  |
 | ---- | ----------- | ------ | --- |
 |      |             |        |     |
+
+## 10. Notifications (release 2, N-01)
+
+- **Services:** `worker` sends queued emails; `mail` (Mailpit) catches them locally. `pnpm dev:up` starts both. Read the local inbox at <http://localhost:8025>.
+- **Settings:** `SMTP_URL` (unset: emails stay queued), `MAIL_FROM`, `NOTIFY_MAX_ATTEMPTS` (6), `NOTIFY_POLL_MS` (5000). Outside local, `SMTP_URL` comes from the secret store and points at the approved relay (Q12).
+- **Logs:** `docker compose … logs -f worker`. Lines carry `component: notify-worker`, and a summary is logged after each batch that did something.
+- **Check the queue:**
+  ```sql
+  SELECT status, count(*) FROM "Notification" WHERE channel = 'EMAIL' GROUP BY status;
+  SELECT id, attempts, "nextAttemptAt", "lastError" FROM "Notification"
+  WHERE channel = 'EMAIL' AND status = 'FAILED' ORDER BY "createdAt" DESC LIMIT 20;
+  ```
+- **Resend failed emails after fixing the cause:**
+  ```sql
+  UPDATE "Notification" SET status = 'PENDING', attempts = 0, "nextAttemptAt" = now()
+  WHERE channel = 'EMAIL' AND status = 'FAILED' AND "createdAt" > now() - interval '7 days';
+  ```
+- **Scaling:** several worker replicas are safe; rows are claimed with `SKIP LOCKED`.

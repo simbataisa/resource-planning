@@ -55,6 +55,16 @@ describe('parseEnv', () => {
     ).toBeUndefined();
   });
 
+  it('lets the notification worker run without OIDC settings (N-01)', () => {
+    const env = parseEnv({ DATABASE_URL: valid.DATABASE_URL, PROCESS_ROLE: 'worker' });
+    expect(env.AUTH_MODE).toBe('oidc');
+    expect(env.NOTIFY_MAX_ATTEMPTS).toBe(6);
+    expect(env.SMTP_URL).toBeUndefined();
+    expect(() =>
+      parseEnv({ DATABASE_URL: valid.DATABASE_URL, PROCESS_ROLE: 'worker', SMTP_URL: 'nope' }),
+    ).toThrow(/SMTP_URL/);
+  });
+
   it('requires https outside local', () => {
     expect(() => parseEnv({ ...valid, APP_ENV: 'sit' })).toThrow(/APP_BASE_URL/);
     expect(

@@ -25,7 +25,9 @@ import {
 } from '@/lib/query/hooks';
 import { can } from '@/lib/rbac';
 import { ResultsPanels } from '../results/results-panels';
+import { VersionHistory } from '../versions/version-history';
 import { useQueryState } from '../shared/use-query-state';
+import { ApplyProfile } from './apply-profile';
 import { AssumptionsTab } from './assumptions-tab';
 import { DetailScopeTab } from './detail-scope-tab';
 import { DraftToolbar } from './draft-toolbar';
@@ -327,12 +329,25 @@ function EditorLayout({
             <EvidenceTab />
           </Panel>
           <Panel value="assumptions">
-            <AssumptionsTab />
+            <AssumptionsTab
+              header={
+                <ApplyProfile
+                  estimateId={estimate.id}
+                  projectId={estimate.projectId}
+                  profileId={version.profileId}
+                />
+              }
+            />
           </Panel>
         </Tabs>
       </section>
       <ResultsPanels />
-      <ExportPanel estimateName={estimate.name} versionNumber={version.number} />
+      <VersionHistory estimate={estimate} open={version} />
+      <ExportPanel
+        estimateId={estimate.id}
+        estimateName={estimate.name}
+        versionNumber={version.number}
+      />
     </div>
   );
 }

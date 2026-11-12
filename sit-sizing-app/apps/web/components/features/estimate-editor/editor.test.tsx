@@ -22,6 +22,9 @@ const hooks = vi.hoisted(() => ({
   useCreateDraft: vi.fn(),
   usePatchDraft: vi.fn(),
   useSaveVersion: vi.fn(),
+  useReviewVersion: vi.fn(),
+  useProfiles: vi.fn(),
+  useApplyProfile: vi.fn(),
 }));
 vi.mock('@/lib/query/hooks', () => hooks);
 
@@ -52,6 +55,11 @@ function version(over: Partial<Version> = {}): Version {
     schemaVersion: 1,
     rowVersion: 3,
     lock: null,
+    submittedBy: null,
+    submittedAt: null,
+    approvedBy: null,
+    approvedAt: null,
+    reviews: [],
     ...over,
   };
 }
@@ -113,6 +121,9 @@ beforeEach(() => {
   save = { mutateAsync: vi.fn(async () => version({ status: 'SAVED' })) };
   createDraft = { mutate: vi.fn(), isPending: false };
   hooks.useLockDraft.mockReturnValue(lock);
+  hooks.useReviewVersion.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false });
+  hooks.useProfiles.mockReturnValue(ok({ items: [] }));
+  hooks.useApplyProfile.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false });
   hooks.usePatchDraft.mockReturnValue(patch);
   hooks.useSaveVersion.mockReturnValue(save);
   hooks.useCreateDraft.mockReturnValue(createDraft);

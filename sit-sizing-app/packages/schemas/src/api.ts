@@ -140,6 +140,11 @@ export const VersionSummary = z
     createdBy: UserRef,
     createdAt: IsoDateTime,
     updatedAt: IsoDateTime,
+    /** Approval workflow (release 2). */
+    submittedBy: UserRef.nullable(),
+    submittedAt: IsoDateTime.nullable(),
+    approvedBy: UserRef.nullable(),
+    approvedAt: IsoDateTime.nullable(),
   })
   .meta({ id: 'VersionSummary' });
 export type VersionSummary = z.infer<typeof VersionSummary>;
@@ -149,6 +154,12 @@ export const EditLock = z
   .meta({ id: 'EditLock' });
 export type EditLock = z.infer<typeof EditLock>;
 
+export const ReviewKind = z.enum(['COMMENT', 'RETURN', 'APPROVE']);
+export const ReviewEntry = z
+  .object({ id: Id, kind: ReviewKind, body: z.string(), author: UserRef, createdAt: IsoDateTime })
+  .meta({ id: 'ReviewEntry' });
+export type ReviewEntry = z.infer<typeof ReviewEntry>;
+
 export const Version = VersionSummary.extend({
   inputs: EstimateInputs,
   assumptions: Assumptions,
@@ -157,6 +168,8 @@ export const Version = VersionSummary.extend({
   schemaVersion: z.number().int(),
   rowVersion: z.number().int(),
   lock: EditLock.nullable(),
+  /** Review notes on submit, approve and return, oldest first. */
+  reviews: z.array(ReviewEntry),
 }).meta({ id: 'Version' });
 export type Version = z.infer<typeof Version>;
 
@@ -222,6 +235,54 @@ export const LockRequest = z
   })
   .meta({ id: 'LockRequest' });
 
+/** Optional note when submitting or approving (release 2, V-01). */
+export const ReviewNote = z
+  .object({ note: z.string().trim().max(2000).optional() })
+  .meta({ id: 'ReviewNote', example: { note: 'Synthetic: scope agreed with the delivery lead' } });
+
+/** Returning a version for changes always says why. */
+export const ReturnRequest = z.object({ note: z.string().trim().min(1).max(2000) }).meta({
+  id: 'ReturnRequest',
+  example: { note: 'Synthetic: add the batch interfaces from FSD v2' },
+});
+
+const ModeFigures = z.object({ fte: z.number(), cases: z.number(), hours: z.number() });
+/** Two versions side by side (release 2, V-01): headline results, groups and changed values. */
+export const VersionCompare = z
+  .object({
+    a: VersionSummary,
+    b: VersionSummary,
+    results: z.object({
+      rough: z.object({ a: ModeFigures, b: ModeFigures }),
+      detailed: z.object({ a: ModeFigures, b: ModeFigures }),
+    }),
+    groups: z.array(
+      z.object({
+        group: z.string(),
+        aCases: z.number(),
+        bCases: z.number(),
+        aHours: z.number(),
+        bHours: z.number(),
+      }),
+    ),
+    changes: z.array(
+      z.object({
+        area: z.enum(['inputs', 'assumptions']),
+        path: z.string(),
+        a: z.unknown(),
+        b: z.unknown(),
+      }),
+    ),
+    /** True when more changes exist than are listed. */
+    truncated: z.boolean(),
+  })
+  .meta({ id: 'VersionCompare' });
+export type VersionCompare = z.infer<typeof VersionCompare>;
+export const CompareQuery = z.object({
+  a: z.coerce.number().int().min(1),
+  b: z.coerce.number().int().min(1),
+});
+
 export const VersionSave = z
   .object({ note: z.string().trim().max(2000).optional() })
   .meta({ id: 'VersionSave' });
@@ -235,6 +296,8 @@ export const Profile = z
     name: z.string(),
     status: ProfileStatus,
     uncalibrated: z.number().int(),
+    /** The profile this one was cloned from. */
+    basedOnId: Id.nullable(),
     createdAt: IsoDateTime,
     publishedAt: IsoDateTime.nullable(),
   })
@@ -253,6 +316,93 @@ export const ProfileDetail = Profile.extend({
 export type ProfileDetail = z.infer<typeof ProfileDetail>;
 
 export const ProfileListQuery = z.object({ projectId: Id.optional() });
+
+/** Calibration notes per assumption path (P-01). Keys are checked against the engine's 142 rows. */
+export const CalibrationMap = z.record(z.string().max(80), CalibrationEntry);
+
+export const ProfileCreate = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    scope: ProfileScope,
+    /** Required for a project profile; not allowed for a global one. */
+    projectId: Id.optional(),
+    /** Copy values and calibration notes from this profile; defaults to the engine defaults. */
+    basedOnId: Id.optional(),
+  })
+  .refine((v) => (v.scope === 'PROJECT') === Boolean(v.projectId), {
+    path: ['projectId'],
+    message: 'A project profile needs projectId; a global profile must not have one.',
+  })
+  .meta({
+    id: 'ProfileCreate',
+    example: {
+      name: 'Synthetic · Retail lending 2026',
+      scope: 'PROJECT',
+      projectId: 'cm0project0000000000000',
+    },
+  });
+
+/** Changes to a DRAFT profile. Published and retired profiles are read-only. */
+export const ProfileUpdate = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    values: Assumptions.optional(),
+    calibration: CalibrationMap.optional(),
+  })
+  .meta({ id: 'ProfileUpdate' });
+
+/** Replaces the open draft's assumptions with a published profile's values. */
+export const ProfileApply = z
+  .object({
+    profileId: Id,
+    /** Optimistic lock: the draft's rowVersion the client last saw. */
+    rowVersion: z.number().int().min(1),
+  })
+  .meta({ id: 'ProfileApply' });
+
+// ---------- export (release 2, X-02) ----------
+export const ExportTable = z.enum(['summary', 'drivers', 'gap', 'assumptions', 'inputs']);
+export const ExportQuery = z
+  .object({
+    format: z.enum(['xlsx', 'csv']).default('xlsx'),
+    /** CSV holds one table; the workbook has all of them. */
+    table: ExportTable.default('gap'),
+    /** Language of labels and headers; defaults to the user's language. */
+    lang: z.enum(['en', 'vi']).optional(),
+  })
+  .meta({ id: 'ExportQuery' });
+
+// ---------- notifications (release 2, N-01) ----------
+export const NotificationKind = z.enum(['SUBMITTED', 'APPROVED', 'RETURNED', 'PROFILE_PUBLISHED']);
+/** What a notice is about; names are copied at the time of the event. */
+export const NotificationPayload = z
+  .object({
+    actorName: z.string(),
+    projectName: z.string().nullable(),
+    estimateId: Id.optional(),
+    estimateName: z.string().optional(),
+    versionNumber: z.number().int().optional(),
+    profileId: Id.optional(),
+    profileName: z.string().optional(),
+    note: z.string().max(2000).optional(),
+  })
+  .meta({ id: 'NotificationPayload' });
+export type NotificationPayload = z.infer<typeof NotificationPayload>;
+
+export const NotificationItem = z
+  .object({
+    id: Id,
+    kind: NotificationKind,
+    payload: NotificationPayload,
+    createdAt: IsoDateTime,
+    readAt: IsoDateTime.nullable(),
+  })
+  .meta({ id: 'NotificationItem' });
+export type NotificationItem = z.infer<typeof NotificationItem>;
+
+export const NotificationList = z
+  .object({ items: z.array(NotificationItem), unread: z.number().int() })
+  .meta({ id: 'NotificationList' });
 
 // ---------- misc ----------
 export const Health = z

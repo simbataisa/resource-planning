@@ -35,6 +35,22 @@ const EnvSchema = z
     SESSION_SECRET: z.string().min(32).optional(),
     /** API requests per user per minute and app instance (design 11, threat model T-11; Q10). */
     RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(300),
+    /**
+     * Notification worker (N-01, Q12). SMTP server, e.g. smtp://mail:1025 for the local
+     * mail catcher; smtps://user:pass@host:465 outside local, from the secret store.
+     * Unset: emails stay queued and in-app notices still work.
+     */
+    SMTP_URL: z.url().optional(),
+    MAIL_FROM: z.string().min(3).default('SIT Sizing <no-reply@sit-sizing.local>'),
+    /** Delivery attempts before an email is marked FAILED. */
+    NOTIFY_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(6),
+    /** How often the worker looks for due emails, in milliseconds. */
+    NOTIFY_POLL_MS: z.coerce.number().int().min(500).default(5000),
+    /**
+     * web (default) or worker. The worker serves no requests, so it needs no OIDC client
+     * settings or session secret; it keeps AUTH_MODE=oidc and never trusts dev headers.
+     */
+    PROCESS_ROLE: z.enum(['web', 'worker']).default('web'),
   })
   .superRefine((env, ctx) => {
     if (env.AUTH_MODE === 'dev' && env.APP_ENV !== 'local') {
@@ -44,7 +60,7 @@ const EnvSchema = z
         message: 'dev sign-in is only allowed when APP_ENV=local',
       });
     }
-    if (env.AUTH_MODE === 'oidc' && !env.OIDC_ISSUER) {
+    if (env.AUTH_MODE === 'oidc' && !env.OIDC_ISSUER && env.PROCESS_ROLE === 'web') {
       ctx.addIssue({
         code: 'custom',
         path: ['OIDC_ISSUER'],

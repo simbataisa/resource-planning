@@ -28,6 +28,10 @@ const summary = {
   createdBy: user,
   createdAt: '2026-11-12T07:00:00.000Z',
   updatedAt: '2026-11-12T07:05:00.000Z',
+  submittedBy: null,
+  submittedAt: null,
+  approvedBy: null,
+  approvedAt: null,
 };
 
 const hooks = vi.hoisted(() => ({
@@ -36,6 +40,8 @@ const hooks = vi.hoisted(() => ({
   useProject: vi.fn(),
   useEstimates: vi.fn(),
   useCreateEstimate: vi.fn(),
+  useProfiles: vi.fn(),
+  useApplyProfile: vi.fn(),
 }));
 vi.mock('@/lib/query/hooks', () => hooks);
 
@@ -63,6 +69,8 @@ beforeEach(() => {
     }),
   );
   hooks.useCreateEstimate.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false });
+  hooks.useProfiles.mockReturnValue(ok({ items: [] }));
+  hooks.useApplyProfile.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false });
 });
 
 describe('ProjectList', () => {

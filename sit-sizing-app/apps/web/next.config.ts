@@ -23,7 +23,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   transpilePackages: ['@sit/db', '@sit/engine', '@sit/schemas', '@sit/tokens'],
-  serverExternalPackages: ['pino', '@opentelemetry/sdk-node'],
+  // Node-only libraries loaded at runtime, not bundled (ExcelJS: X-02 export).
+  serverExternalPackages: ['pino', '@opentelemetry/sdk-node', 'exceljs'],
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

@@ -2,19 +2,26 @@ import {
   Estimate,
   EstimateDetail,
   Me,
+  NotificationList,
   page,
   Profile,
   ProfileDetail,
   Project,
   ProjectDetail,
   Version,
+  VersionCompare,
   type DraftCreate,
   type DraftPatch,
   type EstimateCreate,
   type LockRequest,
   type MeUpdate,
   type MembersPut,
+  type ProfileApply,
+  type ProfileCreate,
+  type ProfileUpdate,
   type PageQuery,
+  type ReturnRequest,
+  type ReviewNote,
   type ProjectCreate,
   type ProjectUpdate,
   type VersionSave,
@@ -63,11 +70,37 @@ export function createApi(http: AxiosInstance = defaultHttp) {
       },
       saveVersion: (estimateId: string, body: In<typeof VersionSave> = {}) =>
         sendParsed(http, 'post', `/estimates/${estimateId}/versions`, body, Version),
+      /** Approval workflow (release 2, V-01). */
+      review: (
+        estimateId: string,
+        n: number,
+        action: 'submit' | 'approve' | 'return',
+        body: In<typeof ReviewNote> | In<typeof ReturnRequest>,
+      ) =>
+        sendParsed(http, 'post', `/estimates/${estimateId}/versions/${n}/${action}`, body, Version),
+      /** Replace the draft's assumptions with a published profile (P-01). */
+      applyProfile: (estimateId: string, body: In<typeof ProfileApply>) =>
+        sendParsed(http, 'post', `/estimates/${estimateId}/draft/profile`, body, Version),
+      compare: (estimateId: string, a: number, b: number) =>
+        getParsed(http, `/estimates/${estimateId}/compare`, VersionCompare, { a, b }),
+    },
+    /** In-app notifications (release 2, N-01). */
+    notifications: {
+      list: () => getParsed(http, '/notifications', NotificationList),
+      read: (id: string) =>
+        sendParsed(http, 'post', `/notifications/${id}/read`, {}, NotificationList),
+      readAll: () => sendParsed(http, 'post', '/notifications/read-all', {}, NotificationList),
     },
     profiles: {
       list: (projectId?: string) =>
         getParsed(http, '/profiles', ProfileList, projectId ? { projectId } : undefined),
       get: (profileId: string) => getParsed(http, `/profiles/${profileId}`, ProfileDetail),
+      create: (body: In<typeof ProfileCreate>) =>
+        sendParsed(http, 'post', '/profiles', body, ProfileDetail),
+      update: (profileId: string, body: In<typeof ProfileUpdate>) =>
+        sendParsed(http, 'patch', `/profiles/${profileId}`, body, ProfileDetail),
+      setStatus: (profileId: string, action: 'publish' | 'retire') =>
+        sendParsed(http, 'post', `/profiles/${profileId}/${action}`, {}, ProfileDetail),
     },
   };
 }

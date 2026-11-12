@@ -105,6 +105,10 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
       const media: JsonObject = { schema: toSchema(op.success.schema, 'output', components) };
       if (op.success.example !== undefined) media.example = op.success.example as Json;
       success.content = { 'application/json': media };
+    } else if (op.success.files) {
+      success.content = Object.fromEntries(
+        op.success.files.map((m) => [m, { schema: { type: 'string', format: 'binary' } }]),
+      );
     } else if (op.path === '/docs') {
       success.content = { 'text/html': { schema: { type: 'string' } } };
     }

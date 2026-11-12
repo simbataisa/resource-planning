@@ -31,7 +31,7 @@ function draftOf(tx: DbOrTx, estimateId: string) {
   });
 }
 
-async function requireOwnLockedDraft(tx: DbOrTx, user: CurrentUser, estimateId: string) {
+export async function requireOwnLockedDraft(tx: DbOrTx, user: CurrentUser, estimateId: string) {
   const draft = await draftOf(tx, estimateId);
   if (!draft) throw conflict('There is no draft. Create one first.', 'NO_DRAFT');
   if (
@@ -42,7 +42,7 @@ async function requireOwnLockedDraft(tx: DbOrTx, user: CurrentUser, estimateId: 
   return draft;
 }
 
-function snapshotData(inputs: EstimateInputs, assumptions: Assumptions) {
+export function snapshotData(inputs: EstimateInputs, assumptions: Assumptions) {
   const snap = versionSnapshot(inputs, assumptions);
   return {
     inputs: inputs as unknown as Prisma.InputJsonValue,

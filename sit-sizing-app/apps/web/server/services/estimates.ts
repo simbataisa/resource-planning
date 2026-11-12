@@ -13,11 +13,11 @@ import { clock } from '../clock';
 import { db, type DbOrTx } from '../db';
 import { estimateDto, lockDto, versionSummaryDto } from '../dto';
 import { lockExpiry } from '../domain/lock';
+import { applicable } from '../domain/profiles';
 import { HttpError } from '../http/route';
 import { recordAudit } from '../repositories/audit';
 import { ESTIMATE_DETAIL_INCLUDE, ESTIMATE_LIST_INCLUDE } from '../repositories/includes';
 import { pageArgs, toPage } from '../repositories/pagination';
-import { can } from '@/lib/rbac';
 import { estimateFor, projectFor, type RequestMeta } from './access';
 
 export async function listEstimates(user: CurrentUser, projectId: string, q: PageQuery) {
@@ -56,11 +56,8 @@ export async function resolveProfile(
 ) {
   if (profileId) {
     const p = await tx.assumptionProfile.findUnique({ where: { id: profileId } });
-    const readable =
-      p &&
-      (p.scope === 'GLOBAL' ||
-        (p.projectId === projectId && can(user, 'profile.project.read', projectId)));
-    if (!p || !readable || p.status === 'RETIRED') {
+    // Published profiles only (P-01): a draft profile can still change under the estimate.
+    if (!p || !applicable(p, projectId)) {
       throw new HttpError(
         422,
         'VALIDATION_FAILED',

@@ -87,6 +87,7 @@ model User {
   estimatesCreated  Estimate[]
   versionsCreated   EstimateVersion[]  @relation("VersionCreatedBy")
   versionsApproved  EstimateVersion[]  @relation("VersionApprovedBy")
+  versionsSubmitted EstimateVersion[]  @relation("VersionSubmittedBy")
   versionsLocked    EstimateVersion[]  @relation("VersionLockedBy")
   profilesCreated   AssumptionProfile[]
   actualsRecorded   Actuals[]
@@ -172,6 +173,8 @@ model EstimateVersion {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @default(now()) @updatedAt
   submittedAt        DateTime?
+  /// Who submitted it for approval (segregation of duties, release 2)
+  submittedById      String?
   approvedById       String?
   approvedAt         DateTime?
 
@@ -179,6 +182,7 @@ model EstimateVersion {
   profile       AssumptionProfile? @relation(fields: [profileId], references: [id])
   createdBy     User               @relation("VersionCreatedBy", fields: [createdById], references: [id])
   approvedBy    User?              @relation("VersionApprovedBy", fields: [approvedById], references: [id])
+  submittedBy   User?              @relation("VersionSubmittedBy", fields: [submittedById], references: [id])
   lockedBy      User?              @relation("VersionLockedBy", fields: [lockedById], references: [id])
   actuals       Actuals[]
   comments      ReviewComment[]
@@ -244,22 +248,27 @@ model ReviewComment {
 
 /// Outbox: written in the same transaction as the business change, sent by the worker.
 model Notification {
-  id          String              @id @default(cuid())
-  recipientId String
-  versionId   String?
-  kind        NotificationKind
-  channel     NotificationChannel
-  status      NotificationStatus  @default(PENDING)
-  payload     Json
-  attempts    Int                 @default(0)
-  createdAt   DateTime            @default(now())
-  sentAt      DateTime?
-  readAt      DateTime?
+  id            String              @id @default(cuid())
+  recipientId   String
+  versionId     String?
+  kind          NotificationKind
+  channel       NotificationChannel
+  status        NotificationStatus  @default(PENDING)
+  payload       Json
+  attempts      Int                 @default(0)
+  /// Email only: when the worker may try (again). Null for in-app rows.
+  nextAttemptAt DateTime?
+  /// Email only: the last delivery error, shortened (no message content).
+  lastError     String?             @db.VarChar(500)
+  createdAt     DateTime            @default(now())
+  sentAt        DateTime?
+  readAt        DateTime?
 
   recipient User             @relation(fields: [recipientId], references: [id])
   version   EstimateVersion? @relation(fields: [versionId], references: [id])
 
   @@index([status, createdAt])
+  @@index([channel, status, nextAttemptAt])
   @@index([recipientId, readAt])
 }
 

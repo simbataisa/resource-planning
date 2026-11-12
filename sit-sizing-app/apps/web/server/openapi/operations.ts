@@ -12,18 +12,33 @@ import {
   PageQuery,
   page,
   Profile,
+  ProfileApply,
+  ProfileCreate,
   ProfileDetail,
   ProfileListQuery,
+  ProfileUpdate,
   Project,
   ProjectCreate,
   ProjectDetail,
   ProjectUpdate,
   Ready,
+  ReturnRequest,
+  ReviewNote,
   Version,
+  VersionCompare,
   VersionSave,
+  CompareQuery,
+  NotificationList,
+  ExportQuery,
 } from '@sit/schemas';
 import { z } from 'zod';
-import { EstimateParams, ProfileParams, ProjectParams, VersionParams } from '../http/params';
+import {
+  EstimateParams,
+  NotificationParams,
+  ProfileParams,
+  ProjectParams,
+  VersionParams,
+} from '../http/params';
 
 export type MinRole = 'none' | 'USER' | 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' | 'ADMIN';
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -41,7 +56,14 @@ export interface Operation {
   query?: z.ZodObject;
   body?: z.ZodType;
   bodyExample?: unknown;
-  success: { status: number; description: string; schema?: z.ZodType; example?: unknown };
+  success: {
+    status: number;
+    description: string;
+    schema?: z.ZodType;
+    example?: unknown;
+    /** Binary or text files (exports): media types returned instead of JSON. */
+    files?: string[];
+  };
   /** Error statuses this operation can return, besides 500. */
   errors: number[];
 }
@@ -273,6 +295,81 @@ export const OPERATIONS: Operation[] = [
     errors: WRITE,
   },
   {
+    method: 'post',
+    path: '/estimates/{estimateId}/versions/{number}/submit',
+    operationId: 'submitVersion',
+    tag: 'Versions',
+    minRole: 'ESTIMATOR',
+    summary: 'Submit a saved version for approval',
+    description: 'SAVED → SUBMITTED. One submitted version per estimate at a time.',
+    params: VersionParams,
+    body: ReviewNote,
+    bodyExample: { note: 'Synthetic · ready for review' },
+    success: { status: 200, description: 'The submitted version', schema: Version },
+    errors: WRITE,
+  },
+  {
+    method: 'post',
+    path: '/estimates/{estimateId}/versions/{number}/approve',
+    operationId: 'approveVersion',
+    tag: 'Versions',
+    minRole: 'QE_LEAD',
+    summary: 'Approve a submitted version',
+    description:
+      'SUBMITTED → APPROVED; the previous approved version becomes SUPERSEDED. Segregation of duties: the author or submitter gets 403.',
+    params: VersionParams,
+    body: ReviewNote,
+    bodyExample: { note: 'Synthetic · approved for the QBR' },
+    success: { status: 200, description: 'The approved version', schema: Version },
+    errors: WRITE,
+  },
+  {
+    method: 'post',
+    path: '/estimates/{estimateId}/versions/{number}/return',
+    operationId: 'returnVersion',
+    tag: 'Versions',
+    minRole: 'QE_LEAD',
+    summary: 'Return a submitted version with a note',
+    description: 'SUBMITTED → SAVED. The note says what to change.',
+    params: VersionParams,
+    body: ReturnRequest,
+    bodyExample: { note: 'Synthetic · add the batch interfaces from FSD v2' },
+    success: { status: 200, description: 'The returned version', schema: Version },
+    errors: WRITE,
+  },
+  {
+    method: 'get',
+    path: '/estimates/{estimateId}/versions/{number}/export',
+    operationId: 'exportVersion',
+    tag: 'Versions',
+    minRole: 'VIEWER',
+    summary: 'Download a version as an Excel workbook or a CSV table',
+    description:
+      'The workbook has Summary, Drivers, Gap by group, Assumptions and Inputs sheets; CSV holds one of them (table). Figures are the engine output for the stored inputs and assumptions. Audited as estimate.export.',
+    params: VersionParams,
+    query: ExportQuery,
+    success: {
+      status: 200,
+      description: 'The file, as an attachment',
+      files: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'],
+    },
+    errors: READ,
+  },
+  {
+    method: 'get',
+    path: '/estimates/{estimateId}/compare',
+    operationId: 'compareVersions',
+    tag: 'Versions',
+    minRole: 'VIEWER',
+    summary: 'Compare two versions',
+    description:
+      'Headline results, detailed groups and every changed input or assumption (at most 500).',
+    params: EstimateParams,
+    query: CompareQuery,
+    success: { status: 200, description: 'The comparison', schema: VersionCompare },
+    errors: READ,
+  },
+  {
     method: 'get',
     path: '/profiles',
     operationId: 'listProfiles',
@@ -298,6 +395,117 @@ export const OPERATIONS: Operation[] = [
     params: ProfileParams,
     success: { status: 200, description: 'The profile', schema: ProfileDetail },
     errors: READ,
+  },
+  {
+    method: 'post',
+    path: '/profiles',
+    operationId: 'createProfile',
+    tag: 'Assumption profiles',
+    minRole: 'QE_LEAD',
+    summary: 'Create a draft profile',
+    description:
+      'Project profiles need QE Lead in that project; global profiles need Admin. Starts from the engine defaults, or from basedOnId (a global profile or one from the same project).',
+    body: ProfileCreate,
+    bodyExample: {
+      name: 'Synthetic · Retail lending 2026',
+      scope: 'PROJECT',
+      projectId: 'cm0project0000000000000',
+    },
+    success: { status: 201, description: 'The new draft profile', schema: ProfileDetail },
+    errors: [...WRITE, 422],
+  },
+  {
+    method: 'patch',
+    path: '/profiles/{profileId}',
+    operationId: 'updateProfile',
+    tag: 'Assumption profiles',
+    minRole: 'QE_LEAD',
+    summary: "Change a draft profile's name, values or calibration notes",
+    description:
+      'Published and retired profiles are read-only (409 NOT_DRAFT); clone them instead.',
+    params: ProfileParams,
+    body: ProfileUpdate,
+    bodyExample: {
+      calibration: {
+        'cases.api': { source: 'Synthetic · SIT cycle 2026-Q3', measuredAt: '2026-10-01' },
+      },
+    },
+    success: { status: 200, description: 'The updated profile', schema: ProfileDetail },
+    errors: [...WRITE, 422],
+  },
+  {
+    method: 'post',
+    path: '/profiles/{profileId}/publish',
+    operationId: 'publishProfile',
+    tag: 'Assumption profiles',
+    minRole: 'QE_LEAD',
+    summary: 'Publish a draft profile',
+    description:
+      'DRAFT → PUBLISHED. Published profiles can be applied to estimates and never change.',
+    params: ProfileParams,
+    success: { status: 200, description: 'The published profile', schema: ProfileDetail },
+    errors: WRITE,
+  },
+  {
+    method: 'post',
+    path: '/profiles/{profileId}/retire',
+    operationId: 'retireProfile',
+    tag: 'Assumption profiles',
+    minRole: 'QE_LEAD',
+    summary: 'Retire a published profile',
+    description:
+      'PUBLISHED → RETIRED. Estimates that copied it keep their values. The last published global profile cannot be retired.',
+    params: ProfileParams,
+    success: { status: 200, description: 'The retired profile', schema: ProfileDetail },
+    errors: WRITE,
+  },
+  {
+    method: 'post',
+    path: '/estimates/{estimateId}/draft/profile',
+    operationId: 'applyProfile',
+    tag: 'Versions',
+    minRole: 'ESTIMATOR',
+    summary: "Apply a published profile to the draft's assumptions",
+    description:
+      "Lock holder only. Replaces every assumption with the profile's values and recomputes; inputs are kept.",
+    params: EstimateParams,
+    body: ProfileApply,
+    bodyExample: { profileId: 'cm0profile0000000000000', rowVersion: 3 },
+    success: { status: 200, description: 'The updated draft', schema: Version },
+    errors: [...WRITE, 422],
+  },
+  {
+    method: 'get',
+    path: '/notifications',
+    operationId: 'listNotifications',
+    tag: 'Session',
+    minRole: 'USER',
+    summary: 'My in-app notifications',
+    description:
+      'The 30 newest notices about submissions, approvals, returns and published profiles, with the unread count.',
+    success: { status: 200, description: 'Notices, newest first', schema: NotificationList },
+    errors: AUTH,
+  },
+  {
+    method: 'post',
+    path: '/notifications/{notificationId}/read',
+    operationId: 'markNotificationRead',
+    tag: 'Session',
+    minRole: 'USER',
+    summary: 'Mark one notice read',
+    params: NotificationParams,
+    success: { status: 200, description: 'The updated list', schema: NotificationList },
+    errors: [400, 401, 404],
+  },
+  {
+    method: 'post',
+    path: '/notifications/read-all',
+    operationId: 'markAllNotificationsRead',
+    tag: 'Session',
+    minRole: 'USER',
+    summary: 'Mark all my notices read',
+    success: { status: 200, description: 'The updated list', schema: NotificationList },
+    errors: AUTH,
   },
   {
     method: 'get',

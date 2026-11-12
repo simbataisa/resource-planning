@@ -3,7 +3,6 @@
 #   pnpm stack:up   production-like image
 #   pnpm dev:up     adds compose.dev.yaml (hot reload)
 #   pnpm dev:obs    adds compose.obs.yaml (tracing viewer)
-# Services added later: worker (release 2).
 name: sit-sizing
 
 services:
@@ -153,11 +152,55 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  worker:
+    # Notification worker (design 12.1, N-01): sends queued emails with retries. Same code as
+    # web, run from the tools image (full workspace + tsx). Several replicas are safe.
+    image: sit-sizing-tools:local
+    # tsx directly, not through pnpm: as the non-root user on a read-only filesystem,
+    # corepack cannot cache pnpm, and the worker needs nothing else from it.
+    working_dir: /repo/apps/web
+    command: ['node_modules/.bin/tsx', 'worker/main.ts']
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_VERSION: ${APP_VERSION:-0.0.0-dev}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://app_user:${APP_DB_PASSWORD}@db:5432/app
+      APP_BASE_URL: http://localhost:${WEB_PORT:-3000}
+      PROCESS_ROLE: worker # serves no requests: no OIDC client settings or session secret
+      SMTP_URL: ${SMTP_URL:-smtp://mail:1025}
+      MAIL_FROM: ${MAIL_FROM:-SIT Sizing <no-reply@sit-sizing.local>}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mail:
+        condition: service_started
+    user: node
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    # The worker touches /tmp/sit-worker-heartbeat on every poll; stale or missing = unhealthy,
+    # so `up --wait` fails when the worker cannot start.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "const s=require('fs').statSync('/tmp/sit-worker-heartbeat',{throwIfNoEntry:false});process.exit(s&&Date.now()-s.mtimeMs<60000?0:1)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
   mail:
     # Local mail catcher for invitation, reset and notification emails. Development only.
     image: ${REGISTRY_PREFIX:-}axllent/mailpit:v1.31.4
     ports:
-      - '127.0.0.1:8025:8025'
+      - '127.0.0.1:${MAIL_UI_PORT:-8025}:8025'
     restart: unless-stopped
 
 volumes:

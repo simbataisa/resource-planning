@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { DEFAULT_ASSUMPTIONS, isDefaultRow } from '@sit/engine';
 import type { Assumptions } from '@sit/schemas';
@@ -9,13 +10,23 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { NumberInput } from '@/components/patterns/number-input';
 import { getPath, setPath } from '@/lib/path';
 import { cn } from '@/lib/utils';
-import { ASSUMPTION_META, type MetaLabel, type MetaRow } from './assumption-meta';
+import { ASSUMPTION_META, type MetaLabel, type MetaRow } from '@/lib/assumption-meta';
 import { useEditor } from './store';
 
 const DEFAULTS = DEFAULT_ASSUMPTIONS as Assumptions;
 
-/** Tab 5 (prototype `#p-asm`): every assumption, its calibration state and a reset. */
-export function AssumptionsTab() {
+/**
+ * Tab 5 (prototype `#p-asm`): every assumption, its calibration state and a reset.
+ * The profile editor (P-01) reuses it and adds a calibration-source cell per row, and
+ * the estimate editor puts the "apply a profile" control in `header`.
+ */
+export function AssumptionsTab({
+  header,
+  calibrationCell,
+}: {
+  header?: ReactNode;
+  calibrationCell?: (path: string, name: string, isDefault: boolean) => ReactNode;
+} = {}) {
   const t = useTranslations('assumptionsTab');
   const tr = useTranslations();
   const { state, uncalibrated, editAssumptions, editable } = useEditor();
@@ -28,6 +39,7 @@ export function AssumptionsTab() {
         <p className="min-w-0 flex-1 basis-80 text-sm text-muted-foreground">{t('hint')}</p>
         <Badge variant="unc">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
       </div>
+      {header}
       {ASSUMPTION_META.map((g) => (
         <section key={g.group} className="grid gap-2">
           <h3 className="pt-1.5 text-base font-semibold">{t(`groups.${g.group}`)}</h3>
@@ -59,6 +71,11 @@ export function AssumptionsTab() {
                           {isDefault ? t('uncalibrated') : t('teamValue')}
                         </Badge>
                       </TableCell>
+                      {calibrationCell ? (
+                        <TableCell className="w-64 align-top">
+                          {calibrationCell(r.path, name, isDefault)}
+                        </TableCell>
+                      ) : null}
                       <TableCell className="w-24 align-top">
                         {!isDefault ? (
                           <Button

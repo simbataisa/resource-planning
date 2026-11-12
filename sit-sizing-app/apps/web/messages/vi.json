@@ -8,7 +8,8 @@
     "apiDocs": "Tài liệu API",
     "language": "Ngôn ngữ",
     "sessionMenu": "Tài khoản",
-    "signedInAs": "Đang đăng nhập với {name}"
+    "signedInAs": "Đang đăng nhập với {name}",
+    "profiles": "Hồ sơ"
   },
   "common": {
     "loading": "Đang tải…",
@@ -1099,6 +1100,21 @@
       "scope": "• Phạm vi gồm: {p}",
       "evidence": "• Bằng chứng shift-left: mutation {m}%, test quy tắc {r}%, validation BE {b}%, validation FE {f}%, test mapping {p}%, unit FE {u}%, mutation FE {s}%",
       "calibration": "• {u} trên {t} giả định là mặc định chưa hiệu chỉnh. Xác nhận với người chịu trách nhiệm delivery trước khi cam kết."
+    },
+    "sheets": {
+      "title": "Bảng tính",
+      "xlsx": "Sổ làm việc Excel",
+      "csv": "Tải CSV",
+      "csvTable": "Bảng CSV",
+      "tables": {
+        "gap": "Chênh lệch theo nhóm",
+        "drivers": "Yếu tố định cỡ",
+        "assumptions": "Giả định",
+        "inputs": "Đầu vào",
+        "summary": "Tổng quan"
+      },
+      "hint": "Tạo từ trạng thái đã lưu gần nhất của phiên bản này, cùng số liệu với màn hình.",
+      "waiting": "Đang chờ tự động lưu trước khi tải xuống."
     }
   },
   "content": {
@@ -1602,6 +1618,195 @@
       "warn": "Dựa trên phương pháp",
       "bad": "Phán đoán",
       "team": "Tiêu chuẩn nội bộ"
+    }
+  },
+  "versions": {
+    "eyebrow": "Phiên bản",
+    "title": "Lịch sử phiên bản",
+    "current": "Đang mở",
+    "by": "{name}, {when}",
+    "submittedBy": "{name} gửi duyệt, {when}",
+    "approvedBy": "{name} phê duyệt, {when}",
+    "submit": "Gửi phê duyệt",
+    "approve": "Phê duyệt",
+    "return": "Trả lại kèm ghi chú",
+    "restore": "Khôi phục thành bản nháp mới",
+    "submitTitle": "Gửi phê duyệt phiên bản {n}",
+    "submitBody": "Một QE Lead không viết và không gửi phiên bản này sẽ xem xét.",
+    "approveTitle": "Phê duyệt phiên bản {n}",
+    "approveBody": "Phiên bản được phê duyệt trở thành bản tham chiếu của ước lượng này. Phiên bản đã phê duyệt trước đó được đánh dấu là đã thay thế.",
+    "returnTitle": "Trả lại phiên bản {n}",
+    "returnBody": "Nêu rõ cần thay đổi gì. Phiên bản trở về trạng thái Đã lưu; người ước lượng mở bản nháp mới từ đó.",
+    "noteOptional": "Ghi chú (không bắt buộc)",
+    "noteRequired": "Cần thay đổi gì",
+    "noteMissing": "Hãy nhập nội dung cần thay đổi.",
+    "confirm": "Xác nhận",
+    "sodHint": "Bạn đã viết hoặc gửi phiên bản này, nên một QE Lead khác phải phê duyệt.",
+    "pending": "Đang có một phiên bản khác chờ phê duyệt.",
+    "error": "Thao tác chưa thành công. Hãy tải lại trang và thử lại.",
+    "reviews": "Ghi chú xem xét",
+    "reviewKind": {
+      "COMMENT": "Ghi chú",
+      "RETURN": "Đã trả lại",
+      "APPROVE": "Đã phê duyệt"
+    },
+    "compareA": "So sánh phiên bản",
+    "compareB": "với phiên bản",
+    "compare": "So sánh",
+    "cmp": {
+      "title": "So sánh phiên bản {a} với {b}",
+      "back": "Quay lại ước lượng",
+      "results": "Kết quả",
+      "mode": "Ước lượng",
+      "measure": "Chỉ số",
+      "rough": "Sơ bộ",
+      "detailed": "Chi tiết",
+      "fte": "FTE",
+      "cases": "Case",
+      "hours": "Giờ",
+      "delta": "Thay đổi",
+      "groups": "Số case chi tiết theo yếu tố",
+      "group": "Yếu tố",
+      "changes": "Dữ liệu đầu vào và giả định đã thay đổi",
+      "area": "Phần",
+      "path": "Giá trị",
+      "inputs": "Phạm vi và nhóm",
+      "assumptions": "Giả định",
+      "none": "Hai phiên bản có cùng dữ liệu đầu vào và giả định.",
+      "truncated": "Chỉ liệt kê 500 thay đổi đầu tiên.",
+      "empty": "(không có)"
+    }
+  },
+  "profiles": {
+    "title": "Hồ sơ giả định",
+    "description": "Các bộ có tên gồm 142 giả định. Phát hành hồ sơ để dùng trong ước tính; hồ sơ đã phát hành không bao giờ thay đổi.",
+    "showFor": "Hiển thị",
+    "globalOnly": "Hồ sơ toàn cục",
+    "globalAnd": "Toàn cục và {project}",
+    "emptyTitle": "Chưa có hồ sơ",
+    "emptyBody": "QE Lead có thể tạo hồ sơ dự án; Quản trị viên quản lý hồ sơ toàn cục.",
+    "name": "Tên",
+    "scope": "Phạm vi",
+    "statusLabel": "Trạng thái",
+    "uncalibratedCol": "Chưa hiệu chỉnh",
+    "published": "Ngày phát hành",
+    "scopes": {
+      "GLOBAL": "Toàn cục",
+      "PROJECT": "Dự án"
+    },
+    "status": {
+      "DRAFT": "Bản nháp",
+      "PUBLISHED": "Đã phát hành",
+      "RETIRED": "Ngừng sử dụng"
+    },
+    "new": "Hồ sơ mới",
+    "clone": "Nhân bản",
+    "copyOf": "Bản sao của {name}",
+    "cloneTitle": "Nhân bản hồ sơ",
+    "newTitle": "Hồ sơ mới",
+    "newDescription": "Hồ sơ mới bắt đầu ở trạng thái nháp. Chỉnh giá trị và ghi chú hiệu chỉnh, rồi phát hành.",
+    "nameRequired": "Nhập tên.",
+    "projectScope": "Dự án: {project}",
+    "basedOn": "Bắt đầu từ",
+    "engineDefaults": "Mặc định của engine (chưa hiệu chỉnh)",
+    "create": "Tạo hồ sơ",
+    "back": "Tất cả hồ sơ",
+    "saving": "Đang lưu…",
+    "save": "Lưu thay đổi",
+    "saveFirst": "Hãy lưu thay đổi trước.",
+    "publish": "Phát hành",
+    "retire": "Ngừng sử dụng",
+    "draftNotice": "Bản nháp: thay đổi giá trị và ghi nguồn cho từng giá trị đã hiệu chỉnh, rồi phát hành. Ước tính chỉ dùng được hồ sơ đã phát hành.",
+    "readOnlyNotice": "Chỉ đọc, phát hành {when}. Nhân bản để thay đổi; các ước tính đang dùng vẫn giữ giá trị của chúng.",
+    "publishTitle": "Phát hành hồ sơ này?",
+    "publishBody": "Sau khi phát hành, giá trị không thể thay đổi và các ước tính trong phạm vi có thể dùng hồ sơ.",
+    "retireTitle": "Ngừng sử dụng hồ sơ này?",
+    "retireBody": "Ước tính mới không thể dùng hồ sơ nữa. Các ước tính đã sao chép giá trị vẫn giữ nguyên.",
+    "sourceFor": "Nguồn hiệu chỉnh cho {label}",
+    "sourcePlaceholder": "Nguồn, ví dụ chu kỳ SIT 2026-Q3",
+    "measuredFor": "Ngày đo, cho {label}",
+    "fieldProfile": "Hồ sơ giả định",
+    "fieldProfileHint": "Các hồ sơ đã phát hành cho dự án này. Bạn có thể áp dụng hồ sơ khác sau.",
+    "defaultProfile": "Hồ sơ toàn cục mặc định",
+    "apply": {
+      "current": "Giả định lấy từ hồ sơ <link>{name}</link>.",
+      "none": "Các giả định này chưa gắn với hồ sơ nào.",
+      "choose": "Áp dụng hồ sơ đã phát hành",
+      "pick": "Chọn hồ sơ",
+      "apply": "Áp dụng hồ sơ",
+      "waitForSave": "Chờ tự động lưu hoàn tất.",
+      "confirmTitle": "Thay thế toàn bộ giả định?",
+      "confirmBody": "Mọi giả định trong bản nháp này sẽ được thay bằng giá trị của {name}. Phạm vi giữ nguyên. Các thay đổi bạn đã làm với giả định sẽ mất."
+    },
+    "valuesTitle": "Giá trị giả định"
+  },
+  "export": {
+    "disclaimer": "Khoảng ước lượng để lập kế hoạch, không phải cam kết. Xác nhận FTE và tiến độ với người chịu trách nhiệm triển khai.",
+    "inputsNote": "Mọi đầu vào của phiên bản này dưới dạng đường dẫn và giá trị. Chỉ dùng số liệu giả lập hoặc tên nghiệp vụ; không có dữ liệu khách hàng.",
+    "sheets": {
+      "summary": "Tổng quan",
+      "drivers": "Yếu tố định cỡ",
+      "gap": "Chênh lệch theo nhóm",
+      "assumptions": "Giả định",
+      "inputs": "Đầu vào"
+    },
+    "cols": {
+      "item": "Mục",
+      "rough": "Sơ bộ",
+      "detailed": "Chi tiết",
+      "driver": "Yếu tố",
+      "group": "Nhóm",
+      "total": "Tổng",
+      "roughCases": "Ca kiểm thử sơ bộ",
+      "detailedCases": "Ca kiểm thử chi tiết",
+      "deltaCases": "Δ ca kiểm thử",
+      "roughHours": "Giờ sơ bộ",
+      "detailedHours": "Giờ chi tiết",
+      "deltaHours": "Δ giờ",
+      "share": "Tỷ trọng chênh lệch giờ",
+      "assumption": "Giả định",
+      "path": "Đường dẫn",
+      "value": "Giá trị",
+      "default": "Mặc định",
+      "status": "Trạng thái"
+    },
+    "summary": {
+      "estimate": "Ước tính",
+      "project": "Dự án",
+      "version": "Phiên bản",
+      "profile": "Hồ sơ giả định",
+      "engine": "Phiên bản engine",
+      "exportedAt": "Thời điểm xuất (UTC)",
+      "uncalibrated": "Giả định chưa hiệu chỉnh",
+      "fte": "FTE",
+      "fteLow": "FTE, thấp",
+      "fteHigh": "FTE, cao",
+      "cases": "Ca kiểm thử",
+      "hours": "Giờ",
+      "weeks": "Cửa sổ SIT (tuần)"
+    }
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "bellUnread": "Thông báo, {n} chưa đọc",
+    "markAll": "Đánh dấu tất cả đã đọc",
+    "empty": "Chưa có thông báo.",
+    "unreadLabel": "Chưa đọc:",
+    "globalScope": "toàn cục",
+    "open": "Mở trong SIT Sizing",
+    "noteLabel": "Ghi chú",
+    "emailFooter": "Bạn nhận email này vì vai trò của bạn trong SIT Sizing. Số liệu là khoảng ước lượng để lập kế hoạch, không phải cam kết.",
+    "subject": {
+      "SUBMITTED": "Cần phê duyệt: {estimate} v{version}",
+      "APPROVED": "Đã phê duyệt: {estimate} v{version}",
+      "RETURNED": "Đã trả lại: {estimate} v{version}",
+      "PROFILE_PUBLISHED": "Hồ sơ giả định mới: {profile}"
+    },
+    "body": {
+      "SUBMITTED": "{actor} đã gửi {estimate} v{version} ({project}) để phê duyệt.",
+      "APPROVED": "{actor} đã phê duyệt {estimate} v{version} ({project}).",
+      "RETURNED": "{actor} đã trả lại {estimate} v{version} ({project}) kèm ghi chú.",
+      "PROFILE_PUBLISHED": "{actor} đã phát hành hồ sơ giả định {profile} ({project})."
     }
   }
 }
