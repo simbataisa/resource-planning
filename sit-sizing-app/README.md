@@ -24,7 +24,7 @@ Then open http://localhost:3000 and http://localhost:3000/api/v1/ready. See [doc
 apps/web            Next.js app (pages, /api/v1 route handlers, server code, components)
 packages/engine     Calculation engine — pure TypeScript, golden parity with the prototype
 packages/schemas    Zod schemas shared by engine, API and forms
-packages/tokens     Design tokens → tokens.css (interim prototype palette until TCB-DS, Q1)
+packages/tokens     Design tokens → tokens.css (TCB-DS, ADR-0005)
 packages/config     Shared tsconfig presets
 packages/db         Prisma schema, migrations, seed, client
 docker/             Dockerfile, compose files, Postgres init
@@ -40,7 +40,7 @@ docs/               ADRs, runbook, threat model, engine findings
 | 1.1  | Engine port with golden parity (E-01…E-07)                      | Done                                      |
 | 1.2  | Prisma, REST API, OpenAPI 3.2 + Scalar, Axios, audit, edit lock | Done                                      |
 | 1.3  | Keycloak realm as code, openid-client sign-in                   | Done (Q2 open)                            |
-| 1.4  | Tokens (interim, Q1), shadcn primitives, Storybook              | Done                                      |
+| 1.4  | TCB-DS tokens, shadcn primitives, Storybook                     | Done                                      |
 | 1.5  | Editor and results, autosave, versions, export/import           | Done                                      |
 | 1.6  | Content pages, EN/VI checks, language in profile, VI review kit | **This change** (review sign-off pending) |
 | 1.7  | Hardening and pilot                                             |                                           |

@@ -5,6 +5,7 @@
 export {
   colorTokens,
   contrastPairs,
+  nonTextPairs,
   motion,
   scaleTokens,
   type ColorToken,

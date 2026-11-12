@@ -1,10 +1,23 @@
-/* TCB login theme — interim values from the prototype palette (packages/tokens, Q1). */
+/* TCB login theme: TCB-DS values (packages/tokens, ADR-0005). Black primary actions, red
+   focus and accents, ink text, mist-grey page, 8px radius. System fonts (no SF Pro files). */
 :root {
-  --tcb-primary: #1b1564;
-  --tcb-brand: #ed1b24;
+  --tcb-primary: #212121;
+  --tcb-brand: #ed1c24;
+  --tcb-ink: #212121;
+  --tcb-page: #f5f6f8;
+  --tcb-border: #dedede;
   --tcb-radius: 0.5rem;
   --pf-v5-global--primary-color--100: var(--tcb-primary);
-  --pf-v5-global--primary-color--200: var(--tcb-primary);
-  --pf-v5-global--link--Color: var(--tcb-primary);
+  --pf-v5-global--primary-color--200: #000000;
+  --pf-v5-global--link--Color: var(--tcb-ink);
+  --pf-v5-global--link--Color--hover: #c70e1b;
   --pf-v5-global--BorderRadius--sm: var(--tcb-radius);
+  --pf-v5-global--BackgroundColor--200: var(--tcb-page);
+  --pf-v5-global--FontFamily--text:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --pf-v5-global--FontFamily--heading: var(--pf-v5-global--FontFamily--text);
+}
+:focus-visible {
+  outline: 2px solid var(--tcb-brand);
+  outline-offset: 2px;
 }

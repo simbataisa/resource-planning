@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   colorTokens,
   contrastPairs,
+  nonTextPairs,
   contrastRatio,
   cssVar,
   luminance,
@@ -25,6 +26,13 @@ describe('tokens', () => {
     for (const [text, bg] of contrastPairs) {
       const ratio = contrastRatio(colorTokens[theme][text], colorTokens[theme][bg]);
       expect(ratio, `${theme}: ${text} on ${bg} = ${ratio.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each(['light', 'dark'] as const)('%s theme: non-text parts meet 3:1', (theme) => {
+    for (const [part, bg] of nonTextPairs) {
+      const ratio = contrastRatio(colorTokens[theme][part], colorTokens[theme][bg]);
+      expect(ratio, `${theme}: ${part} on ${bg} = ${ratio.toFixed(2)}`).toBeGreaterThanOrEqual(3);
     }
   });
 

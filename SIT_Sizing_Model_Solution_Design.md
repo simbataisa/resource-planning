@@ -541,7 +541,7 @@ What happens to saved estimates when a formula or default changes:
 
 ## 8. UI architecture and design system
 
-> **Step 1.4 note (ADR-0005):** until the TCB-DS source is available (Q1), `packages/tokens` carries the prototype's palette, adjusted for WCAG AA contrast. Components use semantic token names only, so adopting TCB-DS changes token values, not components.
+> **Step 1.4 note (ADR-0005):** `packages/tokens` now carries TCB-DS (`tcb-ds/`, captured from the public techcombank.com site; Q1 answered for release 1), with WCAG AA adjustments marked in `tokens.ts`. Rough and detailed keep the prototype's gold and navy series colours. The app uses the system font stack, not the SF Pro web fonts (licence).
 
 
 ### 8.1 Component layers
@@ -1033,7 +1033,7 @@ Give each session: the task ID and acceptance line from the table, links to this
 
 | # | Question | Why it matters | Default if unanswered |
 |---|---|---|---|
-| Q1 | Where is the official TCB-DS source (tokens, components, usage rules), and can it be added to the repository? | Blocks U-01 | Start from the prototype's tokens, isolated in `packages/tokens` |
+| Q1 | Where is the official TCB-DS source (tokens, components, usage rules), and can it be added to the repository? | Blocks U-01 | **Answered for release 1:** `tcb-ds/` (captured from the public site), adopted in `packages/tokens` (ADR-0005 amendment) |
 | Q2 | Is self-hosted Keycloak with local accounts acceptable to information security? Will sign-in with corporate credentials be required later? | Go/no-go for the identity approach | Keycloak with local accounts; federation ready, not configured |
 | Q3 | Session lifetimes and MFA policy: who must use a second factor? | Realm configuration | 8-hour idle, 12-hour maximum; TOTP required for admins, optional for others |
 | Q9 | How are accounts created: admin-created, email invitation, or bulk import? Is an outbound mail service available? | Account lifecycle and reset flow | Admin-created with email invitation |
