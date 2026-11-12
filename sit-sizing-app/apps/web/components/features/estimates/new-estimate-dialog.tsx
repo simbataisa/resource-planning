@@ -15,10 +15,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Field } from '@/components/patterns/field';
 import { useRouter } from '@/i18n/navigation';
-import { useCreateEstimate } from '@/lib/query/hooks';
+import { useCreateEstimate, useProfiles } from '@/lib/query/hooks';
 
 type Template = 'example' | 'blank';
 
@@ -32,6 +33,10 @@ export function NewEstimateDialog({ projectId }: { projectId: string }) {
   const [description, setDescription] = useState('');
   const [template, setTemplate] = useState<Template>('example');
   const [nameError, setNameError] = useState<string | undefined>();
+  const [profileId, setProfileId] = useState('');
+  // Published profiles only (P-01); empty means the server's default global profile.
+  const profiles = useProfiles(projectId);
+  const published = (profiles.data?.items ?? []).filter((p) => p.status === 'PUBLISHED');
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -40,7 +45,12 @@ export function NewEstimateDialog({ projectId }: { projectId: string }) {
       return;
     }
     create.mutate(
-      { name: name.trim(), description: description.trim() || undefined, template },
+      {
+        name: name.trim(),
+        description: description.trim() || undefined,
+        template,
+        profileId: profileId || undefined,
+      },
       { onSuccess: (estimate) => router.push(`/estimates/${estimate.id}`) },
     );
   }
@@ -120,6 +130,22 @@ export function NewEstimateDialog({ projectId }: { projectId: string }) {
               </label>
             ))}
           </fieldset>
+          <Field label={t('profiles.fieldProfile')} hint={t('profiles.fieldProfileHint')}>
+            {(control) => (
+              <NativeSelect
+                {...control}
+                value={profileId}
+                onChange={(e) => setProfileId(e.target.value)}
+              >
+                <option value="">{t('profiles.defaultProfile')}</option>
+                {published.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.scope === 'GLOBAL' ? p.name : `${p.name} · ${t('profiles.scopes.PROJECT')}`}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
+          </Field>
           {create.isError ? (
             <Alert variant="destructive">
               <AlertDescription>{t('common.errorTitle')}</AlertDescription>

@@ -177,6 +177,7 @@ interface ProfileRow {
   status: Profile['status'];
   values: unknown;
   calibration: unknown;
+  basedOnId: string | null;
   createdAt: Date;
   publishedAt: Date | null;
 }
@@ -189,6 +190,7 @@ export function profileDto(p: ProfileRow): Profile {
     name: p.name,
     status: p.status,
     uncalibrated: uncalibratedCount(p.values as Assumptions, DEFAULT_ASSUMPTIONS),
+    basedOnId: p.basedOnId,
     createdAt: iso(p.createdAt),
     publishedAt: p.publishedAt ? iso(p.publishedAt) : null,
   };

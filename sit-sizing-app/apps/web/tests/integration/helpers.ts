@@ -36,6 +36,8 @@ export async function seeded() {
   const example = await db().estimate.findFirstOrThrow({
     where: { projectId: demo.id, name: 'Example estimate' },
   });
-  const profile = await db().assumptionProfile.findFirstOrThrow({ where: { scope: 'GLOBAL' } });
+  const profile = await db().assumptionProfile.findFirstOrThrow({
+    where: { scope: 'GLOBAL', name: 'Default (uncalibrated)' },
+  });
   return { demo, other, example, profile };
 }

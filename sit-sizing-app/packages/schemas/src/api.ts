@@ -296,6 +296,8 @@ export const Profile = z
     name: z.string(),
     status: ProfileStatus,
     uncalibrated: z.number().int(),
+    /** The profile this one was cloned from. */
+    basedOnId: Id.nullable(),
     createdAt: IsoDateTime,
     publishedAt: IsoDateTime.nullable(),
   })
@@ -314,6 +316,49 @@ export const ProfileDetail = Profile.extend({
 export type ProfileDetail = z.infer<typeof ProfileDetail>;
 
 export const ProfileListQuery = z.object({ projectId: Id.optional() });
+
+/** Calibration notes per assumption path (P-01). Keys are checked against the engine's 142 rows. */
+export const CalibrationMap = z.record(z.string().max(80), CalibrationEntry);
+
+export const ProfileCreate = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    scope: ProfileScope,
+    /** Required for a project profile; not allowed for a global one. */
+    projectId: Id.optional(),
+    /** Copy values and calibration notes from this profile; defaults to the engine defaults. */
+    basedOnId: Id.optional(),
+  })
+  .refine((v) => (v.scope === 'PROJECT') === Boolean(v.projectId), {
+    path: ['projectId'],
+    message: 'A project profile needs projectId; a global profile must not have one.',
+  })
+  .meta({
+    id: 'ProfileCreate',
+    example: {
+      name: 'Synthetic · Retail lending 2026',
+      scope: 'PROJECT',
+      projectId: 'cm0project0000000000000',
+    },
+  });
+
+/** Changes to a DRAFT profile. Published and retired profiles are read-only. */
+export const ProfileUpdate = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    values: Assumptions.optional(),
+    calibration: CalibrationMap.optional(),
+  })
+  .meta({ id: 'ProfileUpdate' });
+
+/** Replaces the open draft's assumptions with a published profile's values. */
+export const ProfileApply = z
+  .object({
+    profileId: Id,
+    /** Optimistic lock: the draft's rowVersion the client last saw. */
+    rowVersion: z.number().int().min(1),
+  })
+  .meta({ id: 'ProfileApply' });
 
 // ---------- misc ----------
 export const Health = z

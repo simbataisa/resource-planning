@@ -27,6 +27,7 @@ import { can } from '@/lib/rbac';
 import { ResultsPanels } from '../results/results-panels';
 import { VersionHistory } from '../versions/version-history';
 import { useQueryState } from '../shared/use-query-state';
+import { ApplyProfile } from './apply-profile';
 import { AssumptionsTab } from './assumptions-tab';
 import { DetailScopeTab } from './detail-scope-tab';
 import { DraftToolbar } from './draft-toolbar';
@@ -328,7 +329,15 @@ function EditorLayout({
             <EvidenceTab />
           </Panel>
           <Panel value="assumptions">
-            <AssumptionsTab />
+            <AssumptionsTab
+              header={
+                <ApplyProfile
+                  estimateId={estimate.id}
+                  projectId={estimate.projectId}
+                  profileId={version.profileId}
+                />
+              }
+            />
           </Panel>
         </Tabs>
       </section>

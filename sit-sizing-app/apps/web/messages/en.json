@@ -8,7 +8,8 @@
     "apiDocs": "API reference",
     "language": "Language",
     "sessionMenu": "Account",
-    "signedInAs": "Signed in as {name}"
+    "signedInAs": "Signed in as {name}",
+    "profiles": "Profiles"
   },
   "common": {
     "loading": "Loading…",
@@ -1660,5 +1661,68 @@
       "truncated": "Only the first 500 changes are listed.",
       "empty": "(none)"
     }
+  },
+  "profiles": {
+    "title": "Assumption profiles",
+    "description": "Named sets of the 142 assumptions. Publish a profile to use it in estimates; published profiles never change.",
+    "showFor": "Show",
+    "globalOnly": "Global profiles",
+    "globalAnd": "Global and {project}",
+    "emptyTitle": "No profiles here",
+    "emptyBody": "QE Leads can create project profiles; Admins manage global ones.",
+    "name": "Name",
+    "scope": "Scope",
+    "statusLabel": "Status",
+    "uncalibratedCol": "Uncalibrated",
+    "published": "Published",
+    "scopes": {
+      "GLOBAL": "Global",
+      "PROJECT": "Project"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
+      "RETIRED": "Retired"
+    },
+    "new": "New profile",
+    "clone": "Clone",
+    "copyOf": "Copy of {name}",
+    "cloneTitle": "Clone profile",
+    "newTitle": "New profile",
+    "newDescription": "The new profile starts as a draft. Edit its values and calibration notes, then publish it.",
+    "nameRequired": "Enter a name.",
+    "projectScope": "Project: {project}",
+    "basedOn": "Start from",
+    "engineDefaults": "Engine defaults (uncalibrated)",
+    "create": "Create profile",
+    "back": "All profiles",
+    "saving": "Saving…",
+    "save": "Save changes",
+    "saveFirst": "Save your changes first.",
+    "publish": "Publish",
+    "retire": "Retire",
+    "draftNotice": "Draft: change values and add a source for each calibrated value, then publish. Estimates can only use published profiles.",
+    "readOnlyNotice": "Read-only, published {when}. Clone it to make changes; estimates that use it keep their values.",
+    "publishTitle": "Publish this profile?",
+    "publishBody": "After publishing, the values cannot change and estimates in scope can use the profile.",
+    "retireTitle": "Retire this profile?",
+    "retireBody": "New estimates can no longer use it. Estimates that already copied its values keep them.",
+    "sourceFor": "Calibration source for {label}",
+    "sourcePlaceholder": "Source, e.g. SIT cycle 2026-Q3",
+    "measuredFor": "Measured on, for {label}",
+    "fieldProfile": "Assumption profile",
+    "fieldProfileHint": "Published profiles for this project. You can apply another one later.",
+    "defaultProfile": "Default global profile",
+    "apply": {
+      "current": "Assumptions come from the profile <link>{name}</link>.",
+      "none": "These assumptions are not linked to a profile.",
+      "choose": "Apply a published profile",
+      "pick": "Choose a profile",
+      "apply": "Apply profile",
+      "waitForSave": "Wait for autosave to finish.",
+      "confirmTitle": "Replace all assumptions?",
+      "confirmBody": "Every assumption in this draft will be replaced by the values of {name}. Your scope stays the same. Changes you made to assumptions are lost."
+    },
+    "valuesTitle": "Assumption values"
   }
 }

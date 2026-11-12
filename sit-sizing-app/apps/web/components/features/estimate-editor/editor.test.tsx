@@ -23,6 +23,8 @@ const hooks = vi.hoisted(() => ({
   usePatchDraft: vi.fn(),
   useSaveVersion: vi.fn(),
   useReviewVersion: vi.fn(),
+  useProfiles: vi.fn(),
+  useApplyProfile: vi.fn(),
 }));
 vi.mock('@/lib/query/hooks', () => hooks);
 
@@ -120,6 +122,8 @@ beforeEach(() => {
   createDraft = { mutate: vi.fn(), isPending: false };
   hooks.useLockDraft.mockReturnValue(lock);
   hooks.useReviewVersion.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false });
+  hooks.useProfiles.mockReturnValue(ok({ items: [] }));
+  hooks.useApplyProfile.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false });
   hooks.usePatchDraft.mockReturnValue(patch);
   hooks.useSaveVersion.mockReturnValue(save);
   hooks.useCreateDraft.mockReturnValue(createDraft);

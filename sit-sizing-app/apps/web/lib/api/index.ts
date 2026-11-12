@@ -15,6 +15,9 @@ import {
   type LockRequest,
   type MeUpdate,
   type MembersPut,
+  type ProfileApply,
+  type ProfileCreate,
+  type ProfileUpdate,
   type PageQuery,
   type ReturnRequest,
   type ReviewNote,
@@ -74,6 +77,9 @@ export function createApi(http: AxiosInstance = defaultHttp) {
         body: In<typeof ReviewNote> | In<typeof ReturnRequest>,
       ) =>
         sendParsed(http, 'post', `/estimates/${estimateId}/versions/${n}/${action}`, body, Version),
+      /** Replace the draft's assumptions with a published profile (P-01). */
+      applyProfile: (estimateId: string, body: In<typeof ProfileApply>) =>
+        sendParsed(http, 'post', `/estimates/${estimateId}/draft/profile`, body, Version),
       compare: (estimateId: string, a: number, b: number) =>
         getParsed(http, `/estimates/${estimateId}/compare`, VersionCompare, { a, b }),
     },
@@ -81,6 +87,12 @@ export function createApi(http: AxiosInstance = defaultHttp) {
       list: (projectId?: string) =>
         getParsed(http, '/profiles', ProfileList, projectId ? { projectId } : undefined),
       get: (profileId: string) => getParsed(http, `/profiles/${profileId}`, ProfileDetail),
+      create: (body: In<typeof ProfileCreate>) =>
+        sendParsed(http, 'post', '/profiles', body, ProfileDetail),
+      update: (profileId: string, body: In<typeof ProfileUpdate>) =>
+        sendParsed(http, 'patch', `/profiles/${profileId}`, body, ProfileDetail),
+      setStatus: (profileId: string, action: 'publish' | 'retire') =>
+        sendParsed(http, 'post', `/profiles/${profileId}/${action}`, {}, ProfileDetail),
     },
   };
 }

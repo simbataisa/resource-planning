@@ -8,7 +8,8 @@
     "apiDocs": "Tài liệu API",
     "language": "Ngôn ngữ",
     "sessionMenu": "Tài khoản",
-    "signedInAs": "Đang đăng nhập với {name}"
+    "signedInAs": "Đang đăng nhập với {name}",
+    "profiles": "Hồ sơ"
   },
   "common": {
     "loading": "Đang tải…",
@@ -1660,5 +1661,68 @@
       "truncated": "Chỉ liệt kê 500 thay đổi đầu tiên.",
       "empty": "(không có)"
     }
+  },
+  "profiles": {
+    "title": "Hồ sơ giả định",
+    "description": "Các bộ có tên gồm 142 giả định. Phát hành hồ sơ để dùng trong ước tính; hồ sơ đã phát hành không bao giờ thay đổi.",
+    "showFor": "Hiển thị",
+    "globalOnly": "Hồ sơ toàn cục",
+    "globalAnd": "Toàn cục và {project}",
+    "emptyTitle": "Chưa có hồ sơ",
+    "emptyBody": "QE Lead có thể tạo hồ sơ dự án; Quản trị viên quản lý hồ sơ toàn cục.",
+    "name": "Tên",
+    "scope": "Phạm vi",
+    "statusLabel": "Trạng thái",
+    "uncalibratedCol": "Chưa hiệu chỉnh",
+    "published": "Ngày phát hành",
+    "scopes": {
+      "GLOBAL": "Toàn cục",
+      "PROJECT": "Dự án"
+    },
+    "status": {
+      "DRAFT": "Bản nháp",
+      "PUBLISHED": "Đã phát hành",
+      "RETIRED": "Ngừng sử dụng"
+    },
+    "new": "Hồ sơ mới",
+    "clone": "Nhân bản",
+    "copyOf": "Bản sao của {name}",
+    "cloneTitle": "Nhân bản hồ sơ",
+    "newTitle": "Hồ sơ mới",
+    "newDescription": "Hồ sơ mới bắt đầu ở trạng thái nháp. Chỉnh giá trị và ghi chú hiệu chỉnh, rồi phát hành.",
+    "nameRequired": "Nhập tên.",
+    "projectScope": "Dự án: {project}",
+    "basedOn": "Bắt đầu từ",
+    "engineDefaults": "Mặc định của engine (chưa hiệu chỉnh)",
+    "create": "Tạo hồ sơ",
+    "back": "Tất cả hồ sơ",
+    "saving": "Đang lưu…",
+    "save": "Lưu thay đổi",
+    "saveFirst": "Hãy lưu thay đổi trước.",
+    "publish": "Phát hành",
+    "retire": "Ngừng sử dụng",
+    "draftNotice": "Bản nháp: thay đổi giá trị và ghi nguồn cho từng giá trị đã hiệu chỉnh, rồi phát hành. Ước tính chỉ dùng được hồ sơ đã phát hành.",
+    "readOnlyNotice": "Chỉ đọc, phát hành {when}. Nhân bản để thay đổi; các ước tính đang dùng vẫn giữ giá trị của chúng.",
+    "publishTitle": "Phát hành hồ sơ này?",
+    "publishBody": "Sau khi phát hành, giá trị không thể thay đổi và các ước tính trong phạm vi có thể dùng hồ sơ.",
+    "retireTitle": "Ngừng sử dụng hồ sơ này?",
+    "retireBody": "Ước tính mới không thể dùng hồ sơ nữa. Các ước tính đã sao chép giá trị vẫn giữ nguyên.",
+    "sourceFor": "Nguồn hiệu chỉnh cho {label}",
+    "sourcePlaceholder": "Nguồn, ví dụ chu kỳ SIT 2026-Q3",
+    "measuredFor": "Ngày đo, cho {label}",
+    "fieldProfile": "Hồ sơ giả định",
+    "fieldProfileHint": "Các hồ sơ đã phát hành cho dự án này. Bạn có thể áp dụng hồ sơ khác sau.",
+    "defaultProfile": "Hồ sơ toàn cục mặc định",
+    "apply": {
+      "current": "Giả định lấy từ hồ sơ <link>{name}</link>.",
+      "none": "Các giả định này chưa gắn với hồ sơ nào.",
+      "choose": "Áp dụng hồ sơ đã phát hành",
+      "pick": "Chọn hồ sơ",
+      "apply": "Áp dụng hồ sơ",
+      "waitForSave": "Chờ tự động lưu hoàn tất.",
+      "confirmTitle": "Thay thế toàn bộ giả định?",
+      "confirmBody": "Mọi giả định trong bản nháp này sẽ được thay bằng giá trị của {name}. Phạm vi giữ nguyên. Các thay đổi bạn đã làm với giả định sẽ mất."
+    },
+    "valuesTitle": "Giá trị giả định"
   }
 }

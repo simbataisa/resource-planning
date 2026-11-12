@@ -46,6 +46,9 @@ export function AppShell({
             <Link href="/projects" className="font-medium hover:underline">
               {t('app.projects')}
             </Link>
+            <Link href="/profiles" className="hover:underline">
+              {t('app.profiles')}
+            </Link>
             <Link href="/guide" className="hover:underline">
               {t('content.nav.guide')}
             </Link>

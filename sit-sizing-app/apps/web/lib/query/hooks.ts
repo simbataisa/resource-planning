@@ -1,7 +1,13 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { DraftPatch, EstimateCreate } from '@sit/schemas';
+import type {
+  DraftPatch,
+  EstimateCreate,
+  ProfileCreate,
+  ProfileDetail,
+  ProfileUpdate,
+} from '@sit/schemas';
 import type { z } from 'zod';
 import { api } from '../api';
 import { ApiClientError } from '../http';
@@ -93,6 +99,46 @@ export function useReviewVersion(estimateId: string) {
       qc.setQueryData(qk.version(estimateId, v.number), v);
       await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
     },
+  });
+}
+
+export const useProfile = (id: string) =>
+  useQuery({ queryKey: qk.profile(id), queryFn: () => api.profiles.get(id) });
+
+export function useCreateProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: z.input<typeof ProfileCreate>) => api.profiles.create(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profiles'] }),
+  });
+}
+
+/** Save a draft profile's changes, or publish / retire it (P-01). */
+export function useUpdateProfile(id: string) {
+  const qc = useQueryClient();
+  const done = async (p: ProfileDetail) => {
+    qc.setQueryData(qk.profile(id), p);
+    await qc.invalidateQueries({ queryKey: ['profiles'] });
+  };
+  return {
+    save: useMutation({
+      mutationFn: (body: z.input<typeof ProfileUpdate>) => api.profiles.update(id, body),
+      onSuccess: done,
+    }),
+    setStatus: useMutation({
+      mutationFn: (action: 'publish' | 'retire') => api.profiles.setStatus(id, action),
+      onSuccess: done,
+    }),
+  };
+}
+
+/** Apply a published profile to the open draft; the editor reloads from the returned draft. */
+export function useApplyProfile(estimateId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { profileId: string; rowVersion: number }) =>
+      api.estimates.applyProfile(estimateId, body),
+    onSuccess: (v) => qc.setQueryData(qk.version(estimateId, v.number), v),
   });
 }
 
