@@ -1,0 +1,79 @@
+/*
+ * Global styles: Tailwind v4 + design tokens (design 8, ADR-0005).
+ * Colours and scales come from @sit/tokens; components use the semantic utilities
+ * (bg-primary, text-muted-foreground, border-border, …), never raw colours.
+ */
+@import 'tailwindcss';
+@import '@sit/tokens/tokens.css';
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-rough: var(--rough);
+  --color-rough-soft: var(--rough-soft);
+  --color-rough-foreground: var(--rough-foreground);
+  --color-detailed: var(--detailed);
+  --color-detailed-soft: var(--detailed-soft);
+  --color-detailed-foreground: var(--detailed-foreground);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-code);
+  --shadow-card: var(--shadow-raised);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /* The prototype's theme: a red top bar, ink text on the page grey, red focus outline. */
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    border-top: 4px solid var(--brand);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Motion is decoration only (design 8): honour the OS setting everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

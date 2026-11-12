@@ -1,0 +1,180 @@
+import { DEFAULT_ASSUMPTIONS, uncalibratedCount } from '@sit/engine';
+import type {
+  Assumptions,
+  EditLock,
+  Estimate,
+  EstimateInputs,
+  EstimateResult,
+  Profile,
+  ProfileDetail,
+  Project,
+  ProjectRole,
+  UserRef,
+  Version,
+  VersionSummary,
+} from '@sit/schemas';
+import { activeHolder } from './domain/lock';
+
+/** Row shapes as returned by the includes in repositories/includes.ts. */
+interface UserRow {
+  id: string;
+  displayName: string;
+  email: string;
+}
+interface Num {
+  toString(): string;
+}
+interface VersionRow {
+  id: string;
+  number: number;
+  status: VersionSummary['status'];
+  engineVersion: string;
+  roughFte: Num;
+  detailedFte: Num;
+  totalCasesDetailed: number;
+  uncalibrated: number;
+  note: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: UserRow;
+}
+interface FullVersionRow extends VersionRow {
+  inputs: unknown;
+  assumptions: unknown;
+  result: unknown;
+  profileId: string | null;
+  schemaVersion: number;
+  rowVersion: number;
+  lockedById: string | null;
+  lockExpiresAt: Date | null;
+  lockedBy: UserRow | null;
+}
+
+const iso = (d: Date) => d.toISOString();
+
+export const userRef = (u: UserRow): UserRef => ({
+  id: u.id,
+  displayName: u.displayName,
+  email: u.email,
+});
+
+export function projectDto(
+  p: {
+    id: string;
+    key: string;
+    name: string;
+    description: string | null;
+    archived: boolean;
+    createdAt: Date;
+  },
+  myRole: ProjectRole | null,
+): Project {
+  return {
+    id: p.id,
+    key: p.key,
+    name: p.name,
+    description: p.description,
+    archived: p.archived,
+    createdAt: iso(p.createdAt),
+    myRole,
+  };
+}
+
+export function versionSummaryDto(v: VersionRow): VersionSummary {
+  return {
+    id: v.id,
+    number: v.number,
+    status: v.status,
+    engineVersion: v.engineVersion,
+    roughFte: Number(v.roughFte.toString()),
+    detailedFte: Number(v.detailedFte.toString()),
+    totalCasesDetailed: v.totalCasesDetailed,
+    uncalibrated: v.uncalibrated,
+    note: v.note,
+    createdBy: userRef(v.createdBy),
+    createdAt: iso(v.createdAt),
+    updatedAt: iso(v.updatedAt),
+  };
+}
+
+export function lockDto(
+  v: Pick<FullVersionRow, 'lockedById' | 'lockExpiresAt' | 'lockedBy'>,
+  userId: string,
+  now: Date,
+): EditLock | null {
+  const holder = activeHolder({ holderId: v.lockedById, expiresAt: v.lockExpiresAt }, now);
+  if (!holder || !v.lockedBy || !v.lockExpiresAt) return null;
+  return { holder: userRef(v.lockedBy), expiresAt: iso(v.lockExpiresAt), mine: holder === userId };
+}
+
+/** JSON columns were validated with Zod before they were written (design 5.2.1). */
+export function versionDto(v: FullVersionRow, userId: string, now: Date): Version {
+  return {
+    ...versionSummaryDto(v),
+    inputs: v.inputs as EstimateInputs,
+    assumptions: v.assumptions as Assumptions,
+    result: v.result as EstimateResult,
+    profileId: v.profileId,
+    schemaVersion: v.schemaVersion,
+    rowVersion: v.rowVersion,
+    lock: v.status === 'DRAFT' ? lockDto(v, userId, now) : null,
+  };
+}
+
+export function estimateDto(e: {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string | null;
+  archived: boolean;
+  createdAt: Date;
+  createdBy: UserRow;
+  versions: VersionRow[];
+  _count: { versions: number };
+}): Estimate {
+  const latest = e.versions[0];
+  return {
+    id: e.id,
+    projectId: e.projectId,
+    name: e.name,
+    description: e.description,
+    archived: e.archived,
+    createdBy: userRef(e.createdBy),
+    createdAt: iso(e.createdAt),
+    latest: latest ? versionSummaryDto(latest) : null,
+    hasDraft: e._count.versions > 0,
+  };
+}
+
+interface ProfileRow {
+  id: string;
+  scope: Profile['scope'];
+  projectId: string | null;
+  name: string;
+  status: Profile['status'];
+  values: unknown;
+  calibration: unknown;
+  createdAt: Date;
+  publishedAt: Date | null;
+}
+
+export function profileDto(p: ProfileRow): Profile {
+  return {
+    id: p.id,
+    scope: p.scope,
+    projectId: p.projectId,
+    name: p.name,
+    status: p.status,
+    uncalibrated: uncalibratedCount(p.values as Assumptions, DEFAULT_ASSUMPTIONS),
+    createdAt: iso(p.createdAt),
+    publishedAt: p.publishedAt ? iso(p.publishedAt) : null,
+  };
+}
+
+export function profileDetailDto(p: ProfileRow): ProfileDetail {
+  return {
+    ...profileDto(p),
+    values: p.values as Assumptions,
+    calibration: (p.calibration ?? {}) as ProfileDetail['calibration'],
+  };
+}

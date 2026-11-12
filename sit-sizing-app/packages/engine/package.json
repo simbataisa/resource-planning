@@ -1,0 +1,28 @@
+{
+  "name": "@sit/engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SIT sizing calculation engine. Pure TypeScript, no I/O, runs in browser and server. Golden parity with the prototype is mandatory.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "parity": "node tools/parity-check.mts 5000",
+    "golden:generate": "node tools/generate-golden.mjs",
+    "mutation": "stryker run"
+  },
+  "dependencies": {
+    "@sit/schemas": "workspace:*"
+  },
+  "devDependencies": {
+    "@sit/config": "workspace:*",
+    "@stryker-mutator/core": "10.1.1",
+    "@stryker-mutator/vitest-runner": "10.1.1",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

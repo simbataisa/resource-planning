@@ -1,0 +1,960 @@
+{
+  "name": "channels-web-only",
+  "description": "Web only, no accessibility",
+  "assumptions": {
+    "cases": {
+      "api": [
+        4,
+        6,
+        10
+      ],
+      "screen": [
+        5,
+        8,
+        12
+      ],
+      "integration": [
+        6,
+        10,
+        16
+      ],
+      "rule": [
+        2,
+        4,
+        8
+      ],
+      "journey": [
+        3,
+        5,
+        8
+      ],
+      "batch": [
+        5,
+        8,
+        12
+      ],
+      "event": [
+        4,
+        6,
+        9
+      ]
+    },
+    "ftypes": {
+      "text": {
+        "cases": 15,
+        "mix": 30
+      },
+      "integer": {
+        "cases": 13,
+        "mix": 5
+      },
+      "decimal": {
+        "cases": 16,
+        "mix": 15
+      },
+      "percentage": {
+        "cases": 16,
+        "mix": 0
+      },
+      "currency": {
+        "cases": 18,
+        "mix": 0
+      },
+      "email": {
+        "cases": 15,
+        "mix": 2
+      },
+      "phone": {
+        "cases": 16,
+        "mix": 3
+      },
+      "date": {
+        "cases": 14,
+        "mix": 10
+      },
+      "datetime": {
+        "cases": 14,
+        "mix": 0
+      },
+      "boolean": {
+        "cases": 4,
+        "mix": 3
+      },
+      "enum": {
+        "cases": 3,
+        "mix": 15
+      },
+      "checkbox": {
+        "cases": 3,
+        "mix": 4
+      },
+      "radio": {
+        "cases": 3,
+        "mix": 3
+      },
+      "password": {
+        "cases": 17,
+        "mix": 0
+      },
+      "url": {
+        "cases": 14,
+        "mix": 0
+      },
+      "account": {
+        "cases": 16,
+        "mix": 4
+      },
+      "citizenId": {
+        "cases": 18,
+        "mix": 3
+      },
+      "taxCode": {
+        "cases": 16,
+        "mix": 3
+      },
+      "iban": {
+        "cases": 16,
+        "mix": 0
+      },
+      "file": {
+        "cases": 16,
+        "mix": 0
+      },
+      "image": {
+        "cases": 16,
+        "mix": 0
+      }
+    },
+    "sampleFE": 1,
+    "sampleBE": 1,
+    "partialShare": 0.5,
+    "valDesign": 2,
+    "valExecUI": 3,
+    "valExecAPI": 2,
+    "valCycles": 1,
+    "roleCasesPerPair": 2,
+    "roleSampling": 0.5,
+    "channelShares": {
+      "web2": 0.4,
+      "ios": 0.6,
+      "android": 0.6
+    },
+    "languageShare": 0.2,
+    "deviceCombos": 3,
+    "deviceExtra": 0.2,
+    "mobileCases": [
+      4,
+      6,
+      9
+    ],
+    "releaseCases": 6,
+    "mobileExec": 1.3,
+    "mobileDesignShare": 0.3,
+    "a11yCases": 2,
+    "mobileUnitGate": 70,
+    "mobileUplift": 0.2,
+    "envFactor": [
+      1,
+      1.1,
+      1.25,
+      1.4
+    ],
+    "mutationGate": 70,
+    "ruleUplift": 0.25,
+    "retestWeak": 0.3,
+    "transitions": [
+      3,
+      6,
+      10
+    ],
+    "invalidShare": 0.3,
+    "gatedShare": 0.5,
+    "sodCases": 2,
+    "roughApprovalShare": 0.5,
+    "criticalShare": 0.3,
+    "wiringCases": 1,
+    "variantShare": 0.4,
+    "variantSampling": 0.3,
+    "reqFields": [
+      5,
+      10,
+      20
+    ],
+    "respFields": [
+      8,
+      15,
+      30
+    ],
+    "dtoReuse": 0.3,
+    "eventFields": 12,
+    "apiOnlyCases": 4,
+    "mapPerField": 1,
+    "formatShare": 0.4,
+    "feUnitGate": 80,
+    "feLogicUplift": 0.2,
+    "feMutGate": 60,
+    "feMutUplift": 0.15,
+    "minutes": [
+      10,
+      20,
+      40
+    ],
+    "designFSD": 15,
+    "designNoFSD": 25,
+    "cycles": 2,
+    "regression": 0.3,
+    "retest": 0.2,
+    "overhead": 0.15,
+    "aiDesignCut": [
+      0,
+      0.2,
+      0.4
+    ],
+    "dproxies": {
+      "S": {
+        "feed": 1,
+        "pipe": 1,
+        "table": 3,
+        "report": 1,
+        "columns": 40,
+        "dq": 6,
+        "scd": 0,
+        "secured": 1
+      },
+      "M": {
+        "feed": 2,
+        "pipe": 3,
+        "table": 8,
+        "report": 2,
+        "columns": 120,
+        "dq": 20,
+        "scd": 1,
+        "secured": 3
+      },
+      "L": {
+        "feed": 4,
+        "pipe": 6,
+        "table": 15,
+        "report": 4,
+        "columns": 260,
+        "dq": 40,
+        "scd": 3,
+        "secured": 5
+      },
+      "XL": {
+        "feed": 7,
+        "pipe": 10,
+        "table": 28,
+        "report": 8,
+        "columns": 480,
+        "dq": 80,
+        "scd": 5,
+        "secured": 8
+      }
+    },
+    "ptScript": [
+      4,
+      8,
+      16
+    ],
+    "ptNfrFixed": 16,
+    "ptNfrPer": 2,
+    "ptDataFixed": 8,
+    "ptDataPer": 4,
+    "ptEnvHours": 24,
+    "ptEnvApm": 8,
+    "ptMobileFixed": 8,
+    "ptRuns": {
+      "load": 3,
+      "stress": 2,
+      "soak": 1,
+      "spike": 1,
+      "failover": 1
+    },
+    "ptRunHours": {
+      "load": 4,
+      "stress": 4,
+      "soak": 12,
+      "spike": 2,
+      "failover": 4
+    },
+    "ptCycles": 3,
+    "ptCyclesCI": 2,
+    "ptAnalysis": 0.5,
+    "ptReport": 16,
+    "ptRoughScen": {
+      "S": 1,
+      "M": 2,
+      "L": 3,
+      "XL": 5
+    },
+    "ptEnvDays": 2,
+    "aproxies": {
+      "S": {
+        "intent": 3,
+        "ocr": 0,
+        "rag": 1,
+        "tools": 1,
+        "guard": 4,
+        "hitl": 1
+      },
+      "M": {
+        "intent": 8,
+        "ocr": 1,
+        "rag": 3,
+        "tools": 3,
+        "guard": 6,
+        "hitl": 2
+      },
+      "L": {
+        "intent": 15,
+        "ocr": 2,
+        "rag": 5,
+        "tools": 5,
+        "guard": 6,
+        "hitl": 3
+      },
+      "XL": {
+        "intent": 25,
+        "ocr": 4,
+        "rag": 8,
+        "tools": 8,
+        "guard": 8,
+        "hitl": 4
+      }
+    },
+    "dFeed": [
+      3,
+      4,
+      6
+    ],
+    "dPipe": [
+      4,
+      6,
+      9
+    ],
+    "dTable": [
+      2,
+      3,
+      4
+    ],
+    "dScd": 2,
+    "dCol": 1.5,
+    "dDq": 2,
+    "dReport": [
+      4,
+      6,
+      8
+    ],
+    "dAccessSampling": 0.5,
+    "dataSample": 0.1,
+    "dataDesign": 10,
+    "dataExec": 5,
+    "dataCycles": 3,
+    "dataPrepHours": 2,
+    "dataDaysPerCycle": 2,
+    "aiUtt": [
+      20,
+      35,
+      50
+    ],
+    "aiRagQ": 15,
+    "aiOcrSamples": [
+      50,
+      100,
+      200
+    ],
+    "aiAdv": 40,
+    "aiToolCases": 8,
+    "aiHitlCases": 4,
+    "aiLabelUtt": 2,
+    "aiLabelRag": 6,
+    "aiLabelOcr": 4,
+    "aiLabelAdv": 2,
+    "aiReviewAuto": 0.2,
+    "aiReviewManual": 0.6,
+    "aiReviewMin": 2,
+    "aiAnalysisHours": 6,
+    "qeLabelShare": 0.5,
+    "hoursPerDay": 6,
+    "daysPerWeek": 5,
+    "capacity": [
+      0.7,
+      1,
+      1.2
+    ],
+    "band": {
+      "rough": 0.4,
+      "detailed": 0.15
+    },
+    "proxies": {
+      "S": {
+        "screen": 1,
+        "field": 6,
+        "api": 2,
+        "integration": 0,
+        "rule": 2,
+        "journey": 1,
+        "batch": 0,
+        "event": 0,
+        "workflow": 0,
+        "actions": 1
+      },
+      "M": {
+        "screen": 2,
+        "field": 15,
+        "api": 4,
+        "integration": 1,
+        "rule": 5,
+        "journey": 1,
+        "batch": 1,
+        "event": 1,
+        "workflow": 1,
+        "actions": 2
+      },
+      "L": {
+        "screen": 4,
+        "field": 30,
+        "api": 8,
+        "integration": 2,
+        "rule": 10,
+        "journey": 2,
+        "batch": 1,
+        "event": 2,
+        "workflow": 1,
+        "actions": 3
+      },
+      "XL": {
+        "screen": 7,
+        "field": 55,
+        "api": 14,
+        "integration": 3,
+        "rule": 18,
+        "journey": 3,
+        "batch": 2,
+        "event": 4,
+        "workflow": 2,
+        "actions": 5
+      }
+    }
+  },
+  "scope": {
+    "features": [
+      {
+        "name": "Example · Customer onboarding",
+        "size": "L",
+        "cx": 1,
+        "qty": 1,
+        "pt": true
+      },
+      {
+        "name": "Example · Account maintenance",
+        "size": "M",
+        "cx": 0,
+        "qty": 1
+      },
+      {
+        "name": "Example · Fund transfer",
+        "size": "L",
+        "cx": 2,
+        "qty": 1,
+        "pt": true
+      },
+      {
+        "name": "Example · Notifications",
+        "size": "S",
+        "cx": 0,
+        "qty": 1
+      },
+      {
+        "name": "Example · Back-office approvals",
+        "size": "M",
+        "cx": 1,
+        "qty": 1
+      },
+      {
+        "name": "Example · Transaction data mart",
+        "type": "data",
+        "size": "M",
+        "cx": 1,
+        "qty": 1
+      },
+      {
+        "name": "Example · Customer service chatbot",
+        "type": "ai",
+        "size": "M",
+        "cx": 1,
+        "qty": 1,
+        "pt": true
+      }
+    ],
+    "roughRoles": 5,
+    "roughLanguages": 2,
+    "roughVariants": 2,
+    "channels": {
+      "web2": false,
+      "ios": false,
+      "android": false
+    },
+    "a11y": false,
+    "detail": {
+      "api": [
+        8,
+        14,
+        8
+      ],
+      "screen": [
+        5,
+        8,
+        3
+      ],
+      "integration": [
+        1,
+        4,
+        4
+      ],
+      "rule": [
+        10,
+        18,
+        12
+      ],
+      "journey": [
+        2,
+        4,
+        3
+      ],
+      "batch": [
+        1,
+        2,
+        1
+      ],
+      "event": [
+        2,
+        3,
+        1
+      ],
+      "workflow": [
+        1,
+        2,
+        1
+      ],
+      "fields": 140,
+      "data": {
+        "feed": [
+          1,
+          1,
+          0
+        ],
+        "pipe": [
+          1,
+          2,
+          1
+        ],
+        "table": [
+          3,
+          4,
+          2
+        ],
+        "report": [
+          1,
+          1,
+          1
+        ],
+        "columns": 140,
+        "dq": 24,
+        "scd": 1,
+        "secured": 3,
+        "accessRoles": 4
+      },
+      "ai": {
+        "intent": [
+          3,
+          4,
+          2
+        ],
+        "ocr": [
+          0,
+          0,
+          0
+        ],
+        "rag": 3,
+        "tools": 3,
+        "guard": 6,
+        "hitl": 2
+      },
+      "pt": {
+        "scen": [
+          2,
+          4,
+          2
+        ],
+        "dataHeavy": 2
+      },
+      "reqFields": 0,
+      "respFields": 0,
+      "fieldTypes": {
+        "text": 0,
+        "integer": 0,
+        "decimal": 0,
+        "percentage": 0,
+        "currency": 0,
+        "email": 0,
+        "phone": 0,
+        "date": 0,
+        "datetime": 0,
+        "boolean": 0,
+        "enum": 0,
+        "checkbox": 0,
+        "radio": 0,
+        "password": 0,
+        "url": 0,
+        "account": 0,
+        "citizenId": 0,
+        "taxCode": 0,
+        "iban": 0,
+        "file": 0,
+        "image": 0
+      },
+      "roles": 6,
+      "actions": 14,
+      "approvals": 2,
+      "critical": 12,
+      "variants": 3,
+      "languages": 2
+    },
+    "team": {
+      "weeks": 6,
+      "mix": {
+        "junior": 30,
+        "mid": 50,
+        "senior": 20
+      },
+      "env": 1,
+      "automation": 0,
+      "ai": 0,
+      "aiIters": 4,
+      "aiSmes": 2
+    },
+    "evidence": {
+      "mutation": 62,
+      "valBE": 100,
+      "valFE": 80,
+      "mapCov": 70,
+      "jacoco": 82,
+      "feUnit": 75,
+      "feMut": 55,
+      "ruleCov": 60,
+      "iosUnit": 65,
+      "androidUnit": 72,
+      "dqCov": 50,
+      "contractCov": 40,
+      "goldenReuse": 0,
+      "evalCI": true,
+      "ptCI": false,
+      "ptReuse": 0,
+      "apm": true
+    },
+    "includeL4": true,
+    "ptTypes": {
+      "load": true,
+      "stress": true,
+      "soak": true,
+      "spike": true,
+      "failover": false
+    }
+  },
+  "expected": {
+    "rough": {
+      "cases": 2939,
+      "hours": 2457.22,
+      "fte": 14.3697,
+      "lo": 8.6218,
+      "hi": 20.1176,
+      "smeLabelHours": 21.17,
+      "groups": {
+        "api": {
+          "cases": 176,
+          "hours": 391.96
+        },
+        "screen": {
+          "cases": 150,
+          "hours": 330.34
+        },
+        "integration": {
+          "cases": 68,
+          "hours": 154.88
+        },
+        "rule": {
+          "cases": 141,
+          "hours": 329.18
+        },
+        "workflow": {
+          "cases": 33,
+          "hours": 71.29
+        },
+        "batch": {
+          "cases": 33,
+          "hours": 69.4
+        },
+        "event": {
+          "cases": 40,
+          "hours": 89.77
+        },
+        "journey": {
+          "cases": 37,
+          "hours": 80.77
+        },
+        "fieldFE": {
+          "cases": 584,
+          "hours": 70.41
+        },
+        "fieldBE": {
+          "cases": 26,
+          "hours": 2.42
+        },
+        "mapping": {
+          "cases": 280,
+          "hours": 26.08
+        },
+        "role": {
+          "cases": 118,
+          "hours": 130.93
+        },
+        "sod": {
+          "cases": 4,
+          "hours": 4.44
+        },
+        "channel": {
+          "cases": 30,
+          "hours": 66.07
+        },
+        "mobile": {
+          "cases": 0,
+          "hours": 0
+        },
+        "a11y": {
+          "cases": 0,
+          "hours": 0
+        },
+        "dataSource": {
+          "cases": 8,
+          "hours": 4.82
+        },
+        "dataPipeline": {
+          "cases": 18,
+          "hours": 10.85
+        },
+        "dataModel": {
+          "cases": 26,
+          "hours": 15.67
+        },
+        "dataMapping": {
+          "cases": 90,
+          "hours": 54.25
+        },
+        "dataQuality": {
+          "cases": 20,
+          "hours": 12.06
+        },
+        "dataReport": {
+          "cases": 12,
+          "hours": 20.88
+        },
+        "dataAccess": {
+          "cases": 15,
+          "hours": 9.04
+        },
+        "dataPrep": {
+          "cases": 0,
+          "hours": 13.8
+        },
+        "aiIntent": {
+          "cases": 560,
+          "hours": 27.91
+        },
+        "aiRag": {
+          "cases": 90,
+          "hours": 7.94
+        },
+        "aiOcr": {
+          "cases": 100,
+          "hours": 6.9
+        },
+        "aiGuard": {
+          "cases": 240,
+          "hours": 11.96
+        },
+        "aiTool": {
+          "cases": 24,
+          "hours": 41.76
+        },
+        "aiHitl": {
+          "cases": 8,
+          "hours": 13.92
+        },
+        "aiEval": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptDesign": {
+          "cases": 8,
+          "hours": 156.4
+        },
+        "ptEnv": {
+          "cases": 0,
+          "hours": 9.2
+        },
+        "ptRun": {
+          "cases": 0,
+          "hours": 194.35
+        }
+      }
+    },
+    "detailed": {
+      "cases": 3386,
+      "hours": 2612.64,
+      "fte": 15.2786,
+      "lo": 12.9868,
+      "hi": 17.5704,
+      "smeLabelHours": 18.5,
+      "groups": {
+        "api": {
+          "cases": 196,
+          "hours": 384.15
+        },
+        "screen": {
+          "cases": 169,
+          "hours": 302
+        },
+        "integration": {
+          "cases": 110,
+          "hours": 247.22
+        },
+        "rule": {
+          "cases": 190,
+          "hours": 403.86
+        },
+        "workflow": {
+          "cases": 33,
+          "hours": 64.96
+        },
+        "batch": {
+          "cases": 33,
+          "hours": 63.07
+        },
+        "event": {
+          "cases": 35,
+          "hours": 60.49
+        },
+        "journey": {
+          "cases": 50,
+          "hours": 103.89
+        },
+        "fieldFE": {
+          "cases": 852,
+          "hours": 102.72
+        },
+        "fieldBE": {
+          "cases": 30,
+          "hours": 2.79
+        },
+        "mapping": {
+          "cases": 302,
+          "hours": 28.13
+        },
+        "role": {
+          "cases": 159,
+          "hours": 145.94
+        },
+        "sod": {
+          "cases": 4,
+          "hours": 3.67
+        },
+        "channel": {
+          "cases": 34,
+          "hours": 60.84
+        },
+        "mobile": {
+          "cases": 0,
+          "hours": 0
+        },
+        "a11y": {
+          "cases": 0,
+          "hours": 0
+        },
+        "dataSource": {
+          "cases": 7,
+          "hours": 4.22
+        },
+        "dataPipeline": {
+          "cases": 25,
+          "hours": 15.07
+        },
+        "dataModel": {
+          "cases": 28,
+          "hours": 16.88
+        },
+        "dataMapping": {
+          "cases": 105,
+          "hours": 63.29
+        },
+        "dataQuality": {
+          "cases": 24,
+          "hours": 14.47
+        },
+        "dataReport": {
+          "cases": 18,
+          "hours": 35.43
+        },
+        "dataAccess": {
+          "cases": 12,
+          "hours": 7.23
+        },
+        "dataPrep": {
+          "cases": 0,
+          "hours": 13.8
+        },
+        "aiIntent": {
+          "cases": 600,
+          "hours": 29.9
+        },
+        "aiRag": {
+          "cases": 90,
+          "hours": 7.94
+        },
+        "aiOcr": {
+          "cases": 0,
+          "hours": 0
+        },
+        "aiGuard": {
+          "cases": 240,
+          "hours": 11.96
+        },
+        "aiTool": {
+          "cases": 24,
+          "hours": 37.16
+        },
+        "aiHitl": {
+          "cases": 8,
+          "hours": 12.39
+        },
+        "aiEval": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptDesign": {
+          "cases": 8,
+          "hours": 138
+        },
+        "ptEnv": {
+          "cases": 0,
+          "hours": 9.2
+        },
+        "ptRun": {
+          "cases": 0,
+          "hours": 194.35
+        }
+      }
+    }
+  }
+}

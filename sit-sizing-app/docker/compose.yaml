@@ -1,0 +1,164 @@
+# Base stack (design 12.2). Works on Docker Desktop and Rancher Desktop (dockerd/moby).
+# Run through the pnpm scripts, which pass --env-file .env:
+#   pnpm stack:up   production-like image
+#   pnpm dev:up     adds compose.dev.yaml (hot reload)
+#   pnpm dev:obs    adds compose.obs.yaml (tracing viewer)
+# Services added later: worker (release 2).
+name: sit-sizing
+
+services:
+  db:
+    image: ${REGISTRY_PREFIX:-}postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?run pnpm dev:env to create .env}
+      # Read only by postgres/init/01-databases.sh on first start (empty volume).
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?run pnpm dev:env to create .env}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?run pnpm dev:env to create .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - '127.0.0.1:${DB_PORT:-5432}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d app']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: tools
+      args:
+        REGISTRY_PREFIX: ${REGISTRY_PREFIX:-}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
+    image: sit-sizing-tools:local
+    command: ['pnpm', 'db:migrate']
+    environment:
+      DATABASE_URL: postgresql://app_user:${APP_DB_PASSWORD}@db:5432/app
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  seed:
+    # Synthetic data only. Run with `docker compose run --rm seed` (pnpm dev:up does this).
+    image: sit-sizing-tools:local
+    command: ['pnpm', 'db:seed']
+    environment:
+      DATABASE_URL: postgresql://app_user:${APP_DB_PASSWORD}@db:5432/app
+      APP_ENV: ${APP_ENV:-local}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    profiles: ['seed']
+    restart: 'no'
+
+  keycloak:
+    # Identity provider (design 10, ADR-0002). Local: start-dev over HTTP with the realm and
+    # synthetic users imported on first start. Realm changes after that: see runbook "Keycloak".
+    image: ${REGISTRY_PREFIX:-}keycloak/keycloak:26.8.0
+    command: ['start-dev', '--import-realm']
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/keycloak
+      KC_DB_USERNAME: keycloak_user
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?run pnpm dev:env to create .env}
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?run pnpm dev:env to update .env}
+      # Browser-facing URL; back-channel calls from the web container use keycloak:8080.
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_PORT:-18080}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: 'true'
+      KC_HEALTH_ENABLED: 'true'
+      # Placeholders used by the realm import files
+      SIT_WEB_BASE_URL: http://localhost:${WEB_PORT:-3000}
+      # Server-to-server: Keycloak posts logout tokens to the web container (design 10.4).
+      # For `pnpm dev` on the host, set it to http://host.docker.internal:3000/api/auth/backchannel-logout.
+      SIT_WEB_BACKCHANNEL_URL: ${SIT_WEB_BACKCHANNEL_URL:-http://web:3000/api/auth/backchannel-logout}
+      SIT_WEB_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?run pnpm dev:env to update .env}
+      KC_DEV_USER_PASSWORD: ${KC_DEV_USER_PASSWORD:?run pnpm dev:env to update .env}
+    volumes:
+      - ./keycloak/realm/qe-tools-realm.json:/opt/keycloak/data/import/qe-tools-realm.json:ro
+      - ./keycloak/dev/qe-tools-users-0.json:/opt/keycloak/data/import/qe-tools-users-0.json:ro
+      - ./keycloak/themes/tcb:/opt/keycloak/themes/tcb:ro
+      - ./keycloak/password-blacklists:/opt/keycloak/data/password-blacklists:ro
+    ports:
+      - '127.0.0.1:${KEYCLOAK_PORT:-18080}:8080'
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # The image has no curl; ask the management port with bash's /dev/tcp.
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && grep -q '"UP"' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: runner
+      args:
+        REGISTRY_PREFIX: ${REGISTRY_PREFIX:-}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
+        APP_VERSION: ${APP_VERSION:-0.0.0-dev}
+    image: sit-sizing-web:local
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_VERSION: ${APP_VERSION:-0.0.0-dev}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://app_user:${APP_DB_PASSWORD}@db:5432/app
+      OTEL_SERVICE_NAME: sit-sizing-web
+      OTEL_EXPORTER_OTLP_ENDPOINT: ''
+      AUTH_MODE: ${AUTH_MODE:-oidc}
+      APP_BASE_URL: http://localhost:${WEB_PORT:-3000}
+      OIDC_ISSUER: http://localhost:${KEYCLOAK_PORT:-18080}/realms/qe-tools
+      OIDC_INTERNAL_URL: http://keycloak:8080
+      OIDC_CLIENT_ID: sit-sizing-web
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?run pnpm dev:env to update .env}
+      SESSION_SECRET: ${SESSION_SECRET:?run pnpm dev:env to update .env}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - '127.0.0.1:${WEB_PORT:-3000}:3000'
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/apps/web/.next/cache
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  mail:
+    # Local mail catcher for invitation, reset and notification emails. Development only.
+    image: ${REGISTRY_PREFIX:-}axllent/mailpit:v1.31.4
+    ports:
+      - '127.0.0.1:8025:8025'
+    restart: unless-stopped
+
+volumes:
+  db-data:

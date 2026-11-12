@@ -1,0 +1,26 @@
+{
+  "name": "@sit/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TCB-DS design tokens: TypeScript source, generated CSS variables (light and dark). Interim values from the prototype palette until Q1.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./tokens.css"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "node src/build.ts"
+  },
+  "devDependencies": {
+    "@sit/config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "@types/node": "catalog:"
+  },
+  "files": [
+    "src",
+    "tokens.css"
+  ]
+}

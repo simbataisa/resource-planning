@@ -1,0 +1,9 @@
+{
+  "extends": "@sit/config/tsconfig/library.json",
+  "compilerOptions": {
+    // Node types are for test/ and tools/ only. ESLint keeps node:* imports and
+    // process/Date/Math.random out of src/ (design 6.1: no I/O, no dates, no randomness).
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "tools/**/*.d.mts"]
+}
