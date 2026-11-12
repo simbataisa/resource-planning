@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { NumberInput } from '@/components/patterns/number-input';
 import { getPath, setPath } from '@/lib/path';
 import { cn } from '@/lib/utils';
-import { ASSUMPTION_META, type MetaLabel, type MetaRow } from './assumption-meta';
+import { ASSUMPTION_META, type MetaLabel, type MetaRow } from '@/lib/assumption-meta';
 import { useEditor } from './store';
 
 const DEFAULTS = DEFAULT_ASSUMPTIONS as Assumptions;

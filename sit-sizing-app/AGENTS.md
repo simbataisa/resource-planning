@@ -83,7 +83,7 @@ Give each session: the task ID and acceptance line from the table, links to this
 
 ## Human controls (design 15.5)
 
-- **Sensitive paths:** `packages/engine`, `prisma/migrations`, `lib/rbac.ts`, auth code, `docker/keycloak` and the pipeline need review by a named human. Code-owner enforcement is **optional for now**: until it is turned on, the PR author ticks the sensitive-path box in the PR template and asks a named reviewer. `docs/CODEOWNERS.example` is ready to copy to the repository root when owners are agreed. An agent's approval never counts as that review.
+- **Sensitive paths:** `packages/engine`, `packages/db/prisma/migrations`, `lib/rbac.ts`, auth code, `docker/keycloak` and the pipeline need review by a named human. Code-owner enforcement is **optional for now**: until it is turned on, the PR author ticks the sensitive-path box in the PR template and asks a named reviewer. `docs/CODEOWNERS.example` is ready to copy to the repository root when owners are agreed. An agent's approval never counts as that review.
 - **No self-merge.** Agents open pull requests; a person merges.
 - **Small, traceable changes.** Each PR names its task ID and states what was verified and what was not.
 - **Golden files are protected.** Changing a file under `packages/engine/golden/` requires an ADR link in the PR.

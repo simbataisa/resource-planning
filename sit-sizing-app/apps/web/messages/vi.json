@@ -1100,6 +1100,21 @@
       "scope": "• Phạm vi gồm: {p}",
       "evidence": "• Bằng chứng shift-left: mutation {m}%, test quy tắc {r}%, validation BE {b}%, validation FE {f}%, test mapping {p}%, unit FE {u}%, mutation FE {s}%",
       "calibration": "• {u} trên {t} giả định là mặc định chưa hiệu chỉnh. Xác nhận với người chịu trách nhiệm delivery trước khi cam kết."
+    },
+    "sheets": {
+      "title": "Bảng tính",
+      "xlsx": "Sổ làm việc Excel",
+      "csv": "Tải CSV",
+      "csvTable": "Bảng CSV",
+      "tables": {
+        "gap": "Chênh lệch theo nhóm",
+        "drivers": "Yếu tố định cỡ",
+        "assumptions": "Giả định",
+        "inputs": "Đầu vào",
+        "summary": "Tổng quan"
+      },
+      "hint": "Tạo từ trạng thái đã lưu gần nhất của phiên bản này, cùng số liệu với màn hình.",
+      "waiting": "Đang chờ tự động lưu trước khi tải xuống."
     }
   },
   "content": {
@@ -1724,5 +1739,51 @@
       "confirmBody": "Mọi giả định trong bản nháp này sẽ được thay bằng giá trị của {name}. Phạm vi giữ nguyên. Các thay đổi bạn đã làm với giả định sẽ mất."
     },
     "valuesTitle": "Giá trị giả định"
+  },
+  "export": {
+    "disclaimer": "Khoảng ước lượng để lập kế hoạch, không phải cam kết. Xác nhận FTE và tiến độ với người chịu trách nhiệm triển khai.",
+    "inputsNote": "Mọi đầu vào của phiên bản này dưới dạng đường dẫn và giá trị. Chỉ dùng số liệu giả lập hoặc tên nghiệp vụ; không có dữ liệu khách hàng.",
+    "sheets": {
+      "summary": "Tổng quan",
+      "drivers": "Yếu tố định cỡ",
+      "gap": "Chênh lệch theo nhóm",
+      "assumptions": "Giả định",
+      "inputs": "Đầu vào"
+    },
+    "cols": {
+      "item": "Mục",
+      "rough": "Sơ bộ",
+      "detailed": "Chi tiết",
+      "driver": "Yếu tố",
+      "group": "Nhóm",
+      "total": "Tổng",
+      "roughCases": "Ca kiểm thử sơ bộ",
+      "detailedCases": "Ca kiểm thử chi tiết",
+      "deltaCases": "Δ ca kiểm thử",
+      "roughHours": "Giờ sơ bộ",
+      "detailedHours": "Giờ chi tiết",
+      "deltaHours": "Δ giờ",
+      "share": "Tỷ trọng chênh lệch giờ",
+      "assumption": "Giả định",
+      "path": "Đường dẫn",
+      "value": "Giá trị",
+      "default": "Mặc định",
+      "status": "Trạng thái"
+    },
+    "summary": {
+      "estimate": "Ước tính",
+      "project": "Dự án",
+      "version": "Phiên bản",
+      "profile": "Hồ sơ giả định",
+      "engine": "Phiên bản engine",
+      "exportedAt": "Thời điểm xuất (UTC)",
+      "uncalibrated": "Giả định chưa hiệu chỉnh",
+      "fte": "FTE",
+      "fteLow": "FTE, thấp",
+      "fteHigh": "FTE, cao",
+      "cases": "Ca kiểm thử",
+      "hours": "Giờ",
+      "weeks": "Cửa sổ SIT (tuần)"
+    }
   }
 }

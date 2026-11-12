@@ -1,14 +1,16 @@
 'use client';
 
 import { useRef, useState, type ChangeEvent } from 'react';
-import { useTranslations } from 'next-intl';
-import { ClipboardCopy, Download, Upload } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { ClipboardCopy, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import { ASSUMPTION_PATHS, fromPrototypeProfile, PrototypeImportError, topGap } from '@sit/engine';
 import { Assumptions, EstimateInputs } from '@sit/schemas';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Eyebrow } from '@/components/patterns/eyebrow';
+import { Field } from '@/components/patterns/field';
 import { formatFte as f1, formatInt as fmt } from '@/lib/format';
 import { useEditor } from './store';
 import { useCalendarText } from './use-calendar-text';
@@ -62,13 +64,19 @@ export function prototypeProfileJson(
  * summary, and import a profile exported from the HTML tool or this app into the draft.
  */
 export function ExportPanel({
+  estimateId,
   estimateName,
   versionNumber,
 }: {
+  estimateId: string;
   estimateName: string;
   versionNumber: number;
 }) {
   const t = useTranslations('exportPanel');
+  const locale = useLocale();
+  const [csvTable, setCsvTable] = useState<(typeof CSV_TABLES)[number]>('gap');
+  const exportUrl = (q: string) =>
+    `/api/v1/estimates/${estimateId}/versions/${versionNumber}/export?${q}&lang=${locale}`;
   const { state, uncalibrated, editable, dispatch } = useEditor();
   const summary = useQbrSummary(estimateName);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -156,6 +164,37 @@ export function ExportPanel({
         ) : null}
       </div>
       {editable ? <p className="text-xs text-muted-foreground">{t('importHint')}</p> : null}
+      <div className="grid gap-2 border-t pt-4">
+        <h3 className="text-base font-semibold">{t('sheets.title')}</h3>
+        <div className="flex flex-wrap items-end gap-2">
+          <SheetLink href={exportUrl('format=xlsx')} waiting={state.dirty}>
+            <FileSpreadsheet aria-hidden="true" />
+            {t('sheets.xlsx')}
+          </SheetLink>
+          <Field label={t('sheets.csvTable')}>
+            {(c) => (
+              <NativeSelect
+                {...c}
+                value={csvTable}
+                onChange={(e) => setCsvTable(e.target.value as typeof csvTable)}
+              >
+                {CSV_TABLES.map((x) => (
+                  <option key={x} value={x}>
+                    {t(`sheets.tables.${x}`)}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
+          </Field>
+          <SheetLink href={exportUrl(`format=csv&table=${csvTable}`)} waiting={state.dirty}>
+            <Download aria-hidden="true" />
+            {t('sheets.csv')}
+          </SheetLink>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {state.dirty ? t('sheets.waiting') : t('sheets.hint')}
+        </p>
+      </div>
       {message ? (
         <Alert variant={message.ok ? 'default' : 'destructive'}>
           <AlertDescription>{message.text}</AlertDescription>
@@ -171,6 +210,31 @@ export function ExportPanel({
         />
       ) : null}
     </section>
+  );
+}
+
+const CSV_TABLES = ['gap', 'drivers', 'assumptions', 'inputs', 'summary'] as const;
+
+/** A file download from the server; held back while autosave has not caught up. */
+function SheetLink({
+  href,
+  waiting,
+  children,
+}: {
+  href: string;
+  waiting: boolean;
+  children: React.ReactNode;
+}) {
+  return waiting ? (
+    <Button variant="outline" disabled>
+      {children}
+    </Button>
+  ) : (
+    <Button asChild variant="outline">
+      <a href={href} download>
+        {children}
+      </a>
+    </Button>
   );
 }
 

@@ -28,6 +28,7 @@ import {
   VersionCompare,
   VersionSave,
   CompareQuery,
+  ExportQuery,
 } from '@sit/schemas';
 import { z } from 'zod';
 import { EstimateParams, ProfileParams, ProjectParams, VersionParams } from '../http/params';
@@ -48,7 +49,14 @@ export interface Operation {
   query?: z.ZodObject;
   body?: z.ZodType;
   bodyExample?: unknown;
-  success: { status: number; description: string; schema?: z.ZodType; example?: unknown };
+  success: {
+    status: number;
+    description: string;
+    schema?: z.ZodType;
+    example?: unknown;
+    /** Binary or text files (exports): media types returned instead of JSON. */
+    files?: string[];
+  };
   /** Error statuses this operation can return, besides 500. */
   errors: number[];
 }
@@ -321,6 +329,24 @@ export const OPERATIONS: Operation[] = [
     bodyExample: { note: 'Synthetic · add the batch interfaces from FSD v2' },
     success: { status: 200, description: 'The returned version', schema: Version },
     errors: WRITE,
+  },
+  {
+    method: 'get',
+    path: '/estimates/{estimateId}/versions/{number}/export',
+    operationId: 'exportVersion',
+    tag: 'Versions',
+    minRole: 'VIEWER',
+    summary: 'Download a version as an Excel workbook or a CSV table',
+    description:
+      'The workbook has Summary, Drivers, Gap by group, Assumptions and Inputs sheets; CSV holds one of them (table). Figures are the engine output for the stored inputs and assumptions. Audited as estimate.export.',
+    params: VersionParams,
+    query: ExportQuery,
+    success: {
+      status: 200,
+      description: 'The file, as an attachment',
+      files: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'],
+    },
+    errors: READ,
   },
   {
     method: 'get',

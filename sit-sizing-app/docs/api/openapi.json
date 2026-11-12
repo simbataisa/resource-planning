@@ -2170,6 +2170,159 @@
         }
       }
     },
+    "/estimates/{estimateId}/versions/{number}/export": {
+      "get": {
+        "operationId": "exportVersion",
+        "tags": [
+          "Versions"
+        ],
+        "summary": "Download a version as an Excel workbook or a CSV table",
+        "description": "The workbook has Summary, Drivers, Gap by group, Assumptions and Inputs sheets; CSV holds one of them (table). Figures are the engine output for the stored inputs and assumptions. Audited as estimate.export. Minimum role: VIEWER.",
+        "x-required-role": "VIEWER",
+        "parameters": [
+          {
+            "name": "estimateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "description": "Opaque identifier (cuid)",
+              "example": "clx0synthetic0001"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "type": "string",
+              "enum": [
+                "xlsx",
+                "csv"
+              ]
+            }
+          },
+          {
+            "name": "table",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "gap",
+              "type": "string",
+              "enum": [
+                "summary",
+                "drivers",
+                "gap",
+                "assumptions",
+                "inputs"
+              ]
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "vi"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file, as an attachment",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to you)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ]
+      }
+    },
     "/estimates/{estimateId}/compare": {
       "get": {
         "operationId": "compareVersions",

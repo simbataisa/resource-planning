@@ -21,7 +21,7 @@ Release 1 copies the seeded global "Default (uncalibrated)" profile into every n
    - Open draft: `POST /estimates/{id}/draft/profile` replaces every assumption with the profile's values, recomputes and records `profileId`. It needs the edit lock and the current `rowVersion`, like autosave. The UI asks for confirmation and waits for autosave to finish first.
 5. **Copy, don't link.** Values are copied into the version. Retiring a profile only stops new use.
 6. **The last published global profile cannot be retired** (409 `LAST_GLOBAL`), because new estimates fall back to it.
-7. **Names** are unique per scope and project. The service checks this as well as the unique index, because Postgres treats the null `projectId` of global profiles as distinct.
+7. **Names** are unique per scope and project: the unique index for project profiles, and a trigger from the init migration for global ones (Postgres treats their null `projectId` as distinct). The service checks first so the user gets a clear 409 `NAME_TAKEN`.
 8. **Audit.** `profile.create`, `profile.update`, `profile.publish`, `profile.retire` and `estimate.draft.profile.apply`.
 
 ## Consequences

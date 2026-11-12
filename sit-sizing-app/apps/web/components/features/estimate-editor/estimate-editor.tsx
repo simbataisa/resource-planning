@@ -343,7 +343,11 @@ function EditorLayout({
       </section>
       <ResultsPanels />
       <VersionHistory estimate={estimate} open={version} />
-      <ExportPanel estimateName={estimate.name} versionNumber={version.number} />
+      <ExportPanel
+        estimateId={estimate.id}
+        estimateName={estimate.name}
+        versionNumber={version.number}
+      />
     </div>
   );
 }

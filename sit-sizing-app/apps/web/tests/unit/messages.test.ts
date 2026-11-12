@@ -41,6 +41,7 @@ const SAME_IN_VI = [
   /^roles\.QE_LEAD$/,
   /^teamTab\.(junior|mid|senior)$/,
   /^versions\.(by|cmp\.fte)$/,
+  /^export\.summary\.fte$/,
 ];
 
 describe('i18n messages', () => {

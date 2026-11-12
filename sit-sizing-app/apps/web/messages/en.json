@@ -1100,6 +1100,21 @@
       "scope": "• Scope includes: {p}",
       "evidence": "• Shift-left evidence: mutation {m}%, rule tests {r}%, BE validation {b}%, FE validation {f}%, mapping tests {p}%, FE unit {u}%, FE mutation {s}%",
       "calibration": "• {u} of {t} assumptions are uncalibrated defaults. Confirm with the delivery owner before committing."
+    },
+    "sheets": {
+      "title": "Spreadsheets",
+      "xlsx": "Excel workbook",
+      "csv": "Download CSV",
+      "csvTable": "CSV table",
+      "tables": {
+        "gap": "Gap by group",
+        "drivers": "Drivers",
+        "assumptions": "Assumptions",
+        "inputs": "Inputs",
+        "summary": "Summary"
+      },
+      "hint": "Built from the last saved state of this version, with the same numbers as the screen.",
+      "waiting": "Waiting for autosave before you can download."
     }
   },
   "content": {
@@ -1724,5 +1739,51 @@
       "confirmBody": "Every assumption in this draft will be replaced by the values of {name}. Your scope stays the same. Changes you made to assumptions are lost."
     },
     "valuesTitle": "Assumption values"
+  },
+  "export": {
+    "disclaimer": "Planning range, not a commitment. Confirm FTE and timelines with the accountable delivery owner.",
+    "inputsNote": "Every input of this version as a path and value. Counts are synthetic or business names only; no customer data.",
+    "sheets": {
+      "summary": "Summary",
+      "drivers": "Drivers",
+      "gap": "Gap by group",
+      "assumptions": "Assumptions",
+      "inputs": "Inputs"
+    },
+    "cols": {
+      "item": "Item",
+      "rough": "Rough",
+      "detailed": "Detailed",
+      "driver": "Driver",
+      "group": "Group",
+      "total": "Total",
+      "roughCases": "Rough cases",
+      "detailedCases": "Detailed cases",
+      "deltaCases": "Δ cases",
+      "roughHours": "Rough hours",
+      "detailedHours": "Detailed hours",
+      "deltaHours": "Δ hours",
+      "share": "Share of hours gap",
+      "assumption": "Assumption",
+      "path": "Path",
+      "value": "Value",
+      "default": "Default",
+      "status": "Status"
+    },
+    "summary": {
+      "estimate": "Estimate",
+      "project": "Project",
+      "version": "Version",
+      "profile": "Assumption profile",
+      "engine": "Engine version",
+      "exportedAt": "Exported at (UTC)",
+      "uncalibrated": "Uncalibrated assumptions",
+      "fte": "FTE",
+      "fteLow": "FTE, low",
+      "fteHigh": "FTE, high",
+      "cases": "Test cases",
+      "hours": "Hours",
+      "weeks": "SIT window (weeks)"
+    }
   }
 }

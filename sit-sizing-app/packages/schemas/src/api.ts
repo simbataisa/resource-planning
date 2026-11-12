@@ -360,6 +360,18 @@ export const ProfileApply = z
   })
   .meta({ id: 'ProfileApply' });
 
+// ---------- export (release 2, X-02) ----------
+export const ExportTable = z.enum(['summary', 'drivers', 'gap', 'assumptions', 'inputs']);
+export const ExportQuery = z
+  .object({
+    format: z.enum(['xlsx', 'csv']).default('xlsx'),
+    /** CSV holds one table; the workbook has all of them. */
+    table: ExportTable.default('gap'),
+    /** Language of labels and headers; defaults to the user's language. */
+    lang: z.enum(['en', 'vi']).optional(),
+  })
+  .meta({ id: 'ExportQuery' });
+
 // ---------- misc ----------
 export const Health = z
   .object({ status: z.literal('ok'), version: z.string(), uptimeSeconds: z.number() })
