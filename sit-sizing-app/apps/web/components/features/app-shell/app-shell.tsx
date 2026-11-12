@@ -68,6 +68,7 @@ export function AppShell({
       </a>
       <Sidebar
         collapsible="icon"
+        label={t('app.sidebarLabel')}
         mobileTitle={t('app.mainNav')}
         mobileCloseLabel={t('app.closeNav')}
       >
@@ -146,11 +147,18 @@ export function AppShell({
           {userName ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton aria-label={t('app.accountMenu', { name: userName })}>
-                  <span className="grid size-4 place-items-center rounded-full bg-muted text-[0.6rem] font-semibold">
+                <SidebarMenuButton>
+                  <span
+                    aria-hidden="true"
+                    className="grid size-4 place-items-center rounded-full bg-muted text-[0.6rem] font-semibold"
+                  >
                     {userName.charAt(0)}
                   </span>
-                  <span className="truncate">{userName}</span>
+                  {/* Named by the sr-only text, which contains the visible name (WCAG 2.5.3). */}
+                  <span aria-hidden="true" className="truncate">
+                    {userName}
+                  </span>
+                  <span className="sr-only">{t('app.accountMenu', { name: userName })}</span>
                   <ChevronsUpDown aria-hidden="true" className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

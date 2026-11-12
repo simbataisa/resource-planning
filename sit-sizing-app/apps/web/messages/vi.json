@@ -18,7 +18,8 @@
     },
     "toggleNav": "Ẩn hoặc hiện thanh bên",
     "closeNav": "Đóng điều hướng",
-    "accountMenu": "Menu tài khoản của {name}"
+    "accountMenu": "Menu tài khoản của {name}",
+    "sidebarLabel": "Điều hướng và tài khoản"
   },
   "common": {
     "loading": "Đang tải…",

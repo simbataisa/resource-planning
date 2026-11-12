@@ -38,7 +38,12 @@ function Example() {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <Sidebar collapsible="icon" mobileTitle="Navigation" mobileCloseLabel="Close navigation">
+        <Sidebar
+          collapsible="icon"
+          label="Sidebar"
+          mobileTitle="Navigation"
+          mobileCloseLabel="Close navigation"
+        >
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Work</SidebarGroupLabel>
@@ -96,6 +101,11 @@ describe('Sidebar (layer 2)', () => {
     expect(active).toHaveAttribute('aria-current', 'page');
     expect(active).toHaveAttribute('data-active', 'true');
     expect(screen.getByRole('link', { name: 'Profiles' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('desktop sidebar is a named complementary landmark', () => {
+    render(<Example />);
+    expect(screen.getByRole('complementary', { name: 'Sidebar' })).toBeInTheDocument();
   });
 
   it('inset is not a second main landmark', () => {

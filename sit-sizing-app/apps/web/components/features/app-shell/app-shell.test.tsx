@@ -49,7 +49,15 @@ describe('AppShell (U-04)', () => {
     );
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main');
     await expectNoAxeViolations(container);
-    await user.click(screen.getByRole('button', { name: 'Account menu for Synthetic Estimator' }));
+    const account = screen.getByRole('button', { name: 'Account menu for Synthetic Estimator' });
+    // Visible text must be part of the accessible name (WCAG 2.5.3): the initial is decorative.
+    expect(within(account).getByText('S')).toHaveAttribute('aria-hidden', 'true');
+    // Named by its content, not aria-label, so axe's label-content-name-mismatch cannot fire.
+    expect(account).not.toHaveAttribute('aria-label');
+    expect(screen.getByRole('complementary', { name: 'Navigation and account' })).toContainElement(
+      account,
+    );
+    await user.click(account);
     expect(screen.getByRole('menuitem', { name: 'Sign out' })).toHaveAttribute(
       'href',
       '/api/auth/signout',

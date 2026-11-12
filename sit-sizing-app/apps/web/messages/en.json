@@ -18,7 +18,8 @@
     },
     "toggleNav": "Toggle sidebar",
     "closeNav": "Close navigation",
-    "accountMenu": "Account menu for {name}"
+    "accountMenu": "Account menu for {name}",
+    "sidebarLabel": "Navigation and account"
   },
   "common": {
     "loading": "Loading…",

@@ -120,6 +120,45 @@ describe('ui primitives (layer 2)', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('Table: the scroll container is a tab stop only when it overflows', () => {
+    const widths = (scroll: number, client: number) => {
+      Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
+        configurable: true,
+        get: () => scroll,
+      });
+      Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+        configurable: true,
+        get: () => client,
+      });
+    };
+    const table = (
+      <Table aria-label="Versions">
+        <TableBody>
+          <TableRow>
+            <TableCell>v1</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    );
+    try {
+      widths(400, 400);
+      const fits = render(table);
+      expect(fits.container.querySelector('[data-slot="table-container"]')).not.toHaveAttribute(
+        'tabindex',
+      );
+      fits.unmount();
+      widths(900, 400);
+      const wide = render(table);
+      expect(wide.container.querySelector('[data-slot="table-container"]')).toHaveAttribute(
+        'tabindex',
+        '0',
+      );
+    } finally {
+      delete (HTMLElement.prototype as { scrollWidth?: number }).scrollWidth;
+      delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
+    }
+  });
+
   it('Sheet: opens with its title and closes with the labelled button', async () => {
     const user = userEvent.setup();
     const { baseElement } = render(

@@ -110,6 +110,7 @@ export function SidebarProvider({
 
 export function Sidebar({
   collapsible = 'offcanvas',
+  label,
   mobileTitle,
   mobileCloseLabel,
   className,
@@ -117,6 +118,8 @@ export function Sidebar({
   ...props
 }: ComponentProps<'div'> & {
   collapsible?: 'icon' | 'offcanvas' | 'none';
+  /** Name of the desktop sidebar landmark (<aside>), translated by the caller. */
+  label: string;
   /** Accessible title of the mobile sheet, translated by the caller. */
   mobileTitle: string;
   /** Accessible name of the mobile sheet's close button, translated by the caller. */
@@ -126,16 +129,17 @@ export function Sidebar({
 
   if (collapsible === 'none') {
     return (
-      <div
+      <aside
+        aria-label={label}
         data-slot="sidebar"
         className={cn(
           'flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground',
           className,
         )}
-        {...props}
+        {...(props as ComponentProps<'aside'>)}
       >
         {children}
-      </div>
+      </aside>
     );
   }
 
@@ -186,13 +190,14 @@ export function Sidebar({
         )}
         {...props}
       >
-        <div
+        <aside
+          aria-label={label}
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
           className="flex h-full w-full flex-col bg-sidebar"
         >
           {children}
-        </div>
+        </aside>
       </div>
     </div>
   );

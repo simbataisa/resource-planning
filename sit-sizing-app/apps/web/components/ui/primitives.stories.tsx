@@ -151,7 +151,12 @@ export const SheetAndMenu: StoryObj = {
 function SidebarExample({ defaultOpen }: { defaultOpen: boolean }) {
   return (
     <SidebarProvider defaultOpen={defaultOpen} className="min-h-80">
-      <Sidebar collapsible="icon" mobileTitle="Navigation" mobileCloseLabel="Close navigation">
+      <Sidebar
+        collapsible="icon"
+        label="Sidebar"
+        mobileTitle="Navigation"
+        mobileCloseLabel="Close navigation"
+      >
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel>Work</SidebarGroupLabel>
