@@ -173,12 +173,15 @@ Server environments apply realm changes with a reviewed import job (to be added 
 ## 6. End-to-end tests (step 1.7)
 
 ```bash
-pnpm dev:up        # the stack must be running
-pnpm test:e2e      # Playwright in your installed Google Chrome; report in reports/e2e/html
+pnpm test:e2e      # the gate: production build in its own stack, then Playwright in your Chrome
+pnpm test:e2e:dev  # quick iteration against the running dev stack (pnpm dev:up); not a gate
+pnpm test:e2e:report  # open the last HTML report (traces and screenshots of failures)
 ```
 
-- **Sign-in.** A setup step signs in through Keycloak as `dev-estimator` (password from `.env`, never printed) and the tests reuse that session.
-- **Suite.** The smoke suite:
+- **Why the gate uses the production build.** `next dev` compiles every page on first request and restarts itself on config changes or near its memory limit. Under a full suite that means minute-long gaps at random points, so failures depend on timing rather than on the code. `pnpm test:e2e` builds the web image and runs `deploy/ci/smoke.sh` with `E2E_RUNNER=host`: the same stack CI uses, as compose project `sit-ci-local` on ports 23000 (web), 28080 (Keycloak) and 28025 (Mailpit). It has fresh random secrets and the synthetic seed, and is removed afterwards. It can run while `pnpm dev:up` is running.
+- **Dev server restarts.** The dev container logs `[dev] next dev exited with code …` before Docker restarts it. If restarts are frequent, check `pnpm dev:logs` for "approaching the used memory threshold" or "Found a change in". The container already gets a 4 GB heap (`NODE_OPTIONS` in `compose.dev.yaml`).
+- **Sign-in.** A setup step signs in through Keycloak as `dev-estimator` and `dev-lead` (password from `.env` or the stack's generated env, never printed), and the tests reuse those sessions.
+- **Suite.** `release2.spec.ts` covers the release 2 exit criteria: approval end to end with notices and email, a published profile used by a new estimate, and the Excel export equal to the screen. The smoke suite:
   - creates an estimate from the worked example and checks the prototype's numbers;
   - edits a quantity and checks autosave;
   - exports the profile and saves a version;

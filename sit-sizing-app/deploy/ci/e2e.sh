@@ -17,6 +17,6 @@ mkdir -p reports/e2e
 docker run --rm --network host --ipc=host \
   -v "$ROOT":"$ROOT" -w "$PWD/apps/web" \
   -u "$(id -u):$(id -g)" -e HOME=/tmp -e CI=true \
-  -e E2E_BASE_URL -e KC_DEV_USER_PASSWORD -e E2E_VISUAL=1 -e E2E_BROWSER=bundled \
+  -e E2E_BASE_URL -e E2E_MAILPIT_URL -e KC_DEV_USER_PASSWORD -e E2E_VISUAL=1 -e E2E_BROWSER=bundled \
   "$IMAGE" \
   npx playwright test "${ARGS[@]}"

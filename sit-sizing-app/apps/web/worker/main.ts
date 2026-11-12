@@ -7,6 +7,7 @@
 // Before anything reads the configuration: this process serves no requests.
 process.env.PROCESS_ROLE = 'worker';
 
+import { writeFileSync } from 'node:fs';
 import { clock } from '../server/clock';
 import { db } from '../server/db';
 import { getEnv } from '../server/env';
@@ -15,6 +16,15 @@ import { dispatchOnce } from '../server/notifications/dispatcher';
 import { smtpSender } from '../server/notifications/transport';
 
 const env = getEnv();
+/** Read by the compose healthcheck: a fresh file means the poll loop is alive. */
+const HEARTBEAT = '/tmp/sit-worker-heartbeat';
+const beat = () => {
+  try {
+    writeFileSync(HEARTBEAT, new Date().toISOString());
+  } catch (err) {
+    log.warn({ err }, 'cannot write the heartbeat file');
+  }
+};
 const log = logger.child({ component: 'notify-worker' });
 let stopping = false;
 let wake: (() => void) | null = null;
@@ -34,6 +44,7 @@ async function main() {
   const send = env.SMTP_URL ? smtpSender(env.SMTP_URL, env.MAIL_FROM) : null;
   log.info({ pollMs: env.NOTIFY_POLL_MS, maxAttempts: env.NOTIFY_MAX_ATTEMPTS }, 'started');
   while (!stopping) {
+    beat();
     if (send) {
       try {
         const r = await dispatchOnce({

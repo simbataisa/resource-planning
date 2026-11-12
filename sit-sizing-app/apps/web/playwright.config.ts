@@ -12,6 +12,8 @@ if (!process.env.KC_DEV_USER_PASSWORD && existsSync('../../.env'))
   process.loadEnvFile('../../.env');
 
 export const STATE = '../../reports/e2e/.auth/estimator.json';
+/** The synthetic QE Lead (release 2: approvals, profiles). */
+export const LEAD_STATE = '../../reports/e2e/.auth/lead.json';
 
 export default defineConfig({
   testDir: 'tests/e2e',

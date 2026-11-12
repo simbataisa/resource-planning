@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
-# SIT Sizing web image (design 12.1). Stages: base → deps → dev | build → runner.
-# Build from the repository root:  docker build -f docker/Dockerfile --target runner .
-# Stages: deps → dev | build → tools (migrate, seed) | runner (web).
+# SIT Sizing images (design 12.1). Build from the repository root, for example:
+#   docker build -f docker/Dockerfile --target runner .
+# Stages: deps → dev | workspace → tools (migrate, seed, worker) | build → runner (web).
 #
 # REGISTRY_PREFIX  internal registry prefix, e.g. "nexus.example.internal/docker-proxy/" (trailing slash). Empty = Docker Hub.
 # NPM_REGISTRY     npm proxy URL (Nexus). Used by pnpm and corepack.
@@ -47,18 +47,24 @@ EXPOSE 3000
 CMD ["pnpm", "--filter", "@sit/web", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
 
 # ---------------------------------------------------------------------------
-FROM deps AS build
+# Source and installed dependencies, without the Next.js build.
+FROM deps AS workspace
 COPY . .
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile --offline --store-dir /pnpm/store
+
+# ---------------------------------------------------------------------------
+FROM workspace AS build
 ARG APP_VERSION="0.0.0-dev"
 ENV APP_VERSION=${APP_VERSION} NODE_ENV=production
 RUN pnpm --filter @sit/web build
 
 # ---------------------------------------------------------------------------
-# One-shot tasks: database migrations and the synthetic seed (design 12.1:
-# migrations run as a separate step, never at app start).
-FROM build AS tools
+# Tasks that need the workspace but not the Next.js build: database migrations and
+# the synthetic seed (design 12.1: migrations run as a separate step, never at app
+# start) and the notification worker (N-01, run with tsx). Building it never runs
+# `next build`, so it can be built next to the web image without doubling memory.
+FROM workspace AS tools
 CMD ["pnpm", "db:migrate"]
 
 # ---------------------------------------------------------------------------
