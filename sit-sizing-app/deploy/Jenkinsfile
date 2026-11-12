@@ -106,9 +106,12 @@ pipeline {
       }
     }
 
-    stage('Smoke test (compose stack)') {
+    stage('Smoke and E2E (compose stack)') {
       steps {
         sh 'cd "$APP_DIR" && deploy/ci/smoke.sh "$IMAGE_NAME:$APP_VERSION"'
+      }
+      post {
+        always { archiveArtifacts artifacts: "${env.APP_DIR}/reports/e2e/**", allowEmptyArchive: true }
       }
     }
 

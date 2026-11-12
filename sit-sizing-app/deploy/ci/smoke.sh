@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Starts the production-like compose stack with the image under test and checks
-# liveness and readiness (design 12.5 "E2E smoke against the compose stack").
-# Playwright E2E replaces/extends this in step 1.5.
+# Starts the production-like compose stack with the image under test, checks liveness,
+# readiness and headers, then runs the Playwright E2E suite against it (design 12.5, 13).
+# Fixed ports: Keycloak's public URL and the app's redirect URIs must be known before start.
+# E2E=off skips the browser suite (never on main or release branches).
 set -euo pipefail
 IMAGE="${1:?usage: smoke.sh <image:tag>}"
 PROJECT="sit-ci-${BUILD_NUMBER:-local}"
@@ -24,8 +25,8 @@ KEYCLOAK_ADMIN_PASSWORD=$(rand)
 OIDC_CLIENT_SECRET=$(rand)
 SESSION_SECRET=$(rand)$(rand)
 KC_DEV_USER_PASSWORD=$(rand)
-KEYCLOAK_PORT=0
-WEB_PORT=0
+KEYCLOAK_PORT=${E2E_KEYCLOAK_PORT:-28080}
+WEB_PORT=${E2E_WEB_PORT:-23000}
 DB_PORT=0
 APP_ENV=local
 APP_VERSION=${APP_VERSION:-smoke}
@@ -49,3 +50,9 @@ curl -fsS -o /dev/null -D - "$BASE/api/v1/health" | grep -qi '^x-request-id:'
 
 echo
 echo "smoke test passed"
+
+if [[ "${E2E:-on}" != "off" ]]; then
+  E2E_BASE_URL="http://localhost:${WEB_PORT}" \
+    KC_DEV_USER_PASSWORD="$(grep '^KC_DEV_USER_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)" \
+    deploy/ci/e2e.sh
+fi

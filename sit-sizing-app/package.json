@@ -20,7 +20,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:int": "pnpm --filter @sit/web test:int",
-    "test:e2e": "node scripts/not-yet.mjs test:e2e 1.5",
+    "test:e2e": "pnpm --filter @sit/web test:e2e",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "dev:env": "node scripts/ensure-dev-env.mjs",
     "dev:up": "node scripts/ensure-dev-env.mjs && docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml up -d --build --wait db mail keycloak web && docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml run --rm seed",
@@ -40,7 +40,8 @@
     "test:idp": "pnpm --filter @sit/web test:idp",
     "dev:keycloak-reset": "node scripts/ensure-dev-env.mjs && node scripts/dev-keycloak-reset.mjs",
     "i18n:review": "node scripts/i18n-review.mjs export",
-    "i18n:apply": "node scripts/i18n-review.mjs apply"
+    "i18n:apply": "node scripts/i18n-review.mjs apply",
+    "db:restore-test": "node scripts/ensure-dev-env.mjs && node scripts/db-restore-test.mjs"
   },
   "devDependencies": {
     "@types/node": "catalog:",

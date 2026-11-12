@@ -91,7 +91,8 @@ export async function proxy(request: NextRequest) {
     signin.searchParams.set('next', `${pathname}${search}`);
     response = NextResponse.redirect(signin);
   } else {
-    const target = isPage
+    // Every page path gets the locale prefix, public ones too (/signed-out → /en/signed-out).
+    const target = !pathname.startsWith('/api/')
       ? localeRedirect(
           pathname,
           pickLocale(

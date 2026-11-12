@@ -56,4 +56,4 @@
 
 - Session lifetime and MFA scope: confirm with information security (Q2).
 - Rate-limit thresholds: derive from the non-functional targets (Q10).
-- Penetration test of the IdP configuration before the pilot (step 1.7).
+- Penetration test of the IdP configuration before the pilot: scope in `docs/security/pentest-scope.md`, configuration review in `docs/security/idp-review.md` (release gates, `docs/release-checklist.md`).

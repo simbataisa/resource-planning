@@ -45,10 +45,13 @@ describe('AppShell (U-04)', () => {
   it('switches language, remembering the choice', async () => {
     const user = userEvent.setup();
     renderWithIntl(<AppShell userName="Synthetic Viewer">x</AppShell>);
-    expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true');
-    await user.click(screen.getByRole('button', { name: 'English' }));
+    expect(screen.getByRole('button', { name: 'EN English' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.click(screen.getByRole('button', { name: 'EN English' }));
     expect(router.replace).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Tiếng Việt' }));
+    await user.click(screen.getByRole('button', { name: 'VI Tiếng Việt' }));
     expect(router.replace).toHaveBeenCalledWith('/projects', { locale: 'vi' });
     expect(document.cookie).toContain('sit-locale=vi');
     expect(updateLocale.mutate).toHaveBeenCalledWith('vi');

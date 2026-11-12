@@ -119,7 +119,7 @@ export TESTCONTAINERS_HOST_OVERRIDE=$(rdctl shell ip a show rd0 | awk '/inet / {
 
 ## 4. Pipeline (design 12.5)
 
-`deploy/Jenkinsfile` (multibranch job on the TCB repository, script path `sit-sizing-app/deploy/Jenkinsfile`). Stages: install → type check and lint → unit tests with coverage → engine mutation gate (from step 1.1) → API integration tests (from step 1.2) → build image → security scans → compose smoke test → publish to Nexus (`main` only).
+`deploy/Jenkinsfile` (multibranch job on the TCB repository, script path `sit-sizing-app/deploy/Jenkinsfile`). Stages: install → type check and lint → unit tests with coverage → engine mutation gate → API integration tests → build image → security scans → compose smoke test and Playwright E2E (`deploy/ci/smoke.sh` → `deploy/ci/e2e.sh`) → publish to Nexus (`main` only).
 
 Jenkins configuration that the platform team provides:
 
@@ -130,6 +130,8 @@ Jenkins configuration that the platform team provides:
 | `NPM_REGISTRY`                                         | Nexus npm proxy URL                                     |
 | `NEXUS_DOCKER_REGISTRY` and credentials `nexus-docker` | Image push target                                       |
 | `gitleaks` and `trivy` on the agent                    | Secret and image scans (`deploy/ci/security-scans.sh`)  |
+| `mcr.microsoft.com/playwright` through Nexus           | E2E browser image, same version as `@playwright/test`   |
+| Free ports 23000 and 28080 on the agent                | The E2E stack (`E2E_WEB_PORT`, `E2E_KEYCLOAK_PORT`)     |
 
 ### Branch protection (F-05) — set on the Git host
 
@@ -148,7 +150,7 @@ Jenkins configuration that the platform team provides:
 | Synthetic users | `dev-admin`, `dev-lead`, `dev-estimator`, `dev-viewer`, `dev-outsider`; password = `KC_DEV_USER_PASSWORD` in `.env`. `dev-admin` must set up TOTP on first sign-in       |
 | Admin console   | http://localhost:18080/admin (master realm), user `admin`, password `KEYCLOAK_ADMIN_PASSWORD` in `.env`. Local only; in server environments the console is internal-only |
 | Realm as code   | `docker/keycloak/realm/qe-tools-realm.json` (all environments), `docker/keycloak/dev/qe-tools-users-0.json` (local only)                                                 |
-| Login theme     | `docker/keycloak/themes/tcb` (placeholder colours until TCB-DS tokens, Q1)                                                                                               |
+| Login theme     | `docker/keycloak/themes/tcb` (TCB-DS red in the app's theme, ADR-0005)                                                                                                   |
 | Baseline checks | `pnpm test` (realm export) and `pnpm test:idp` (running Keycloak)                                                                                                        |
 
 **Changing the realm.** Edit the export in a pull request; never change `sit` or `prod` in the console without exporting back. Keycloak imports the realm only when it does not exist yet, so locally apply a change with `pnpm dev:keycloak-reset` (drops and re-creates only the local `keycloak` database, then restarts Keycloak).
@@ -164,3 +166,58 @@ Server environments apply realm changes with a reviewed import job (to be added 
 | `/api/v1/ready` reports `identityProvider` not ok | Keycloak is still starting (about 30 s) or `OIDC_INTERNAL_URL` is wrong                        |
 | Keycloak says "Invalid redirect uri"              | `APP_BASE_URL` and `SIT_WEB_BASE_URL` (compose) must match the URL in the browser              |
 | Signed out every 10 minutes                       | The refresh with Keycloak fails: check the web logs for `REFRESH_FAILED` and Keycloak's events |
+| Signed out right after signing out elsewhere      | Expected: back-channel logout (step 1.7). Keycloak posts to `SIT_WEB_BACKCHANNEL_URL`          |
+
+**Back-channel logout with `pnpm dev` on the host.** Keycloak (in a container) must reach the app. Set `SIT_WEB_BACKCHANNEL_URL=http://host.docker.internal:3000/api/auth/backchannel-logout` in `.env`, then `pnpm dev:keycloak-reset`. With `pnpm dev:up` the default (`http://web:3000/…`) already works.
+
+## 6. End-to-end tests (step 1.7)
+
+```bash
+pnpm dev:up        # the stack must be running
+pnpm test:e2e      # Playwright in your installed Google Chrome; report in reports/e2e/html
+```
+
+- **Sign-in.** A setup step signs in through Keycloak as `dev-estimator` (password from `.env`, never printed) and the tests reuse that session.
+- **Suite.** The smoke suite:
+  - creates an estimate from the worked example and checks the prototype's numbers;
+  - edits a quantity and checks autosave;
+  - exports the profile and saves a version;
+  - opens the content pages with axe, the API reference (CSP nonce) and the Vietnamese switch;
+  - signs out last.
+- **Test data.** Each run adds a few estimates named `E2E · …` to the local database (synthetic). `pnpm dev:reset` clears them.
+- **Visual regression.** Screenshots of the summary cards and the gap table (`@visual`) run in CI's Linux Playwright image, where the baselines are kept. To refresh them after an approved UI change, run `UPDATE_SNAPSHOTS=1 deploy/ci/e2e.sh` against a running stack and commit `apps/web/tests/e2e/*-snapshots/`.
+
+## 7. Security settings (step 1.7)
+
+| Setting                 | Where                                 | Notes                                                                                                       |
+| ----------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Content Security Policy | `proxy.ts`, `server/http/csp.ts`      | Fresh script nonce per request, `'strict-dynamic'`; no inline scripts without the nonce (threat model T-07) |
+| Rate limit              | `RATE_LIMIT_PER_MINUTE` (default 300) | Per user and app instance; 429 with `Retry-After`. Tune with the non-functional targets (Q10)               |
+| Back-channel logout     | `/api/auth/backchannel-logout`, realm | Keycloak ends a session → the app refuses it on the next request (`RevokedSession`, rows expire after 12 h) |
+| Security headers        | `next.config.ts`                      | HSTS, `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`                                 |
+
+## 8. Release, promotion and rollback (design 12.5)
+
+1. **Release candidate.** Jenkins on `main` is green: tests, coverage gates, engine parity and mutation gate, integration tests, security scans, E2E. The image is published to Nexus under `APP_VERSION`.
+2. **Checklist.** Complete `docs/release-checklist.md` in the release pull request. It covers scan results, the restore test date, the IdP review and the VI sign-off.
+3. **Migrate, then deploy.** Run the `tools` image (`pnpm db:migrate`) against the target database. Then roll out the same image to `dev` → `sit` → `prod`; only environment variables and secrets differ.
+4. **Promotion to `prod`** needs a human approval in Jenkins.
+5. **Rollback.** Redeploy the previous image tag. Migrations are expand-only within a release (design 12.5), so the previous version runs on the new schema. Never edit or roll back a merged migration; fix forward.
+6. **Keycloak realm changes** go through the reviewed import job, not the console (section 5).
+
+## 9. Backup and restore (design 12.7)
+
+- **Backups.** Nightly backups of the `app` and `keycloak` databases (point-in-time recovery if the platform offers it) are owned by the platform team (Q4). The realm export and configuration are in the repository, so Keycloak can be rebuilt from code plus its database backup.
+- **Restore test, before every release:**
+
+  ```bash
+  pnpm db:restore-test   # against the running compose stack
+  ```
+
+  It dumps both databases (`reports/backup/`), restores each into a scratch database, compares the row counts of the key tables, drops the scratch copies and appends the result to `reports/restore-test.log`. For `sit` and `prod`, restore the platform backup into a scratch server instead and run the same row-count comparison.
+
+- **Record of restore tests:**
+
+| Date | Environment | Result | By  |
+| ---- | ----------- | ------ | --- |
+|      |             |        |     |

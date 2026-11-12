@@ -33,6 +33,8 @@ pnpm dev              # Next.js on the host (needs `pnpm dev:env` and the db fro
 pnpm dev:up           # full stack in containers with hot reload
 pnpm dev:obs          # plus Jaeger tracing at http://localhost:16686
 pnpm test:int         # API integration suite (Testcontainers, needs Docker)
+pnpm test:e2e         # Playwright E2E against the running stack (pnpm dev:up first)
+pnpm db:restore-test  # backup, restore and row-count check (before every release)
 pnpm openapi:generate # after any API change; commit docs/api/openapi.json
 pnpm --filter @sit/web storybook   # component catalogue at http://localhost:6006
 pnpm --filter @sit/web exec vitest run tests/unit/prototype-ui-parity.test.tsx   # app vs HTML prototype (ADR-0006)

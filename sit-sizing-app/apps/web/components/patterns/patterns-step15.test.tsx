@@ -32,9 +32,12 @@ describe('patterns added in step 1.5', () => {
         onChange={onChange}
       />,
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Tiếng Việt' }));
+    await userEvent.click(screen.getByRole('button', { name: 'VI Tiếng Việt' }));
     expect(onChange).toHaveBeenCalledWith('vi');
-    expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'EN English' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await expectNoAxeViolations(container);
   });
 

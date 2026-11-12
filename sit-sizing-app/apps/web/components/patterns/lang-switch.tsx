@@ -35,7 +35,6 @@ export function LangSwitch({ label, value, options, onChange, className }: LangS
             type="button"
             lang={o.value}
             title={o.title}
-            aria-label={o.title}
             aria-pressed={active}
             onClick={() => !active && onChange(o.value)}
             className={cn(
@@ -45,7 +44,9 @@ export function LangSwitch({ label, value, options, onChange, className }: LangS
                 : 'text-muted-foreground hover:bg-muted',
             )}
           >
-            {o.label}
+            {/* Name from content, so it starts with the visible text (WCAG 2.5.3): "EN English". */}
+            {`${o.label} `}
+            <span className="sr-only">{o.title}</span>
           </button>
         );
       })}
