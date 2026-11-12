@@ -24,8 +24,8 @@ export function AssumptionsTab() {
 
   return (
     <div className="grid gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-3xl text-sm text-muted-foreground">{t('hint')}</p>
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <p className="min-w-0 flex-1 basis-80 text-sm text-muted-foreground">{t('hint')}</p>
         <Badge variant="unc">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
       </div>
       {ASSUMPTION_META.map((g) => (
