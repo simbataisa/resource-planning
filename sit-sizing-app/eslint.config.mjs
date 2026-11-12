@@ -35,9 +35,20 @@ const UI_FORBIDDEN = [
   { group: ['@/server', '@/server/*'], message: 'Server code is not importable from components.' },
 ];
 
-const restrict = (/** @type {Array<{group: string[], message: string}>} */ patterns) => ({
-  'no-restricted-imports': ['error', { patterns }],
+const restrict = (
+  /** @type {Array<{group: string[], message: string}>} */ patterns,
+  /** @type {Array<{name: string, message: string}>} */ paths = [],
+) => ({
+  'no-restricted-imports': ['error', { patterns, paths }],
 });
+
+/** In-app links must keep the locale prefix (design 8.5). */
+const LOCALE_LINK = [
+  {
+    name: 'next/link',
+    message: 'Use Link from @/i18n/navigation so the locale prefix is kept. (design 8.5)',
+  },
+];
 
 export default defineConfig([
   ...nextVitals,
@@ -65,6 +76,20 @@ export default defineConfig([
       'no-console': ['error', { allow: ['warn', 'error'] }],
       eqeqeq: ['error', 'always', { null: 'ignore' }],
     },
+  },
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    rules: {
+      // Every page sits under the dynamic [locale] segment, so this rule treats any path as a
+      // page, including the sign-in/out route handlers, which must be full-page navigations.
+      // In-app links use the locale-aware Link from @/i18n/navigation (enforced below).
+      '@next/next/no-html-link-for-pages': 'off',
+    },
+  },
+  {
+    files: ['apps/web/components/**/*.{ts,tsx}', 'apps/web/app/**/*.{ts,tsx}'],
+    ignores: ['apps/web/**/*.test.tsx'],
+    rules: restrict([], LOCALE_LINK),
   },
   // ---- Pure packages -------------------------------------------------------
   {
@@ -106,25 +131,34 @@ export default defineConfig([
   // ---- Component layers (design 8: ui → patterns → features) ---------------
   {
     files: ['apps/web/components/ui/**/*.{ts,tsx}'],
-    rules: restrict([
-      ...UI_FORBIDDEN,
-      {
-        group: ['@/components/patterns/*', '@/components/features/*'],
-        message: 'Layer 2 (ui) cannot import layers 3–4.',
-      },
-    ]),
+    rules: restrict(
+      [
+        ...UI_FORBIDDEN,
+        {
+          group: ['@/components/patterns/*', '@/components/features/*'],
+          message: 'Layer 2 (ui) cannot import layers 3–4.',
+        },
+      ],
+      LOCALE_LINK,
+    ),
   },
   {
     files: ['apps/web/components/patterns/**/*.{ts,tsx}'],
-    rules: restrict([
-      ...UI_FORBIDDEN,
-      {
-        group: ['@/components/features/*'],
-        message: 'Layer 3 (patterns) is domain-free; it cannot import features.',
-      },
-    ]),
+    rules: restrict(
+      [
+        ...UI_FORBIDDEN,
+        {
+          group: ['@/components/features/*'],
+          message: 'Layer 3 (patterns) is domain-free; it cannot import features.',
+        },
+      ],
+      LOCALE_LINK,
+    ),
   },
-  { files: ['apps/web/components/features/**/*.{ts,tsx}'], rules: restrict(UI_FORBIDDEN) },
+  {
+    files: ['apps/web/components/features/**/*.{ts,tsx}'],
+    rules: restrict(UI_FORBIDDEN, LOCALE_LINK),
+  },
   // ---- Scripts and config files may log ------------------------------------
   {
     files: [

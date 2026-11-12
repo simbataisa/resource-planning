@@ -6,4 +6,4 @@
 | `patterns/` | 3 · composed, domain-free    | `ui/`                           | features, Prisma, Axios, `@/server`           |
 | `features/` | 4 · domain components        | `ui/`, `patterns/`, query hooks | Prisma, Axios, `@/server`                     |
 
-The rules are enforced by ESLint (`eslint.config.mjs`). Components arrive in step 1.4.
+The rules are enforced by ESLint (`eslint.config.mjs`). Layers 2 and 3 arrived in step 1.4; layer 4 (`features/app-shell`, `projects`, `estimates`, `estimate-editor`, `results`) in step 1.5 (ADR-0006).

@@ -1,0 +1,233 @@
+'use client';
+
+import { useRef, useState, type ChangeEvent } from 'react';
+import { useTranslations } from 'next-intl';
+import { ClipboardCopy, Download, Upload } from 'lucide-react';
+import { ASSUMPTION_PATHS, fromPrototypeProfile, PrototypeImportError, topGap } from '@sit/engine';
+import { Assumptions, EstimateInputs } from '@sit/schemas';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { formatFte as f1, formatInt as fmt } from '@/lib/format';
+import { useEditor } from './store';
+import { useCalendarText } from './use-calendar-text';
+
+/** File name safe slug: "Synthetic · R3" → "synthetic-r3". */
+const slug = (s: string) =>
+  s
+    .normalize('NFKD')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-')
+    .slice(0, 60) || 'estimate';
+
+/** Saves text as a file in the browser. */
+function download(name: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** The prototype's export format, so files move between the HTML tool and this app. */
+export function prototypeProfileJson(
+  profile: string,
+  inputs: EstimateInputs,
+  assumptions: Assumptions,
+  uncalibrated: number,
+  savedAt: Date,
+): string {
+  const total = ASSUMPTION_PATHS.length;
+  return JSON.stringify(
+    {
+      tool: 'sit-sizing-model',
+      version: 1,
+      profile,
+      savedAt: savedAt.toISOString(),
+      calibrated: `${total - uncalibrated} of ${total}`,
+      assumptions,
+      scope: inputs,
+    },
+    null,
+    2,
+  );
+}
+
+/**
+ * "Profile and actuals" (prototype `#calib`, X-01): export the profile JSON, copy the QBR
+ * summary, and import a profile exported from the HTML tool or this app into the draft.
+ */
+export function ExportPanel({
+  estimateName,
+  versionNumber,
+}: {
+  estimateName: string;
+  versionNumber: number;
+}) {
+  const t = useTranslations('exportPanel');
+  const { state, uncalibrated, editable, dispatch } = useEditor();
+  const summary = useQbrSummary(estimateName);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [shown, setShown] = useState<string | null>(null);
+
+  async function copySummary() {
+    try {
+      await navigator.clipboard.writeText(summary);
+      setShown(null);
+      setMessage({ ok: true, text: t('copied') });
+    } catch {
+      setShown(summary);
+      setMessage({ ok: false, text: t('copyFailed') });
+    }
+  }
+
+  function exportProfile() {
+    download(
+      `sit-sizing-${slug(estimateName)}-v${versionNumber}.json`,
+      prototypeProfileJson(estimateName, state.inputs, state.assumptions, uncalibrated, new Date()),
+    );
+  }
+
+  async function onFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const text = await file.text();
+    const fail = (reason: string) =>
+      setMessage({ ok: false, text: t('importError', { e: reason }) });
+    let obj: unknown;
+    try {
+      obj = JSON.parse(text);
+    } catch {
+      return fail(t('notJson'));
+    }
+    try {
+      const imported = fromPrototypeProfile(obj);
+      const assumptions = Assumptions.safeParse(imported.assumptions);
+      const inputs = EstimateInputs.safeParse(imported.inputs ?? state.inputs);
+      if (!assumptions.success || !inputs.success) return fail(t('invalid'));
+      dispatch({ type: 'replace', inputs: inputs.data, assumptions: assumptions.data });
+      setMessage({
+        ok: true,
+        text: imported.profile ? t('imported', { p: imported.profile }) : t('importedNoName'),
+      });
+    } catch (err) {
+      if (err instanceof PrototypeImportError)
+        return fail(t(err.code === 'NO_ASSUMPTIONS' ? 'noAssumptions' : 'notProfile'));
+      throw err;
+    }
+  }
+
+  return (
+    <section className="grid gap-4 rounded-lg border bg-card p-5">
+      <header>
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {t('eyebrow')}
+        </p>
+        <h2 className="text-lg font-semibold">{t('title')}</h2>
+      </header>
+      <p className="max-w-3xl text-sm text-muted-foreground">{t('hint')}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={exportProfile}>
+          <Download aria-hidden="true" />
+          {t('exportBtn')}
+        </Button>
+        <Button variant="outline" onClick={() => void copySummary()}>
+          <ClipboardCopy aria-hidden="true" />
+          {t('copySummary')}
+        </Button>
+        {editable ? (
+          <>
+            <Button variant="outline" onClick={() => fileRef.current?.click()}>
+              <Upload aria-hidden="true" />
+              {t('importFile')}
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".json,application/json"
+              hidden
+              onChange={(e) => void onFile(e)}
+            />
+          </>
+        ) : null}
+      </div>
+      {editable ? <p className="text-xs text-muted-foreground">{t('importHint')}</p> : null}
+      {message ? (
+        <Alert variant={message.ok ? 'default' : 'destructive'}>
+          <AlertDescription>{message.text}</AlertDescription>
+        </Alert>
+      ) : null}
+      {shown ? (
+        <Textarea
+          aria-label={t('summaryLabel')}
+          readOnly
+          rows={10}
+          value={shown}
+          onFocus={(e) => e.currentTarget.select()}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+/** The QBR summary text (prototype `#copySummary`). */
+export function useQbrSummary(profile: string): string {
+  const t = useTranslations('exportPanel.summary');
+  const tc = useTranslations('catalogue');
+  const tg = useTranslations('catalogue.groups');
+  const tw = useTranslations('detailTab');
+  const { state, results, uncalibrated } = useEditor();
+  const calendar = useCalendarText();
+  const { rough: R, detailed: D } = results;
+  const { team, evidence: E } = state.inputs;
+  const top = topGap(results);
+  const channels = [
+    tw('summary.web'),
+    ...(['web2', 'ios', 'android'] as const)
+      .filter((k) => D.counts.ch[k])
+      .map((k) => tc(`channels.${k}`)),
+  ].join(', ');
+  const any = (k: 'dOn' | 'aOn' | 'ptOn') => D.explain[k] || R.explain[k];
+  const scope = [
+    tc('featureTypes.app'),
+    ...(any('dOn') ? [tc('featureTypes.data')] : []),
+    ...(any('aOn') ? [tc('featureTypes.ai')] : []),
+    ...(any('ptOn') ? [tw('sections.pt')] : []),
+  ].join(', ');
+  const hasCalendar = any('dOn') || any('aOn') || any('ptOn');
+  let gapDriver = '';
+  if (top) {
+    const label = tg(top.group);
+    gapDriver = t(/s$/.test(label) ? 'gapMany' : 'gapOne', { label, p: top.share });
+  }
+  return [
+    t('head') + (profile ? t('profile', { p: profile }) : ''),
+    t('rough', { lo: f1(R.lo), hi: f1(R.hi), m: f1(R.fte), c: fmt(R.cases), h: fmt(R.hours) }),
+    t('detailed', { lo: f1(D.lo), hi: f1(D.hi), m: f1(D.fte), c: fmt(D.cases), h: fmt(D.hours) }),
+    t('gap', { s: D.fte >= R.fte ? '+' : '−', n: f1(Math.abs(D.fte - R.fte)) }) + gapDriver,
+    t('window', { w: team.weeks, j: team.mix.junior, m: team.mix.mid, s: team.mix.senior }),
+    t('env', {
+      e: tc(`env.${D.envI}`),
+      a: Math.round(D.auto * 100),
+      c: channels,
+      l: D.counts.languages,
+    }),
+    t('ai', { a: tc(`aiLevels.${D.aiI}`), p: Math.round(D.aiCut * 100) }),
+    t('scope', { p: scope }) + (hasCalendar && calendar ? ` · ${calendar}` : ''),
+    t('evidence', {
+      r: E.ruleCov,
+      m: E.mutation,
+      b: E.valBE,
+      f: E.valFE,
+      p: E.mapCov,
+      u: E.feUnit,
+      s: E.feMut,
+    }),
+    t('calibration', { u: uncalibrated, t: ASSUMPTION_PATHS.length }),
+  ].join('\n');
+}

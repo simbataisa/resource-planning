@@ -43,9 +43,22 @@ export function usePatchDraft(estimateId: string) {
   });
 }
 
+/** Take or renew the draft edit lock (also the heartbeat); `true` takes it over (QE Lead). */
 export function useLockDraft(estimateId: string) {
   return useMutation({
     mutationFn: (takeover: boolean = false) => api.estimates.lock(estimateId, { takeover }),
+  });
+}
+
+/** Starts a new draft from the latest version; the editor then loads it. */
+export function useCreateDraft(estimateId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.estimates.createDraft(estimateId),
+    onSuccess: async (v) => {
+      qc.setQueryData(qk.version(estimateId, v.number), v);
+      await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
+    },
   });
 }
 
@@ -53,6 +66,9 @@ export function useSaveVersion(estimateId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (note?: string) => api.estimates.saveVersion(estimateId, note ? { note } : {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.estimate(estimateId) }),
+    onSuccess: async (v) => {
+      qc.setQueryData(qk.version(estimateId, v.number), v);
+      await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
+    },
   });
 }

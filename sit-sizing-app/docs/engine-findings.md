@@ -29,3 +29,13 @@ Status: **Review** = for the tech lead and QE practice lead to decide, ideally w
 - `compute()` was split into the modules listed in design 6.3. Arithmetic order is unchanged, which is why results are bit-identical, not just within tolerance.
 - Prototype names were kept where they appear in saved profiles (assumption keys, `explain` fields), so exported profiles import without mapping.
 - The engine returns keys and numbers only. Labels for groups, sensitivity items (`SENSITIVITY_ITEMS[].key`) and derived-row formulas belong in the web app's message files (step 1.5/1.6).
+
+## UI notes (step 1.5)
+
+Behaviours of the prototype's screens, found while building the app against it. They do not change any number.
+
+| #   | Date       | Finding                                                                                                                                                                                                                        | App behaviour                                                                                   |
+| --- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| U1  | 2026-11-12 | With a blank scope no assumption moves the estimate. The prototype's `renderTornado` then reads the first row of an empty list and stops with an error, so the rest of the page (scenarios, chips, language) is not refreshed. | Shows "No assumption changes the estimate." and renders everything.                             |
+| U2  | 2026-11-12 | The prototype's profile name exists only in the browser and in exported files.                                                                                                                                                 | Release 1 exports the estimate name as `profile`; profiles come in release 2 (P-01).            |
+| U3  | 2026-11-12 | The VI dictionary leaves "Request / Bean Validation · backend" in English and has no entries for the editor's autosave, lock and version messages.                                                                             | Same label as the prototype; new messages translated by the team, for the VI review (step 1.6). |

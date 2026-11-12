@@ -35,7 +35,15 @@ pnpm dev:obs          # plus Jaeger tracing at http://localhost:16686
 pnpm test:int         # API integration suite (Testcontainers, needs Docker)
 pnpm openapi:generate # after any API change; commit docs/api/openapi.json
 pnpm --filter @sit/web storybook   # component catalogue at http://localhost:6006
+pnpm --filter @sit/web exec vitest run tests/unit/prototype-ui-parity.test.tsx   # app vs HTML prototype (ADR-0006)
 ```
+
+## UI conventions (step 1.5, ADR-0006)
+
+- Pages live under `app/[locale]/`; link with `Link` from `@/i18n/navigation` (ESLint blocks `next/link`).
+- Every string is in `apps/web/messages/en.json` and `vi.json` (same keys; a test checks). Prototype wording is the reference: reuse its EN text and its VI dictionary entry.
+- Format figures with `lib/format.ts` (prototype rounding), never with `Intl` or `toLocaleString` directly.
+- A change that alters what the editor shows must keep `tests/unit/prototype-ui-parity.test.tsx` green.
 
 ## Ground rules (design 15.1)
 

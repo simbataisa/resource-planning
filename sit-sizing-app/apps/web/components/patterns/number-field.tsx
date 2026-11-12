@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
 import { Field } from './field';
+import { NumberInput } from './number-input';
 
 export interface NumberFieldProps {
   label: string;
@@ -16,14 +15,13 @@ export interface NumberFieldProps {
   unit?: string;
   hint?: ReactNode;
   error?: string;
+  disabled?: boolean;
+  /** See NumberInput. */
+  normalize?: (n: number) => number;
   className?: string;
 }
 
-/**
- * Number input for the estimate editor. Keeps what the user is typing (including an empty
- * box) and reports a number only when it parses and is within min/max, so partial input
- * never reaches the engine.
- */
+/** Labelled number input for the estimate editor; see NumberInput for the parsing rules. */
 export function NumberField({
   label,
   value,
@@ -34,40 +32,24 @@ export function NumberField({
   unit,
   hint,
   error,
+  disabled,
+  normalize,
   className,
 }: NumberFieldProps) {
-  const [text, setText] = useState(String(value));
-  // When the value changes from outside (e.g. reset), show it — unless the box already
-  // holds the same number in another spelling ("6.0"). Adjusting state during render is
-  // React's recommended alternative to an effect here.
-  const [lastValue, setLastValue] = useState(value);
-  if (value !== lastValue) {
-    setLastValue(value);
-    if (Number(text) !== value) setText(String(value));
-  }
-
   return (
     <Field label={label} hint={hint} error={error} className={className}>
       {(control) => (
         <div className="flex items-center gap-2">
-          <Input
+          <NumberInput
             {...control}
-            type="number"
-            inputMode="decimal"
+            value={value}
+            onValueChange={onChange}
             min={min}
             max={max}
             step={step}
-            value={text}
-            className={cn('w-28 text-right tabular-nums')}
-            onChange={(e) => {
-              const raw = e.target.value;
-              setText(raw);
-              if (raw.trim() === '') return;
-              const n = Number(raw);
-              if (!Number.isFinite(n)) return;
-              if ((min !== undefined && n < min) || (max !== undefined && n > max)) return;
-              onChange(n);
-            }}
+            disabled={disabled}
+            normalize={normalize}
+            className="w-28"
           />
           {unit ? <span className="text-sm text-muted-foreground">{unit}</span> : null}
         </div>

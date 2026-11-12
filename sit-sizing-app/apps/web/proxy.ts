@@ -3,6 +3,7 @@ import { clearCookie, serializeCookie } from '@/server/auth/cookies';
 import { keycloakRefresh, updateSession } from '@/server/auth/refresh';
 import { cookieNames, nowSeconds, openSession, sealSession } from '@/server/auth/session';
 import { getEnv } from '@/server/env';
+import { LOCALE_COOKIE, LOCALES, localeRedirect, pickLocale } from '@/lib/i18n';
 
 /**
  * Next.js 16 request proxy (formerly middleware), Node runtime.
@@ -10,10 +11,13 @@ import { getEnv } from '@/server/env';
  * - Keeps the app session alive: refresh with Keycloak every access-token lifetime, idle and
  *   absolute limits; ends the session when Keycloak says so (design 10.4, 10.5).
  * - Pages need a session (redirect to sign-in). API routes answer 401 themselves.
+ * - Pages live under `/{locale}` (design 8.5); a path without one is redirected.
  */
 const REQUEST_ID = 'x-request-id';
 const VALID_ID = /^[A-Za-z0-9._:-]{8,128}$/;
-const PUBLIC_PAGES = ['/signed-out'];
+/** Keycloak returns to /signed-out after sign-out (registered redirect URI); it is public. */
+const isPublicPage = (pathname: string) =>
+  pathname === '/signed-out' || LOCALES.some((l) => pathname === `/${l}/signed-out`);
 
 export async function proxy(request: NextRequest) {
   const incoming = request.headers.get(REQUEST_ID);
@@ -71,8 +75,7 @@ export async function proxy(request: NextRequest) {
 
   // The API reference is a page for people, so it redirects to sign-in too.
   const isPage =
-    (!pathname.startsWith('/api/') || pathname === '/api/v1/docs') &&
-    !PUBLIC_PAGES.includes(pathname);
+    (!pathname.startsWith('/api/') || pathname === '/api/v1/docs') && !isPublicPage(pathname);
   const signInAvailable = Boolean(env.OIDC_ISSUER && env.SESSION_SECRET);
   const devBypass = env.AUTH_MODE === 'dev' && Boolean(request.cookies.get('sit-dev-user')?.value);
   let response: NextResponse;
@@ -81,7 +84,18 @@ export async function proxy(request: NextRequest) {
     signin.searchParams.set('next', `${pathname}${search}`);
     response = NextResponse.redirect(signin);
   } else {
-    response = NextResponse.next({ request: { headers } });
+    const target = isPage
+      ? localeRedirect(
+          pathname,
+          pickLocale(
+            request.cookies.get(LOCALE_COOKIE)?.value,
+            request.headers.get('accept-language'),
+          ),
+        )
+      : null;
+    response = target
+      ? NextResponse.redirect(new URL(`${target}${search}`, env.APP_BASE_URL))
+      : NextResponse.next({ request: { headers } });
   }
   response.headers.set(REQUEST_ID, requestId);
   for (const c of setCookies) response.headers.append('set-cookie', c);

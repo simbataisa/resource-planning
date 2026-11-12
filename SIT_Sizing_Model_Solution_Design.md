@@ -566,6 +566,9 @@ Each layer 2 and 3 component ships with a Vitest + Testing Library test and a us
 
 ### 8.3 Editor state
 
+> **Step 1.5 note (ADR-0006):** the editor uses a context + reducer store with the prototype's own input normalisers instead of React Hook Form; locale routing uses next-intl with the locale prefix added by `proxy.ts`; a parity test runs the HTML prototype in jsdom against the app.
+
+
 - The open draft lives in one client store (React context + reducer, or Zustand). Shape: `{ inputs, assumptions, dirty, rowVersion }`.
 - Every change runs `computeBoth()` in the browser, memoised. If profiling shows more than 16 ms per run on a large scope, move it to a Web Worker.
 - **One editor at a time per draft.** Opening a draft for editing takes a lock (`lockedById`, 15-minute expiry, renewed by a heartbeat). Others see "being edited by …" and a read-only view. A QE Lead can take the lock over. This is simpler and safer than merging two people's changes.
