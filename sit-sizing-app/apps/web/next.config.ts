@@ -4,28 +4,11 @@ import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const monorepoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const isDev = process.env.NODE_ENV !== 'production';
 
-/**
- * Baseline Content Security Policy (design 11).
- * 'unsafe-inline' for scripts is a temporary allowance for Next.js bootstrap
- * scripts; step 1.7 replaces it with a per-request nonce (threat model T-07).
- */
-const csp = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self'",
-  `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "object-src 'none'",
-].join('; ');
+// The Content Security Policy is set per request by proxy.ts, with a script nonce
+// (threat model T-07, server/http/csp.ts). These headers apply to every response.
 
 const securityHeaders = [
-  { key: 'Content-Security-Policy', value: csp },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-Frame-Options', value: 'DENY' },

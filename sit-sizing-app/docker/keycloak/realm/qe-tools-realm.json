@@ -72,7 +72,9 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "${SIT_WEB_BASE_URL}/signed-out",
         "use.refresh.tokens": "true",
-        "backchannel.logout.session.required": "true"
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.url": "${SIT_WEB_BACKCHANNEL_URL}",
+        "backchannel.logout.revoke.offline.tokens": "false"
       },
       "defaultClientScopes": ["basic", "profile", "email", "roles", "web-origins", "acr"],
       "optionalClientScopes": [],

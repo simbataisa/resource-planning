@@ -33,6 +33,8 @@ const EnvSchema = z
     OIDC_CLIENT_SECRET: z.string().min(16).optional(),
     /** Encrypts the session cookie. At least 32 characters; from the secret store outside local. */
     SESSION_SECRET: z.string().min(32).optional(),
+    /** API requests per user per minute and app instance (design 11, threat model T-11; Q10). */
+    RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(300),
   })
   .superRefine((env, ctx) => {
     if (env.AUTH_MODE === 'dev' && env.APP_ENV !== 'local') {

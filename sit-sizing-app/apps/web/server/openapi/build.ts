@@ -21,6 +21,7 @@ const STATUS_TEXT: Record<number, string> = {
   404: 'Not found (or not visible to you)',
   409: 'Conflict: stale rowVersion, lock held by someone else, or duplicate',
   422: 'Request understood but cannot be applied',
+  429: 'Too many requests for this user; see Retry-After',
   500: 'Unexpected error',
   503: 'A dependency is not reachable',
 };
@@ -108,7 +109,9 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
       success.content = { 'text/html': { schema: { type: 'string' } } };
     }
     responses[String(op.success.status)] = success;
-    for (const status of [...op.errors, 500]) {
+    // Every signed-in operation is rate limited per user (threat model T-11).
+    const limited = op.minRole !== 'none' ? [429] : [];
+    for (const status of [...op.errors, ...limited, 500]) {
       responses[String(status)] = {
         description: STATUS_TEXT[status] ?? 'Error',
         content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },

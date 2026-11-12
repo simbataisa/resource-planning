@@ -11,13 +11,22 @@ export class HttpError extends Error {
   readonly status: number;
   readonly code: ApiErrorCode;
   readonly details: unknown[] | undefined;
+  /** Extra response headers, e.g. Retry-After on 429. */
+  readonly headers: Record<string, string> | undefined;
 
-  constructor(status: number, code: ApiErrorCode, message: string, details?: unknown[]) {
+  constructor(
+    status: number,
+    code: ApiErrorCode,
+    message: string,
+    details?: unknown[],
+    headers?: Record<string, string>,
+  ) {
     super(message);
     this.name = 'HttpError';
     this.status = status;
     this.code = code;
     this.details = details;
+    this.headers = headers;
   }
 }
 
@@ -51,7 +60,9 @@ function toErrorResponse(err: unknown, requestId: string, log: Logger): Response
   if (pc === 'P2002') return errorResponse(409, 'CONFLICT', 'That already exists.', requestId);
   if (pc === 'P2025') return errorResponse(404, 'NOT_FOUND', 'Not found.', requestId);
   if (err instanceof HttpError) {
-    return errorResponse(err.status, err.code, err.message, requestId, err.details);
+    const res = errorResponse(err.status, err.code, err.message, requestId, err.details);
+    for (const [k, v] of Object.entries(err.headers ?? {})) res.headers.set(k, v);
+    return res;
   }
   if (err instanceof ZodError) {
     const details = err.issues.map((i) => ({ path: i.path, message: i.message }));

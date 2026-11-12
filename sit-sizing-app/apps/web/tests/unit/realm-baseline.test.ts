@@ -68,6 +68,12 @@ describe('realm baseline (design 10.4)', () => {
     expect(client.redirectUris).toEqual(['${SIT_WEB_BASE_URL}/api/auth/callback']);
   });
 
+  it('ends app sessions by back-channel logout with the session id (step 1.7)', () => {
+    expect(client.frontchannelLogout).toBe(false);
+    expect(client.attributes['backchannel.logout.url']).toBe('${SIT_WEB_BACKCHANNEL_URL}');
+    expect(client.attributes['backchannel.logout.session.required']).toBe('true');
+  });
+
   it('client scopes give the profile and email claims the app requests (no offline access)', () => {
     // An explicit, complete list: with optionalClientScopes set but no defaults, Keycloak
     // rejects "openid profile email" with invalid_scope.

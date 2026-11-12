@@ -4,6 +4,7 @@ import { keycloakRefresh, updateSession } from '@/server/auth/refresh';
 import { cookieNames, nowSeconds, openSession, sealSession } from '@/server/auth/session';
 import { getEnv } from '@/server/env';
 import { LOCALE_COOKIE, LOCALES, localeRedirect, pickLocale } from '@/lib/i18n';
+import { buildCsp, newNonce } from '@/server/http/csp';
 
 /**
  * Next.js 16 request proxy (formerly middleware), Node runtime.
@@ -12,6 +13,8 @@ import { LOCALE_COOKIE, LOCALES, localeRedirect, pickLocale } from '@/lib/i18n';
  *   absolute limits; ends the session when Keycloak says so (design 10.4, 10.5).
  * - Pages need a session (redirect to sign-in). API routes answer 401 themselves.
  * - Pages live under `/{locale}` (design 8.5); a path without one is redirected.
+ * - Content Security Policy with a fresh script nonce per request (threat model T-07).
+ *   Next.js reads the policy from the request header and puts the nonce on its scripts.
  */
 const REQUEST_ID = 'x-request-id';
 const VALID_ID = /^[A-Za-z0-9._:-]{8,128}$/;
@@ -24,6 +27,10 @@ export async function proxy(request: NextRequest) {
   const requestId = incoming && VALID_ID.test(incoming) ? incoming : crypto.randomUUID();
   const headers = new Headers(request.headers);
   headers.set(REQUEST_ID, requestId);
+  const nonce = newNonce();
+  const csp = buildCsp(nonce, { dev: process.env.NODE_ENV !== 'production' });
+  headers.set('x-nonce', nonce);
+  headers.set('content-security-policy', csp);
 
   const env = getEnv();
   const { pathname, search } = request.nextUrl;
@@ -98,6 +105,7 @@ export async function proxy(request: NextRequest) {
       : NextResponse.next({ request: { headers } });
   }
   response.headers.set(REQUEST_ID, requestId);
+  response.headers.set('content-security-policy', csp);
   for (const c of setCookies) response.headers.append('set-cookie', c);
   return response;
 }

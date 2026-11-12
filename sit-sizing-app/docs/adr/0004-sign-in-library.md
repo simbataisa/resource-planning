@@ -38,3 +38,15 @@ Use **openid-client** for the protocol: authorization code flow with PKCE (S256)
 - AGENTS.md rule 13 changes from "no custom authentication code" to "authentication code lives only in `server/auth` and the auth routes; every change needs a named security reviewer".
 - **Back-channel logout** (immediate sign-out of other apps' sessions) needs a server-side revocation list. It is deferred to step 1.7; until then sign-out elsewhere takes effect within 10 minutes.
 - If the bank later standardises on another IdP, only `OIDC_*` settings change (ADR-0002 fallback).
+
+## Amendment: back-channel logout (step 1.7)
+
+- **Session id.** The session cookie now also carries the Keycloak session id (`sid` from the ID token).
+- **Logout endpoint.** Keycloak posts a logout token to `/api/auth/backchannel-logout`, server to server. The realm attribute is `backchannel.logout.url` (`${SIT_WEB_BACKCHANNEL_URL}`), with the session id required.
+- **Token checks.** The token is checked as OIDC Back-Channel Logout 1.0, section 2.6 requires (`server/auth/backchannel.ts`):
+  - signature against the realm's JWKS;
+  - issuer and audience;
+  - age at most 5 minutes;
+  - the logout event present, no `nonce`, and a `sid`.
+- **Revocation.** The `sid` is stored in `RevokedSession` until the longest app session could have ended. `currentUserFromCookies` refuses a revoked session on the next request, so sign-out elsewhere, an admin "sign out" or a disabled user takes effect at once instead of after up to 10 minutes.
+- **Review.** The changed auth code needs the named security review (AGENTS.md rule 13).

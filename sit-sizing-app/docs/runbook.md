@@ -38,12 +38,12 @@ Mailpit (local email) runs at http://localhost:8025.
 
 `pnpm dev:up` runs the `migrate` service before the web app starts, then loads the synthetic seed. On the host:
 
-| Command                                             | What it does                                                                                                   |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `pnpm db:migrate`                                   | Apply migrations                                                                                               |
-| `pnpm db:seed`                                      | Synthetic users, projects DEMO and OTHER, the default global profile, an example estimate (refuses sit/prod)   |
-| `pnpm db:check`                                     | Fail if `schema.prisma` and the migrations disagree (needs a shadow database; `app_user` has CREATEDB locally) |
-| `pnpm --filter @sit/db migrate:dev --name <change>` | Create a new migration (local only)                                                                            |
+| Command                                             | What it does                                                                                                                               |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm db:migrate`                                   | Apply migrations                                                                                                                           |
+| `pnpm db:seed`                                      | Synthetic users, projects DEMO and OTHER, the default global profile, an example estimate (refuses sit/prod)                               |
+| `pnpm db:check`                                     | Validate the schema; the drift check (migrations vs `schema.prisma`) runs when `SHADOW_DATABASE_URL` is set, and always in `pnpm test:int` |
+| `pnpm --filter @sit/db migrate:dev --name <change>` | Create a new migration (local only)                                                                                                        |
 
 If `binaries.prisma.sh` is not reachable, set `PRISMA_ENGINES_MIRROR` to the internal mirror before `pnpm install`.
 

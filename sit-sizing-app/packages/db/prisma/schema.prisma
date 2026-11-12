@@ -282,3 +282,14 @@ model AuditEvent {
   @@index([entity, entityId])
   @@index([projectId, at])
 }
+
+/// Keycloak sessions ended by back-channel logout (design 10.4, threat model T-01). The app
+/// session cookie carries the Keycloak session id (`sid`); a revoked sid signs the user out
+/// on the next request. Rows expire after the longest possible app session.
+model RevokedSession {
+  sid       String   @id @db.VarChar(128)
+  revokedAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}

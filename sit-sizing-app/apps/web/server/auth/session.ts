@@ -5,8 +5,9 @@ import { z } from 'zod';
  * The app session (design 10.3, 10.4; ADR-0004): an encrypted, HttpOnly cookie
  * (JWE dir + A256GCM) holding the user id and the tokens needed for refresh and
  * sign-out. Idle limit 8 h, absolute limit 12 h, matching the Keycloak SSO session.
- * No server-side session store: revocation works through the refresh check
- * (every access-token lifetime, 10 minutes).
+ * No server-side session store. Revocation: back-channel logout marks the Keycloak session
+ * id as revoked (checked on every request); the refresh check (every access-token lifetime,
+ * 10 minutes) also ends sessions Keycloak no longer knows.
  */
 export const IDLE_SECONDS = 8 * 60 * 60;
 export const ABSOLUTE_SECONDS = 12 * 60 * 60;
@@ -18,6 +19,8 @@ const SessionData = z.object({
   uid: z.string().min(1),
   /** OIDC subject (Keycloak user id) */
   sub: z.string().min(1),
+  /** Keycloak session id (ID token `sid`), for back-channel logout. */
+  sid: z.string().min(1).optional(),
   idToken: z.string().min(1),
   refreshToken: z.string().min(1).optional(),
   /** Unix seconds when the next refresh check is due. */

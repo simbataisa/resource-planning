@@ -47,6 +47,7 @@ beforeAll(async () => {
       KC_BOOTSTRAP_ADMIN_PASSWORD: ADMIN_PASSWORD,
       KC_HEALTH_ENABLED: 'true',
       SIT_WEB_BASE_URL: 'http://localhost:3000',
+      SIT_WEB_BACKCHANNEL_URL: 'http://web:3000/api/auth/backchannel-logout',
       SIT_WEB_CLIENT_SECRET: CLIENT_SECRET,
       KC_DEV_USER_PASSWORD: 'synthetic-Dev-user-pass-01',
     })

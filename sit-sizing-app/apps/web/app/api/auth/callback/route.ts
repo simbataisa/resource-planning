@@ -71,6 +71,7 @@ export const GET = route(async (request, { requestId, log }) => {
     {
       uid: user.id,
       sub: claims.sub,
+      ...(typeof claims.sid === 'string' && claims.sid ? { sid: claims.sid } : {}),
       idToken: tokens.id_token,
       ...(tokens.refresh_token ? { refreshToken: tokens.refresh_token } : {}),
       refreshAt: now + Math.max(60, (tokens.expires_in ?? 600) - 60),

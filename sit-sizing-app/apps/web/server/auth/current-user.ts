@@ -2,6 +2,7 @@ import type { Principal, ProjectRole } from '@/lib/rbac';
 import { db } from '../db';
 import { getEnv } from '../env';
 import { parseCookies } from './cookies';
+import { isSessionRevoked } from './revocation';
 import { cookieNames, nowSeconds, openSession } from './session';
 
 export interface CurrentUser extends Principal {
@@ -18,7 +19,8 @@ export const DEV_USER_COOKIE = 'sit-dev-user';
 /**
  * Who is calling (design 10.5: identity comes from the IdP, project roles from the app).
  *
- * 1. The app session cookie set after Keycloak sign-in (ADR-0004). The proxy refreshes it.
+ * 1. The app session cookie set after Keycloak sign-in (ADR-0004). The proxy refreshes it;
+ *    a session revoked by back-channel logout is refused.
  * 2. AUTH_MODE=dev only: a seeded user named in the `x-dev-user` header or `sit-dev-user`
  *    cookie. env.ts allows dev mode only when APP_ENV=local.
  */
@@ -41,7 +43,8 @@ export async function currentUserFromCookies(
       env.SESSION_SECRET,
       nowSeconds(),
     );
-    if (session) {
+    // A Keycloak session ended by back-channel logout ends this app session too.
+    if (session && !(await isSessionRevoked(session.sid))) {
       const user = await loadUser({ id: session.uid });
       if (user && user.subject === session.sub) return user;
     }

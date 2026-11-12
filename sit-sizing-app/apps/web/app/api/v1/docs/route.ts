@@ -1,5 +1,6 @@
 import { ApiReference, type ApiReferenceConfiguration } from '@scalar/nextjs-api-reference';
 import { api } from '@/server/http/authed';
+import { addNonceToScripts } from '@/server/http/csp';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,4 +28,15 @@ const render = ApiReference(config as Partial<ApiReferenceConfiguration>) as (
   request?: Request,
 ) => Response | Promise<Response>;
 
-export const GET = api(async (request) => render(request));
+/** Scalar's page has an inline config script: give it this request's CSP nonce (T-07). */
+export const GET = api(async (request) => {
+  const page = await render(request);
+  const nonce = request.headers.get('x-nonce');
+  if (!nonce) return page;
+  const headers = new Headers(page.headers);
+  headers.delete('content-length');
+  return new Response(addNonceToScripts(await page.text(), nonce), {
+    status: page.status,
+    headers,
+  });
+});
