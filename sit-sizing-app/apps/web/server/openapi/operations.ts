@@ -28,10 +28,17 @@ import {
   VersionCompare,
   VersionSave,
   CompareQuery,
+  NotificationList,
   ExportQuery,
 } from '@sit/schemas';
 import { z } from 'zod';
-import { EstimateParams, ProfileParams, ProjectParams, VersionParams } from '../http/params';
+import {
+  EstimateParams,
+  NotificationParams,
+  ProfileParams,
+  ProjectParams,
+  VersionParams,
+} from '../http/params';
 
 export type MinRole = 'none' | 'USER' | 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' | 'ADMIN';
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -466,6 +473,39 @@ export const OPERATIONS: Operation[] = [
     bodyExample: { profileId: 'cm0profile0000000000000', rowVersion: 3 },
     success: { status: 200, description: 'The updated draft', schema: Version },
     errors: [...WRITE, 422],
+  },
+  {
+    method: 'get',
+    path: '/notifications',
+    operationId: 'listNotifications',
+    tag: 'Session',
+    minRole: 'USER',
+    summary: 'My in-app notifications',
+    description:
+      'The 30 newest notices about submissions, approvals, returns and published profiles, with the unread count.',
+    success: { status: 200, description: 'Notices, newest first', schema: NotificationList },
+    errors: AUTH,
+  },
+  {
+    method: 'post',
+    path: '/notifications/{notificationId}/read',
+    operationId: 'markNotificationRead',
+    tag: 'Session',
+    minRole: 'USER',
+    summary: 'Mark one notice read',
+    params: NotificationParams,
+    success: { status: 200, description: 'The updated list', schema: NotificationList },
+    errors: [400, 401, 404],
+  },
+  {
+    method: 'post',
+    path: '/notifications/read-all',
+    operationId: 'markAllNotificationsRead',
+    tag: 'Session',
+    minRole: 'USER',
+    summary: 'Mark all my notices read',
+    success: { status: 200, description: 'The updated list', schema: NotificationList },
+    errors: AUTH,
   },
   {
     method: 'get',

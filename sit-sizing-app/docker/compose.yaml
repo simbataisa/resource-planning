@@ -3,7 +3,6 @@
 #   pnpm stack:up   production-like image
 #   pnpm dev:up     adds compose.dev.yaml (hot reload)
 #   pnpm dev:obs    adds compose.obs.yaml (tracing viewer)
-# Services added later: worker (release 2).
 name: sit-sizing
 
 services:
@@ -151,6 +150,33 @@ services:
       timeout: 3s
       retries: 5
       start_period: 30s
+    restart: unless-stopped
+
+  worker:
+    # Notification worker (design 12.1, N-01): sends queued emails with retries. Same code as
+    # web, run from the tools image (full workspace + tsx). Several replicas are safe.
+    image: sit-sizing-tools:local
+    command: ['pnpm', '--filter', '@sit/web', 'worker']
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_VERSION: ${APP_VERSION:-0.0.0-dev}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://app_user:${APP_DB_PASSWORD}@db:5432/app
+      APP_BASE_URL: http://localhost:${WEB_PORT:-3000}
+      PROCESS_ROLE: worker # serves no requests: no OIDC client settings or session secret
+      SMTP_URL: ${SMTP_URL:-smtp://mail:1025}
+      MAIL_FROM: ${MAIL_FROM:-SIT Sizing <no-reply@sit-sizing.local>}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mail:
+        condition: service_started
+    user: node
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
     restart: unless-stopped
 
   mail:

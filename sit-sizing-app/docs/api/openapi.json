@@ -3275,6 +3275,225 @@
         }
       }
     },
+    "/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "tags": [
+          "Session"
+        ],
+        "summary": "My in-app notifications",
+        "description": "The 30 newest notices about submissions, approvals, returns and published profiles, with the unread count. Minimum role: USER.",
+        "x-required-role": "USER",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Notices, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ]
+      }
+    },
+    "/notifications/{notificationId}/read": {
+      "post": {
+        "operationId": "markNotificationRead",
+        "tags": [
+          "Session"
+        ],
+        "summary": "Mark one notice read",
+        "description": "Minimum role: USER.",
+        "x-required-role": "USER",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "description": "Opaque identifier (cuid)",
+              "example": "clx0synthetic0001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The updated list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible to you)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ]
+      }
+    },
+    "/notifications/read-all": {
+      "post": {
+        "operationId": "markAllNotificationsRead",
+        "tags": [
+          "Session"
+        ],
+        "summary": "Mark all my notices read",
+        "description": "Minimum role: USER.",
+        "x-required-role": "USER",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The updated list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this user; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "devUser": []
+          }
+        ]
+      }
+    },
     "/me": {
       "get": {
         "operationId": "getMe",
@@ -7032,6 +7251,124 @@
         "example": {
           "locale": "vi"
         }
+      },
+      "NotificationItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "Opaque identifier (cuid)",
+            "example": "clx0synthetic0001"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SUBMITTED",
+              "APPROVED",
+              "RETURNED",
+              "PROFILE_PUBLISHED"
+            ]
+          },
+          "payload": {
+            "$ref": "#/components/schemas/NotificationPayload"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "readAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "payload",
+          "createdAt",
+          "readAt"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationItem"
+            }
+          },
+          "unread": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "items",
+          "unread"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationPayload": {
+        "type": "object",
+        "properties": {
+          "actorName": {
+            "type": "string"
+          },
+          "projectName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "estimateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "Opaque identifier (cuid)",
+            "example": "clx0synthetic0001"
+          },
+          "estimateName": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "profileId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "Opaque identifier (cuid)",
+            "example": "clx0synthetic0001"
+          },
+          "profileName": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "actorName",
+          "projectName"
+        ],
+        "additionalProperties": false
       },
       "Profile": {
         "type": "object",

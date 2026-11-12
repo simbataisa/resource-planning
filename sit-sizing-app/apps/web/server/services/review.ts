@@ -8,6 +8,7 @@ import { diffJson } from '../domain/compare';
 import { decideReview, type ReviewAction } from '../domain/review';
 import { versionDto, versionSummaryDto } from '../dto';
 import { HttpError } from '../http/route';
+import { enqueue } from '../notifications/outbox';
 import { recordAudit } from '../repositories/audit';
 import { VERSION_FULL_INCLUDE, VERSION_SUMMARY_INCLUDE } from '../repositories/includes';
 import { estimateFor, notFound, type RequestMeta } from './access';
@@ -18,6 +19,11 @@ const ACTION_PERMISSION = {
   return: 'version.return',
 } as const;
 const COMMENT_KIND = { submit: 'COMMENT', approve: 'APPROVE', return: 'RETURN' } as const;
+const NOTIFICATION_KIND = {
+  submit: 'SUBMITTED',
+  approve: 'APPROVED',
+  return: 'RETURNED',
+} as const;
 
 /**
  * Submit, approve or return a saved version (design 5.2, release 2 V-01). Rules live in
@@ -74,6 +80,28 @@ export async function reviewVersion(
         data: { versionId: v.id, authorId: user.id, kind: COMMENT_KIND[action], body: note },
       });
     }
+    const names = await tx.estimate.findUniqueOrThrow({
+      where: { id: estimateId },
+      select: { name: true, project: { select: { name: true } } },
+    });
+    const kind = NOTIFICATION_KIND[action];
+    await enqueue(tx, {
+      audience:
+        kind === 'SUBMITTED'
+          ? { kind, actorId: user.id }
+          : { kind, actorId: user.id, authorId: v.createdById, submitterId: v.submittedById },
+      projectId: est.projectId,
+      versionId: v.id,
+      payload: {
+        actorName: user.displayName,
+        projectName: names.project.name,
+        estimateId,
+        estimateName: names.name,
+        versionNumber: number,
+        ...(note ? { note } : {}),
+      },
+      now,
+    });
     await recordAudit(tx, {
       actorId: user.id,
       action: `estimate.version.${action}`,

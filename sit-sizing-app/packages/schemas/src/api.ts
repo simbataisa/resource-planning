@@ -372,6 +372,38 @@ export const ExportQuery = z
   })
   .meta({ id: 'ExportQuery' });
 
+// ---------- notifications (release 2, N-01) ----------
+export const NotificationKind = z.enum(['SUBMITTED', 'APPROVED', 'RETURNED', 'PROFILE_PUBLISHED']);
+/** What a notice is about; names are copied at the time of the event. */
+export const NotificationPayload = z
+  .object({
+    actorName: z.string(),
+    projectName: z.string().nullable(),
+    estimateId: Id.optional(),
+    estimateName: z.string().optional(),
+    versionNumber: z.number().int().optional(),
+    profileId: Id.optional(),
+    profileName: z.string().optional(),
+    note: z.string().max(2000).optional(),
+  })
+  .meta({ id: 'NotificationPayload' });
+export type NotificationPayload = z.infer<typeof NotificationPayload>;
+
+export const NotificationItem = z
+  .object({
+    id: Id,
+    kind: NotificationKind,
+    payload: NotificationPayload,
+    createdAt: IsoDateTime,
+    readAt: IsoDateTime.nullable(),
+  })
+  .meta({ id: 'NotificationItem' });
+export type NotificationItem = z.infer<typeof NotificationItem>;
+
+export const NotificationList = z
+  .object({ items: z.array(NotificationItem), unread: z.number().int() })
+  .meta({ id: 'NotificationList' });
+
 // ---------- misc ----------
 export const Health = z
   .object({ status: z.literal('ok'), version: z.string(), uptimeSeconds: z.number() })

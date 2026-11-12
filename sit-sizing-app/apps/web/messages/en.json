@@ -1785,5 +1785,28 @@
       "hours": "Hours",
       "weeks": "SIT window (weeks)"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bellUnread": "Notifications, {n} unread",
+    "markAll": "Mark all as read",
+    "empty": "No notifications yet.",
+    "unreadLabel": "Unread:",
+    "globalScope": "global",
+    "open": "Open in SIT Sizing",
+    "noteLabel": "Note",
+    "emailFooter": "You get this email because of your role in SIT Sizing. Figures are a planning range, not a commitment.",
+    "subject": {
+      "SUBMITTED": "Approval needed: {estimate} v{version}",
+      "APPROVED": "Approved: {estimate} v{version}",
+      "RETURNED": "Returned: {estimate} v{version}",
+      "PROFILE_PUBLISHED": "New assumption profile: {profile}"
+    },
+    "body": {
+      "SUBMITTED": "{actor} submitted {estimate} v{version} ({project}) for approval.",
+      "APPROVED": "{actor} approved {estimate} v{version} ({project}).",
+      "RETURNED": "{actor} returned {estimate} v{version} ({project}) with a note.",
+      "PROFILE_PUBLISHED": "{actor} published the assumption profile {profile} ({project})."
+    }
   }
 }

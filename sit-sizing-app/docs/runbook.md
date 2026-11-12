@@ -221,3 +221,21 @@ pnpm test:e2e      # Playwright in your installed Google Chrome; report in repor
 | Date | Environment | Result | By  |
 | ---- | ----------- | ------ | --- |
 |      |             |        |     |
+
+## 10. Notifications (release 2, N-01)
+
+- **Services:** `worker` sends queued emails; `mail` (Mailpit) catches them locally. `pnpm dev:up` starts both. Read the local inbox at <http://localhost:8025>.
+- **Settings:** `SMTP_URL` (unset: emails stay queued), `MAIL_FROM`, `NOTIFY_MAX_ATTEMPTS` (6), `NOTIFY_POLL_MS` (5000). Outside local, `SMTP_URL` comes from the secret store and points at the approved relay (Q12).
+- **Logs:** `docker compose … logs -f worker`. Lines carry `component: notify-worker`, and a summary is logged after each batch that did something.
+- **Check the queue:**
+  ```sql
+  SELECT status, count(*) FROM "Notification" WHERE channel = 'EMAIL' GROUP BY status;
+  SELECT id, attempts, "nextAttemptAt", "lastError" FROM "Notification"
+  WHERE channel = 'EMAIL' AND status = 'FAILED' ORDER BY "createdAt" DESC LIMIT 20;
+  ```
+- **Resend failed emails after fixing the cause:**
+  ```sql
+  UPDATE "Notification" SET status = 'PENDING', attempts = 0, "nextAttemptAt" = now()
+  WHERE channel = 'EMAIL' AND status = 'FAILED' AND "createdAt" > now() - interval '7 days';
+  ```
+- **Scaling:** several worker replicas are safe; rows are claimed with `SKIP LOCKED`.

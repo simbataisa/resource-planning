@@ -147,3 +147,21 @@ export const useCompare = (estimateId: string, a: number, b: number) =>
     queryKey: qk.compare(estimateId, a, b),
     queryFn: () => api.estimates.compare(estimateId, a, b),
   });
+
+/** My in-app notices; refreshed every minute and when the window regains focus (N-01). */
+export const useNotifications = () =>
+  useQuery({
+    queryKey: qk.notifications,
+    queryFn: api.notifications.list,
+    refetchInterval: 60_000,
+  });
+
+export function useMarkNotifications() {
+  const qc = useQueryClient();
+  const done = (list: Awaited<ReturnType<typeof api.notifications.list>>) =>
+    qc.setQueryData(qk.notifications, list);
+  return {
+    read: useMutation({ mutationFn: (id: string) => api.notifications.read(id), onSuccess: done }),
+    readAll: useMutation({ mutationFn: () => api.notifications.readAll(), onSuccess: done }),
+  };
+}

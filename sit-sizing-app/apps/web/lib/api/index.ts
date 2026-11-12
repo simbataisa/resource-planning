@@ -2,6 +2,7 @@ import {
   Estimate,
   EstimateDetail,
   Me,
+  NotificationList,
   page,
   Profile,
   ProfileDetail,
@@ -82,6 +83,13 @@ export function createApi(http: AxiosInstance = defaultHttp) {
         sendParsed(http, 'post', `/estimates/${estimateId}/draft/profile`, body, Version),
       compare: (estimateId: string, a: number, b: number) =>
         getParsed(http, `/estimates/${estimateId}/compare`, VersionCompare, { a, b }),
+    },
+    /** In-app notifications (release 2, N-01). */
+    notifications: {
+      list: () => getParsed(http, '/notifications', NotificationList),
+      read: (id: string) =>
+        sendParsed(http, 'post', `/notifications/${id}/read`, {}, NotificationList),
+      readAll: () => sendParsed(http, 'post', '/notifications/read-all', {}, NotificationList),
     },
     profiles: {
       list: (projectId?: string) =>

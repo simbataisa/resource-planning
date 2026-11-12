@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/patterns/eyebrow';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/lib/i18n';
+import { NotificationBell } from '../notifications/notification-bell';
 import { AdoptProfileLocale, LanguageSwitch } from './language-switch';
 
 export interface AppShellProps {
@@ -70,6 +71,7 @@ export function AppShell({
                 role="group"
                 className="flex items-center gap-2"
               >
+                <NotificationBell />
                 <span className="hidden text-sm text-muted-foreground sm:inline">
                   {t('app.signedInAs', { name: userName })}
                 </span>

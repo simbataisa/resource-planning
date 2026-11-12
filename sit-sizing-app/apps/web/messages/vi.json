@@ -1785,5 +1785,28 @@
       "hours": "Giờ",
       "weeks": "Cửa sổ SIT (tuần)"
     }
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "bellUnread": "Thông báo, {n} chưa đọc",
+    "markAll": "Đánh dấu tất cả đã đọc",
+    "empty": "Chưa có thông báo.",
+    "unreadLabel": "Chưa đọc:",
+    "globalScope": "toàn cục",
+    "open": "Mở trong SIT Sizing",
+    "noteLabel": "Ghi chú",
+    "emailFooter": "Bạn nhận email này vì vai trò của bạn trong SIT Sizing. Số liệu là khoảng ước lượng để lập kế hoạch, không phải cam kết.",
+    "subject": {
+      "SUBMITTED": "Cần phê duyệt: {estimate} v{version}",
+      "APPROVED": "Đã phê duyệt: {estimate} v{version}",
+      "RETURNED": "Đã trả lại: {estimate} v{version}",
+      "PROFILE_PUBLISHED": "Hồ sơ giả định mới: {profile}"
+    },
+    "body": {
+      "SUBMITTED": "{actor} đã gửi {estimate} v{version} ({project}) để phê duyệt.",
+      "APPROVED": "{actor} đã phê duyệt {estimate} v{version} ({project}).",
+      "RETURNED": "{actor} đã trả lại {estimate} v{version} ({project}) kèm ghi chú.",
+      "PROFILE_PUBLISHED": "{actor} đã phát hành hồ sơ giả định {profile} ({project})."
+    }
   }
 }

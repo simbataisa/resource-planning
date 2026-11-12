@@ -22,6 +22,7 @@ import {
 } from '../domain/profiles';
 import { profileDetailDto, profileDto, versionDto } from '../dto';
 import { HttpError } from '../http/route';
+import { enqueue } from '../notifications/outbox';
 import { recordAudit } from '../repositories/audit';
 import { VERSION_FULL_INCLUDE } from '../repositories/includes';
 import { ensure, estimateFor, notFound, projectFor, type RequestMeta } from './access';
@@ -207,6 +208,22 @@ export async function changeProfileStatus(
       data: { status: d.to, ...(action === 'publish' ? { publishedAt: now } : {}) },
     });
     if (updated.count === 0) throw conflict('The profile changed; reload and try again.', 'RACE');
+    if (action === 'publish') {
+      const project = p.projectId
+        ? await tx.project.findUnique({ where: { id: p.projectId }, select: { name: true } })
+        : null;
+      await enqueue(tx, {
+        audience: { kind: 'PROFILE_PUBLISHED', actorId: user.id, scope: p.scope },
+        projectId: p.projectId,
+        payload: {
+          actorName: user.displayName,
+          projectName: project?.name ?? null,
+          profileId: p.id,
+          profileName: p.name,
+        },
+        now,
+      });
+    }
     await recordAudit(tx, {
       actorId: user.id,
       action: `profile.${action}`,

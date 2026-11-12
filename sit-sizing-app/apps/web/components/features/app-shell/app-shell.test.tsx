@@ -12,7 +12,11 @@ vi.mock(
   async () => (await import('@/tests/support/navigation-mock')).navigationMock,
 );
 const updateLocale = vi.hoisted(() => ({ mutate: vi.fn() }));
-vi.mock('@/lib/query/hooks', () => ({ useUpdateLocale: () => updateLocale }));
+vi.mock('@/lib/query/hooks', () => ({
+  useUpdateLocale: () => updateLocale,
+  useNotifications: () => ({ data: { items: [], unread: 0 } }),
+  useMarkNotifications: () => ({ read: { mutate: vi.fn() }, readAll: { mutate: vi.fn() } }),
+}));
 
 describe('AppShell (U-04)', () => {
   it('shows navigation, the user and sign-out, with a skip link', async () => {
