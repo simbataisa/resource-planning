@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { useScrollTabStop } from './use-scroll-tab-stop';
 
@@ -40,4 +41,52 @@ describe('useScrollTabStop', () => {
     render(<Box />);
     expect(screen.getByTestId('box')).toHaveAttribute('tabindex', '0');
   });
+
+  it('counts only enabled controls: a read-only box with disabled inputs is still a tab stop', () => {
+    setWidths(900, 400);
+    render(
+      <BoxWith>
+        <input aria-label="APIs" disabled />
+        <button type="button" disabled>
+          Remove
+        </button>
+      </BoxWith>,
+    );
+    expect(screen.getByTestId('box')).toHaveAttribute('tabindex', '0');
+  });
+
+  it('rechecks when its controls become disabled', async () => {
+    setWidths(900, 400);
+    const { rerender } = render(
+      <BoxWith>
+        <input aria-label="APIs" />
+      </BoxWith>,
+    );
+    expect(screen.getByTestId('box')).not.toHaveAttribute('tabindex');
+    rerender(
+      <BoxWith>
+        <input aria-label="APIs" disabled />
+      </BoxWith>,
+    );
+    await waitFor(() => expect(screen.getByTestId('box')).toHaveAttribute('tabindex', '0'));
+  });
+
+  it('adds no stop when an enabled control can take focus', () => {
+    setWidths(900, 400);
+    render(
+      <BoxWith>
+        <input aria-label="APIs" />
+      </BoxWith>,
+    );
+    expect(screen.getByTestId('box')).not.toHaveAttribute('tabindex');
+  });
 });
+
+function BoxWith({ children }: { children: ReactNode }) {
+  const { ref, tabIndex } = useScrollTabStop<HTMLDivElement>();
+  return (
+    <div ref={ref} tabIndex={tabIndex} data-testid="box">
+      {children}
+    </div>
+  );
+}
