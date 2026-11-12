@@ -50,6 +50,13 @@ describe('tokens', () => {
     }
   });
 
+  it('sidebar tokens exist and are covered by the contrast checks', () => {
+    const pairs = contrastPairs.map(([a, b]) => `${a}/${b}`);
+    expect(pairs).toContain('sidebar-foreground/sidebar');
+    expect(pairs).toContain('sidebar-accent-foreground/sidebar-accent');
+    expect(nonTextPairs.map(([a, b]) => `${a}/${b}`)).toContain('sidebar-ring/sidebar');
+  });
+
   it('contrast maths matches known values', () => {
     expect(contrastRatio('#000000', '#FFFFFF')).toBeCloseTo(21, 5);
     expect(luminance('#FFFFFF')).toBeCloseTo(1, 10);

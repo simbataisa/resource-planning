@@ -50,6 +50,12 @@ export const colorTokens = {
     'warn-soft': '#F6EEDC',
     bad: '#C8141C', // AA: prototype #ED1B24
     'bad-soft': '#FDE8E9',
+    sidebar: '#FFFFFF', // navigation sidebar (ADR-0015)
+    'sidebar-foreground': '#212121',
+    'sidebar-accent': '#FDE8E9', // active item: soft red tint
+    'sidebar-accent-foreground': '#C8141C',
+    'sidebar-border': '#DEDEDE',
+    'sidebar-ring': '#ED1C24',
   },
   dark: {
     background: '#131313',
@@ -87,6 +93,12 @@ export const colorTokens = {
     'warn-soft': '#2E2717',
     bad: '#FF6B70',
     'bad-soft': '#3A1C1E',
+    sidebar: '#1C2629',
+    'sidebar-foreground': '#F5F6F8',
+    'sidebar-accent': '#3A1C1E',
+    'sidebar-accent-foreground': '#FF8A8F',
+    'sidebar-border': '#35424A',
+    'sidebar-ring': '#FF3B42',
   },
 } as const;
 
@@ -136,6 +148,8 @@ export const contrastPairs: readonly [text: ColorToken, background: ColorToken][
   ['good', 'card'],
   ['warn', 'card'],
   ['bad', 'card'],
+  ['sidebar-foreground', 'sidebar'],
+  ['sidebar-accent-foreground', 'sidebar-accent'],
 ];
 
 /**
@@ -163,4 +177,5 @@ export const nonTextPairs: readonly [part: ColorToken, background: ColorToken][]
   ['brand', 'card'],
   ['rough', 'card'],
   ['detailed', 'card'],
+  ['sidebar-ring', 'sidebar'],
 ];
