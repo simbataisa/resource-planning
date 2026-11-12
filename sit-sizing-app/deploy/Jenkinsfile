@@ -80,7 +80,7 @@ pipeline {
       // Testcontainers suite arrives in step 1.2 (A-01).
       when { expression { fileExists("${env.APP_DIR}/apps/web/tests/integration") } }
       steps {
-        sh 'cd "$APP_DIR" && deploy/ci/in-node.sh --docker "pnpm test:int"'
+        sh 'cd "$APP_DIR" && deploy/ci/in-node.sh --docker "pnpm test:int && pnpm test:idp"'
       }
     }
 

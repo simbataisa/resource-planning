@@ -12666,8 +12666,8 @@
       "cookieAuth": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "__Secure-authjs.session-token",
-        "description": "Session cookie set at sign-in (Keycloak via Auth.js, step 1.3)."
+        "name": "__Host-sit.session",
+        "description": "Encrypted session cookie set after Keycloak sign-in (/api/auth/signin). Named sit.session on plain http locally."
       },
       "devUser": {
         "type": "apiKey",

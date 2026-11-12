@@ -81,7 +81,7 @@ Pin exact versions at kickoff (latest stable, at least two weeks old) and record
 | HTTP client | **Axios** | For browser calls that change data. Read data in server components where possible. One configured instance with interceptors (section 9.3) |
 | Server state (recommended addition) | TanStack Query | Caching, optimistic updates and retries around the Axios client. Not in the requested list; drop it if the team prefers plain Axios |
 | Identity provider | **Keycloak**, self-hosted in its own container with its own database | Username and password sign-in, SSO, MFA, admin console, corporate federation by configuration; see section 10 |
-| App sign-in | **Auth.js** (NextAuth v5) as an OIDC client of Keycloak | The web app never sees passwords |
+| App sign-in | **openid-client** (OpenID Certified) with an encrypted session cookie (jose); ADR-0004 replaced Auth.js v5, which is still a beta | The web app never sees passwords |
 | i18n (recommended addition) | next-intl | EN/VI messages, locale routing, number formatting |
 | Forms (recommended addition) | React Hook Form + Zod resolver | The editor is form-heavy |
 | Charts | Hand-built SVG components | Bars, tornado and range charts only; no charting library |
@@ -112,7 +112,7 @@ flowchart LR
   subgraph WEB[apps/web · Next.js container]
     RSC[Server components · pages]
     API[Route handlers · /api/v1]
-    AUTH[Auth.js · OIDC client]
+    AUTH[openid-client · OIDC client]
     ENG[(engine package)]
   end
   U -->|1 redirect to sign in| OIDC
@@ -698,7 +698,7 @@ The solution runs its own identity provider: a self-hosted **Keycloak** instance
 ```mermaid
 sequenceDiagram
   participant B as Browser
-  participant W as apps/web (Auth.js)
+  participant W as apps/web (openid-client)
   participant K as Keycloak
   B->>W: GET /estimates (no session)
   W-->>B: 302 to Keycloak /auth (client_id, redirect_uri, code_challenge, state, nonce)
@@ -746,7 +746,7 @@ Set in the realm export and verified by an automated test against a Keycloak tes
 - **Who you are** comes from Keycloak. **What you can do in a project** is stored in the app (`ProjectMember`). The `groups` claim maps only to the global Admin role (group `sit-sizing-admins`).
 - A user cannot approve a version they submitted (segregation of duties), unless they are the only QE Lead and an Admin has allowed it for the project.
 - One `authorize(user, action, resource)` function in `lib/rbac.ts`, driven by a permission matrix. Used by every route handler and by server components.
-- `middleware.ts` blocks unauthenticated requests to everything except `/api/v1/health`, `/api/v1/ready` and the auth routes.
+- `proxy.ts` (Next.js 16's middleware) sends pages without a session to sign-in and keeps the session fresh; API routes return 401; `/api/v1/health`, `/api/v1/ready`, the auth routes and `/signed-out` are public.
 - The UI hides actions the user cannot perform, but the server check is the control.
 - Authorisation tests cover every endpoint × role, including cross-project access (must return 404, not 403, to avoid leaking existence).
 - Disabling an account in Keycloak takes effect in the app within one access-token lifetime, and immediately through back-channel logout.
@@ -875,7 +875,7 @@ The plan is three releases, each usable on its own. Durations are not given here
 | **1.0 · Foundations** | Monorepo, tooling, Jenkins pipeline, Docker Compose, env validation, logging and tracing, ADR-0001/0002, `AGENTS.md`, PR template (code owners optional), threat model | `pnpm dev:up` works on Docker Desktop and Rancher Desktop; pipeline green on an empty app |
 | **1.1 · Engine** | `packages/schemas`, `packages/engine`, golden tests, property tests, findings log | Parity with the golden example and 25+ extra cases; coverage and mutation gates met |
 | **1.2 · Data and API** | Prisma schema and migrations, seed, services, REST API, OpenAPI document and Scalar API reference, Axios client, audit, edit lock | API integration suite green; RBAC matrix tested |
-| **1.3 · Identity** | Keycloak realm as code, TCB-DS login theme, Auth.js client, middleware, user provisioning | Sign-in, SSO and sign-out work; realm baseline test passes; every endpoint enforces roles |
+| **1.3 · Identity** | Keycloak realm as code, TCB-DS login theme, openid-client sign-in, proxy, user provisioning | Sign-in, SSO and sign-out work; realm baseline test passes; every endpoint enforces roles |
 | **1.4 · Design system and components** | `packages/tokens` (TCB-DS), themed shadcn primitives, patterns layer, Storybook | Component catalogue reviewed by design; accessibility checks pass |
 | **1.5 · Editor and results** | All five tabs, nine detailed sections, live results, sensitivity, scenarios, calendar check, autosave, save version, JSON and summary export, import of prototype JSON | A user reproduces the prototype's example with identical numbers |
 | **1.6 · Content and i18n** | Guide, method, standards pages; EN/VI complete; Vietnamese review | No missing message keys; reviewer sign-off |
@@ -928,7 +928,7 @@ Copy this section into `AGENTS.md` at the repository root. It applies to every a
 10. **Accessibility is part of done:** labels, keyboard access, focus state, reduced motion.
 11. **Do not add dependencies** without stating why in the PR and checking the licence. Prefer what is already in the stack.
 12. **Ask instead of guessing** when a requirement is ambiguous or an open question in section 16 blocks the task. Record the question in the PR.
-13. **Identity is configuration, not code.** Change sign-in behaviour only through the Keycloak realm export. Do not write custom authentication, token or password logic. Never log passwords, tokens, secrets or reset links. Never weaken a rule in section 10.4 to make a test pass. Every change to the realm export, `lib/rbac.ts` or auth code needs human security review.
+13. **Identity is configuration, not code.** Change sign-in behaviour through the Keycloak realm export. Authentication code lives only in `apps/web/server/auth` and `app/api/auth` (ADR-0004); do not add token or password logic anywhere else. Never log passwords, tokens, secrets or reset links. Never weaken a rule in section 10.4 to make a test pass. Every change to the realm export, `lib/rbac.ts` or auth code needs human security review.
 14. **Do not** push to the main branch, change CI gates, edit migrations that have been merged, or run destructive database commands outside your own dev containers.
 15. **API changes include the contract.** A new or changed endpoint is not done until its Zod schemas are registered in the OpenAPI registry with synthetic examples and error responses, the committed `openapi.json` is updated, and it renders in `/api/v1/docs`. Do not hand-edit the generated document.
 
@@ -968,7 +968,7 @@ Work in this order. A task may start only when its dependencies are merged.
 | K-02 | Realm baseline (section 10.4) and its automated test against a Keycloak test container | K-01 | Baseline test passes |
 | K-03 | TCB-DS login theme (sign-in, reset, MFA) in EN and VI | K-01, U-01 | Theme review; E2E sign-in and reset |
 | K-04 | Runbook: upgrade, backup and restore, admin access, adding a client | K-01 | Dry-run of an upgrade and a restore |
-| A-03 | Auth.js as OIDC client of Keycloak, middleware, user provisioning by `sub`, groups → Admin mapping | A-02, K-01 | Sign-in, SSO and sign-out E2E locally |
+| A-03 | OIDC client of Keycloak (openid-client, ADR-0004), proxy session refresh, user provisioning by `sub`, groups → Admin mapping | A-02, K-01 | Sign-in, SSO and sign-out E2E locally |
 | A-04 | Axios instance, typed API modules, query hooks | A-01 | Contract tests parse every response |
 | A-07 | Spike: generate OpenAPI 3.2 from Zod and render it in self-hosted Scalar with no external network access. Record the generator, linter and the 3.2-or-3.1 decision in ADR-0003 | A-01 | ADR-0003 merged; sample endpoints render with examples and the try-it client |
 | A-05 | OpenAPI document from Zod for every endpoint; `/api/v1/openapi.json` and committed copy; lint, drift check and breaking-change diff in CI | A-07 | CI fails on a missing endpoint, an uncommitted change or an unapproved breaking change |

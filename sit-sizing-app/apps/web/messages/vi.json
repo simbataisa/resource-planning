@@ -3,5 +3,12 @@
     "title": "Ước lượng SIT",
     "status": "Phần nền tảng đang chạy. Trình chỉnh sửa ước lượng sẽ có ở bước sau.",
     "disclaimer": "Kết quả là khoảng ước lượng để lập kế hoạch. Hãy xác nhận FTE và tiến độ với người chịu trách nhiệm triển khai."
+  },
+  "auth": {
+    "signIn": "Đăng nhập",
+    "signOut": "Đăng xuất",
+    "signedInAs": "Đang đăng nhập với",
+    "signedOutTitle": "Bạn đã đăng xuất",
+    "signedOutBody": "Phiên làm việc của bạn trong ứng dụng này và trong dịch vụ đăng nhập QE Tools đã kết thúc."
   }
 }

@@ -1,0 +1,72 @@
+{
+  "realm": "qe-tools",
+  "users": [
+    {
+      "id": "dev-admin",
+      "username": "dev-admin",
+      "email": "admin@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Admin",
+      "enabled": true,
+      "attributes": { "locale": ["en"] },
+      "credentials": [
+        { "type": "password", "value": "${KC_DEV_USER_PASSWORD}", "temporary": false }
+      ],
+      "groups": ["/sit-sizing-admins"],
+      "requiredActions": ["CONFIGURE_TOTP"]
+    },
+    {
+      "id": "dev-lead",
+      "username": "dev-lead",
+      "email": "lead@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "QE Lead",
+      "enabled": true,
+      "attributes": { "locale": ["en"] },
+      "credentials": [
+        { "type": "password", "value": "${KC_DEV_USER_PASSWORD}", "temporary": false }
+      ]
+    },
+    {
+      "id": "dev-estimator",
+      "username": "dev-estimator",
+      "email": "estimator@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Estimator",
+      "enabled": true,
+      "attributes": { "locale": ["en"] },
+      "credentials": [
+        { "type": "password", "value": "${KC_DEV_USER_PASSWORD}", "temporary": false }
+      ]
+    },
+    {
+      "id": "dev-viewer",
+      "username": "dev-viewer",
+      "email": "viewer@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Viewer",
+      "enabled": true,
+      "attributes": { "locale": ["vi"] },
+      "credentials": [
+        { "type": "password", "value": "${KC_DEV_USER_PASSWORD}", "temporary": false }
+      ]
+    },
+    {
+      "id": "dev-outsider",
+      "username": "dev-outsider",
+      "email": "outsider@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Outsider",
+      "enabled": true,
+      "attributes": { "locale": ["en"] },
+      "credentials": [
+        { "type": "password", "value": "${KC_DEV_USER_PASSWORD}", "temporary": false }
+      ]
+    }
+  ]
+}

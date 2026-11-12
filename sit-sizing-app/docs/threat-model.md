@@ -47,7 +47,12 @@
 | T-16 | **CSRF** on state-changing routes                                     | 1        | SameSite cookies (1.3) plus an Origin check on POST, PUT, PATCH and DELETE (`assertSameOrigin`)                                                        | **1.2 ✓** Origin check |
 | T-17 | **Spoofing**: the local `x-dev-user` sign-in left on outside a laptop | 1        | `AUTH_MODE=dev` is rejected at start-up unless `APP_ENV=local`; compose defaults to `oidc`; removed from use once Keycloak lands (1.3)                 | **1.2 ✓**              |
 
+| T-18 | **Open redirect / login CSRF** in the sign-in flow | 1, 2 | `state`, `nonce`, PKCE; redirect URI from `APP_BASE_URL`; `next` limited to same-site paths | **1.3 ✓** |
+| T-19 | **Forced sign-out** through a link to `/api/auth/signout` | 1 | Accepted risk (nuisance only); a GET keeps sign-out working under `form-action 'self'` | 1.3 (accepted) |
+
 ## Open items
+
+- Back-channel logout (immediate end of app sessions when Keycloak ends a session) needs a revocation list; until step 1.7 it takes up to one access-token lifetime (10 min).
 
 - Session lifetime and MFA scope: confirm with information security (Q2).
 - Rate-limit thresholds: derive from the non-functional targets (Q10).

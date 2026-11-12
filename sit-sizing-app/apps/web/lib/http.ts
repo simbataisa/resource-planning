@@ -70,12 +70,14 @@ export function createHttp(opts: HttpOptions = {}): AxiosInstance {
   return http;
 }
 
-/** Browser default: redirect to sign-in on 401 (the sign-in route arrives in step 1.3). */
+/** Browser default: on 401, go to Keycloak sign-in and come back to this page. */
 export const http = createHttp({
   locale: () => (typeof document !== 'undefined' ? document.documentElement.lang || 'en' : 'en'),
   onUnauthenticated: () => {
     if (typeof window !== 'undefined')
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Axios interceptor runs outside React
-      window.location.assign(`/signin?next=${encodeURIComponent(window.location.pathname)}`);
+      window.location.assign(
+        `/api/auth/signin?next=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+      );
   },
 });

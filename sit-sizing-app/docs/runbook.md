@@ -139,3 +139,28 @@ Jenkins configuration that the platform team provides:
 - Nobody approves their own PR. An agent's approval never counts (design 15.5).
 - **Code owners are optional for now.** To turn them on later, copy `docs/CODEOWNERS.example` to the repository root, replace the `@OWNER-…` placeholders, and enable "require code owner review".
 - If the Git host does not read `.github/pull_request_template.md`, use `docs/pull-request-template.md` as the template.
+
+## 5. Keycloak (step 1.3)
+
+| What            | Where                                                                                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sign-in page    | http://localhost:3000 redirects to Keycloak at http://localhost:18080                                                                                                    |
+| Synthetic users | `dev-admin`, `dev-lead`, `dev-estimator`, `dev-viewer`, `dev-outsider`; password = `KC_DEV_USER_PASSWORD` in `.env`. `dev-admin` must set up TOTP on first sign-in       |
+| Admin console   | http://localhost:18080/admin (master realm), user `admin`, password `KEYCLOAK_ADMIN_PASSWORD` in `.env`. Local only; in server environments the console is internal-only |
+| Realm as code   | `docker/keycloak/realm/qe-tools-realm.json` (all environments), `docker/keycloak/dev/qe-tools-users-0.json` (local only)                                                 |
+| Login theme     | `docker/keycloak/themes/tcb` (placeholder colours until TCB-DS tokens, Q1)                                                                                               |
+| Baseline checks | `pnpm test` (realm export) and `pnpm test:idp` (running Keycloak)                                                                                                        |
+
+**Changing the realm.** Edit the export in a pull request; never change `sit` or `prod` in the console without exporting back. Keycloak imports the realm only when it does not exist yet, so locally apply a change with `pnpm dev:keycloak-reset` (drops and re-creates only the local `keycloak` database, then restarts Keycloak).
+
+Server environments apply realm changes with a reviewed import job (to be added with hosting, Q4).
+
+**Upgrades (design 10.7).** Pin the image tag in `docker/compose.yaml` and `tests/identity/keycloak.test.ts`; run `pnpm test:idp` and the sign-in E2E, then upgrade `sit` before `prod`. Back up the `keycloak` database together with `app`.
+
+**Sign-in problems.**
+
+| Symptom                                           | Fix                                                                                            |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `/api/v1/ready` reports `identityProvider` not ok | Keycloak is still starting (about 30 s) or `OIDC_INTERNAL_URL` is wrong                        |
+| Keycloak says "Invalid redirect uri"              | `APP_BASE_URL` and `SIT_WEB_BASE_URL` (compose) must match the URL in the browser              |
+| Signed out every 10 minutes                       | The refresh with Keycloak fails: check the web logs for `REFRESH_FAILED` and Keycloak's events |

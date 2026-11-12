@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { EnvError, parseEnv } from './env';
 
-const valid = { DATABASE_URL: 'postgresql://app_user:synthetic@localhost:5432/app' };
+const valid = {
+  DATABASE_URL: 'postgresql://app_user:synthetic@localhost:5432/app',
+  OIDC_ISSUER: 'http://localhost:8080/realms/qe-tools',
+  OIDC_CLIENT_SECRET: 'synthetic-client-secret',
+  SESSION_SECRET: 'synthetic-session-secret-0123456789abcdef',
+};
 
 describe('parseEnv', () => {
   it('applies defaults', () => {
@@ -39,6 +44,23 @@ describe('parseEnv', () => {
     expect(parseEnv({ ...valid, AUTH_MODE: 'dev' }).AUTH_MODE).toBe('dev');
     expect(() => parseEnv({ ...valid, AUTH_MODE: 'dev', APP_ENV: 'sit' })).toThrow(/AUTH_MODE/);
     expect(parseEnv(valid).AUTH_MODE).toBe('oidc');
+  });
+
+  it('requires the OIDC settings for AUTH_MODE=oidc', () => {
+    expect(() => parseEnv({ DATABASE_URL: valid.DATABASE_URL })).toThrow(/OIDC_ISSUER/);
+    expect(() => parseEnv({ ...valid, SESSION_SECRET: '' })).toThrow(/SESSION_SECRET/);
+    expect(() => parseEnv({ ...valid, SESSION_SECRET: 'too-short' })).toThrow(/SESSION_SECRET/);
+    expect(
+      parseEnv({ DATABASE_URL: valid.DATABASE_URL, AUTH_MODE: 'dev' }).OIDC_ISSUER,
+    ).toBeUndefined();
+  });
+
+  it('requires https outside local', () => {
+    expect(() => parseEnv({ ...valid, APP_ENV: 'sit' })).toThrow(/APP_BASE_URL/);
+    expect(
+      parseEnv({ ...valid, APP_ENV: 'sit', APP_BASE_URL: 'https://sit-sizing.example.invalid' })
+        .APP_ENV,
+    ).toBe('sit');
   });
 
   it('requires DATABASE_URL', () => {

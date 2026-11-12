@@ -4,7 +4,7 @@ Full-stack version of the SIT Sizing Model prototype (`../SIT_Sizing_Model.html`
 
 The solution design is `../SIT_Sizing_Model_Solution_Design.md`. AI agents must read [AGENTS.md](AGENTS.md) first.
 
-**Status: step 1.2 (Data and API).** Foundations (1.0), the engine (1.1), and now the database, the REST API for projects, estimates, drafts and versions with the edit lock, the OpenAPI 3.2 contract and the Scalar API reference. Sign-in is a local stand-in until Keycloak (1.3); no UI yet.
+**Status: step 1.3 (Identity).** Foundations (1.0), engine (1.1), database and API (1.2), and now Keycloak as the identity provider with sign-in, sign-out and SSO for the app (openid-client, ADR-0004). No estimating UI yet.
 
 ## Quick start
 

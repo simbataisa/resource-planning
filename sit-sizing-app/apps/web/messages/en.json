@@ -3,5 +3,12 @@
     "title": "SIT Sizing",
     "status": "Foundations are running. The estimate editor arrives in a later step.",
     "disclaimer": "Results are a planning range. Confirm FTE and timelines with the accountable delivery owner."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as",
+    "signedOutTitle": "You are signed out",
+    "signedOutBody": "Your session in this app and in the QE Tools sign-in service has ended."
   }
 }

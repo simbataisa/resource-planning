@@ -1,0 +1,10 @@
+/* TCB-DS login theme — placeholder tokens (replace from packages/tokens in step 1.4). */
+:root {
+  --tcb-accent: #c8102e;
+  --tcb-accent-ink: #ffffff;
+  --tcb-radius: 8px;
+  --pf-v5-global--primary-color--100: var(--tcb-accent);
+  --pf-v5-global--primary-color--200: var(--tcb-accent);
+  --pf-v5-global--link--Color: var(--tcb-accent);
+  --pf-v5-global--BorderRadius--sm: var(--tcb-radius);
+}

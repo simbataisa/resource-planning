@@ -19,10 +19,20 @@ const EnvSchema = z
     OTEL_SERVICE_NAME: z.string().min(1).default('sit-sizing-web'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
     /**
-     * oidc: sign-in through Keycloak (step 1.3). dev: trust the `x-dev-user` header
-     * (a seeded subject) — only for local runs and tests before Keycloak exists.
+     * oidc: sign-in through Keycloak only. dev: also trust the `x-dev-user` header or
+     * `sit-dev-user` cookie (a seeded subject) — local runs and integration tests only.
      */
     AUTH_MODE: z.enum(['oidc', 'dev']).default('oidc'),
+    /** Public URL of this app; the OIDC redirect and post-logout URIs are built from it. */
+    APP_BASE_URL: z.url().default('http://localhost:3000'),
+    /** Issuer as the browser sees it, e.g. https://idp.example/realms/qe-tools (design 10). */
+    OIDC_ISSUER: z.url().optional(),
+    /** Optional server-to-server base URL of the IdP when it differs (e.g. http://keycloak:8080 in compose). */
+    OIDC_INTERNAL_URL: z.url().optional(),
+    OIDC_CLIENT_ID: z.string().min(1).default('sit-sizing-web'),
+    OIDC_CLIENT_SECRET: z.string().min(16).optional(),
+    /** Encrypts the session cookie. At least 32 characters; from the secret store outside local. */
+    SESSION_SECRET: z.string().min(32).optional(),
   })
   .superRefine((env, ctx) => {
     if (env.AUTH_MODE === 'dev' && env.APP_ENV !== 'local') {
@@ -30,6 +40,30 @@ const EnvSchema = z
         code: 'custom',
         path: ['AUTH_MODE'],
         message: 'dev sign-in is only allowed when APP_ENV=local',
+      });
+    }
+    if (env.AUTH_MODE === 'oidc' && !env.OIDC_ISSUER) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OIDC_ISSUER'],
+        message: 'required when AUTH_MODE=oidc',
+      });
+    }
+    if (env.OIDC_ISSUER) {
+      for (const key of ['OIDC_CLIENT_SECRET', 'SESSION_SECRET'] as const) {
+        if (!env[key])
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'required when OIDC_ISSUER is set',
+          });
+      }
+    }
+    if (env.APP_ENV !== 'local' && !env.APP_BASE_URL.startsWith('https://')) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['APP_BASE_URL'],
+        message: 'must use https outside local',
       });
     }
     if (env.APP_ENV === 'prod' && (env.LOG_LEVEL === 'debug' || env.LOG_LEVEL === 'trace')) {

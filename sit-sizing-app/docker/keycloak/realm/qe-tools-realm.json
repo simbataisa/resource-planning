@@ -1,0 +1,96 @@
+{
+  "realm": "qe-tools",
+  "displayName": "QE Tools",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": false,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 10,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "passwordPolicy": "length(12) and notUsername(undefined) and notEmail(undefined) and passwordHistory(5) and passwordBlacklist(common-passwords.txt)",
+  "ssoSessionIdleTimeout": 28800,
+  "ssoSessionMaxLifespan": 43200,
+  "accessTokenLifespan": 600,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["en", "vi"],
+  "defaultLocale": "en",
+  "loginTheme": "tcb",
+  "eventsEnabled": true,
+  "eventsExpiration": 7776000,
+  "eventsListeners": ["jboss-logging"],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": false,
+  "smtpServer": {
+    "host": "${KC_SMTP_HOST:mail}",
+    "port": "${KC_SMTP_PORT:1025}",
+    "from": "no-reply@example.invalid",
+    "fromDisplayName": "QE Tools",
+    "ssl": "false",
+    "starttls": "false",
+    "auth": "false"
+  },
+  "groups": [
+    {
+      "name": "sit-sizing-admins",
+      "path": "/sit-sizing-admins"
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "sit-sizing-web",
+      "name": "SIT Sizing",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${SIT_WEB_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "consentRequired": false,
+      "frontchannelLogout": false,
+      "rootUrl": "${SIT_WEB_BASE_URL}",
+      "baseUrl": "/",
+      "redirectUris": ["${SIT_WEB_BASE_URL}/api/auth/callback"],
+      "webOrigins": ["${SIT_WEB_BASE_URL}"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${SIT_WEB_BASE_URL}/signed-out",
+        "use.refresh.tokens": "true",
+        "backchannel.logout.session.required": "true"
+      },
+      "defaultClientScopes": ["basic", "profile", "email", "roles", "web-origins", "acr"],
+      "optionalClientScopes": [],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "claim.name": "groups"
+          }
+        }
+      ]
+    }
+  ]
+}

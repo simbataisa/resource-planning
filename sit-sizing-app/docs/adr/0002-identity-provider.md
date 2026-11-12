@@ -21,7 +21,7 @@ The tool needs its own identity provider with username and password sign-in, SSO
 
 ## Decision
 
-Use **Keycloak**, self-hosted in its own container with its own database and database role. The web app is only an OIDC client, using Auth.js with the authorization code flow and PKCE. It never sees passwords. All Keycloak configuration lives in `docker/keycloak/` as a realm export. Nobody makes manual console changes in `sit` or `prod`.
+Use **Keycloak**, self-hosted in its own container with its own database and database role. The web app is only an OIDC client (openid-client, ADR-0004) with the authorization code flow and PKCE. It never sees passwords. All Keycloak configuration lives in `docker/keycloak/` as a realm export. Nobody makes manual console changes in `sit` or `prod`.
 
 The step 1.0 database setup already creates a separate `keycloak` database and `keycloak_user` role that the app role cannot connect to (`docker/postgres/init/01-databases.sh`).
 

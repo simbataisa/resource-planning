@@ -20,9 +20,14 @@ cat > "$ENV_FILE" <<ENV
 POSTGRES_SUPERUSER_PASSWORD=$(rand)
 APP_DB_PASSWORD=$(rand)
 KEYCLOAK_DB_PASSWORD=$(rand)
+KEYCLOAK_ADMIN_PASSWORD=$(rand)
+OIDC_CLIENT_SECRET=$(rand)
+SESSION_SECRET=$(rand)$(rand)
+KC_DEV_USER_PASSWORD=$(rand)
+KEYCLOAK_PORT=0
 WEB_PORT=0
 DB_PORT=0
-APP_ENV=dev
+APP_ENV=local
 APP_VERSION=${APP_VERSION:-smoke}
 LOG_LEVEL=info
 REGISTRY_PREFIX=${REGISTRY_PREFIX:-}
@@ -32,7 +37,7 @@ ENV
 docker tag "$IMAGE" sit-sizing-web:local
 # The migrate service uses the tools stage; it shares the build cache with the image under test.
 "${COMPOSE[@]}" build migrate
-"${COMPOSE[@]}" up -d --no-build --wait --wait-timeout 120 db web
+"${COMPOSE[@]}" up -d --no-build --wait --wait-timeout 240 db keycloak web
 
 WEB_PORT=$("${COMPOSE[@]}" port web 3000 | awk -F: '{print $NF}')
 BASE="http://127.0.0.1:${WEB_PORT}"
