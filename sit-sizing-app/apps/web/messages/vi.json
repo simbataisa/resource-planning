@@ -1913,5 +1913,14 @@
       "hours": "Số giờ",
       "roughFte": "FTE sơ bộ"
     }
+  },
+  "engine": {
+    "title": "Được tính bằng engine {old}",
+    "body": "Phiên bản này giữ kết quả do engine {old} tính. Engine hiện tại là {current}. Tính lại thành bản nháp mới để xem thay đổi ảnh hưởng thế nào đến số liệu; phiên bản này vẫn giữ nguyên.",
+    "recompute": "Tính lại thành bản nháp mới",
+    "recomputing": "Đang tính lại…",
+    "draftExists": "Hãy hoàn tất hoặc lưu bản nháp đang mở trước, rồi tính lại từ phiên bản này.",
+    "badge": "engine {old}",
+    "badgeTitle": "Được tính bằng engine {old}, không phải engine hiện tại"
   }
 }

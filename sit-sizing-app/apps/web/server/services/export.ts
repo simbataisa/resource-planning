@@ -1,5 +1,5 @@
 import { computeBoth } from '@sit/engine';
-import { Assumptions, EstimateInputs, type ExportQuery } from '@sit/schemas';
+import type { ExportQuery } from '@sit/schemas';
 import { createTranslator } from 'next-intl';
 import type { z } from 'zod';
 import en from '@/messages/en.json';
@@ -11,6 +11,7 @@ import { toCsv } from '../export/csv';
 import { buildTables, type Translate } from '../export/workbook';
 import { toXlsx } from '../export/xlsx';
 import { recordAudit } from '../repositories/audit';
+import { readStored } from '../stored';
 import { estimateFor, notFound, type RequestMeta } from './access';
 
 const MESSAGES = { en, vi } as const;
@@ -49,8 +50,7 @@ export async function exportVersion(
   const locale = q.lang ?? user.locale;
   const translator = createTranslator({ locale, messages: MESSAGES[locale] });
   const t: Translate = (key, values) => translator(key as never, values as never);
-  const inputs = EstimateInputs.parse(v.inputs);
-  const assumptions = Assumptions.parse(v.assumptions);
+  const { inputs, assumptions } = readStored(v);
   const result = computeBoth(inputs, assumptions);
   const tables = buildTables(
     {

@@ -10,6 +10,7 @@ import { versionDto, versionSummaryDto } from '../dto';
 import { HttpError } from '../http/route';
 import { enqueue } from '../notifications/outbox';
 import { recordAudit } from '../repositories/audit';
+import { readStored } from '../stored';
 import { VERSION_FULL_INCLUDE, VERSION_SUMMARY_INCLUDE } from '../repositories/includes';
 import { estimateFor, notFound, type RequestMeta } from './access';
 
@@ -139,9 +140,12 @@ export async function compareVersions(
   if (!va || !vb) throw notFound();
   const ra = va.result as unknown as EstimateResult;
   const rb = vb.result as unknown as EstimateResult;
+  // Compare in the current shape, whatever schema version each was stored with (E-08).
+  const sa = readStored(va);
+  const sb = readStored(vb);
   const changes = [
-    ...diffJson(va.inputs, vb.inputs).map((c) => ({ area: 'inputs' as const, ...c })),
-    ...diffJson(va.assumptions, vb.assumptions).map((c) => ({
+    ...diffJson(sa.inputs, sb.inputs).map((c) => ({ area: 'inputs' as const, ...c })),
+    ...diffJson(sa.assumptions, sb.assumptions).map((c) => ({
       area: 'assumptions' as const,
       ...c,
     })),

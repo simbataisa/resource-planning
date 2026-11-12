@@ -1,11 +1,5 @@
 import type { Prisma } from '@sit/db';
-import {
-  ActualsData,
-  Assumptions,
-  EstimateResult,
-  type Actuals,
-  type ActualsCreate,
-} from '@sit/schemas';
+import { ActualsData, EstimateResult, type Actuals, type ActualsCreate } from '@sit/schemas';
 import type { z } from 'zod';
 import { can } from '@/lib/rbac';
 import type { CurrentUser } from '../auth/current-user';
@@ -14,6 +8,7 @@ import { userRef } from '../dto';
 import { canRecordActuals, variance } from '../domain/variance';
 import { HttpError } from '../http/route';
 import { recordAudit } from '../repositories/audit';
+import { readStored } from '../stored';
 import { USER_REF } from '../repositories/includes';
 import { estimateFor, notFound, type RequestMeta } from './access';
 
@@ -23,7 +18,15 @@ const conflict = (message: string, reason: string) =>
 async function versionOf(tx: DbOrTx, estimateId: string, number: number) {
   const v = await tx.estimateVersion.findUnique({
     where: { estimateId_number: { estimateId, number } },
-    select: { id: true, number: true, status: true, result: true, assumptions: true },
+    select: {
+      id: true,
+      number: true,
+      status: true,
+      result: true,
+      inputs: true,
+      assumptions: true,
+      schemaVersion: true,
+    },
   });
   if (!v) throw notFound();
   return v;
@@ -33,7 +36,13 @@ type Row = Prisma.ActualsGetPayload<{ include: { recordedBy: typeof USER_REF } }
 
 function actualsDto(
   row: Row,
-  v: { number: number; result: unknown; assumptions: unknown },
+  v: {
+    number: number;
+    result: unknown;
+    inputs: unknown;
+    assumptions: unknown;
+    schemaVersion: number;
+  },
 ): Actuals {
   const data = ActualsData.parse(row.data);
   return {
@@ -44,7 +53,7 @@ function actualsDto(
     note: row.note,
     recordedBy: userRef(row.recordedBy),
     recordedAt: row.recordedAt.toISOString(),
-    variance: variance(EstimateResult.parse(v.result), Assumptions.parse(v.assumptions), data),
+    variance: variance(EstimateResult.parse(v.result), readStored(v).assumptions, data),
   };
 }
 

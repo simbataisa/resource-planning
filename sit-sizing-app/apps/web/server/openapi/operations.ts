@@ -228,7 +228,7 @@ export const OPERATIONS: Operation[] = [
     summary: 'Read one version with inputs, assumptions and result',
     params: VersionParams,
     success: { status: 200, description: 'The version', schema: Version },
-    errors: READ,
+    errors: [...READ, 409],
   },
   {
     method: 'post',

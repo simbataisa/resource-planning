@@ -43,6 +43,7 @@ const SAME_IN_VI = [
   /^versions\.(by|cmp\.fte)$/,
   /^export\.summary\.fte$/,
   /^portfolio\.cols\.fte$/,
+  /^engine\.badge$/,
 ];
 
 describe('i18n messages', () => {

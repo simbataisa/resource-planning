@@ -23,6 +23,7 @@ import { formatDateTime, formatFte } from '@/lib/format';
 import { principalFromMe } from '@/lib/me';
 import { useCreateDraft, useMe, useReviewVersion } from '@/lib/query/hooks';
 import { can } from '@/lib/rbac';
+import { staleEngine } from '../estimate-editor/engine-notice';
 
 type Action = 'submit' | 'approve' | 'return';
 const TONE = {
@@ -40,6 +41,7 @@ const TONE = {
 export function VersionHistory({ estimate, open }: { estimate: EstimateDetail; open: Version }) {
   const t = useTranslations('versions');
   const ts = useTranslations('status');
+  const te = useTranslations('engine');
   const locale = useLocale();
   const me = useMe();
   const review = useReviewVersion(estimate.id);
@@ -80,6 +82,11 @@ export function VersionHistory({ estimate, open }: { estimate: EstimateDetail; o
               <span className="font-mono text-sm font-semibold">v{v.number}</span>
               <Badge variant={TONE[v.status]}>{ts(v.status)}</Badge>
               {v.number === open.number ? <Badge variant="outline">{t('current')}</Badge> : null}
+              {v.status !== 'DRAFT' && staleEngine(v.engineVersion) ? (
+                <Badge variant="unc" title={te('badgeTitle', { old: v.engineVersion })}>
+                  {te('badge', { old: v.engineVersion })}
+                </Badge>
+              ) : null}
             </div>
             <div className="grid gap-0.5 text-sm">
               <span className="font-mono tabular-nums">

@@ -1118,6 +1118,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Too many requests for this user; see Retry-After",
             "content": {

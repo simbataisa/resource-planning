@@ -10,8 +10,7 @@ import { EstimateResult, GroupKey } from './result';
  * Examples use synthetic data only.
  */
 
-/** Version of the EstimateInputs payload shape stored in EstimateVersion.schemaVersion. */
-export const INPUTS_SCHEMA_VERSION = 1;
+export { INPUTS_SCHEMA_VERSION } from './upgrade';
 
 export const Id = z
   .string()

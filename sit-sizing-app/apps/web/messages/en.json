@@ -1913,5 +1913,14 @@
       "hours": "Hours",
       "roughFte": "Rough FTE"
     }
+  },
+  "engine": {
+    "title": "Computed with engine {old}",
+    "body": "This version keeps the result that engine {old} computed. The current engine is {current}. Recompute as a new draft to see what the change does to the numbers; this version stays as it is.",
+    "recompute": "Recompute as new draft",
+    "recomputing": "Recomputing…",
+    "draftExists": "Finish or save the open draft first, then recompute from this version.",
+    "badge": "engine {old}",
+    "badgeTitle": "Computed with engine {old}, not the current one"
   }
 }
