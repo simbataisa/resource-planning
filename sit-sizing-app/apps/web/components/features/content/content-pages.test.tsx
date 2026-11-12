@@ -46,4 +46,22 @@ describe('content pages (C-02)', () => {
     await act(async () => fireEvent.click(button));
     expect(screen.getByRole('status').textContent).not.toBe('');
   });
+
+  it('the Method formula scrolls by keyboard when it overflows', () => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
+      configurable: true,
+      get: () => 900,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+      configurable: true,
+      get: () => 400,
+    });
+    try {
+      const { container } = renderWithIntl(<MethodPage />);
+      expect(container.querySelector('pre')).toHaveAttribute('tabindex', '0');
+    } finally {
+      delete (HTMLElement.prototype as { scrollWidth?: number }).scrollWidth;
+      delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
+    }
+  });
 });

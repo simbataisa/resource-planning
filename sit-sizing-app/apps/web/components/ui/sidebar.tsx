@@ -183,7 +183,7 @@ export function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          'fixed inset-y-0 left-0 z-10 hidden h-svh w-(--sidebar-width) border-r border-sidebar-border transition-[left,width] duration-200 ease-linear md:flex',
+          'fixed top-1 bottom-0 left-0 z-10 hidden w-(--sidebar-width) border-r border-sidebar-border transition-[left,width] duration-200 ease-linear md:flex',
           'group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]',
           'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
           className,

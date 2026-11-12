@@ -1,31 +1,20 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState, type ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
+import { useScrollTabStop } from '@/lib/use-scroll-tab-stop';
 import { cn } from '@/lib/utils';
 
 /**
- * Plain table primitives; the wrapper scrolls horizontally on narrow screens. While it
- * overflows it is a tab stop, so keyboard users can scroll it (WCAG 2.1.1, axe
- * scrollable-region-focusable); a table that fits adds no tab stop.
+ * Plain table primitives; the wrapper scrolls horizontally on narrow screens and is a
+ * tab stop while it overflows (useScrollTabStop).
  */
 export function Table({ className, ...props }: ComponentProps<'table'>) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [overflows, setOverflows] = useState(false);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const check = () => setOverflows(el.scrollWidth > el.clientWidth);
-    check();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(check);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  const { ref, tabIndex } = useScrollTabStop<HTMLDivElement>();
   return (
     <div
       ref={ref}
       data-slot="table-container"
-      tabIndex={overflows ? 0 : undefined}
+      tabIndex={tabIndex}
       className="relative w-full overflow-x-auto focus-visible:outline-2 focus-visible:outline-ring"
     >
       <table

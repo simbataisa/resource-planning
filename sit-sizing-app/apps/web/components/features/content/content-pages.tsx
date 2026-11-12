@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ScrollablePre } from './scrollable-pre';
 import { CollapsibleSection } from '@/components/patterns/collapsible-section';
 import { PageHeader } from '@/components/patterns/page-header';
 import { CopyText } from './copy-text';
@@ -144,9 +145,7 @@ export function MethodPage() {
   return (
     <div className="grid gap-6">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} />
-      <pre className="overflow-x-auto rounded-lg border bg-muted px-3.5 py-3 font-mono text-[0.86rem] leading-[1.7]">
-        {t('formula')}
-      </pre>
+      <ScrollablePre>{t('formula')}</ScrollablePre>
       <ol className="ml-5 grid list-decimal gap-2 text-sm leading-relaxed">
         {keys(10).map((k) => (
           <li key={k}>{rich(`steps.${k}`)}</li>
