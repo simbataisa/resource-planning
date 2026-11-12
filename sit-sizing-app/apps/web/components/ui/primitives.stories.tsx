@@ -5,8 +5,17 @@ import { Badge } from './badge';
 import { Button } from './button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Checkbox } from './checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu';
 import { Input } from './input';
 import { Label } from './label';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
@@ -96,5 +105,32 @@ export const TabsAndTooltip: StoryObj = {
       <TabsContent value="detailed">Detailed panel</TabsContent>
       <TabsContent value="team">Team panel</TabsContent>
     </Tabs>
+  ),
+};
+
+export const SheetAndMenu: StoryObj = {
+  render: () => (
+    <div className="flex gap-3">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline">Open sheet</Button>
+        </SheetTrigger>
+        <SheetContent side="left" closeLabel="Close" aria-describedby={undefined}>
+          <SheetHeader>
+            <SheetTitle>Navigation</SheetTitle>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">Account</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuLabel>Synthetic Estimator</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>Sign out</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   ),
 };

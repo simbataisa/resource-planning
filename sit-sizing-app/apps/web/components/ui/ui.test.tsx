@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { expectNoAxeViolations } from '@/tests/support/axe';
 import { Alert, AlertDescription, AlertTitle } from './alert';
 import { Badge } from './badge';
@@ -9,8 +9,17 @@ import { Button } from './button';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Checkbox } from './checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from './dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu';
 import { Input } from './input';
 import { Label } from './label';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 
@@ -109,5 +118,46 @@ describe('ui primitives (layer 2)', () => {
     expect(screen.getByRole('dialog', { name: 'Import a profile' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('Sheet: opens with its title and closes with the labelled button', async () => {
+    const user = userEvent.setup();
+    const { baseElement } = render(
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button>Menu</Button>
+        </SheetTrigger>
+        <SheetContent side="left" closeLabel="Close" aria-describedby={undefined}>
+          <SheetHeader>
+            <SheetTitle>Navigation</SheetTitle>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+    await expectNoAxeViolations(baseElement);
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('DropdownMenu: opens on click and runs an item', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button>Account</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuLabel>Signed in</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={onSelect}>Sign out</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
   });
 });
