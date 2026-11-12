@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { Info } from 'lucide-react';
+import { FolderKanban, Info, SlidersHorizontal } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './alert';
 import { Badge } from './badge';
 import { Button } from './button';
@@ -16,6 +16,19 @@ import {
 import { Input } from './input';
 import { Label } from './label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './sheet';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from './sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
@@ -134,3 +147,43 @@ export const SheetAndMenu: StoryObj = {
     </div>
   ),
 };
+
+function SidebarExample({ defaultOpen }: { defaultOpen: boolean }) {
+  return (
+    <SidebarProvider defaultOpen={defaultOpen} className="min-h-80">
+      <Sidebar collapsible="icon" mobileTitle="Navigation" mobileCloseLabel="Close navigation">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Work</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive tooltip="Projects">
+                    <a href="#projects">
+                      <FolderKanban aria-hidden="true" />
+                      <span>Projects</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Profiles">
+                    <a href="#profiles">
+                      <SlidersHorizontal aria-hidden="true" />
+                      <span>Profiles</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset className="p-4">
+        <SidebarTrigger label="Toggle sidebar" />
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
+
+export const SidebarExpanded: StoryObj = { render: () => <SidebarExample defaultOpen /> };
+export const SidebarCollapsed: StoryObj = { render: () => <SidebarExample defaultOpen={false} /> };
