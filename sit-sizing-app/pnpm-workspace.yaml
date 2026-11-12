@@ -23,3 +23,11 @@ catalog:
   typescript: ~6.0.3
   vitest: ^5.0.3
   zod: ^4.1.0
+
+# Also install the Linux (glibc) builds of native packages (esbuild, rolldown, lightningcss,
+# Tailwind oxide). The same node_modules can then run tests inside Linux sandboxes and
+# containers used by tooling; it costs some disk space on developer machines.
+supportedArchitectures:
+  os: [current, linux]
+  cpu: [current, arm64, x64]
+  libc: [current, glibc]

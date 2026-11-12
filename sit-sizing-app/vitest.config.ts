@@ -11,8 +11,14 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov', 'cobertura'],
       reportsDirectory: 'coverage',
-      include: ['packages/*/src/**', 'apps/web/{lib,server,components}/**'],
-      exclude: ['**/*.test.{ts,tsx}', '**/index.ts'],
+      include: ['packages/*/src/**/*.{ts,tsx}', 'apps/web/{lib,server,components}/**/*.{ts,tsx}'],
+      exclude: [
+        '**/*.test.{ts,tsx}',
+        '**/*.stories.{ts,tsx}',
+        '**/index.ts',
+        '**/*.d.ts',
+        '**/generated/**',
+      ],
       thresholds: {
         'packages/engine/src/**': { lines: 95, branches: 95 },
         'packages/schemas/src/**': { lines: 90, branches: 90 },

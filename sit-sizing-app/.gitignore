@@ -30,6 +30,7 @@ apps/web/.env*.local
 *.log
 
 # generated
+apps/web/storybook-static/
 packages/db/src/generated/
 apps/web/public/vendor/
 

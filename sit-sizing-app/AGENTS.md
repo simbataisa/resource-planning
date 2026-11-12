@@ -34,6 +34,7 @@ pnpm dev:up           # full stack in containers with hot reload
 pnpm dev:obs          # plus Jaeger tracing at http://localhost:16686
 pnpm test:int         # API integration suite (Testcontainers, needs Docker)
 pnpm openapi:generate # after any API change; commit docs/api/openapi.json
+pnpm --filter @sit/web storybook   # component catalogue at http://localhost:6006
 ```
 
 ## Ground rules (design 15.1)

@@ -2,7 +2,8 @@
   "home": {
     "title": "Ước lượng SIT",
     "status": "Phần nền tảng đang chạy. Trình chỉnh sửa ước lượng sẽ có ở bước sau.",
-    "disclaimer": "Kết quả là khoảng ước lượng để lập kế hoạch. Hãy xác nhận FTE và tiến độ với người chịu trách nhiệm triển khai."
+    "disclaimer": "Kết quả là khoảng ước lượng để lập kế hoạch. Hãy xác nhận FTE và tiến độ với người chịu trách nhiệm triển khai.",
+    "apiDocs": "Tài liệu API"
   },
   "auth": {
     "signIn": "Đăng nhập",

@@ -51,6 +51,7 @@ export default defineConfig([
     '**/next-env.d.ts',
     'packages/db/src/generated/**',
     'apps/web/public/vendor/**',
+    'apps/web/storybook-static/**',
   ]),
   {
     settings: { next: { rootDir: 'apps/web/' } },

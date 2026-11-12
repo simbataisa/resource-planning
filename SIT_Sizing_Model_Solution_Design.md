@@ -541,6 +541,9 @@ What happens to saved estimates when a formula or default changes:
 
 ## 8. UI architecture and design system
 
+> **Step 1.4 note (ADR-0005):** until the TCB-DS source is available (Q1), `packages/tokens` carries the prototype's palette, adjusted for WCAG AA contrast. Components use semantic token names only, so adopting TCB-DS changes token values, not components.
+
+
 ### 8.1 Component layers
 
 A component may only import from layers below it. Enforce with an ESLint import-boundary rule.

@@ -4,7 +4,7 @@ Full-stack version of the SIT Sizing Model prototype (`../SIT_Sizing_Model.html`
 
 The solution design is `../SIT_Sizing_Model_Solution_Design.md`. AI agents must read [AGENTS.md](AGENTS.md) first.
 
-**Status: step 1.3 (Identity).** Foundations (1.0), engine (1.1), database and API (1.2), and now Keycloak as the identity provider with sign-in, sign-out and SSO for the app (openid-client, ADR-0004). No estimating UI yet.
+**Status: step 1.4 (Design system and components).** Foundations, engine, database and API, Keycloak sign-in, and now the design tokens (interim prototype palette, Q1), Tailwind v4, the shadcn/ui primitives, the patterns layer, anime.js motion hooks and Storybook (ADR-0005). The estimate editor comes next.
 
 ## Quick start
 
@@ -24,7 +24,7 @@ Then open http://localhost:3000 and http://localhost:3000/api/v1/ready. See [doc
 apps/web            Next.js app (pages, /api/v1 route handlers, server code, components)
 packages/engine     Calculation engine — pure TypeScript, golden parity with the prototype
 packages/schemas    Zod schemas shared by engine, API and forms
-packages/tokens     TCB-DS design tokens (step 1.4)
+packages/tokens     Design tokens → tokens.css (interim prototype palette until TCB-DS, Q1)
 packages/config     Shared tsconfig presets
 packages/db         Prisma schema, migrations, seed, client
 docker/             Dockerfile, compose files, Postgres init

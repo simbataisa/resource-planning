@@ -2,7 +2,8 @@
   "home": {
     "title": "SIT Sizing",
     "status": "Foundations are running. The estimate editor arrives in a later step.",
-    "disclaimer": "Results are a planning range. Confirm FTE and timelines with the accountable delivery owner."
+    "disclaimer": "Results are a planning range. Confirm FTE and timelines with the accountable delivery owner.",
+    "apiDocs": "API reference"
   },
   "auth": {
     "signIn": "Sign in",
