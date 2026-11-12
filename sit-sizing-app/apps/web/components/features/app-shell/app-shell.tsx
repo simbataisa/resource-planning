@@ -26,14 +26,14 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Eyebrow } from '@/components/patterns/eyebrow';
-import { Link, usePathname } from '@/i18n/navigation';
+import { usePathname } from '@/i18n/navigation';
 import type { Locale } from '@/lib/i18n';
 import { AdminNavGroup } from '../admin/admin-nav';
 import { NotificationBell } from '../notifications/notification-bell';
 import { PortfolioNavItem } from '../portfolio/portfolio-page';
 import { AdoptProfileLocale, LanguageSwitch } from './language-switch';
 import { NAV_ICONS, SECTION_LABEL, sectionFor } from './nav-items';
-import { SidebarNavLink } from './sidebar-nav-link';
+import { SidebarBrandLink, SidebarNavLink } from './sidebar-nav-link';
 
 export interface AppShellProps {
   /** Display name of the signed-in user; null shows a sign-in button. */
@@ -73,13 +73,10 @@ export function AppShell({
         mobileCloseLabel={t('app.closeNav')}
       >
         <SidebarHeader>
-          <Link
-            href="/projects"
-            className="grid gap-0.5 px-2 py-1 leading-tight group-data-[collapsible=icon]:hidden"
-          >
+          <SidebarBrandLink className="grid gap-0.5 px-2 py-1 leading-tight group-data-[collapsible=icon]:hidden">
             <Eyebrow className="text-[0.7rem]">{t('app.tagline')}</Eyebrow>
             <span className="text-xl font-light text-foreground">{t('app.name')}</span>
-          </Link>
+          </SidebarBrandLink>
         </SidebarHeader>
         <SidebarContent>
           <nav aria-label={t('app.mainNav')}>

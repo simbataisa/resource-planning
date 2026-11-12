@@ -1,6 +1,7 @@
 'use client';
 
 import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { Link } from '@/i18n/navigation';
 
@@ -26,5 +27,21 @@ export function SidebarNavLink({
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
+  );
+}
+
+/** The brand link at the top of the sidebar; like the other links, closes the mobile sheet. */
+export function SidebarBrandLink({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const { setOpenMobile } = useSidebar();
+  return (
+    <Link href="/projects" className={className} onClick={() => setOpenMobile(false)}>
+      {children}
+    </Link>
   );
 }

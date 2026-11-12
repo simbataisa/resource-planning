@@ -23,7 +23,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 /*
  * shadcn/ui Sidebar, trimmed to what the app shell uses (ADR-0015). Changes from upstream:
  * labels are props (no English in layer 2), the inset is a <div> (the shell owns <main>),
- * hover is neutral and only the active item gets the red tint and marker.
+ * hover is neutral and only the active item gets the red tint and marker, and Ctrl/Cmd+B
+ * is ignored while focus is in a text field.
  */
 
 export { SIDEBAR_COOKIE_NAME };
@@ -73,6 +74,14 @@ export function SidebarProvider({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      // Not while typing: Ctrl+B moves the caret on macOS (change from upstream shadcn).
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        Boolean(target?.isContentEditable);
+      if (typing || event.defaultPrevented) return;
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         toggleSidebar();

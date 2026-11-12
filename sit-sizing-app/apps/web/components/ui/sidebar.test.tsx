@@ -95,6 +95,19 @@ describe('Sidebar (layer 2)', () => {
     expect(sidebarState(container)).toBe('expanded');
   });
 
+  it('Ctrl+B is left alone while typing in a field', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <Example />
+        <input aria-label="Count" />
+      </>,
+    );
+    await user.click(screen.getByRole('textbox', { name: 'Count' }));
+    await user.keyboard('{Control>}b{/Control}');
+    expect(sidebarState(container)).toBe('expanded');
+  });
+
   it('active item is marked for assistive tech', () => {
     render(<Example />);
     const active = screen.getByRole('link', { name: 'Projects' });

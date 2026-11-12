@@ -97,6 +97,14 @@ describe('AppShell (U-04)', () => {
       const sheet = screen.getByRole('dialog', { name: 'Main' });
       await user.click(within(sheet).getByRole('link', { name: 'Profiles' }));
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // The brand link is a link too: choosing it also closes the sheet.
+      await user.click(screen.getByRole('button', { name: 'Toggle sidebar' }));
+      await user.click(
+        within(screen.getByRole('dialog', { name: 'Main' })).getByRole('link', {
+          name: /SIT Sizing/,
+        }),
+      );
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     } finally {
       window.matchMedia = original;
     }

@@ -159,6 +159,36 @@ describe('ui primitives (layer 2)', () => {
     }
   });
 
+  it('Table: no extra tab stop when the overflowing table already has controls', () => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
+      configurable: true,
+      get: () => 900,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+      configurable: true,
+      get: () => 400,
+    });
+    try {
+      const { container } = render(
+        <Table>
+          <TableBody>
+            <TableRow>
+              <TableCell>
+                <input aria-label="APIs" />
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>,
+      );
+      expect(container.querySelector('[data-slot="table-container"]')).not.toHaveAttribute(
+        'tabindex',
+      );
+    } finally {
+      delete (HTMLElement.prototype as { scrollWidth?: number }).scrollWidth;
+      delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
+    }
+  });
+
   it('Sheet: opens with its title and closes with the labelled button', async () => {
     const user = userEvent.setup();
     const { baseElement } = render(
