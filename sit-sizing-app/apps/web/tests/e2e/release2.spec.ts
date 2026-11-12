@@ -1,7 +1,12 @@
 import ExcelJS from 'exceljs';
-import { expect, test, type Browser, type Page } from '@playwright/test';
-import { LEAD_STATE } from '../../playwright.config';
-import { createExampleEstimate, expectNoAxeViolations } from './helpers';
+import { expect, test } from '@playwright/test';
+import {
+  asLead,
+  createExampleEstimate,
+  expectNoAxeViolations,
+  saveVersion,
+  versionRow,
+} from './helpers';
 
 /**
  * Release 2 exit criteria (design 14) through the browser, as two synthetic users:
@@ -11,27 +16,6 @@ import { createExampleEstimate, expectNoAxeViolations } from './helpers';
  * Mail is read from the local mail catcher (Mailpit) at E2E_MAILPIT_URL.
  */
 const MAILPIT = process.env.E2E_MAILPIT_URL ?? 'http://localhost:8025';
-
-async function asLead<T>(browser: Browser, fn: (page: Page) => Promise<T>): Promise<T> {
-  const context = await browser.newContext({ storageState: LEAD_STATE, locale: 'en-GB' });
-  try {
-    return await fn(await context.newPage());
-  } finally {
-    await context.close();
-  }
-}
-
-/** The Version history row of version n. */
-const versionRow = (page: Page, n: number) =>
-  page.getByRole('listitem').filter({ has: page.getByText(`v${n}`, { exact: true }) });
-
-async function saveVersion(page: Page, note: string) {
-  await page.getByRole('button', { name: 'Save version' }).click();
-  const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Note (optional)').fill(note);
-  await dialog.getByRole('button', { name: 'Save version' }).click();
-  await expect(page.getByText(/Version 1 is saved and cannot change/)).toBeVisible();
-}
 
 test('a QE Lead approves an estimate end to end, with in-app notices and email', async ({
   page,

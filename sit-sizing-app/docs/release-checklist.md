@@ -13,6 +13,7 @@ Copy this list into the release pull request and tick each item. A human approve
   - API integration tests (with the migration drift check);
   - Keycloak realm baseline (`pnpm test:idp`).
 - [ ] Playwright E2E smoke passed against the compose stack, including axe and the visual baselines.
+- [ ] Release 3 exit criteria passed in `tests/e2e/release3.spec.ts`: actuals calibrate a published profile, portfolio totals equal the underlying versions.
 - [ ] Release 2 exit criteria passed in `tests/e2e/release2.spec.ts`: approval end to end with notices and email, a published profile applied to a new estimate, Excel export equal to the screen.
 - [ ] Prototype parity test green (`tests/unit/prototype-ui-parity.test.tsx`).
 - [ ] OpenAPI document regenerated and committed. Breaking-change diff reviewed (`deploy/ci/openapi-diff.sh`).
