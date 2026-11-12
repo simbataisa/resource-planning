@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft for review, revision 4. No development has started. |
+| **Status** | Revision 4, in delivery. Release 1 steps 1.0–1.6 are done and 1.7 (hardening and pilot) is in progress; release 2 V-01 and P-01 are merged. Notes marked "Step x note" and the ADRs in `sit-sizing-app/docs/adr/` record where the build departed from this text. |
 | **Changes in revision 3** | Identity provider is self-hosted Keycloak, not a custom build. Plan restructured into three releases. Added non-functional targets, pipeline, observability, backup, engine change policy, notifications, Excel export, portfolio view, governance. |
 | **Changes in revision 4** | API contract follows OpenAPI 3.2 (3.1 fallback, decided by a spike) and is documented with a self-hosted Scalar API Reference (section 9.4, ADR-0003). |
 | **Audience** | Engineering, QE leads, and the AI coding agents that will build it |
@@ -83,7 +83,7 @@ Pin exact versions at kickoff (latest stable, at least two weeks old) and record
 | Identity provider | **Keycloak**, self-hosted in its own container with its own database | Username and password sign-in, SSO, MFA, admin console, corporate federation by configuration; see section 10 |
 | App sign-in | **openid-client** (OpenID Certified) with an encrypted session cookie (jose); ADR-0004 replaced Auth.js v5, which is still a beta | The web app never sees passwords |
 | i18n (recommended addition) | next-intl | EN/VI messages, locale routing, number formatting |
-| Forms (recommended addition) | React Hook Form + Zod resolver | The editor is form-heavy |
+| Forms (recommended addition) | ~~React Hook Form + Zod resolver~~ Not used (ADR-0006) | The editor is a context + reducer store with the prototype's normalisers; small forms validate with the shared Zod schemas |
 | Charts | Hand-built SVG components | Bars, tornado and range charts only; no charting library |
 | Component catalogue (recommended addition) | Storybook | Review surface for the component base and TCB-DS theming |
 | API contract | **OpenAPI 3.2** document generated from the Zod schemas; 3.1 fallback until the generator and renderer support 3.2 (section 9.4) | Published contract; drift and unapproved breaking changes fail CI |
@@ -362,7 +362,7 @@ Keycloak ships and migrates its own database schema, so there is no ERD to desig
 
 #### 5.2.3 Prisma implementation
 
-Agents: implement the application ERD as `prisma/schema.prisma`. The outline below shows the main models; the ERD is the full field list.
+Agents: implement the application ERD as `packages/db/prisma/schema.prisma`. The outline below shows the main models; the ERD is the full field list.
 
 ```prisma
 model User {
@@ -573,7 +573,7 @@ Each layer 2 and 3 component ships with a Vitest + Testing Library test and a us
 - Every change runs `computeBoth()` in the browser, memoised. If profiling shows more than 16 ms per run on a large scope, move it to a Web Worker.
 - **One editor at a time per draft.** Opening a draft for editing takes a lock (`lockedById`, 15-minute expiry, renewed by a heartbeat). Others see "being edited by …" and a read-only view. A QE Lead can take the lock over. This is simpler and safer than merging two people's changes.
 - Autosave: debounce 1.5 s, `PATCH` the draft with `rowVersion` as a second line of defence. A 409 means the lock was lost; the editor reloads and keeps the user's unsaved values in a side panel.
-- Forms use React Hook Form with the Zod resolver; the same schemas validate on the server.
+- Forms do not use React Hook Form (ADR-0006): the editor is always valid and recomputed live, so inputs are controlled and normalised as in the prototype. Small forms validate with the shared Zod schemas, which also validate on the server.
 
 ### 8.4 Animation (anime.js)
 
@@ -657,12 +657,12 @@ Rules: durations of 150–350 ms, no animation on first paint of data tables, an
 
 | Item | Decision |
 |---|---|
-| Specification version | **OpenAPI 3.2.0** (latest, published September 2025). Fall back to **3.1** if spike A-07 shows the generator or Scalar cannot handle 3.2; move to 3.2 once both do. The API does not depend on 3.2-only features, so the switch is a version bump. |
-| Source of truth | Zod schemas in `packages/schemas`, registered per route in `apps/web/lib/openapi/registry.ts`. No hand-edited YAML. |
-| Generator | A Zod-to-OpenAPI library chosen in the spike (for example `@asteasolutions/zod-to-openapi` or `zod-openapi`), pinned in ADR-0003. |
+| Specification version | **OpenAPI 3.2.0** (latest, published September 2025), adopted after spike A-07 (ADR-0003). The API uses no 3.2-only features, so falling back to 3.1.1 is a one-line change (`OPENAPI_VERSION`). |
+| Source of truth | Zod schemas in `packages/schemas`, registered per route in `apps/web/server/openapi/operations.ts`. No hand-edited YAML. |
+| Generator | No third-party generator (ADR-0003): Zod 4's native `z.toJSONSchema` plus a small builder, `apps/web/server/openapi/build.ts`. Linted with Redocly CLI; breaking changes diffed with oasdiff. |
 | Output | `GET /api/v1/openapi.json`, plus a committed copy at `docs/api/openapi.json` for review and diff. |
 | Reference UI | `@scalar/nextjs-api-reference`, mounted as a route handler at `GET /api/v1/docs`. Assets bundled with the app; no script, font or document loaded from Scalar's servers or a public CDN. Telemetry and external integrations off. |
-| Access | Same sign-in as the app (`middleware.ts`). The "try it" client calls the API with the user's own session, so it can do only what the user's role allows. |
+| Access | Same sign-in as the app (`proxy.ts`, Next.js 16's middleware). The "try it" client calls the API with the user's own session, so it can do only what the user's role allows. |
 | Theme | TCB-DS colours through Scalar's CSS variables; light and dark. Descriptions in English (developer audience). |
 | Why not Swagger UI | Scalar has a Next.js integration, a better built-in request client, search and code samples. Swagger UI announced OpenAPI 3.2 support earlier, so it is the fallback if 3.2 on day one becomes a hard requirement. The generated document stays the same either way. |
 | Why not Scalar's hosted Docs product | It would publish the internal API description outside the bank's network. |
@@ -1021,7 +1021,7 @@ Give each session: the task ID and acceptance line from the table, links to this
 
 ### 15.5 Human controls on agent work
 
-- **Sensitive paths:** `packages/engine`, `prisma/migrations`, `lib/rbac.ts`, auth code, `docker/keycloak` and the pipeline need review by a named human. Code-owner enforcement is **optional for now**: until it is turned on, the PR author ticks the sensitive-path box in the PR template and asks a named reviewer. `docs/CODEOWNERS.example` is ready to copy to the repository root when owners are agreed. An agent's approval never counts as that review.
+- **Sensitive paths:** `packages/engine`, `packages/db/prisma/migrations`, `lib/rbac.ts`, auth code, `docker/keycloak` and the pipeline need review by a named human. Code-owner enforcement is **optional for now**: until it is turned on, the PR author ticks the sensitive-path box in the PR template and asks a named reviewer. `docs/CODEOWNERS.example` is ready to copy to the repository root when owners are agreed. An agent's approval never counts as that review.
 - **No self-merge.** Agents open pull requests; a person merges.
 - **Small, traceable changes.** Each PR names its task ID and states what was verified and what was not.
 - **Golden files are protected.** Changing a file under `packages/engine/golden/` requires an ADR link in the PR.
