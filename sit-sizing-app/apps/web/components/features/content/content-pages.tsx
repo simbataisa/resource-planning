@@ -104,27 +104,27 @@ export function GuidePage() {
         ))}
       </ol>
       <p className="text-sm text-muted-foreground">{tp('workedExampleNote')}</p>
-      <CollapsibleSection title={t('where.title')} defaultOpen>
+      <CollapsibleSection variant="box" title={t('where.title')} defaultOpen>
         <SimpleTable
           head={keys(3).map((k) => t(`where.head.${k}`))}
           rows={keys(13).map((r) => keys(3).map((c) => rich(`where.rows.${r}.${c}`)))}
         />
       </CollapsibleSection>
-      <CollapsibleSection title={t('read.title')}>
+      <CollapsibleSection variant="box" title={t('read.title')}>
         <ul className="ml-5 grid list-disc gap-2 text-sm">
           {keys(6).map((k) => (
             <li key={k}>{rich(`read.items.${k}`)}</li>
           ))}
         </ul>
       </CollapsibleSection>
-      <CollapsibleSection title={t('calibrate.title')}>
+      <CollapsibleSection variant="box" title={t('calibrate.title')}>
         <ul className="ml-5 grid list-disc gap-2 text-sm">
           {keys(9).map((k) => (
             <li key={k}>{rich(`calibrate.items.${k}`)}</li>
           ))}
         </ul>
       </CollapsibleSection>
-      <CollapsibleSection title={t('faq.title')}>
+      <CollapsibleSection variant="box" title={t('faq.title')}>
         <dl className="grid gap-4 text-sm">
           {keys(9).map((k) => (
             <div key={k} className="grid gap-1">

@@ -122,15 +122,20 @@ describe('patterns (layer 3)', () => {
         <StatCard label="Rough" value={12} tone="rough" detail="3,511 cases" />
         <StatCard label="Plain" value={3} />
         <ComparisonBars label="no scale" rough={5} detailed={-1} max={0} />
-        <CollapsibleSection title="Data" empty defaultOpen>
+        <CollapsibleSection title="Data" index={5} empty defaultOpen>
           Body
+        </CollapsibleSection>
+        <CollapsibleSection variant="box" title="Fields by type">
+          Box body
         </CollapsibleSection>
       </div>,
     );
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
     expect(screen.getByText('3,511 cases')).toBeInTheDocument();
     expect(container.querySelector('details')!.open).toBe(true);
-    expect(container.querySelector('details')!.className).toContain('opacity-70');
+    // Nothing in scope: the section number turns grey instead of red (prototype .dsec.empty).
+    expect(screen.getByText('5').className).toContain('bg-border-strong');
+    expect(container.querySelectorAll('details')[1]!.className).toContain('bg-muted');
     const bars = screen.getByRole('img', { name: 'no scale' }).querySelectorAll('span');
     expect((bars[0] as HTMLElement).style.width).toBe('0%');
     await expectNoAxeViolations(container);

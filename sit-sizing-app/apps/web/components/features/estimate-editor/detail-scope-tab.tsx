@@ -134,12 +134,15 @@ export function DetailScopeTab() {
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted-foreground">{t('hint')}</p>
-      <nav aria-label={t('nav')} className="flex flex-wrap items-center gap-2 text-sm">
+      <nav
+        aria-label={t('nav')}
+        className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-[10px] border bg-muted px-3 py-2.5"
+      >
         {SECTIONS.map((s, i) => (
           <a
             key={s}
             href={`#${sectionId(s)}`}
-            className={`rounded-md border px-2 py-1 hover:bg-muted ${summaries[s].empty ? 'text-muted-foreground' : ''}`}
+            className={`inline-flex items-center gap-1.5 rounded-full border bg-card py-1 pr-[11px] pl-1 text-[0.84rem] text-foreground no-underline hover:border-brand hover:text-brand focus-visible:border-brand focus-visible:text-brand ${summaries[s].empty ? 'opacity-60' : ''}`}
             onClick={(e) => {
               e.preventDefault();
               setOpen((o) => ({ ...o, [s]: true }));
@@ -148,14 +151,27 @@ export function DetailScopeTab() {
               el?.querySelector('summary')?.focus({ preventScroll: true });
             }}
           >
-            <b>{i + 1}</b> {t(`sections.${s}`)}
+            <b className="inline-grid size-5 place-items-center rounded-full bg-muted font-mono text-[0.72rem] font-semibold text-muted-foreground">
+              {i + 1}
+            </b>
+            {t(`sections.${s}`)}
           </a>
         ))}
-        <span className="ml-auto flex gap-1">
-          <Button variant="link" size="sm" onClick={() => setAll(true)}>
+        <span className="ml-auto flex gap-3.5">
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-[0.85rem] font-normal underline underline-offset-2"
+            onClick={() => setAll(true)}
+          >
             {t('expandAll')}
           </Button>
-          <Button variant="link" size="sm" onClick={() => setAll(false)}>
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-[0.85rem] font-normal underline underline-offset-2"
+            onClick={() => setAll(false)}
+          >
             {t('collapseAll')}
           </Button>
         </span>
@@ -278,7 +294,7 @@ function FieldsSection() {
           u: pctS(A.dtoReuse),
         })}
       </p>
-      <CollapsibleSection title={t('byType')} defaultOpen={typed}>
+      <CollapsibleSection variant="box" title={t('byType')} defaultOpen={typed}>
         <Hint>{t('byTypeHint')}</Hint>
         <div className="overflow-x-auto rounded-lg border">
           <Table>
@@ -557,7 +573,7 @@ function GuideSection() {
                 {([0, 1, 2] as const).map((b) => (
                   <TableCell key={b} className="align-top whitespace-normal">
                     {t(`rubric.${k}.${b}`)}
-                    <span className="mt-1 block text-xs text-muted-foreground">
+                    <span className="mt-1 block font-mono text-[0.76rem] text-brand">
                       {t('perItem', { h: formatFte(itemHours(k, b, D, A)) })}
                     </span>
                   </TableCell>

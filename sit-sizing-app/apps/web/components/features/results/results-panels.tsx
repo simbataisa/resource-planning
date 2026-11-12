@@ -435,7 +435,7 @@ function WorkedExample() {
     }),
   ];
   return (
-    <CollapsibleSection title={t('title')}>
+    <CollapsibleSection variant="box" title={t('title')}>
       <p className="text-sm text-muted-foreground">{t('hint')}</p>
       <ol className="ml-5 grid list-decimal gap-1.5 text-sm">
         {steps.map((s, i) => (
