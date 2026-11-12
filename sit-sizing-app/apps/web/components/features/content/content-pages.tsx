@@ -96,7 +96,7 @@ export function GuidePage() {
   const tp = useTranslations('content.guidePage');
   const rich = (key: string) => t.rich(key, tags());
   return (
-    <div className="grid max-w-4xl gap-6">
+    <div className="grid gap-6">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('note')} />
       <ol className="ml-5 grid list-decimal gap-2 text-sm leading-relaxed">
         {keys(7).map((k) => (
@@ -142,7 +142,7 @@ export function MethodPage() {
   const t = useTranslations('content.method');
   const rich = (key: string) => t.rich(key, tags());
   return (
-    <div className="grid max-w-4xl gap-6">
+    <div className="grid gap-6">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} />
       <pre className="overflow-x-auto rounded-lg border bg-muted px-3.5 py-3 font-mono text-[0.86rem] leading-[1.7]">
         {t('formula')}
@@ -171,7 +171,7 @@ export function StandardsPage() {
     : tc('wide');
 
   return (
-    <div className="grid max-w-5xl gap-8">
+    <div className="grid gap-8">
       <PageHeader
         eyebrow={t('eyebrow')}
         title={t('title')}
