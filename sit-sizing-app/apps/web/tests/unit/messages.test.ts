@@ -40,6 +40,7 @@ const SAME_IN_VI = [
   /^evidenceTab\.spares\.r1\.test$/,
   /^roles\.QE_LEAD$/,
   /^teamTab\.(junior|mid|senior)$/,
+  /^versions\.(by|cmp\.fte)$/,
 ];
 
 describe('i18n messages', () => {

@@ -87,6 +87,7 @@ model User {
   estimatesCreated  Estimate[]
   versionsCreated   EstimateVersion[]  @relation("VersionCreatedBy")
   versionsApproved  EstimateVersion[]  @relation("VersionApprovedBy")
+  versionsSubmitted EstimateVersion[]  @relation("VersionSubmittedBy")
   versionsLocked    EstimateVersion[]  @relation("VersionLockedBy")
   profilesCreated   AssumptionProfile[]
   actualsRecorded   Actuals[]
@@ -172,6 +173,8 @@ model EstimateVersion {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @default(now()) @updatedAt
   submittedAt        DateTime?
+  /// Who submitted it for approval (segregation of duties, release 2)
+  submittedById      String?
   approvedById       String?
   approvedAt         DateTime?
 
@@ -179,6 +182,7 @@ model EstimateVersion {
   profile       AssumptionProfile? @relation(fields: [profileId], references: [id])
   createdBy     User               @relation("VersionCreatedBy", fields: [createdById], references: [id])
   approvedBy    User?              @relation("VersionApprovedBy", fields: [approvedById], references: [id])
+  submittedBy   User?              @relation("VersionSubmittedBy", fields: [submittedById], references: [id])
   lockedBy      User?              @relation("VersionLockedBy", fields: [lockedById], references: [id])
   actuals       Actuals[]
   comments      ReviewComment[]

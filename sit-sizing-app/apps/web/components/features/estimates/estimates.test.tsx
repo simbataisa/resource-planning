@@ -28,6 +28,10 @@ const summary = {
   createdBy: user,
   createdAt: '2026-11-12T07:00:00.000Z',
   updatedAt: '2026-11-12T07:05:00.000Z',
+  submittedBy: null,
+  submittedAt: null,
+  approvedBy: null,
+  approvedAt: null,
 };
 
 const hooks = vi.hoisted(() => ({

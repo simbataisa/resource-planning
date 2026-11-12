@@ -140,6 +140,11 @@ export const VersionSummary = z
     createdBy: UserRef,
     createdAt: IsoDateTime,
     updatedAt: IsoDateTime,
+    /** Approval workflow (release 2). */
+    submittedBy: UserRef.nullable(),
+    submittedAt: IsoDateTime.nullable(),
+    approvedBy: UserRef.nullable(),
+    approvedAt: IsoDateTime.nullable(),
   })
   .meta({ id: 'VersionSummary' });
 export type VersionSummary = z.infer<typeof VersionSummary>;
@@ -149,6 +154,12 @@ export const EditLock = z
   .meta({ id: 'EditLock' });
 export type EditLock = z.infer<typeof EditLock>;
 
+export const ReviewKind = z.enum(['COMMENT', 'RETURN', 'APPROVE']);
+export const ReviewEntry = z
+  .object({ id: Id, kind: ReviewKind, body: z.string(), author: UserRef, createdAt: IsoDateTime })
+  .meta({ id: 'ReviewEntry' });
+export type ReviewEntry = z.infer<typeof ReviewEntry>;
+
 export const Version = VersionSummary.extend({
   inputs: EstimateInputs,
   assumptions: Assumptions,
@@ -157,6 +168,8 @@ export const Version = VersionSummary.extend({
   schemaVersion: z.number().int(),
   rowVersion: z.number().int(),
   lock: EditLock.nullable(),
+  /** Review notes on submit, approve and return, oldest first. */
+  reviews: z.array(ReviewEntry),
 }).meta({ id: 'Version' });
 export type Version = z.infer<typeof Version>;
 
@@ -221,6 +234,54 @@ export const LockRequest = z
     takeover: z.boolean().default(false),
   })
   .meta({ id: 'LockRequest' });
+
+/** Optional note when submitting or approving (release 2, V-01). */
+export const ReviewNote = z
+  .object({ note: z.string().trim().max(2000).optional() })
+  .meta({ id: 'ReviewNote', example: { note: 'Synthetic: scope agreed with the delivery lead' } });
+
+/** Returning a version for changes always says why. */
+export const ReturnRequest = z.object({ note: z.string().trim().min(1).max(2000) }).meta({
+  id: 'ReturnRequest',
+  example: { note: 'Synthetic: add the batch interfaces from FSD v2' },
+});
+
+const ModeFigures = z.object({ fte: z.number(), cases: z.number(), hours: z.number() });
+/** Two versions side by side (release 2, V-01): headline results, groups and changed values. */
+export const VersionCompare = z
+  .object({
+    a: VersionSummary,
+    b: VersionSummary,
+    results: z.object({
+      rough: z.object({ a: ModeFigures, b: ModeFigures }),
+      detailed: z.object({ a: ModeFigures, b: ModeFigures }),
+    }),
+    groups: z.array(
+      z.object({
+        group: z.string(),
+        aCases: z.number(),
+        bCases: z.number(),
+        aHours: z.number(),
+        bHours: z.number(),
+      }),
+    ),
+    changes: z.array(
+      z.object({
+        area: z.enum(['inputs', 'assumptions']),
+        path: z.string(),
+        a: z.unknown(),
+        b: z.unknown(),
+      }),
+    ),
+    /** True when more changes exist than are listed. */
+    truncated: z.boolean(),
+  })
+  .meta({ id: 'VersionCompare' });
+export type VersionCompare = z.infer<typeof VersionCompare>;
+export const CompareQuery = z.object({
+  a: z.coerce.number().int().min(1),
+  b: z.coerce.number().int().min(1),
+});
 
 export const VersionSave = z
   .object({ note: z.string().trim().max(2000).optional() })

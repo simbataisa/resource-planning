@@ -63,7 +63,8 @@ export function useLockDraft(estimateId: string) {
 export function useCreateDraft(estimateId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => api.estimates.createDraft(estimateId),
+    mutationFn: (fromVersion?: number) =>
+      api.estimates.createDraft(estimateId, fromVersion ? { fromVersion } : {}),
     onSuccess: async (v) => {
       qc.setQueryData(qk.version(estimateId, v.number), v);
       await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
@@ -81,3 +82,22 @@ export function useSaveVersion(estimateId: string) {
     },
   });
 }
+
+/** Submit, approve or return a saved version (release 2, V-01). */
+export function useReviewVersion(estimateId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { number: number; action: 'submit' | 'approve' | 'return'; note?: string }) =>
+      api.estimates.review(estimateId, v.number, v.action, v.note ? { note: v.note } : {}),
+    onSuccess: async (v) => {
+      qc.setQueryData(qk.version(estimateId, v.number), v);
+      await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
+    },
+  });
+}
+
+export const useCompare = (estimateId: string, a: number, b: number) =>
+  useQuery({
+    queryKey: qk.compare(estimateId, a, b),
+    queryFn: () => api.estimates.compare(estimateId, a, b),
+  });

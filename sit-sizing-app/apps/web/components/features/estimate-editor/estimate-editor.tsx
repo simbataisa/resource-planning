@@ -25,6 +25,7 @@ import {
 } from '@/lib/query/hooks';
 import { can } from '@/lib/rbac';
 import { ResultsPanels } from '../results/results-panels';
+import { VersionHistory } from '../versions/version-history';
 import { useQueryState } from '../shared/use-query-state';
 import { AssumptionsTab } from './assumptions-tab';
 import { DetailScopeTab } from './detail-scope-tab';
@@ -332,6 +333,7 @@ function EditorLayout({
         </Tabs>
       </section>
       <ResultsPanels />
+      <VersionHistory estimate={estimate} open={version} />
       <ExportPanel estimateName={estimate.name} versionNumber={version.number} />
     </div>
   );

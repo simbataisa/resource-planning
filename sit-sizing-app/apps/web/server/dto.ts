@@ -37,6 +37,17 @@ interface VersionRow {
   createdAt: Date;
   updatedAt: Date;
   createdBy: UserRow;
+  submittedAt: Date | null;
+  submittedBy: UserRow | null;
+  approvedAt: Date | null;
+  approvedBy: UserRow | null;
+}
+interface ReviewRow {
+  id: string;
+  kind: 'COMMENT' | 'RETURN' | 'APPROVE';
+  body: string;
+  createdAt: Date;
+  author: UserRow;
 }
 interface FullVersionRow extends VersionRow {
   inputs: unknown;
@@ -48,6 +59,7 @@ interface FullVersionRow extends VersionRow {
   lockedById: string | null;
   lockExpiresAt: Date | null;
   lockedBy: UserRow | null;
+  comments: ReviewRow[];
 }
 
 const iso = (d: Date) => d.toISOString();
@@ -94,6 +106,10 @@ export function versionSummaryDto(v: VersionRow): VersionSummary {
     createdBy: userRef(v.createdBy),
     createdAt: iso(v.createdAt),
     updatedAt: iso(v.updatedAt),
+    submittedBy: v.submittedBy ? userRef(v.submittedBy) : null,
+    submittedAt: v.submittedAt ? iso(v.submittedAt) : null,
+    approvedBy: v.approvedBy ? userRef(v.approvedBy) : null,
+    approvedAt: v.approvedAt ? iso(v.approvedAt) : null,
   };
 }
 
@@ -118,6 +134,13 @@ export function versionDto(v: FullVersionRow, userId: string, now: Date): Versio
     schemaVersion: v.schemaVersion,
     rowVersion: v.rowVersion,
     lock: v.status === 'DRAFT' ? lockDto(v, userId, now) : null,
+    reviews: v.comments.map((c) => ({
+      id: c.id,
+      kind: c.kind,
+      body: c.body,
+      author: userRef(c.author),
+      createdAt: iso(c.createdAt),
+    })),
   };
 }
 

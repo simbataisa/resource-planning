@@ -8,6 +8,7 @@ import {
   Project,
   ProjectDetail,
   Version,
+  VersionCompare,
   type DraftCreate,
   type DraftPatch,
   type EstimateCreate,
@@ -15,6 +16,8 @@ import {
   type MeUpdate,
   type MembersPut,
   type PageQuery,
+  type ReturnRequest,
+  type ReviewNote,
   type ProjectCreate,
   type ProjectUpdate,
   type VersionSave,
@@ -63,6 +66,16 @@ export function createApi(http: AxiosInstance = defaultHttp) {
       },
       saveVersion: (estimateId: string, body: In<typeof VersionSave> = {}) =>
         sendParsed(http, 'post', `/estimates/${estimateId}/versions`, body, Version),
+      /** Approval workflow (release 2, V-01). */
+      review: (
+        estimateId: string,
+        n: number,
+        action: 'submit' | 'approve' | 'return',
+        body: In<typeof ReviewNote> | In<typeof ReturnRequest>,
+      ) =>
+        sendParsed(http, 'post', `/estimates/${estimateId}/versions/${n}/${action}`, body, Version),
+      compare: (estimateId: string, a: number, b: number) =>
+        getParsed(http, `/estimates/${estimateId}/compare`, VersionCompare, { a, b }),
     },
     profiles: {
       list: (projectId?: string) =>
