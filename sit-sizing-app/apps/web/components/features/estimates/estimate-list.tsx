@@ -19,6 +19,7 @@ import { formatDateTime, formatFte } from '@/lib/format';
 import { principalFromMe } from '@/lib/me';
 import { useEstimates, useMe, useProject } from '@/lib/query/hooks';
 import { can } from '@/lib/rbac';
+import { MembersPanel } from '../admin/members-panel';
 import { useQueryState } from '../shared/use-query-state';
 import { NewEstimateDialog } from './new-estimate-dialog';
 
@@ -112,6 +113,15 @@ export function EstimateList({ projectId }: { projectId: string }) {
             </div>
           )}
         </QueryState>
+        {project.data ? (
+          <MembersPanel
+            key={project.data.members.map((m) => `${m.user.id}:${m.role}`).join(',')}
+            project={project.data}
+            canManage={
+              me.data ? can(principalFromMe(me.data), 'project.members.manage', projectId) : false
+            }
+          />
+        ) : null}
       </QueryState>
     </div>
   );

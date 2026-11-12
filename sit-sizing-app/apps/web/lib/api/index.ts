@@ -1,4 +1,7 @@
 import {
+  AdminUser,
+  AuditPage,
+  UserPage,
   Actuals,
   ActualsList,
   Estimate,
@@ -95,6 +98,14 @@ export function createApi(http: AxiosInstance = defaultHttp) {
       },
       compare: (estimateId: string, a: number, b: number) =>
         getParsed(http, `/estimates/${estimateId}/compare`, VersionCompare, { a, b }),
+    },
+    /** Admin and audit (release 3, H-01). */
+    audit: (q: Record<string, string | number | undefined>) =>
+      getParsed(http, '/audit', AuditPage, q),
+    users: {
+      list: (q: { q?: string; cursor?: string }) => getParsed(http, '/users', UserPage, q),
+      setActive: (id: string, active: boolean) =>
+        sendParsed(http, 'patch', `/users/${id}`, { active }, AdminUser),
     },
     /** Portfolio roll-up for the QBR (release 3, R-01). */
     portfolio: (q: { projectIds?: string[]; status: 'approved' | 'latest' }) =>

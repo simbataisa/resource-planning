@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/patterns/eyebrow';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/lib/i18n';
+import { AdminNavLinks } from '../admin/admin-nav';
 import { NotificationBell } from '../notifications/notification-bell';
 import { PortfolioNavLink } from '../portfolio/portfolio-page';
 import { AdoptProfileLocale, LanguageSwitch } from './language-switch';
@@ -52,6 +53,7 @@ export function AppShell({
               {t('app.profiles')}
             </Link>
             <PortfolioNavLink />
+            <AdminNavLinks />
             <Link href="/guide" className="hover:underline">
               {t('content.nav.guide')}
             </Link>

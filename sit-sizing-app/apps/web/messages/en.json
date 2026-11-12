@@ -10,7 +10,9 @@
     "sessionMenu": "Account",
     "signedInAs": "Signed in as {name}",
     "profiles": "Profiles",
-    "portfolio": "Portfolio"
+    "portfolio": "Portfolio",
+    "audit": "Audit log",
+    "users": "Users"
   },
   "common": {
     "loading": "Loading…",
@@ -1922,5 +1924,85 @@
     "draftExists": "Finish or save the open draft first, then recompute from this version.",
     "badge": "engine {old}",
     "badgeTitle": "Computed with engine {old}, not the current one"
+  },
+  "audit": {
+    "title": "Audit log",
+    "description": "Who did what and when, newest first. Each record keeps the request reference for support.",
+    "forbidden": "The audit log is for QE Leads (their projects) and Admins.",
+    "project": "Project",
+    "allProjects": "All projects and global events",
+    "action": "Action",
+    "anyAction": "Any action",
+    "actions": {
+      "estimate": "Estimates",
+      "estimate_version": "Versions and approvals",
+      "estimate_draft": "Drafts and locks",
+      "profile": "Assumption profiles",
+      "actuals": "Actuals",
+      "project": "Projects and members",
+      "user": "Users and sign-in"
+    },
+    "from": "From",
+    "to": "To",
+    "emptyTitle": "No events",
+    "emptyBody": "Nothing matches these filters.",
+    "more": "Show older events",
+    "cols": {
+      "when": "When",
+      "who": "Who",
+      "action": "Action",
+      "project": "Project",
+      "detail": "Details"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Users",
+      "description": "Everyone who has signed in, with their project roles.",
+      "forbidden": "Only Admins can manage users.",
+      "keycloakNote": "Accounts, passwords and the Admin role are managed in Keycloak: add or remove someone from the group sit-sizing-admins there, and it applies at their next sign-in. Here you can deactivate someone in this app; they are refused straight away.",
+      "search": "Search by name or e-mail",
+      "emptyTitle": "No users found",
+      "emptyBody": "People appear here after their first sign-in.",
+      "admin": "Admin",
+      "user": "User",
+      "active": "Active",
+      "inactive": "Deactivated",
+      "you": "You",
+      "deactivate": "Deactivate",
+      "activate": "Reactivate",
+      "confirmDeactivate": "Deactivate {name}",
+      "confirmActivate": "Reactivate {name}",
+      "cancel": "Cancel",
+      "more": "Show more",
+      "cols": {
+        "name": "Name",
+        "role": "Global role",
+        "projects": "Projects",
+        "lastSignIn": "Last sign-in",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "members": {
+      "title": "Members",
+      "person": "Person",
+      "role": "Project role",
+      "actions": "Actions",
+      "pending": "Not signed in yet",
+      "roleFor": "Project role for {who}",
+      "removeWho": "Remove {who}",
+      "email": "Work e-mail",
+      "newRole": "Role",
+      "add": "Add",
+      "hint": "People can be added once they have signed in to SIT Sizing. A project needs at least one QE Lead.",
+      "save": "Save members",
+      "saving": "Saving…",
+      "discard": "Discard changes",
+      "badEmail": "Enter a work e-mail address.",
+      "duplicate": "This person is already in the list.",
+      "needLead": "Keep at least one QE Lead.",
+      "notSignedIn": "These people have not signed in yet: {emails}. Ask them to sign in once, then add them."
+    }
   }
 }

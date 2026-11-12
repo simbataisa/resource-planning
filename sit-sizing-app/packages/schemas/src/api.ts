@@ -563,6 +563,53 @@ export const Portfolio = z
   .meta({ id: 'Portfolio' });
 export type Portfolio = z.infer<typeof Portfolio>;
 
+// ---------- admin and audit (release 3, H-01) ----------
+export const AuditQuery = PageQuery.extend({
+  /** Required for QE Leads (a project they lead); Admins may leave it out for all projects. */
+  projectId: Id.optional(),
+  entity: z.string().max(40).optional(),
+  /** Exact action, or a prefix ending in a dot, e.g. "estimate.version." */
+  action: z.string().max(80).optional(),
+  actorId: Id.optional(),
+  from: z.iso.date().optional(),
+  to: z.iso.date().optional(),
+}).meta({ id: 'AuditQuery' });
+
+export const AuditEventItem = z
+  .object({
+    id: Id,
+    at: IsoDateTime,
+    actor: UserRef,
+    action: z.string(),
+    entity: z.string(),
+    entityId: z.string(),
+    project: z.object({ id: Id, key: z.string(), name: z.string() }).nullable(),
+    detail: z.record(z.string(), z.unknown()),
+    requestId: z.string().nullable(),
+  })
+  .meta({ id: 'AuditEvent' });
+export type AuditEventItem = z.infer<typeof AuditEventItem>;
+export const AuditPage = page(AuditEventItem).meta({ id: 'AuditPage' });
+
+export const UserListQuery = PageQuery.extend({
+  /** Name or e-mail contains. */
+  q: z.string().trim().max(120).optional(),
+}).meta({ id: 'UserListQuery' });
+
+export const AdminUser = UserRef.extend({
+  /** From the Keycloak group sit-sizing-admins at each sign-in; read-only here. */
+  globalRole: GlobalRole,
+  active: z.boolean(),
+  createdAt: IsoDateTime,
+  lastLoginAt: IsoDateTime.nullable(),
+  memberships: z.array(z.object({ projectId: Id, projectKey: z.string(), role: ProjectRole })),
+}).meta({ id: 'AdminUser' });
+export type AdminUser = z.infer<typeof AdminUser>;
+export const UserPage = page(AdminUser).meta({ id: 'UserPage' });
+
+/** Only activation is managed in the app; identity and the Admin role live in Keycloak. */
+export const UserUpdate = z.object({ active: z.boolean() }).meta({ id: 'UserUpdate' });
+
 // ---------- misc ----------
 export const Health = z
   .object({ status: z.literal('ok'), version: z.string(), uptimeSeconds: z.number() })

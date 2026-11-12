@@ -10,7 +10,9 @@
     "sessionMenu": "Tài khoản",
     "signedInAs": "Đang đăng nhập với {name}",
     "profiles": "Hồ sơ",
-    "portfolio": "Danh mục"
+    "portfolio": "Danh mục",
+    "audit": "Nhật ký",
+    "users": "Người dùng"
   },
   "common": {
     "loading": "Đang tải…",
@@ -1922,5 +1924,85 @@
     "draftExists": "Hãy hoàn tất hoặc lưu bản nháp đang mở trước, rồi tính lại từ phiên bản này.",
     "badge": "engine {old}",
     "badgeTitle": "Được tính bằng engine {old}, không phải engine hiện tại"
+  },
+  "audit": {
+    "title": "Nhật ký kiểm tra",
+    "description": "Ai đã làm gì và khi nào, mới nhất trước. Mỗi bản ghi giữ mã yêu cầu để hỗ trợ tra cứu.",
+    "forbidden": "Nhật ký kiểm tra dành cho QE Lead (dự án của họ) và Quản trị viên.",
+    "project": "Dự án",
+    "allProjects": "Tất cả dự án và sự kiện chung",
+    "action": "Hành động",
+    "anyAction": "Mọi hành động",
+    "actions": {
+      "estimate": "Ước tính",
+      "estimate_version": "Phiên bản và phê duyệt",
+      "estimate_draft": "Bản nháp và khoá chỉnh sửa",
+      "profile": "Hồ sơ giả định",
+      "actuals": "Số liệu thực tế",
+      "project": "Dự án và thành viên",
+      "user": "Người dùng và đăng nhập"
+    },
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "emptyTitle": "Không có sự kiện",
+    "emptyBody": "Không có gì khớp với bộ lọc này.",
+    "more": "Xem sự kiện cũ hơn",
+    "cols": {
+      "when": "Thời điểm",
+      "who": "Người thực hiện",
+      "action": "Hành động",
+      "project": "Dự án",
+      "detail": "Chi tiết"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Người dùng",
+      "description": "Tất cả người đã đăng nhập, kèm vai trò trong các dự án.",
+      "forbidden": "Chỉ Quản trị viên quản lý người dùng.",
+      "keycloakNote": "Tài khoản, mật khẩu và vai trò Quản trị viên được quản lý trong Keycloak: thêm hoặc bỏ người dùng khỏi nhóm sit-sizing-admins ở đó, thay đổi có hiệu lực ở lần đăng nhập kế tiếp. Tại đây bạn có thể vô hiệu hoá người dùng trong ứng dụng này; họ bị từ chối ngay lập tức.",
+      "search": "Tìm theo tên hoặc e-mail",
+      "emptyTitle": "Không tìm thấy người dùng",
+      "emptyBody": "Người dùng xuất hiện ở đây sau lần đăng nhập đầu tiên.",
+      "admin": "Quản trị viên",
+      "user": "Người dùng",
+      "active": "Đang hoạt động",
+      "inactive": "Đã vô hiệu hoá",
+      "you": "Bạn",
+      "deactivate": "Vô hiệu hoá",
+      "activate": "Kích hoạt lại",
+      "confirmDeactivate": "Vô hiệu hoá {name}",
+      "confirmActivate": "Kích hoạt lại {name}",
+      "cancel": "Huỷ",
+      "more": "Xem thêm",
+      "cols": {
+        "name": "Tên",
+        "role": "Vai trò chung",
+        "projects": "Dự án",
+        "lastSignIn": "Đăng nhập gần nhất",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      }
+    },
+    "members": {
+      "title": "Thành viên",
+      "person": "Người",
+      "role": "Vai trò trong dự án",
+      "actions": "Thao tác",
+      "pending": "Chưa đăng nhập",
+      "roleFor": "Vai trò trong dự án của {who}",
+      "removeWho": "Xoá {who}",
+      "email": "E-mail công việc",
+      "newRole": "Vai trò",
+      "add": "Thêm",
+      "hint": "Chỉ thêm được người đã đăng nhập SIT Sizing ít nhất một lần. Mỗi dự án cần ít nhất một QE Lead.",
+      "save": "Lưu thành viên",
+      "saving": "Đang lưu…",
+      "discard": "Bỏ thay đổi",
+      "badEmail": "Nhập địa chỉ e-mail công việc.",
+      "duplicate": "Người này đã có trong danh sách.",
+      "needLead": "Giữ ít nhất một QE Lead.",
+      "notSignedIn": "Những người này chưa đăng nhập: {emails}. Hãy nhờ họ đăng nhập một lần rồi thêm lại."
+    }
   }
 }

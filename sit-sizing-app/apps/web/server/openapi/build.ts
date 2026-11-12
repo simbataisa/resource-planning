@@ -176,6 +176,11 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
           'What SIT cycles measured, against approved versions, with variance (release 3).',
       },
       {
+        name: 'Admin',
+        description:
+          'Users (activation only; identity lives in Keycloak) and the audit log (release 3).',
+      },
+      {
         name: 'Portfolio',
         description: 'Totals across projects for the QBR, with calibration status (release 3).',
       },

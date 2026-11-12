@@ -42,6 +42,7 @@ const hooks = vi.hoisted(() => ({
   useCreateEstimate: vi.fn(),
   useProfiles: vi.fn(),
   useApplyProfile: vi.fn(),
+  usePutMembers: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 vi.mock('@/lib/query/hooks', () => hooks);
 
