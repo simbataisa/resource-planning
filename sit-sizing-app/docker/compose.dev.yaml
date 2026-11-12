@@ -1,0 +1,45 @@
+# Development override: hot reload through a bind mount (design 12.2, 12.3).
+# node_modules and .next live in named volumes so host binaries never mix with
+# container binaries and bind-mount performance stays acceptable on macOS.
+services:
+  web:
+    build:
+      target: dev
+    image: sit-sizing-web:dev
+    command:
+      - sh
+      - -c
+      - pnpm install --frozen-lockfile --store-dir /pnpm/store && exec pnpm --filter @sit/web dev --webpack --hostname 0.0.0.0 --port 3000
+    environment:
+      NODE_ENV: development
+      # Bind mounts on Docker Desktop / Rancher Desktop for macOS do not reliably deliver file
+      # events into the container, so hot reload polls. Webpack's watcher supports polling;
+      # `pnpm dev` on the host keeps Turbopack.
+      WATCHPACK_POLLING: 'true'
+    read_only: false
+    tmpfs: !reset []
+    cap_drop: !reset []
+    volumes:
+      - ..:/repo
+      - nm-root:/repo/node_modules
+      - nm-web:/repo/apps/web/node_modules
+      - nm-engine:/repo/packages/engine/node_modules
+      - nm-schemas:/repo/packages/schemas/node_modules
+      - nm-tokens:/repo/packages/tokens/node_modules
+      - nm-config:/repo/packages/config/node_modules
+      - nm-db:/repo/packages/db/node_modules
+      - next-cache:/repo/apps/web/.next
+      - pnpm-store:/pnpm/store
+    healthcheck:
+      start_period: 120s
+
+volumes:
+  nm-root:
+  nm-web:
+  nm-engine:
+  nm-schemas:
+  nm-tokens:
+  nm-config:
+  nm-db:
+  next-cache:
+  pnpm-store:

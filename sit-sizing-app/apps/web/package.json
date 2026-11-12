@@ -1,0 +1,46 @@
+{
+  "name": "@sit/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc -p tsconfig.json",
+    "predev": "node scripts/vendor-scalar.mjs",
+    "prebuild": "node scripts/vendor-scalar.mjs",
+    "openapi:generate": "tsx scripts/openapi.ts",
+    "openapi:check": "tsx scripts/openapi.ts --check",
+    "openapi:lint": "redocly lint ../../docs/api/openapi.json --config ../../redocly.yaml",
+    "test:int": "vitest run --config vitest.integration.config.ts"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "~1.10.0",
+    "@opentelemetry/sdk-node": "^0.300.0",
+    "@scalar/api-reference": "^1.70.0",
+    "@scalar/nextjs-api-reference": "^0.12.0",
+    "@sit/db": "workspace:*",
+    "@sit/engine": "workspace:*",
+    "@sit/schemas": "workspace:*",
+    "@sit/tokens": "workspace:*",
+    "@tanstack/react-query": "^5.90.0",
+    "axios": "^1.13.0",
+    "next": "^16.3.0",
+    "pino": "^10.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.10.0",
+    "@sit/config": "workspace:*",
+    "@testcontainers/postgresql": "^12.0.0",
+    "@types/node": "catalog:",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tsx": "^4.20.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

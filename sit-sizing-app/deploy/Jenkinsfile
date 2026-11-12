@@ -1,0 +1,136 @@
+// SIT Sizing — Jenkins multibranch pipeline (design 12.5).
+// Every dependency and image comes through Nexus. Credentials IDs and the Nexus
+// URLs are placeholders: the platform team sets them as job/folder properties.
+//
+// Required Jenkins configuration (see docs/runbook.md, "Pipeline"):
+//   env NEXUS_DOCKER_REGISTRY   e.g. nexus.example.internal:8443          (push target)
+//   env REGISTRY_PREFIX         e.g. nexus.example.internal:8443/docker-proxy/  (pull-through, trailing slash)
+//   env NPM_REGISTRY            e.g. https://nexus.example.internal/repository/npm-proxy/
+//   credentials 'nexus-docker'  username/password for docker login
+//   agent label 'docker'        agent with Docker Engine + Compose v2
+//   script path                 sit-sizing-app/deploy/Jenkinsfile (multibranch job on the TCB repository)
+//   tools on the agent image or as containers: gitleaks, trivy (scans are skipped with a
+//   warning only when SECURITY_SCANS=off is set explicitly for a sandbox job)
+
+pipeline {
+  agent { label 'docker' }
+
+  options {
+    timestamps()
+    timeout(time: 45, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    disableConcurrentBuilds(abortPrevious: true)
+  }
+
+  environment {
+    CI = 'true'
+    // The app lives in a subfolder of the TCB repository; the prototype reference
+    // files (../sit-sizing-reference) are needed by the engine parity check.
+    APP_DIR = 'sit-sizing-app'
+    IMAGE_NAME = 'sit-sizing-web'
+    APP_VERSION = "${env.BRANCH_NAME == 'main' ? '0.1.' + env.BUILD_NUMBER : '0.1.0-' + env.BRANCH_NAME.replaceAll('[^A-Za-z0-9.-]', '-') + '.' + env.BUILD_NUMBER}"
+    NODE_IMAGE = "${env.REGISTRY_PREFIX ?: ''}node:24-bookworm-slim"
+  }
+
+  stages {
+    stage('Install') {
+      steps {
+        sh 'cd "$APP_DIR" && deploy/ci/in-node.sh "pnpm install --frozen-lockfile"'
+      }
+    }
+
+    stage('Type check and lint') {
+      steps {
+        sh 'cd "$APP_DIR" && deploy/ci/in-node.sh "pnpm typecheck && pnpm lint && pnpm format:check"'
+      }
+    }
+
+    stage('API contract') {
+      // design 9.4: committed OpenAPI document up to date, linted, no unapproved breaking change.
+      steps {
+        sh 'cd "$APP_DIR" && deploy/ci/in-node.sh "pnpm openapi:check && pnpm --filter @sit/web openapi:lint"'
+        sh 'cd "$APP_DIR" && deploy/ci/openapi-diff.sh'
+      }
+    }
+
+    stage('Unit and component tests') {
+      steps {
+        sh 'cd "$APP_DIR" && deploy/ci/in-node.sh "pnpm test:coverage"'
+      }
+      post {
+        always {
+          junit allowEmptyResults: false, testResults: "${env.APP_DIR}/reports/junit.xml"
+          archiveArtifacts artifacts: "${env.APP_DIR}/coverage/**", allowEmptyArchive: true
+        }
+      }
+    }
+
+    stage('Engine parity and mutation gate') {
+      // Golden parity also runs in the unit stage. This stage cross-checks the engine
+      // against the prototype itself (../sit-sizing-reference) and runs Stryker (break < 70%).
+      steps {
+        sh 'cd "$APP_DIR" && deploy/ci/in-node.sh "pnpm --filter @sit/engine parity && pnpm --filter @sit/engine mutation"'
+      }
+      post {
+        always { archiveArtifacts artifacts: "${env.APP_DIR}/reports/mutation/**", allowEmptyArchive: true }
+      }
+    }
+
+    stage('API integration tests') {
+      // Testcontainers suite arrives in step 1.2 (A-01).
+      when { expression { fileExists("${env.APP_DIR}/apps/web/tests/integration") } }
+      steps {
+        sh 'cd "$APP_DIR" && deploy/ci/in-node.sh --docker "pnpm test:int"'
+      }
+    }
+
+    stage('Build image') {
+      steps {
+        sh '''
+          cd "$APP_DIR"
+          docker build -f docker/Dockerfile --target runner \
+            --build-arg REGISTRY_PREFIX="${REGISTRY_PREFIX:-}" \
+            --build-arg NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmjs.org/}" \
+            --build-arg APP_VERSION="$APP_VERSION" \
+            -t "$IMAGE_NAME:$APP_VERSION" .
+        '''
+      }
+    }
+
+    stage('Security scans') {
+      steps {
+        sh 'cd "$APP_DIR" && deploy/ci/security-scans.sh "$IMAGE_NAME:$APP_VERSION"'
+      }
+      post {
+        always { archiveArtifacts artifacts: "${env.APP_DIR}/reports/security/**", allowEmptyArchive: true }
+      }
+    }
+
+    stage('Smoke test (compose stack)') {
+      steps {
+        sh 'cd "$APP_DIR" && deploy/ci/smoke.sh "$IMAGE_NAME:$APP_VERSION"'
+      }
+    }
+
+    stage('Publish to Nexus') {
+      when { branch 'main' }
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'nexus-docker', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+          sh '''
+          cd "$APP_DIR"
+            echo "$NEXUS_PASS" | docker login "$NEXUS_DOCKER_REGISTRY" -u "$NEXUS_USER" --password-stdin
+            docker tag "$IMAGE_NAME:$APP_VERSION" "$NEXUS_DOCKER_REGISTRY/$IMAGE_NAME:$APP_VERSION"
+            docker push "$NEXUS_DOCKER_REGISTRY/$IMAGE_NAME:$APP_VERSION"
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      // smoke.sh tears its compose project down itself.
+      sh 'cd "$APP_DIR" && docker logout "$NEXUS_DOCKER_REGISTRY" >/dev/null 2>&1 || true'
+    }
+  }
+}

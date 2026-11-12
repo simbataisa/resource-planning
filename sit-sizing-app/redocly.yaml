@@ -1,0 +1,12 @@
+# OpenAPI lint rules (design 9.4). Run: pnpm --filter @sit/web openapi:lint
+# Reviewed exceptions live in .redocly.lint-ignore.yaml next to this file.
+extends:
+  - recommended
+rules:
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-summary: error
+  operation-4xx-response: error
+  security-defined: error
+  no-unused-components: error
+  info-license: off

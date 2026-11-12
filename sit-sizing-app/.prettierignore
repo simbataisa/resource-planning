@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+coverage
+reports
+.next
+**/node_modules
+docs/api/openapi.json
+packages/db/src/generated
+apps/web/public/vendor
+packages/engine/golden

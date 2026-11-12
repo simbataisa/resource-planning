@@ -1,0 +1,9 @@
+# Reviewed exceptions to redocly.yaml (design 9.4, ADR-0003). Keep this list short;
+# every entry needs a reason.
+#
+# /health and /ready are unauthenticated operational probes. They take no input, so they
+# cannot return a 4xx; failure is 500 or 503.
+docs/api/openapi.json:
+  operation-4xx-response:
+    - '#/paths/~1health/get/responses'
+    - '#/paths/~1ready/get/responses'

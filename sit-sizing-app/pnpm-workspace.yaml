@@ -1,0 +1,25 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Supply-chain guard: never resolve a version published less than 14 days ago
+# (design section 3: "latest stable, at least two weeks old"). Minutes.
+minimumReleaseAge: 20160
+
+# pnpm 10 blocks dependency lifecycle scripts unless listed here.
+# Prisma downloads its schema engine on install; set PRISMA_ENGINES_MIRROR to an
+# internal mirror (Nexus raw proxy) where binaries.prisma.sh is not reachable.
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver
+
+# One version of the shared toolchain across every package.
+catalog:
+  '@types/node': ^24.0.0
+  '@vitest/coverage-v8': ^5.0.3
+  typescript: ~6.0.3
+  vitest: ^5.0.3
+  zod: ^4.1.0

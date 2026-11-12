@@ -1,0 +1,20 @@
+# Observability override (design 12.6): `pnpm dev:obs`.
+# Jaeger v2 is an OpenTelemetry Collector distribution, so it receives OTLP
+# directly and serves the trace viewer; no separate collector is needed locally.
+# Server environments send OTLP to the platform collector instead (Q4).
+services:
+  web:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+    depends_on:
+      jaeger:
+        condition: service_started
+
+  jaeger:
+    image: ${REGISTRY_PREFIX:-}jaegertracing/jaeger:2.22.0
+    environment:
+      JAEGER_LISTEN_HOST: 0.0.0.0
+    ports:
+      - '127.0.0.1:16686:16686' # UI
+      - '127.0.0.1:4318:4318' # OTLP/HTTP (for `pnpm dev` on the host)
+    restart: unless-stopped

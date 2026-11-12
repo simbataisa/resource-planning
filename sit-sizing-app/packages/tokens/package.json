@@ -1,0 +1,19 @@
+{
+  "name": "@sit/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TCB-DS design tokens as CSS variables and a Tailwind preset. Filled in step 1.4 (U-01) once the TCB-DS source is available (Q1).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@sit/config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

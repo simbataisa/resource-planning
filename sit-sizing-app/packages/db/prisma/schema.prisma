@@ -1,0 +1,284 @@
+// Application database `app` (design 5.2.1). Keycloak owns its own database.
+// Rules Prisma cannot express (one draft per estimate, unique global profile names, profile scope,
+// lock-only-drafts, append-only audit) are in the init migration's custom SQL.
+// JSON columns are validated with the Zod schemas before every write.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GlobalRole {
+  USER
+  ADMIN
+}
+
+enum ProjectRole {
+  VIEWER
+  ESTIMATOR
+  QE_LEAD
+}
+
+/// DRAFT: the one editable working copy · SAVED: frozen snapshot (release 1)
+/// SUBMITTED, APPROVED, SUPERSEDED: approval workflow (release 2)
+enum VersionStatus {
+  DRAFT
+  SAVED
+  SUBMITTED
+  APPROVED
+  SUPERSEDED
+}
+
+enum ProfileScope {
+  GLOBAL
+  PROJECT
+}
+
+enum ProfileStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+enum CommentKind {
+  COMMENT
+  RETURN
+  APPROVE
+}
+
+enum NotificationKind {
+  SUBMITTED
+  APPROVED
+  RETURNED
+  PROFILE_PUBLISHED
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id          String     @id @default(cuid())
+  /// OIDC "sub" = Keycloak user id
+  subject     String     @unique
+  email       String     @unique
+  displayName String
+  globalRole  GlobalRole @default(USER)
+  locale      String     @default("en") @db.VarChar(5)
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  lastLoginAt DateTime?
+
+  memberships       ProjectMember[]    @relation("MemberUser")
+  membersAdded      ProjectMember[]    @relation("MemberAddedBy")
+  projectsCreated   Project[]
+  estimatesCreated  Estimate[]
+  versionsCreated   EstimateVersion[]  @relation("VersionCreatedBy")
+  versionsApproved  EstimateVersion[]  @relation("VersionApprovedBy")
+  versionsLocked    EstimateVersion[]  @relation("VersionLockedBy")
+  profilesCreated   AssumptionProfile[]
+  actualsRecorded   Actuals[]
+  comments          ReviewComment[]
+  notifications     Notification[]
+  auditEvents       AuditEvent[]
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  /// Short code, e.g. "LEND"
+  key         String   @unique @db.VarChar(16)
+  name        String   @db.VarChar(120)
+  description String?  @db.VarChar(2000)
+  archived    Boolean  @default(false)
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy   User                @relation(fields: [createdById], references: [id])
+  members     ProjectMember[]
+  estimates   Estimate[]
+  profiles    AssumptionProfile[]
+  auditEvents AuditEvent[]
+}
+
+model ProjectMember {
+  projectId String
+  userId    String
+  role      ProjectRole
+  addedById String
+  addedAt   DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation("MemberUser", fields: [userId], references: [id])
+  addedBy User    @relation("MemberAddedBy", fields: [addedById], references: [id])
+
+  @@id([projectId, userId])
+  @@index([userId])
+}
+
+model Estimate {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String   @db.VarChar(160)
+  description String?  @db.VarChar(2000)
+  archived    Boolean  @default(false)
+  createdById String
+  createdAt   DateTime @default(now())
+
+  project   Project           @relation(fields: [projectId], references: [id])
+  createdBy User              @relation(fields: [createdById], references: [id])
+  versions  EstimateVersion[]
+
+  @@index([projectId, createdAt])
+}
+
+model EstimateVersion {
+  id                 String        @id @default(cuid())
+  estimateId         String
+  /// Unique per estimate
+  number             Int
+  status             VersionStatus @default(DRAFT)
+  /// zod: EstimateInputs (scope + team + evidence)
+  inputs             Json
+  profileId          String?
+  /// zod: Assumptions, copied at save time
+  assumptions        Json
+  /// zod: EstimateResult (both modes)
+  result             Json
+  engineVersion      String        @db.VarChar(20)
+  schemaVersion      Int
+  roughFte           Decimal       @db.Decimal(8, 2)
+  detailedFte        Decimal       @db.Decimal(8, 2)
+  totalCasesDetailed Int
+  uncalibrated       Int
+  note               String?       @db.VarChar(2000)
+  /// Optimistic lock
+  rowVersion         Int           @default(1)
+  /// Draft edit lock (drafts only)
+  lockedById         String?
+  lockExpiresAt      DateTime?
+  createdById        String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @default(now()) @updatedAt
+  submittedAt        DateTime?
+  approvedById       String?
+  approvedAt         DateTime?
+
+  estimate      Estimate           @relation(fields: [estimateId], references: [id])
+  profile       AssumptionProfile? @relation(fields: [profileId], references: [id])
+  createdBy     User               @relation("VersionCreatedBy", fields: [createdById], references: [id])
+  approvedBy    User?              @relation("VersionApprovedBy", fields: [approvedById], references: [id])
+  lockedBy      User?              @relation("VersionLockedBy", fields: [lockedById], references: [id])
+  actuals       Actuals[]
+  comments      ReviewComment[]
+  notifications Notification[]
+
+  @@unique([estimateId, number])
+  @@index([estimateId, status])
+}
+
+model AssumptionProfile {
+  id          String        @id @default(cuid())
+  scope       ProfileScope
+  projectId   String?
+  name        String        @db.VarChar(120)
+  status      ProfileStatus @default(DRAFT)
+  /// zod: Assumptions (the 142 calibratable values)
+  values      Json
+  /// Per path: source, measuredAt, note
+  calibration Json          @default("{}")
+  basedOnId   String?
+  createdById String
+  createdAt   DateTime      @default(now())
+  publishedAt DateTime?
+
+  project   Project?            @relation(fields: [projectId], references: [id])
+  basedOn   AssumptionProfile?  @relation("ProfileClone", fields: [basedOnId], references: [id])
+  clones    AssumptionProfile[] @relation("ProfileClone")
+  createdBy User                @relation(fields: [createdById], references: [id])
+  versions  EstimateVersion[]
+
+  @@unique([scope, projectId, name])
+  @@index([projectId, status])
+}
+
+model Actuals {
+  id           String   @id @default(cuid())
+  versionId    String
+  cycleLabel   String   @db.VarChar(80)
+  /// Cases, hours and rates per group
+  data         Json
+  recordedById String
+  recordedAt   DateTime @default(now())
+
+  version    EstimateVersion @relation(fields: [versionId], references: [id])
+  recordedBy User            @relation(fields: [recordedById], references: [id])
+
+  @@index([versionId])
+}
+
+model ReviewComment {
+  id        String      @id @default(cuid())
+  versionId String
+  authorId  String
+  kind      CommentKind
+  body      String      @db.VarChar(4000)
+  createdAt DateTime    @default(now())
+
+  version EstimateVersion @relation(fields: [versionId], references: [id])
+  author  User            @relation(fields: [authorId], references: [id])
+
+  @@index([versionId, createdAt])
+}
+
+/// Outbox: written in the same transaction as the business change, sent by the worker.
+model Notification {
+  id          String              @id @default(cuid())
+  recipientId String
+  versionId   String?
+  kind        NotificationKind
+  channel     NotificationChannel
+  status      NotificationStatus  @default(PENDING)
+  payload     Json
+  attempts    Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  sentAt      DateTime?
+  readAt      DateTime?
+
+  recipient User             @relation(fields: [recipientId], references: [id])
+  version   EstimateVersion? @relation(fields: [versionId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([recipientId, readAt])
+}
+
+/// Append-only (enforced by a trigger in the init migration).
+model AuditEvent {
+  id        String   @id @default(cuid())
+  actorId   String
+  /// e.g. "estimate.version.save"
+  action    String   @db.VarChar(80)
+  entity    String   @db.VarChar(40)
+  entityId  String
+  projectId String?
+  detail    Json     @default("{}")
+  requestId String?  @db.VarChar(128)
+  at        DateTime @default(now())
+
+  actor   User     @relation(fields: [actorId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([projectId, at])
+}

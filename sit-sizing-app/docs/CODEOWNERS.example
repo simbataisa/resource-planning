@@ -1,0 +1,25 @@
+# OPTIONAL for now (design 15.5). Not active: Git hosts read CODEOWNERS only from the
+# repository root, .github/ or docs/CODEOWNERS (without .example).
+# To enable: copy to the repository root as CODEOWNERS, replace the placeholder handles,
+# then turn on "require code owner review" (docs/runbook.md). An agent's approval never counts.
+
+*                         @OWNER-TECH-LEAD
+
+# Numbers: engine and its golden files
+/packages/engine/         @OWNER-TECH-LEAD @OWNER-QE-PRACTICE-LEAD
+/packages/schemas/        @OWNER-TECH-LEAD
+
+# Data: migrations are append-only once merged
+/packages/db/prisma/       @OWNER-TECH-LEAD @OWNER-DBA
+
+# Identity and authorisation: human security review required
+/docker/keycloak/         @OWNER-IDP @OWNER-SECURITY
+/apps/web/lib/rbac.ts     @OWNER-TECH-LEAD @OWNER-SECURITY
+/apps/web/lib/auth/       @OWNER-TECH-LEAD @OWNER-SECURITY
+/apps/web/proxy.ts        @OWNER-TECH-LEAD @OWNER-SECURITY
+
+# Pipeline, containers and agent rules
+/deploy/                  @OWNER-TECH-LEAD @OWNER-PLATFORM
+/docker/                  @OWNER-TECH-LEAD @OWNER-PLATFORM
+/AGENTS.md                @OWNER-TECH-LEAD
+/CODEOWNERS               @OWNER-TECH-LEAD

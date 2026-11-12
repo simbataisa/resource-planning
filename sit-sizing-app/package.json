@@ -1,0 +1,50 @@
+{
+  "name": "sit-sizing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SIT Sizing Model: estimate SIT and QE effort with a versioned, auditable engine.",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=24 <27"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @sit/web dev",
+    "build": "pnpm --filter @sit/web build",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:int": "pnpm --filter @sit/web test:int",
+    "test:e2e": "node scripts/not-yet.mjs test:e2e 1.5",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "dev:env": "node scripts/ensure-dev-env.mjs",
+    "dev:up": "node scripts/ensure-dev-env.mjs && docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml up -d --build --wait db mail web && docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml run --rm seed",
+    "dev:down": "docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml down",
+    "dev:logs": "docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml logs -f web",
+    "dev:obs": "node scripts/ensure-dev-env.mjs && docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml -f docker/compose.obs.yaml up -d --build --wait db mail web jaeger",
+    "dev:reset": "docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml --profile obs down -v",
+    "stack:up": "node scripts/ensure-dev-env.mjs && docker compose --env-file .env -f docker/compose.yaml up -d --build --wait db mail web && docker compose --env-file .env -f docker/compose.yaml run --rm seed",
+    "stack:down": "docker compose --env-file .env -f docker/compose.yaml down",
+    "db:migrate": "pnpm --filter @sit/db migrate:deploy",
+    "db:seed": "pnpm --filter @sit/db seed",
+    "licenses:check": "node deploy/ci/license-check.mjs",
+    "postinstall": "pnpm --filter @sit/db generate",
+    "db:check": "pnpm --filter @sit/db check",
+    "openapi:generate": "pnpm --filter @sit/web openapi:generate",
+    "openapi:check": "pnpm --filter @sit/web openapi:check"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "^16.3.0",
+    "prettier": "^3.6.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
