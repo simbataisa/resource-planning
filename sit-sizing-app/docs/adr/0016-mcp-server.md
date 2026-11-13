@@ -45,8 +45,8 @@ Other findings:
 - Codex sends `resource=<MCP URL>`; Keycloak 26.8 did not copy it into the token.
 - A client follows `scopes_supported` in the protected-resource metadata, so `apps/mcp` must publish `openid profile email` there. Without it Codex requested every scope the realm advertises, including `service_account`.
 - The realm already advertises an anonymous registration endpoint; the default policies are what keep it closed.
-- **Claude Code also asks for an offline token once the server publishes `scopes_supported`.** Its first run (no `scopes_supported`) got scope `email profile` and worked. A later run on 2026-11-13 against a server publishing `openid profile email`, with the pre-registered client and a user without the offline role, failed at the token exchange with "Offline tokens not allowed for the user or client" (Keycloak event `CODE_TO_TOKEN_ERROR`, client `sit-sizing-mcp-spike`). So without offline tokens, publishing scopes breaks Claude Code, and not publishing them makes Codex ask for every scope.
-- Not tested: whether both clients stop asking for `offline_access` if the realm does not advertise that scope. If they do, point 4 of the proposed realm change (offline tokens) could be dropped.
+- **Both clients ask for an offline token whenever the realm advertises one.** Claude Code too, once the server publishes `scopes_supported`: Its first run (no `scopes_supported`) got scope `email profile` and worked. A later run on 2026-11-13 against a server publishing `openid profile email`, with the pre-registered client and a user without the offline role, failed at the token exchange with "Offline tokens not allowed for the user or client" (Keycloak event `CODE_TO_TOKEN_ERROR`, client `sit-sizing-mcp-spike`). So without offline tokens, publishing scopes breaks Claude Code, and not publishing them makes Codex ask for every scope.
+- Tested afterwards: with the scope removed from the realm, neither client asks for it (see Decision).
 
 ## Options considered
 
@@ -75,9 +75,16 @@ Proposed realm change, every line for the security reviewer:
    - "Allowed Client Scopes": only `openid`, `profile`, `email`, `offline_access` and the audience scope below. Not `service_account`, `roles` or the rest.
    - "Consent Required", "Full Scope Disabled", "Allowed Protocol Mapper Types" and "Max Clients Limit" stay as they are. Each Codex sign-in registers a new client (two were created in two runs), so the limit will be reached; stale self-registered clients need a documented clean-up.
 3. **Audience for every client.** A realm default client scope with an audience mapper adding `sit-sizing-api`, so that self-registered clients get it too. Without it tokens carry no `aud` and the API refuses them.
-4. **Offline tokens**, because Codex always requests `offline_access`. Users get the `offline_access` role. To limit the damage: offline session idle and maximum lifetimes set no longer than the SSO limits in design 10.4, and back-channel logout set to revoke offline tokens (`backchannel.logout.revoke.offline.tokens`). The API's revoked-session check must also cover offline sessions.
+4. **No offline tokens.** The realm has no `offline_access` client scope, so it is not in the scopes Keycloak advertises, and no user has the `offline_access` role. Neither the web app nor the realm export uses offline tokens today; the export currently gets the scope only because Keycloak creates it on import, so the export must remove it explicitly and an identity test must check it is absent.
 
-**Proven in dev on 2026-11-13** with points 2 to 4 applied (offline tokens for one dev user only): Codex (client 0.168.0) registered itself, the user signed in, and `ping` returned `pong`. The access token carried `aud: sit-sizing-api`, scope `openid email profile offline_access`, and `azp` set to the self-registered client's generated ID. All settings were removed afterwards and anonymous registration was confirmed refused again (403).
+**Proven in dev on 2026-11-13, in two steps:**
+
+- With offline tokens allowed for one dev user, Codex (0.168.0) registered itself, the user signed in, and `ping` returned `pong`; the token carried `aud: sit-sizing-api`.
+- **Then without offline tokens** (points 1 to 4 as written above): with the `offline_access` scope removed from the realm, **both clients stopped asking for it**. Codex requested `openid profile email`, registered, signed in and received an ordinary refresh token. Claude Code signed in through the pre-registered client with the same scopes and `ping` returned `pong`. No user had the offline role. Keycloak events `CLIENT_REGISTER` and `CODE_TO_TOKEN` (scope `openid email profile`, refresh type `Refresh`) record it.
+
+So the earlier need for offline tokens came only from the realm advertising the scope. Dropping it keeps the session limits and back-channel logout in design 10.4 intact.
+
+All test settings were removed afterwards and anonymous registration was confirmed refused again (403).
 
 Consequence for the API: `azp` is a different generated ID per Codex sign-in, so "came through the assistant" cannot be decided by comparing `azp` with one client ID. Every bearer-authenticated request is recorded as channel `mcp`; the bearer path exists only for MCP clients.
 
