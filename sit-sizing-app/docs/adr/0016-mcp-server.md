@@ -61,20 +61,30 @@ Realm decision rule (spec 6.2a):
 - **Preferred:** option A, if every required client works with it.
 - **Fallback, only if a required client cannot work that way:** option B with its restrictions. This is a decision for the security reviewer.
 
-**Proposed outcome (for the product owner and the security reviewer to confirm):** option A. One pre-registered public client `sit-sizing-mcp`: standard flow, PKCE S256, redirect URIs `http://127.0.0.1/*` and `http://localhost/*`, no implicit flow, no direct grants, no service account, no offline tokens, plus an audience mapper adding `sit-sizing-api`. Anonymous registration stays closed.
+**Product owner's decision (2026-11-13): Codex must work in the first version, by opening the realm (option B).** Option A alone was offered and declined; a sign-in broker inside the MCP server and a local server (option C) were also offered and declined.
 
-Under option A this version supports **Claude Code**. Codex and Antigravity are unsupported as tested; Kiro is unknown until someone tests it.
+**This is not accepted until the security reviewer accepts it (rule 13).** The reviewer may refuse it; the alternatives above then come back.
 
-Open for the deciders:
+Proposed realm change, every line for the security reviewer:
 
-- **Product owner:** is Claude Code alone acceptable for the first version, or must Codex and Antigravity work? If they must, the choice is between option B with offline tokens (Codex only; Antigravity still does not sign in) and option C.
-- **Security reviewer:** accept option A as described; and, only if the product owner needs Codex, whether option B with offline tokens is acceptable at all.
+1. **A pre-registered public client `sit-sizing-mcp`** for clients that accept a configured client ID (Claude Code): standard flow, PKCE S256, redirect URIs `http://127.0.0.1/*` and `http://localhost/*`, no implicit flow, no direct grants, no service account.
+2. **Anonymous dynamic client registration, restricted by policy:**
+   - "Trusted Hosts": the sending host is not checked (laptops cannot be listed); the registered client's URIs must be `127.0.0.1` or `localhost`.
+   - "Allowed Client Scopes": only `openid`, `profile`, `email`, `offline_access` and the audience scope below. Not `service_account`, `roles` or the rest.
+   - "Consent Required", "Full Scope Disabled", "Allowed Protocol Mapper Types" and "Max Clients Limit" stay as they are. Each Codex sign-in registers a new client (two were created in two runs), so the limit will be reached; stale self-registered clients need a documented clean-up.
+3. **Audience for every client.** A realm default client scope with an audience mapper adding `sit-sizing-api`, so that self-registered clients get it too. Without it tokens carry no `aud` and the API refuses them.
+4. **Offline tokens**, because Codex always requests `offline_access`. Users get the `offline_access` role. To limit the damage: offline session idle and maximum lifetimes set no longer than the SSO limits in design 10.4, and back-channel logout set to revoke offline tokens (`backchannel.logout.revoke.offline.tokens`). The API's revoked-session check must also cover offline sessions.
+
+Not yet proven: the test stopped at the offline-token refusal, so nobody has seen Codex complete a sign-in and call a tool with these settings. That run is needed before the review.
+
+Under this decision the first version supports **Claude Code and Codex**. **Antigravity** stays unsupported (it never starts a sign-in); **Kiro** is unknown until someone tests it.
 
 Realm changes are made only through `docker/keycloak/realm/qe-tools-realm.json` and need human security review.
 
 ## Consequences
 
 - Nothing is built until the security reviewer has accepted the realm decision.
-- If option B is chosen, the realm policy and its tests become part of the review scope.
+- Option B is chosen: the registration policies, the default audience scope, the offline-token settings and their tests are part of the review scope and of plan task 1.
+- The realm's anonymous registration endpoint becomes usable from the network the server is exposed on; this goes into the threat model.
 - Unsupported clients get no workaround in this version.
 - We will know the decision was wrong if a client in regular use cannot sign in; revisit then.
