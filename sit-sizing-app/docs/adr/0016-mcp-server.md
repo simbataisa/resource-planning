@@ -45,6 +45,8 @@ Other findings:
 - Codex sends `resource=<MCP URL>`; Keycloak 26.8 did not copy it into the token.
 - A client follows `scopes_supported` in the protected-resource metadata, so `apps/mcp` must publish `openid profile email` there. Without it Codex requested every scope the realm advertises, including `service_account`.
 - The realm already advertises an anonymous registration endpoint; the default policies are what keep it closed.
+- **Claude Code also asks for an offline token once the server publishes `scopes_supported`.** Its first run (no `scopes_supported`) got scope `email profile` and worked. A later run on 2026-11-13 against a server publishing `openid profile email`, with the pre-registered client and a user without the offline role, failed at the token exchange with "Offline tokens not allowed for the user or client" (Keycloak event `CODE_TO_TOKEN_ERROR`, client `sit-sizing-mcp-spike`). So without offline tokens, publishing scopes breaks Claude Code, and not publishing them makes Codex ask for every scope.
+- Not tested: whether both clients stop asking for `offline_access` if the realm does not advertise that scope. If they do, point 4 of the proposed realm change (offline tokens) could be dropped.
 
 ## Options considered
 
