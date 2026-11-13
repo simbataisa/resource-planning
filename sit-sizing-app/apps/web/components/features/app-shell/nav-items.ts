@@ -27,18 +27,6 @@ export const NAV_ICONS: Record<NavSection | 'apiDocs', LucideIcon> = {
   apiDocs: FileCode2,
 };
 
-/** Message key of each section's link and of its name in the bar above the page. */
-export const SECTION_LABEL = {
-  projects: 'app.projects',
-  profiles: 'app.profiles',
-  portfolio: 'app.portfolio',
-  audit: 'app.audit',
-  users: 'app.users',
-  guide: 'content.nav.guide',
-  method: 'content.nav.method',
-  standards: 'content.nav.standards',
-} as const satisfies Record<NavSection, string>;
-
 const BY_SEGMENT: Record<string, NavSection> = {
   projects: 'projects',
   estimates: 'projects', // estimates belong to a project

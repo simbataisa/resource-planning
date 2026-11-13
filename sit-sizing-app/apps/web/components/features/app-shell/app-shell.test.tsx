@@ -41,8 +41,17 @@ describe('AppShell (U-04)', () => {
     );
     expect(within(nav).getByText('Work')).toBeInTheDocument();
     expect(within(nav).getByText('Reference')).toBeInTheDocument();
-    expect(within(screen.getByRole('banner')).getByText('Projects')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Toggle sidebar' })).toBeInTheDocument();
+    // No bar above the page: the toggle and the bell live in the sidebar.
+    expect(screen.queryByRole('banner')).toBeNull();
+    const sidebar = screen.getByRole('complementary', { name: 'Navigation and account' });
+    expect(within(sidebar).getByRole('button', { name: 'Toggle sidebar' })).toBeInTheDocument();
+    expect(within(sidebar).getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+    // The title is the short brand only.
+    expect(within(sidebar).getByRole('link', { name: 'Quality engineering' })).toHaveAttribute(
+      'href',
+      '/en/projects',
+    );
+    expect(within(sidebar).queryByText(/SIT Sizing|SIT planning/)).toBeNull();
     expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute(
       'href',
       '#main',
@@ -54,9 +63,7 @@ describe('AppShell (U-04)', () => {
     expect(within(account).getByText('S')).toHaveAttribute('aria-hidden', 'true');
     // Named by its content, not aria-label, so axe's label-content-name-mismatch cannot fire.
     expect(account).not.toHaveAttribute('aria-label');
-    expect(screen.getByRole('complementary', { name: 'Navigation and account' })).toContainElement(
-      account,
-    );
+    expect(sidebar).toContainElement(account);
     await user.click(account);
     expect(screen.getByRole('menuitem', { name: 'Sign out' })).toHaveAttribute(
       'href',
@@ -93,15 +100,19 @@ describe('AppShell (U-04)', () => {
     try {
       const user = userEvent.setup();
       renderWithIntl(<AppShell userName="Synthetic Estimator">x</AppShell>);
+      // On a phone the sidebar is hidden, so a slim bar keeps its toggle in reach.
       await user.click(screen.getByRole('button', { name: 'Toggle sidebar' }));
       const sheet = screen.getByRole('dialog', { name: 'Main' });
+      expect(within(sheet).getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+      // The sheet has its own close button, so no second toggle inside it.
+      expect(within(sheet).queryByRole('button', { name: 'Toggle sidebar' })).toBeNull();
       await user.click(within(sheet).getByRole('link', { name: 'Profiles' }));
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       // The brand link is a link too: choosing it also closes the sheet.
       await user.click(screen.getByRole('button', { name: 'Toggle sidebar' }));
       await user.click(
         within(screen.getByRole('dialog', { name: 'Main' })).getByRole('link', {
-          name: /SIT Sizing/,
+          name: 'Quality engineering',
         }),
       );
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

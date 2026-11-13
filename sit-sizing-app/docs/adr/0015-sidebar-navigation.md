@@ -31,7 +31,7 @@ How it is built:
 
 ## Decision
 
-The signed-in navigation is a left sidebar (layout A) built from shadcn's Sidebar, copied into `components/ui` and trimmed. Links are grouped as Work (Projects, Profiles, Portfolio), Admin (Audit log, Users; hidden when neither is visible) and Reference (Guide, Method, Standards, API reference). The sidebar footer holds the language switch and an account menu with Sign out. A slim bar above the page holds the toggle, the current section's name and the bell. On desktop the sidebar collapses to icons (Ctrl/⌘+B), remembered in the `sidebar_state` cookie and read by the server layout; below 768px it is a slide-over sheet.
+The signed-in navigation is a left sidebar (layout A) built from shadcn's Sidebar, copied into `components/ui` and trimmed. Links are grouped as Work (Projects, Profiles, Portfolio), Admin (Audit log, Users; hidden when neither is visible) and Reference (Guide, Method, Standards, API reference). The sidebar footer holds the language switch and an account menu with Sign out. There is no bar above the page: the sidebar header holds the short brand ("Quality engineering"), the notification bell and the collapse toggle, stacked when collapsed to icons. On a phone, where the sidebar is hidden, a slim bar holds only the toggle; the bell is inside the sheet. The section name is no longer repeated above the page, since each page has its own heading. (Revised 2026-11-13 at the product owner's request.) On desktop the sidebar collapses to icons (Ctrl/⌘+B), remembered in the `sidebar_state` cookie and read by the server layout; below 768px it is a slide-over sheet.
 
 Changes from upstream shadcn: labels are props (no English in layer 2), the inset is a `<div>` because the shell owns `<main id="main">`, hover is neutral and only the active item gets the red tint and a 2px red marker. Six `sidebar-*` tokens are added to `packages/tokens` and covered by the contrast tests.
 
@@ -40,5 +40,5 @@ Changes from upstream shadcn: labels are props (no English in layer 2), the inse
 - The ADR-0005 theme is unchanged: the 4px red top bar, page grey, red focus and active marker stay.
 - `components/ui` gains `sidebar.tsx`, `sheet.tsx` and `dropdown-menu.tsx`, plus `lib/use-mobile.ts` and `lib/sidebar-cookie.ts`.
 - Sign-out now opens the account menu first; the E2E sign-out test does the same.
-- The Vietnamese labels added here (`app.navGroups.*`, `app.toggleNav`, `app.closeNav`, `app.accountMenu`) go through `pnpm i18n:review`.
+- The Vietnamese labels added here (`app.navGroups.*`, `app.toggleNav`, `app.closeNav`, `app.accountMenu`, `app.sidebarLabel`, `app.brand`) go through `pnpm i18n:review`.
 - If users miss the always-visible links on narrow laptops, start collapsed or move to option C by changing the default only.

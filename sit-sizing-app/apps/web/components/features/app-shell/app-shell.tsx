@@ -23,7 +23,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Eyebrow } from '@/components/patterns/eyebrow';
 import { usePathname } from '@/i18n/navigation';
@@ -32,8 +31,9 @@ import { AdminNavGroup } from '../admin/admin-nav';
 import { NotificationBell } from '../notifications/notification-bell';
 import { PortfolioNavItem } from '../portfolio/portfolio-page';
 import { AdoptProfileLocale, LanguageSwitch } from './language-switch';
-import { NAV_ICONS, SECTION_LABEL, sectionFor } from './nav-items';
+import { NAV_ICONS, sectionFor } from './nav-items';
 import { SidebarBrandLink, SidebarNavLink } from './sidebar-nav-link';
+import { MobileSidebarBar, SidebarHeaderToggle } from './sidebar-toggle';
 
 export interface AppShellProps {
   /** Display name of the signed-in user; null shows a sign-in button. */
@@ -47,7 +47,7 @@ export interface AppShellProps {
   children: ReactNode;
 }
 
-/** Sidebar navigation, top bar and footer around every signed-in page (U-04, ADR-0015). */
+/** Sidebar navigation and footer around every signed-in page (U-04, ADR-0015). */
 export function AppShell({
   userName,
   profileLocale = null,
@@ -72,11 +72,14 @@ export function AppShell({
         mobileTitle={t('app.mainNav')}
         mobileCloseLabel={t('app.closeNav')}
       >
-        <SidebarHeader>
-          <SidebarBrandLink className="grid gap-0.5 px-2 py-1 leading-tight group-data-[collapsible=icon]:hidden">
-            <Eyebrow className="text-[0.7rem]">{t('app.tagline')}</Eyebrow>
-            <span className="text-xl font-light text-foreground">{t('app.name')}</span>
+        {/* Expanded: brand, bell, toggle in a row. Collapsed to icons: toggle above the bell.
+            In the phone sheet, pad the right so the bell clears the sheet's close button. */}
+        <SidebarHeader className="flex-row items-center gap-1 group-data-[collapsible=icon]:flex-col-reverse in-data-[mobile=true]:pr-10">
+          <SidebarBrandLink className="min-w-0 flex-1 px-2 py-1 group-data-[collapsible=icon]:hidden">
+            <Eyebrow className="text-[0.7rem]">{t('app.brand')}</Eyebrow>
           </SidebarBrandLink>
+          {userName ? <NotificationBell /> : null}
+          <SidebarHeaderToggle label={t('app.toggleNav')} />
         </SidebarHeader>
         <SidebarContent>
           <nav aria-label={t('app.mainNav')}>
@@ -176,17 +179,7 @@ export function AppShell({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-12 items-center gap-3 border-b bg-card px-4">
-          <SidebarTrigger label={t('app.toggleNav')} />
-          {section ? (
-            <span className="text-sm font-medium text-foreground">{t(SECTION_LABEL[section])}</span>
-          ) : null}
-          {userName ? (
-            <div className="ml-auto">
-              <NotificationBell />
-            </div>
-          ) : null}
-        </header>
+        <MobileSidebarBar label={t('app.toggleNav')} />
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
           {children}
         </main>
