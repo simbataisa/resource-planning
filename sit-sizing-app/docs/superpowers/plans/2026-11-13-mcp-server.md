@@ -97,9 +97,9 @@ git add docs/adr/0016-mcp-server.md && git commit -m "ADR-0016: MCP server and c
 **Interfaces:**
 
 - Produces:
-  - Env: `OIDC_API_AUDIENCE` (default `sit-sizing-api`), `OIDC_MCP_CLIENT_ID` (default `sit-sizing-mcp`).
+  - Env: `OIDC_API_AUDIENCE` (default `sit-sizing-api`).
   - `verifyAccessToken(token: string, opts?: { keys?: JWTVerifyGetKey; now?: Date }): Promise<{ sub: string; sid?: string; azp: string } | null>` in `bearer.ts`. Checks signature, `iss === OIDC_ISSUER`, `aud` contains `OIDC_API_AUDIENCE`, expiry. Keys default to a cached remote JWKS fetched from `OIDC_INTERNAL_URL ?? OIDC_ISSUER`. Returns `null` on any failure; never logs the token.
-  - `CurrentUser.channel: 'web' | 'mcp'` — `'mcp'` when the request was authenticated by a bearer token whose `azp === OIDC_MCP_CLIENT_ID`.
+  - `CurrentUser.channel: 'web' | 'mcp'` — `'mcp'` for every request authenticated by a bearer token (self-registered clients have a generated `azp`, ADR-0016); `'web'` otherwise.
   - `ApiErrorCode` gains `'NOT_PROVISIONED'`.
 - `getCurrentUser(request)` order: (1) `Authorization: Bearer` present → bearer path only, cookies and dev header ignored; (2) session cookie; (3) dev header. Bearer path: `verifyAccessToken` → `null` ⇒ return `null` (401); `sid` in `RevokedSession` ⇒ `null`; `loadUser({ subject })` missing or inactive ⇒ throw `HttpError(403, 'NOT_PROVISIONED', 'Sign in to SIT Sizing once in the browser first.')`.
 - Bearer is accepted only when `AUTH_MODE === 'oidc'` and `OIDC_ISSUER` is set.
@@ -116,7 +116,7 @@ it('refuses alg none and a malformed token', …)                           // �
 ```
 
 - [ ] **Step 2:** Run `pnpm vitest run --project web apps/web/server/auth/bearer.test.ts`. Expected: FAIL, module not found.
-- [ ] **Step 3:** Implement `bearer.ts` with `jose` (`jwtVerify`, `createRemoteJWKSet`). Add the two env variables to `env.ts` and `.env.example`.
+- [ ] **Step 3:** Implement `bearer.ts` with `jose` (`jwtVerify`, `createRemoteJWKSet`). Add the env variable to `env.ts` and `.env.example`.
 - [ ] **Step 4:** Run the same command. Expected: PASS (6).
 - [ ] **Step 5: Write failing integration tests** in `tests/integration/bearer.test.ts` (inject the test key set through a module-level setter exported for tests from `bearer.ts`, e.g. `setKeysForTests`):
 
@@ -171,7 +171,7 @@ git commit -m "API: accept Keycloak bearer tokens for the MCP client (ADR-0016)"
 ```ts
 it('patchDraft without summary writes no audit event'); // autosave unchanged
 it('patchDraft with summary writes estimate.draft.update with summary'); // detail.summary, detail.changed
-it('records channel "mcp" only for a bearer user from the MCP client'); // web user: no channel key
+it('records channel "mcp" for a bearer user and no channel for a cookie user'); // web user: no channel key
 it('createEstimate, createDraft, applyProfile, saveVersion, submit carry summary in detail');
 it('saveVersion uses the summary as the note when no note is given');
 it('never stores input or assumption values in the audit detail');

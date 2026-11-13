@@ -75,7 +75,9 @@ Proposed realm change, every line for the security reviewer:
 3. **Audience for every client.** A realm default client scope with an audience mapper adding `sit-sizing-api`, so that self-registered clients get it too. Without it tokens carry no `aud` and the API refuses them.
 4. **Offline tokens**, because Codex always requests `offline_access`. Users get the `offline_access` role. To limit the damage: offline session idle and maximum lifetimes set no longer than the SSO limits in design 10.4, and back-channel logout set to revoke offline tokens (`backchannel.logout.revoke.offline.tokens`). The API's revoked-session check must also cover offline sessions.
 
-Not yet proven: the test stopped at the offline-token refusal, so nobody has seen Codex complete a sign-in and call a tool with these settings. That run is needed before the review.
+**Proven in dev on 2026-11-13** with points 2 to 4 applied (offline tokens for one dev user only): Codex (client 0.168.0) registered itself, the user signed in, and `ping` returned `pong`. The access token carried `aud: sit-sizing-api`, scope `openid email profile offline_access`, and `azp` set to the self-registered client's generated ID. All settings were removed afterwards and anonymous registration was confirmed refused again (403).
+
+Consequence for the API: `azp` is a different generated ID per Codex sign-in, so "came through the assistant" cannot be decided by comparing `azp` with one client ID. Every bearer-authenticated request is recorded as channel `mcp`; the bearer path exists only for MCP clients.
 
 Under this decision the first version supports **Claude Code and Codex**. **Antigravity** stays unsupported (it never starts a sign-in); **Kiro** is unknown until someone tests it.
 
