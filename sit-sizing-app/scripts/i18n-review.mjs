@@ -94,12 +94,25 @@ function exportSheet() {
   );
 }
 
-function apply(file) {
-  if (!file) throw new Error('usage: pnpm i18n:apply <reviewed.csv>');
-  const en = new Map(flatten(JSON.parse(readFileSync(EN, 'utf8'))));
-  const viTree = JSON.parse(readFileSync(VI, 'utf8'));
-  const rows = parseCsv(readFileSync(file, 'utf8').replace(/^﻿/, ''));
-  const head = rows.shift();
+// JSON.parse puts integer-like keys ("0", "1") before the others, so a parse-and-stringify
+// would reorder vi.json. Mark them with \u0001 while parsing so they keep their place.
+const NUMERIC_KEY = /(?<!\\)"(\d+)"(\s*:)/g;
+const MARKED_KEY = /"\\u0001(\d+)"(\s*:)/g;
+const parseOrdered = (text) => JSON.parse(text.replace(NUMERIC_KEY, '"\\u0001$1"$2'));
+const stringifyOrdered = (tree) =>
+  `${JSON.stringify(tree, null, 2).replace(MARKED_KEY, '"$1"$2')}\n`;
+const child = (obj, part) => (part in obj ? part : `\u0001${part}`);
+
+/**
+ * Copies reviewed wording into the Vietnamese messages. Pure: returns the new vi.json text
+ * (the input text, untouched, when nothing changed), the number of changed messages and the
+ * rows it refused.
+ */
+export function applyReview({ enTree, viText, csvText }) {
+  const en = new Map(flatten(enTree));
+  const viTree = parseOrdered(viText);
+  const rows = parseCsv(csvText.replace(/^\uFEFF/, ''));
+  const head = rows.shift() ?? [];
   const col = (name) => head.indexOf(name);
   const [ki, ri] = [col('key'), col('reviewed_vi')];
   if (ki < 0 || ri < 0) throw new Error('the file needs "key" and "reviewed_vi" columns');
@@ -119,21 +132,35 @@ function apply(file) {
     }
     const parts = key.split('.');
     const last = parts.pop();
-    const parent = parts.reduce((o, p) => o[p], viTree);
-    if (parent[last] !== next) {
-      parent[last] = next;
+    const parent = parts.reduce((o, p) => o[child(o, p)], viTree);
+    const slot = child(parent, last);
+    if (parent[slot] !== next) {
+      parent[slot] = next;
       changed += 1;
     }
   }
+  return { text: changed ? stringifyOrdered(viTree) : viText, changed, problems };
+}
+
+function apply(file) {
+  if (!file) throw new Error('usage: pnpm i18n:apply <reviewed.csv>');
+  const { text, changed, problems } = applyReview({
+    enTree: JSON.parse(readFileSync(EN, 'utf8')),
+    viText: readFileSync(VI, 'utf8'),
+    csvText: readFileSync(file, 'utf8'),
+  });
   if (problems.length) {
     console.error(`not applied:\n  ${problems.join('\n  ')}`);
     process.exitCode = 1;
   }
-  writeFileSync(VI, `${JSON.stringify(viTree, null, 2)}\n`);
+  if (changed) writeFileSync(VI, text);
   console.log(`updated ${changed} Vietnamese messages in apps/web/messages/vi.json`);
 }
 
-const [cmd, arg] = process.argv.slice(2);
-if (cmd === 'export') exportSheet();
-else if (cmd === 'apply') apply(arg);
-else console.log('usage: node scripts/i18n-review.mjs export | apply <file.csv>');
+// Run as a command only, not when a test imports applyReview.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const [cmd, arg] = process.argv.slice(2);
+  if (cmd === 'export') exportSheet();
+  else if (cmd === 'apply') apply(arg);
+  else console.log('usage: node scripts/i18n-review.mjs export | apply <file.csv>');
+}
