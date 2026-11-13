@@ -1,12 +1,13 @@
 // Vietnamese review round trip (design 8.5, step 1.6).
 //
 //   pnpm i18n:review              writes docs/i18n/vi-review.csv for the reviewer (opens in Excel)
-//   pnpm i18n:apply <file.csv>    copies the "reviewed_vi" column back into apps/web/messages/vi.json
+//   pnpm i18n:apply [file.csv]    copies the "reviewed_vi" column back into apps/web/messages/vi.json
+//                                 (default: docs/i18n/vi-review.csv, the sheet i18n:review writes)
 //
 // The reviewer fills "reviewed_vi" only where the current Vietnamese should change, and may
 // add a comment. Apply refuses a row whose placeholders ({n}) or tags (<b>) differ from English.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -142,8 +143,19 @@ export function applyReview({ enTree, viText, csvText }) {
   return { text: changed ? stringifyOrdered(viTree) : viText, changed, problems };
 }
 
-function apply(file) {
-  if (!file) throw new Error('usage: pnpm i18n:apply <reviewed.csv>');
+/** The reviewed sheet: the given path, or the sheet that i18n:review writes. */
+export const reviewFile = (arg) => (arg ? resolve(arg) : OUT);
+
+function apply(arg) {
+  const file = reviewFile(arg);
+  if (!existsSync(file)) {
+    console.error(
+      `no review sheet at ${relative(process.cwd(), file)}: run pnpm i18n:review first, or pass the reviewed file`,
+    );
+    process.exitCode = 1;
+    return;
+  }
+  console.log(`applying ${relative(process.cwd(), file)}`);
   const { text, changed, problems } = applyReview({
     enTree: JSON.parse(readFileSync(EN, 'utf8')),
     viText: readFileSync(VI, 'utf8'),
@@ -162,5 +174,5 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const [cmd, arg] = process.argv.slice(2);
   if (cmd === 'export') exportSheet();
   else if (cmd === 'apply') apply(arg);
-  else console.log('usage: node scripts/i18n-review.mjs export | apply <file.csv>');
+  else console.log('usage: node scripts/i18n-review.mjs export | apply [file.csv]');
 }

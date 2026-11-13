@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 // @ts-expect-error -- plain Node script without type declarations
-import { applyReview } from '../../../../scripts/i18n-review.mjs';
+import { applyReview, reviewFile } from '../../../../scripts/i18n-review.mjs';
+
+describe('i18n:apply file argument', () => {
+  it('defaults to the sheet that i18n:review writes', () => {
+    expect(reviewFile(undefined)).toBe(
+      fileURLToPath(new URL('../../../../docs/i18n/vi-review.csv', import.meta.url)),
+    );
+  });
+
+  it('uses the given path, relative to where the command runs', () => {
+    expect(reviewFile('reviewed/vi.csv')).toBe(resolve('reviewed/vi.csv'));
+  });
+});
 
 /** Synthetic messages: numeric keys after a text key, as in the real data-platform drivers. */
 const en = {

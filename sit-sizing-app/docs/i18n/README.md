@@ -19,7 +19,8 @@ The app is in English and Vietnamese (design 8.5). Most Vietnamese text is reuse
 3. Apply the reviewed file and run the checks:
 
    ```bash
-   pnpm i18n:apply path/to/vi-review.csv
+   pnpm i18n:apply                         # reads docs/i18n/vi-review.csv
+   pnpm i18n:apply path/to/reviewed.csv    # or a sheet saved elsewhere
    pnpm test
    ```
 
