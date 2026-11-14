@@ -14,6 +14,10 @@ The app's rules, layer boundaries, command list, definition of done and human co
 
 @sit-sizing-app/AGENTS.md
 
+## Before merging: full test suite
+
+Never merge a branch on a partial run. First run the full suite on the tree you are about to merge, from `sit-sizing-app/`: `pnpm check`, `pnpm test:coverage`, `pnpm test:int` and `pnpm test:e2e`. When `packages/engine` changed, also run `pnpm --filter @sit/engine parity`. All of them must pass, and you report each result. The details are in "Before any merge" in `sit-sizing-app/AGENTS.md`.
+
 ## Running a single test
 
 ```bash
