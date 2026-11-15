@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { createWriteStream, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { REFUSED_CLIENTS } from '../../server/auth/bearer';
 import { configureContainerRuntime } from '../support/container-runtime';
 
 /**
@@ -183,19 +184,29 @@ describe('Keycloak realm qe-tools', () => {
 
   describe('MCP clients (ADR-0016)', () => {
     const LOOPBACK = 'http://127.0.0.1:53682/callback';
-    const register = (body: Record<string, unknown>) =>
-      json('/realms/qe-tools/clients-registrations/openid-connect', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          client_name: 'synthetic-test-assistant',
-          redirect_uris: [LOOPBACK],
-          token_endpoint_auth_method: 'none',
-          grant_types: ['authorization_code', 'refresh_token'],
-          response_types: ['code'],
-          ...body,
+    /** Client IDs created by self-registration in this file (OIDC DCR or native endpoint). */
+    const selfRegistered = new Set<string>();
+    const track = (res: Awaited<ReturnType<typeof json>>) => {
+      const id = res.status === 201 ? (res.body.client_id ?? res.body.clientId) : undefined;
+      if (typeof id === 'string') selfRegistered.add(id);
+      return res;
+    };
+    /** OIDC DCR as an MCP client does it: public (`token_endpoint_auth_method: none`). */
+    const register = async (body: Record<string, unknown>) =>
+      track(
+        await json('/realms/qe-tools/clients-registrations/openid-connect', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            client_name: 'synthetic-test-assistant',
+            redirect_uris: [LOOPBACK],
+            token_endpoint_auth_method: 'none',
+            grant_types: ['authorization_code', 'refresh_token'],
+            response_types: ['code'],
+            ...body,
+          }),
         }),
-      });
+      );
     const claims = (jwt: string) =>
       JSON.parse(Buffer.from(jwt.split('.')[1]!, 'base64url').toString('utf8')) as Record<
         string,
@@ -359,21 +370,65 @@ describe('Keycloak realm qe-tools', () => {
       expect(((await refresh.json()) as { error: string }).error).toBe('invalid_grant');
     });
 
-    it('gives the pre-registered client the API audience too', async () => {
+    it('gives the pre-registered client the API audience and a session id too', async () => {
       const tokens = await signIn('sit-sizing-mcp', 'openid profile email');
-      expect([claims(tokens.access_token).aud].flat()).toContain('sit-sizing-api');
+      const access = claims(tokens.access_token);
+      expect([access.aud].flat()).toContain('sit-sizing-api');
+      expect(typeof access.sid).toBe('string'); // the API refuses tokens without sid
     });
 
-    const native = (body: Record<string, unknown>) =>
-      json('/realms/qe-tools/clients-registrations/default', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ redirectUris: [LOOPBACK], publicClient: true, ...body }),
-      });
+    it('keeps both self-registration client policies in STRICT mode', async () => {
+      const { status, body } = await json(
+        '/admin/realms/qe-tools/client-policies/policies',
+        asAdmin(),
+      );
+      expect(status).toBe(200);
+      const byName = new Map(
+        (body.policies as { name: string; mode?: string; enabled?: boolean }[]).map((p) => [
+          p.name,
+          p,
+        ]),
+      );
+      for (const name of ['self-registered-clients', 'self-registered-clients-are-public']) {
+        expect(byName.get(name)?.mode, name).toBe('STRICT');
+        expect(byName.get(name)?.enabled, name).toBe(true);
+      }
+    });
+
+    it('has no client that can mint API tokens other than MCP clients', async () => {
+      // Every client not created by self-registration must be refused by azp in the API
+      // (REFUSED_CLIENTS) or be the pre-registered MCP client. A new client fails here
+      // until someone decides whether it may call the API.
+      const { body } = await json('/admin/realms/qe-tools/clients', asAdmin());
+      for (const { clientId } of body as { clientId: string }[]) {
+        if (selfRegistered.has(clientId)) continue;
+        expect(
+          REFUSED_CLIENTS.has(clientId) || clientId === 'sit-sizing-mcp',
+          `${clientId} is neither refused by the API nor the MCP client`,
+        ).toBe(true);
+      }
+    });
+
+    /** Keycloak's native registration endpoint, as a public client unless the body says otherwise. */
+    const native = async (body: Record<string, unknown>) =>
+      track(
+        await json('/realms/qe-tools/clients-registrations/default', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ redirectUris: [LOOPBACK], publicClient: true, ...body }),
+        }),
+      );
     const refused = (status: number) => {
       expect(status).toBeGreaterThanOrEqual(400);
       expect(status).toBeLessThan(500);
     };
+
+    it('refuses a native registration that enables the password grant', async () => {
+      refused(
+        (await native({ clientId: 'synthetic-direct-grants', directAccessGrantsEnabled: true }))
+          .status,
+      );
+    });
 
     it('refuses a self-registered client that brings a protocol mapper (forged sub)', async () => {
       const res = await native({
