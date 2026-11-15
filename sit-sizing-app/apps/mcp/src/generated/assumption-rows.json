@@ -1,0 +1,853 @@
+[
+  {
+    "path": "cases.api",
+    "group": "cases",
+    "labelKey": "assumptionsTab.rows.cases_api",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "cases.screen",
+    "group": "cases",
+    "labelKey": "assumptionsTab.rows.cases_screen",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "cases.integration",
+    "group": "cases",
+    "labelKey": "assumptionsTab.rows.cases_integration",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "cases.batch",
+    "group": "cases",
+    "labelKey": "assumptionsTab.rows.cases_batch",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "cases.event",
+    "group": "cases",
+    "labelKey": "assumptionsTab.rows.cases_event",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "cases.journey",
+    "group": "cases",
+    "labelKey": "assumptionsTab.rows.cases_journey",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "cases.rule",
+    "group": "rules",
+    "labelKey": "assumptionsTab.rows.cases_rule",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "criticalShare",
+    "group": "rules",
+    "labelKey": "assumptionsTab.rows.criticalShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "wiringCases",
+    "group": "rules",
+    "labelKey": "assumptionsTab.rows.wiringCases",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "variantShare",
+    "group": "rules",
+    "labelKey": "assumptionsTab.rows.variantShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "variantSampling",
+    "group": "rules",
+    "labelKey": "assumptionsTab.rows.variantSampling",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "transitions",
+    "group": "roles",
+    "labelKey": "assumptionsTab.rows.transitions",
+    "unitKey": "assumptionsTab.units.transitions"
+  },
+  {
+    "path": "invalidShare",
+    "group": "roles",
+    "labelKey": "assumptionsTab.rows.invalidShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "gatedShare",
+    "group": "roles",
+    "labelKey": "assumptionsTab.rows.gatedShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "roleCasesPerPair",
+    "group": "roles",
+    "labelKey": "assumptionsTab.rows.roleCasesPerPair",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "roleSampling",
+    "group": "roles",
+    "labelKey": "assumptionsTab.rows.roleSampling",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "sodCases",
+    "group": "roles",
+    "labelKey": "assumptionsTab.rows.sodCases",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "roughApprovalShare",
+    "group": "roles",
+    "labelKey": "assumptionsTab.rows.roughApprovalShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "sampleFE",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.sampleFE",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "sampleBE",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.sampleBE",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "partialShare",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.partialShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "valDesign",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.valDesign",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "valExecUI",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.valExecUI",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "valExecAPI",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.valExecAPI",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "valCycles",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.valCycles",
+    "unitKey": "assumptionsTab.units.passes"
+  },
+  {
+    "path": "reqFields",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.reqFields",
+    "unitKey": "assumptionsTab.units.fields"
+  },
+  {
+    "path": "respFields",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.respFields",
+    "unitKey": "assumptionsTab.units.fields"
+  },
+  {
+    "path": "dtoReuse",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.dtoReuse",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "eventFields",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.eventFields",
+    "unitKey": "assumptionsTab.units.fields"
+  },
+  {
+    "path": "apiOnlyCases",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.apiOnlyCases",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "mapPerField",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.mapPerField",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "formatShare",
+    "group": "validation",
+    "labelKey": "assumptionsTab.rows.formatShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "ftypes.text",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.text"
+  },
+  {
+    "path": "ftypes.integer",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.integer"
+  },
+  {
+    "path": "ftypes.decimal",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.decimal"
+  },
+  {
+    "path": "ftypes.percentage",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.percentage"
+  },
+  {
+    "path": "ftypes.currency",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.currency"
+  },
+  {
+    "path": "ftypes.email",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.email"
+  },
+  {
+    "path": "ftypes.phone",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.phone"
+  },
+  {
+    "path": "ftypes.date",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.date"
+  },
+  {
+    "path": "ftypes.datetime",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.datetime"
+  },
+  {
+    "path": "ftypes.boolean",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.boolean"
+  },
+  {
+    "path": "ftypes.enum",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.enum"
+  },
+  {
+    "path": "ftypes.checkbox",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.checkbox"
+  },
+  {
+    "path": "ftypes.radio",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.radio"
+  },
+  {
+    "path": "ftypes.password",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.password"
+  },
+  {
+    "path": "ftypes.url",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.url"
+  },
+  {
+    "path": "ftypes.account",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.account"
+  },
+  {
+    "path": "ftypes.citizenId",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.citizenId"
+  },
+  {
+    "path": "ftypes.taxCode",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.taxCode"
+  },
+  {
+    "path": "ftypes.iban",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.iban"
+  },
+  {
+    "path": "ftypes.file",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.file"
+  },
+  {
+    "path": "ftypes.image",
+    "group": "ftypes",
+    "labelKey": "catalogue.fieldTypes.image"
+  },
+  {
+    "path": "channelShares",
+    "group": "channels",
+    "labelKey": "assumptionsTab.rows.channelShares"
+  },
+  {
+    "path": "languageShare",
+    "group": "channels",
+    "labelKey": "assumptionsTab.rows.languageShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "envFactor",
+    "group": "channels",
+    "labelKey": "assumptionsTab.rows.envFactor",
+    "unitKey": "assumptionsTab.units.x"
+  },
+  {
+    "path": "mobileCases",
+    "group": "mobile",
+    "labelKey": "assumptionsTab.rows.mobileCases",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "deviceCombos",
+    "group": "mobile",
+    "labelKey": "assumptionsTab.rows.deviceCombos",
+    "unitKey": "assumptionsTab.units.combos"
+  },
+  {
+    "path": "deviceExtra",
+    "group": "mobile",
+    "labelKey": "assumptionsTab.rows.deviceExtra",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "releaseCases",
+    "group": "mobile",
+    "labelKey": "assumptionsTab.rows.releaseCases",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "mobileExec",
+    "group": "mobile",
+    "labelKey": "assumptionsTab.rows.mobileExec",
+    "unitKey": "assumptionsTab.units.x"
+  },
+  {
+    "path": "mobileDesignShare",
+    "group": "mobile",
+    "labelKey": "assumptionsTab.rows.mobileDesignShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "a11yCases",
+    "group": "mobile",
+    "labelKey": "assumptionsTab.rows.a11yCases",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "mutationGate",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.mutationGate",
+    "unitKey": "assumptionsTab.units.percent"
+  },
+  {
+    "path": "ruleUplift",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.ruleUplift",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "retestWeak",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.retestWeak",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "feUnitGate",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.feUnitGate",
+    "unitKey": "assumptionsTab.units.percent"
+  },
+  {
+    "path": "feLogicUplift",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.feLogicUplift",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "feMutGate",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.feMutGate",
+    "unitKey": "assumptionsTab.units.percent"
+  },
+  {
+    "path": "feMutUplift",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.feMutUplift",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "mobileUnitGate",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.mobileUnitGate",
+    "unitKey": "assumptionsTab.units.percent"
+  },
+  {
+    "path": "mobileUplift",
+    "group": "shiftLeft",
+    "labelKey": "assumptionsTab.rows.mobileUplift",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "dFeed",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dFeed",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "dPipe",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dPipe",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "dTable",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dTable",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "dScd",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dScd",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "dCol",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dCol",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "dDq",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dDq",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "dReport",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dReport",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "dAccessSampling",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dAccessSampling",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "dataSample",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dataSample",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "dataDesign",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dataDesign",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "dataExec",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dataExec",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "dataCycles",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dataCycles",
+    "unitKey": "assumptionsTab.units.cycles"
+  },
+  {
+    "path": "dataPrepHours",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dataPrepHours",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "dataDaysPerCycle",
+    "group": "data",
+    "labelKey": "assumptionsTab.rows.dataDaysPerCycle",
+    "unitKey": "assumptionsTab.units.days"
+  },
+  {
+    "path": "aiUtt",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiUtt",
+    "unitKey": "assumptionsTab.units.samples"
+  },
+  {
+    "path": "aiRagQ",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiRagQ",
+    "unitKey": "assumptionsTab.units.samples"
+  },
+  {
+    "path": "aiOcrSamples",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiOcrSamples",
+    "unitKey": "assumptionsTab.units.samples"
+  },
+  {
+    "path": "aiAdv",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiAdv",
+    "unitKey": "assumptionsTab.units.samples"
+  },
+  {
+    "path": "aiToolCases",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiToolCases",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "aiHitlCases",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiHitlCases",
+    "unitKey": "assumptionsTab.units.cases"
+  },
+  {
+    "path": "aiLabelUtt",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiLabelUtt",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "aiLabelRag",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiLabelRag",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "aiLabelOcr",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiLabelOcr",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "aiLabelAdv",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiLabelAdv",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "aiReviewAuto",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiReviewAuto",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "aiReviewManual",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiReviewManual",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "aiReviewMin",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiReviewMin",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "aiAnalysisHours",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.aiAnalysisHours",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "qeLabelShare",
+    "group": "ai",
+    "labelKey": "assumptionsTab.rows.qeLabelShare",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "ptScript",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptScript",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptNfrFixed",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptNfrFixed",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptNfrPer",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptNfrPer",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptDataFixed",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptDataFixed",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptDataPer",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptDataPer",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptEnvHours",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptEnvHours",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptEnvApm",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptEnvApm",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptRuns",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptRuns"
+  },
+  {
+    "path": "ptRunHours",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptRunHours"
+  },
+  {
+    "path": "ptCycles",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptCycles",
+    "unitKey": "assumptionsTab.units.cycles"
+  },
+  {
+    "path": "ptCyclesCI",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptCyclesCI",
+    "unitKey": "assumptionsTab.units.cycles"
+  },
+  {
+    "path": "ptAnalysis",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptAnalysis",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "ptReport",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptReport",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptMobileFixed",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptMobileFixed",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "ptRoughScen",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptRoughScen"
+  },
+  {
+    "path": "ptEnvDays",
+    "group": "pt",
+    "labelKey": "assumptionsTab.rows.ptEnvDays",
+    "unitKey": "assumptionsTab.units.days"
+  },
+  {
+    "path": "minutes",
+    "group": "effort",
+    "labelKey": "assumptionsTab.rows.minutes",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "designFSD",
+    "group": "effort",
+    "labelKey": "assumptionsTab.rows.designFSD",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "designNoFSD",
+    "group": "effort",
+    "labelKey": "assumptionsTab.rows.designNoFSD",
+    "unitKey": "assumptionsTab.units.min"
+  },
+  {
+    "path": "cycles",
+    "group": "effort",
+    "labelKey": "assumptionsTab.rows.cycles",
+    "unitKey": "assumptionsTab.units.cycles"
+  },
+  {
+    "path": "regression",
+    "group": "effort",
+    "labelKey": "assumptionsTab.rows.regression",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "retest",
+    "group": "effort",
+    "labelKey": "assumptionsTab.rows.retest",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "overhead",
+    "group": "effort",
+    "labelKey": "assumptionsTab.rows.overhead",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "aiDesignCut",
+    "group": "effort",
+    "labelKey": "assumptionsTab.rows.aiDesignCut",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "hoursPerDay",
+    "group": "capacity",
+    "labelKey": "assumptionsTab.rows.hoursPerDay",
+    "unitKey": "assumptionsTab.units.h"
+  },
+  {
+    "path": "daysPerWeek",
+    "group": "capacity",
+    "labelKey": "assumptionsTab.rows.daysPerWeek",
+    "unitKey": "assumptionsTab.units.days"
+  },
+  {
+    "path": "capacity",
+    "group": "capacity",
+    "labelKey": "assumptionsTab.rows.capacity",
+    "unitKey": "assumptionsTab.units.x"
+  },
+  {
+    "path": "band.rough",
+    "group": "uncertainty",
+    "labelKey": "assumptionsTab.rows.band_rough",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "band.detailed",
+    "group": "uncertainty",
+    "labelKey": "assumptionsTab.rows.band_detailed",
+    "unitKey": "assumptionsTab.units.share"
+  },
+  {
+    "path": "dproxies.S",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "S"
+    }
+  },
+  {
+    "path": "dproxies.M",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M"
+    }
+  },
+  {
+    "path": "dproxies.L",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "L"
+    }
+  },
+  {
+    "path": "dproxies.XL",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XL"
+    }
+  },
+  {
+    "path": "aproxies.S",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "S"
+    }
+  },
+  {
+    "path": "aproxies.M",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M"
+    }
+  },
+  {
+    "path": "aproxies.L",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "L"
+    }
+  },
+  {
+    "path": "aproxies.XL",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XL"
+    }
+  },
+  {
+    "path": "proxies.S",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "S"
+    }
+  },
+  {
+    "path": "proxies.M",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M"
+    }
+  },
+  {
+    "path": "proxies.L",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "L"
+    }
+  },
+  {
+    "path": "proxies.XL",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XL"
+    }
+  }
+]

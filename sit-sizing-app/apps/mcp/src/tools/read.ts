@@ -18,7 +18,7 @@ import { defineTool, type ToolContext } from '../context';
 const READ_ONLY = { readOnlyHint: true, openWorldHint: false } as const;
 
 /** A saved version number, or `'draft'` for the open draft (resolved with `get_estimate`'s data). */
-const VersionRef = z
+export const VersionRef = z
   .union([z.number().int().min(1), z.literal('draft')])
   .describe("A version number (1 or more), or 'draft' for the estimate's open draft.");
 
@@ -30,7 +30,7 @@ const PageArgs = {
 const seg = encodeURIComponent;
 
 /** Resolves `'draft'` to the draft's version number; says what to do when there is none. */
-async function versionNumber(
+export async function versionNumber(
   ctx: ToolContext,
   estimateId: string,
   ref: z.infer<typeof VersionRef>,

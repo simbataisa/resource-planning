@@ -53,6 +53,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(zod@4.6.7)
+      '@sit/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@sit/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
@@ -72,9 +75,6 @@ importers:
       '@sit/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@sit/engine':
-        specifier: workspace:*
-        version: link:../../packages/engine
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.2

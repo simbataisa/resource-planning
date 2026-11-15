@@ -1,5 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import { PathError } from './merge';
 
 /** A non-2xx answer from the SIT Sizing API, parsed from its error envelope (design 9.1). */
 export class ApiCallError extends Error {
@@ -40,6 +41,11 @@ export function zodIssues(error: z.core.$ZodError): Array<{ path: string; messag
   return error.issues.map((i) => ({ path: i.path.map(String).join('.'), message: i.message }));
 }
 
+/** A validation error for one argument, reported like a schema error (`VALIDATION_FAILED`). */
+export function invalidInput(path: string, message: string): z.ZodError {
+  return new z.ZodError([{ code: 'custom', path: path.split('.'), message, input: undefined }]);
+}
+
 function toolError(text: string): CallToolResult {
   return { content: [{ type: 'text', text }], isError: true };
 }
@@ -57,6 +63,11 @@ export function toToolResult(err: unknown): CallToolResult {
     if (err.retryAfter !== undefined) text += ` Retry after ${err.retryAfter} seconds.`;
     if (err.details?.length) text += `\n${JSON.stringify(err.details)}`;
     return toolError(text);
+  }
+  if (err instanceof PathError) {
+    return toolError(
+      `VALIDATION_FAILED: Invalid input\n${JSON.stringify([{ path: err.path, message: err.message }])}`,
+    );
   }
   if (err instanceof z.core.$ZodError) {
     return toolError(`VALIDATION_FAILED: Invalid input\n${JSON.stringify(zodIssues(err))}`);

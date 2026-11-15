@@ -8,10 +8,12 @@
     "dev": "tsx watch src/main.ts",
     "build": "tsc -p tsconfig.json",
     "start": "tsx src/main.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "glossary": "node scripts/build-glossary.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
+    "@sit/engine": "workspace:*",
     "@sit/schemas": "workspace:*",
     "jose": "^6.2.0",
     "pino": "^10.0.0",
@@ -20,7 +22,6 @@
   },
   "devDependencies": {
     "@sit/config": "workspace:*",
-    "@sit/engine": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
