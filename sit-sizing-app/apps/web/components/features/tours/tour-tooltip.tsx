@@ -63,6 +63,10 @@ export function TourTooltip({
       aria-describedby={`${id}-body ${id}-progress`}
       tabIndex={-1}
       onKeyDown={onKeyDown}
+      // An open modal dialog makes the page inert to the pointer and closes itself on any
+      // pointerdown outside it. The card stays clickable, and using it leaves the dialog open.
+      onPointerDown={(e) => e.stopPropagation()}
+      style={{ pointerEvents: 'auto' }}
       className="w-[22rem] max-w-[calc(100vw-2rem)] rounded-lg border bg-card p-4 text-left text-card-foreground shadow-card outline-none"
     >
       <div className="flex items-start gap-2">

@@ -327,6 +327,9 @@ export function TourProvider({
         // Steps that wait for the page (click, event, navigate) must let keyboard users leave the
         // tooltip and reach the target, so Joyride's focus trap is off there (WCAG 2.1.1).
         disableFocusTrap: s.advance !== 'next',
+        // Event steps are worked in a modal dialog (create, save version), which sits below the
+        // tour layer: an overlay there would cover and block the dialog's own buttons.
+        hideOverlay: typeof s.advance === 'object',
         data: {
           advance: typeof s.advance === 'object' ? 'event' : s.advance,
           recorded,
@@ -336,12 +339,18 @@ export function TourProvider({
     [tour, t, recorded, me],
   );
   const options = useMemo(() => joyrideOptions(reducedMotion), [reducedMotion]);
+  // Joyride renders into this element, a direct child of <body>. A modal dialog hides everything
+  // else from assistive technology when it opens (Radix `hideOthers`), but keeps `[aria-live]`
+  // elements; `aria-live="off"` keeps the tour step readable without announcing it twice.
+  const [portal, setPortal] = useState<HTMLDivElement | null>(null);
 
   return (
     <TourContext.Provider value={{ active: tour, paused: !!progress?.paused, start, resume, emit }}>
       {children}
-      {run && tour && (
+      <div ref={setPortal} data-tour-portal="" aria-live="off" />
+      {run && tour && portal && (
         <Joyride
+          portalElement={portal}
           key={tour.id}
           run
           continuous

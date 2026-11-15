@@ -13,6 +13,7 @@ import { joyrideOptions, TourProvider, useTours } from './tour-provider';
 import { useTourEvent } from './use-tour-event';
 import { TourMenu, TakeTourButton } from './tour-menu';
 import { TOURS } from '@/lib/tours/registry';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 const nav = vi.hoisted(() => ({ pathname: '/projects', push: vi.fn() }));
 vi.mock('@/i18n/navigation', () => ({
@@ -256,6 +257,43 @@ describe('TourProvider', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(api.updateMe).toHaveBeenCalledTimes(1);
     expect(meIn(client).tours['demo@1']?.status).toBe('completed');
+  });
+
+  it('keeps an event step readable and usable over an open modal dialog (E2E risk 1)', async () => {
+    const user = userEvent.setup();
+    startAt('demo@1', 3);
+    const onOpenChange = vi.fn();
+    render(
+      <Harness client={makeClient()} registry={[DEMO]}>
+        <Page />
+        <Dialog open onOpenChange={onOpenChange}>
+          <DialogContent closeLabel="Close">
+            <DialogTitle>Save version 1</DialogTitle>
+            <button type="button">Confirm save</button>
+          </DialogContent>
+        </Dialog>
+      </Harness>,
+    );
+    // The modal hides the rest of the page from assistive technology, but not the tour step.
+    const step = await screen.findByRole('dialog', { name: 'Save a version' });
+    expect(step.closest('[aria-hidden="true"]')).toBeNull();
+    expect(step.closest('[data-tour-portal]')).toHaveAttribute('aria-live', 'off');
+    // No overlay over the dialog on an event step, and the card takes the pointer.
+    expect(document.querySelector('.react-joyride__overlay')).toBeNull();
+    // Using the card does not count as a click outside the dialog: Radix listens for that on the
+    // document, and the card's pointerdown never reaches it.
+    const outside = vi.fn();
+    document.addEventListener('pointerdown', outside);
+    fireEvent.pointerDown(within(step).getByRole('button', { name: 'Skip tour' }));
+    document.removeEventListener('pointerdown', outside);
+    expect(outside).not.toHaveBeenCalled();
+    await user.click(within(step).getByRole('button', { name: 'Skip tour' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Save a version' })).toBeNull(),
+    );
+    expect(local()['demo@1'].status).toBe('skipped');
+    expect(screen.getByRole('dialog', { name: 'Save version 1' })).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 
   it('Skip records skipped at once in the cache, the browser copy and PATCH /me', async () => {
