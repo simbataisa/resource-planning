@@ -61,10 +61,26 @@
 | T-27 | **Spoofing**: claim forgery through a self-registered client's protocol mapper (e.g. a user property mapped to `sub`) | 7 | The anonymous "Allowed Protocol Mapper Types" list is empty, so registration with any mapper is refused (realm-baseline and identity tests). A client that drops the `basic` scope gets tokens without `sub`, which the API refuses | MCP task 1 |
 | T-28 | **SSRF from Keycloak** through URL fields on the anonymous registration endpoint (`sector_identifier_uri`, fetched when the registration is validated; `jwks_uri` and `request_uris`, fetched at authorization or token time; the back-channel logout URL, called when a session ends) | 7 | Not mitigated by a realm setting: Trusted Hosts checks the redirect and client URLs, not every URL field. Keycloak must not reach internal services it does not need (network egress rules). In the penetration test scope | MCP task 1 (pentest) |
 
+## Network exposure (MCP server)
+
+Hosting follows design open question Q4 (default: container images plus Compose); the platform team decides it. What is decided and what is not:
+
+| Item                                                                       | Status                                                                                                                                                                                                                         |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| MCP URL over HTTPS, reachable from QE laptops                              | **Required** (design spec 6.7). The server refuses a non-https `MCP_PUBLIC_URL` outside `local`. TLS termination point not decided                                                                                             |
+| Keycloak reachable from the same laptops                                   | **Required**: the MCP client opens Keycloak in the laptop's browser to sign in                                                                                                                                                 |
+| Who can reach the MCP URL and Keycloak (VPN only, internal network, wider) | **Open: platform team.** Assumed for this model: internal network or VPN only, never the internet. Boundaries 6 and 7 widen with the exposure chosen; T-25 and T-28 assume this assumption holds                               |
+| MCP server ↔ web API                                                       | Server-to-server inside the deployment (`SIT_API_BASE_URL`); the server needs no route to the database                                                                                                                         |
+| MCP server egress                                                          | Only the web API and Keycloak's JWKS (`OIDC_INTERNAL_URL`); no other outbound need. Enforcement (network policy or firewall) is the platform team's                                                                            |
+| Image                                                                      | `sit-sizing-mcp`, built, Trivy-scanned and smoke-tested in the same pipeline run as web, published to Nexus from `main` only (runbook section 4). Runs non-root on a read-only filesystem with all capabilities dropped (T-15) |
+
+Update this section and boundaries 6 and 7 when the platform team records the decision.
+
 ## Open items
 
 - ~~Back-channel logout~~ **Done in 1.7:** Keycloak posts a signed logout token to `/api/auth/backchannel-logout`; the session id is recorded in `RevokedSession` and refused on the next request (T-01).
 
+- Network exposure of the MCP URL and Keycloak (VPN only or wider): platform team decision, recorded in "Network exposure (MCP server)" above (Q4).
 - Clean-up of stale self-registered MCP clients before the 200-client limit is reached (T-25, ADR-0016): procedure in runbook section 11; a person still has to run it on a schedule.
 - Session lifetime and MFA scope: confirm with information security (Q2).
 - Rate-limit thresholds: derive from the non-functional targets (Q10).

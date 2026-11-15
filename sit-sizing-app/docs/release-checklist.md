@@ -24,7 +24,7 @@ Copy this list into the release pull request and tick each item. A human approve
   - gitleaks: no findings;
   - `pnpm audit`: no high or critical;
   - licences within policy;
-  - Trivy: no fixable high or critical.
+  - Trivy: no fixable high or critical, for both images (`sit-sizing-web` and `sit-sizing-mcp`).
 - [ ] Dynamic scan of `sit` done, findings triaged (design 11).
 - [ ] IdP configuration review done and signed (`docs/security/idp-review.md`).
 - [ ] Penetration test of the IdP configuration done; findings closed or accepted with an owner (`docs/security/pentest-scope.md`).
@@ -39,6 +39,15 @@ Copy this list into the release pull request and tick each item. A human approve
 - [ ] Rate limit (`RATE_LIMIT_PER_MINUTE`) set for the environment (Q10).
 - [ ] Release 2: `worker` service deployed; `SMTP_URL` points at the approved relay (Q12) or is left unset on purpose; no `FAILED` emails left unexplained (runbook section 10).
 - [ ] Dashboards and alerts in place (design 12.6): error rate, latency, failed migrations, certificate expiry.
+
+## MCP server (ADR-0016, runbook section 11)
+
+- [ ] MCP image `sit-sizing-mcp:<APP_VERSION>` scanned (Trivy report attached) and smoke-tested in the same Jenkins run: `/health` 200, unauthenticated `POST /mcp` answers 401 with `resource_metadata`.
+- [ ] The environment's MCP URL (`https://…/mcp`) is reachable over HTTPS from a QE laptop. URL: ………
+- [ ] Keycloak is reachable from the same laptop (sign-in runs in the laptop's browser).
+- [ ] Sign-in verified from each supported client in ADR-0016's compatibility table, and a tool call answered. Clients, versions and date: ………
+- [ ] `MCP_DEV_USER` is not set; `APP_ENV` is the target environment; `MCP_PUBLIC_URL` is the https URL above.
+- [ ] Network exposure of the MCP URL and of Keycloak's registration endpoint matches what the threat model records.
 
 ## Content and sign-off
 

@@ -119,19 +119,26 @@ export TESTCONTAINERS_HOST_OVERRIDE=$(rdctl shell ip a show rd0 | awk '/inet / {
 
 ## 4. Pipeline (design 12.5)
 
-`deploy/Jenkinsfile` (multibranch job on the TCB repository, script path `sit-sizing-app/deploy/Jenkinsfile`). Stages: install → type check and lint → unit tests with coverage → engine mutation gate → API integration tests → build image → security scans → compose smoke test and Playwright E2E (`deploy/ci/smoke.sh` → `deploy/ci/e2e.sh`) → publish to Nexus (`main` only).
+`deploy/Jenkinsfile` (multibranch job on the TCB repository, script path `sit-sizing-app/deploy/Jenkinsfile`). Stages: install → type check and lint → unit tests with coverage → engine mutation gate → API integration tests → build image → build MCP image → security scans → compose smoke test and Playwright E2E (`deploy/ci/smoke.sh` → `deploy/ci/e2e.sh`) → publish to Nexus (`main` only).
+
+Two images come out of one run, with the same `APP_VERSION`: `sit-sizing-web` (target `runner`) and `sit-sizing-mcp` (target `mcp`, the MCP server of section 11). Both are built with the same `REGISTRY_PREFIX`, `NPM_REGISTRY` and `APP_VERSION` arguments.
+
+- **Security scans** (`deploy/ci/security-scans.sh <web image> <mcp image>`): the secret scan, `pnpm audit` and the licence policy run once over the whole workspace, which includes the MCP server's production dependencies. Trivy scans each image: `reports/security/trivy.json` for web, `trivy-sit-sizing-mcp.json` for MCP. Every image is scanned before the step fails.
+- **Smoke** (`deploy/ci/smoke.sh <web image> <mcp image>`): the compose stack also starts `mcp`, with `APP_ENV=local` pinned and without `MCP_DEV_USER`. The script checks `/health` (200, `ok`), `/ready` (`ready`) and that an unauthenticated `POST /mcp` answers 401 with a `WWW-Authenticate: Bearer … resource_metadata=…` challenge. The MCP logs go to `reports/smoke-mcp.log`. Locally, `pnpm test:e2e` builds the MCP image and runs the same check.
+- **Publish** (`main` only): pushes `sit-sizing-web:<APP_VERSION>` and `sit-sizing-mcp:<APP_VERSION>` to `NEXUS_DOCKER_REGISTRY`.
 
 Jenkins configuration that the platform team provides:
 
-| Item                                                   | Purpose                                                 |
-| ------------------------------------------------------ | ------------------------------------------------------- |
-| Agent label `docker`                                   | Docker Engine and Compose v2                            |
-| `REGISTRY_PREFIX`                                      | Nexus Docker pull-through prefix, with a trailing slash |
-| `NPM_REGISTRY`                                         | Nexus npm proxy URL                                     |
-| `NEXUS_DOCKER_REGISTRY` and credentials `nexus-docker` | Image push target                                       |
-| `gitleaks` and `trivy` on the agent                    | Secret and image scans (`deploy/ci/security-scans.sh`)  |
-| `mcr.microsoft.com/playwright` through Nexus           | E2E browser image, same version as `@playwright/test`   |
-| Free ports 23000 and 28080 on the agent                | The E2E stack (`E2E_WEB_PORT`, `E2E_KEYCLOAK_PORT`)     |
+| Item                                                   | Purpose                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------- |
+| Agent label `docker`                                   | Docker Engine and Compose v2                                        |
+| `REGISTRY_PREFIX`                                      | Nexus Docker pull-through prefix, with a trailing slash             |
+| `NPM_REGISTRY`                                         | Nexus npm proxy URL                                                 |
+| `NEXUS_DOCKER_REGISTRY` and credentials `nexus-docker` | Image push target                                                   |
+| `gitleaks` and `trivy` on the agent                    | Secret and image scans (`deploy/ci/security-scans.sh`)              |
+| `mcr.microsoft.com/playwright` through Nexus           | E2E browser image, same version as `@playwright/test`               |
+| Free ports 23000, 28080 and 23100 on the agent         | The E2E stack (`E2E_WEB_PORT`, `E2E_KEYCLOAK_PORT`, `E2E_MCP_PORT`) |
+| Push rights for `sit-sizing-mcp` in Nexus              | The MCP image is published beside `sit-sizing-web`                  |
 
 The web and MCP runtime images (`runner`, `mcp`) have no npm or npx: the `runtime` stage in `docker/Dockerfile` removes the npm bundled with the Node base image. They only run `node` and `tsx`, and the bundled npm's own dependencies otherwise fail the Trivy gate with CVEs that are not in the app. Do not run `npm` inside these containers; use the `tools` image (pnpm) for workspace tasks.
 

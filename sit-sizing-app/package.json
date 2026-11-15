@@ -20,7 +20,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:int": "pnpm --filter @sit/web test:int",
-    "test:e2e": "node scripts/ensure-dev-env.mjs && docker compose --env-file .env -f docker/compose.yaml build web && docker compose --env-file .env -f docker/compose.yaml build migrate && E2E_RUNNER=host deploy/ci/smoke.sh sit-sizing-web:local",
+    "test:e2e": "node scripts/ensure-dev-env.mjs && docker compose --env-file .env -f docker/compose.yaml build web && docker compose --env-file .env -f docker/compose.yaml build migrate && docker compose --env-file .env -f docker/compose.yaml build mcp && E2E_RUNNER=host deploy/ci/smoke.sh sit-sizing-web:local sit-sizing-mcp:local",
     "test:e2e:dev": "pnpm --filter @sit/web test:e2e",
     "test:e2e:report": "pnpm --filter @sit/web exec playwright show-report ../../reports/e2e/html",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",

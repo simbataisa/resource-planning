@@ -28,6 +28,8 @@ pipeline {
     // files (../sit-sizing-reference) are needed by the engine parity check.
     APP_DIR = 'sit-sizing-app'
     IMAGE_NAME = 'sit-sizing-web'
+    // MCP server for AI assistants (ADR-0016): built, scanned, smoke-tested and published with web.
+    MCP_IMAGE_NAME = 'sit-sizing-mcp'
     APP_VERSION = "${env.BRANCH_NAME == 'main' ? '0.1.' + env.BUILD_NUMBER : '0.1.0-' + env.BRANCH_NAME.replaceAll('[^A-Za-z0-9.-]', '-') + '.' + env.BUILD_NUMBER}"
     NODE_IMAGE = "${env.REGISTRY_PREFIX ?: ''}node:24-bookworm-slim"
   }
@@ -97,9 +99,25 @@ pipeline {
       }
     }
 
+    stage('Build MCP image') {
+      // Same base, registry and version arguments as the web image; target `mcp` (ADR-0016).
+      steps {
+        sh '''
+          cd "$APP_DIR"
+          docker build -f docker/Dockerfile --target mcp \
+            --build-arg REGISTRY_PREFIX="${REGISTRY_PREFIX:-}" \
+            --build-arg NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmjs.org/}" \
+            --build-arg APP_VERSION="$APP_VERSION" \
+            -t "$MCP_IMAGE_NAME:$APP_VERSION" .
+        '''
+      }
+    }
+
     stage('Security scans') {
       steps {
-        sh 'cd "$APP_DIR" && deploy/ci/security-scans.sh "$IMAGE_NAME:$APP_VERSION"'
+        // Secret scan, dependency audit and licence policy cover the whole workspace (MCP
+        // dependencies included); the image scan runs on every image listed.
+        sh 'cd "$APP_DIR" && deploy/ci/security-scans.sh "$IMAGE_NAME:$APP_VERSION" "$MCP_IMAGE_NAME:$APP_VERSION"'
       }
       post {
         always { archiveArtifacts artifacts: "${env.APP_DIR}/reports/security/**", allowEmptyArchive: true }
@@ -108,7 +126,7 @@ pipeline {
 
     stage('Smoke and E2E (compose stack)') {
       steps {
-        sh 'cd "$APP_DIR" && deploy/ci/smoke.sh "$IMAGE_NAME:$APP_VERSION"'
+        sh 'cd "$APP_DIR" && deploy/ci/smoke.sh "$IMAGE_NAME:$APP_VERSION" "$MCP_IMAGE_NAME:$APP_VERSION"'
       }
       post {
         always { archiveArtifacts artifacts: "${env.APP_DIR}/reports/e2e/**", allowEmptyArchive: true }
@@ -124,6 +142,8 @@ pipeline {
             echo "$NEXUS_PASS" | docker login "$NEXUS_DOCKER_REGISTRY" -u "$NEXUS_USER" --password-stdin
             docker tag "$IMAGE_NAME:$APP_VERSION" "$NEXUS_DOCKER_REGISTRY/$IMAGE_NAME:$APP_VERSION"
             docker push "$NEXUS_DOCKER_REGISTRY/$IMAGE_NAME:$APP_VERSION"
+            docker tag "$MCP_IMAGE_NAME:$APP_VERSION" "$NEXUS_DOCKER_REGISTRY/$MCP_IMAGE_NAME:$APP_VERSION"
+            docker push "$NEXUS_DOCKER_REGISTRY/$MCP_IMAGE_NAME:$APP_VERSION"
           '''
         }
       }
