@@ -19,6 +19,7 @@ import { recordAudit } from '../repositories/audit';
 import { ESTIMATE_DETAIL_INCLUDE, ESTIMATE_LIST_INCLUDE } from '../repositories/includes';
 import { pageArgs, toPage } from '../repositories/pagination';
 import { estimateFor, projectFor, type RequestMeta } from './access';
+import { changeDetail } from './change-meta';
 
 export async function listEstimates(user: CurrentUser, projectId: string, q: PageQuery) {
   await projectFor(db(), user, projectId, 'estimate.list');
@@ -129,7 +130,11 @@ export async function createEstimate(
       entity: 'Estimate',
       entityId: e.id,
       projectId,
-      detail: { template: input.template, profileId: profile.id },
+      detail: {
+        template: input.template,
+        profileId: profile.id,
+        ...changeDetail(user, input.summary),
+      },
       requestId: meta.requestId,
     });
     return estimateDto(e);

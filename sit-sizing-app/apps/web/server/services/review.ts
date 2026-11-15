@@ -13,6 +13,7 @@ import { recordAudit } from '../repositories/audit';
 import { readStored } from '../stored';
 import { VERSION_FULL_INCLUDE, VERSION_SUMMARY_INCLUDE } from '../repositories/includes';
 import { estimateFor, notFound, type RequestMeta } from './access';
+import { changeDetail } from './change-meta';
 
 const ACTION_PERMISSION = {
   submit: 'version.submit',
@@ -109,7 +110,11 @@ export async function reviewVersion(
       entity: 'EstimateVersion',
       entityId: v.id,
       projectId: est.projectId,
-      detail: { number, to: d.to },
+      detail: {
+        number,
+        to: d.to,
+        ...changeDetail(user, 'summary' in input ? input.summary : undefined),
+      },
       requestId: meta.requestId,
     });
     const full = await tx.estimateVersion.findUniqueOrThrow({

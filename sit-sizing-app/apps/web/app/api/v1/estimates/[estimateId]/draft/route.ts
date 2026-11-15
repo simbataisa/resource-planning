@@ -20,12 +20,13 @@ export const POST = api<{ estimateId: string }>(async (request, { user, params, 
 );
 
 /** Autosave: the server recomputes and returns the draft with its new rowVersion. */
-export const PATCH = api<{ estimateId: string }>(async (request, { user, params }) =>
+export const PATCH = api<{ estimateId: string }>(async (request, { user, params, requestId }) =>
   ok(
     await patchDraft(
       user,
       EstimateParams.parse(params).estimateId,
       await readJson(request, DraftPatch),
+      { requestId },
     ),
   ),
 );

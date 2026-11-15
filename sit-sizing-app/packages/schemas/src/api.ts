@@ -234,6 +234,14 @@ export const EstimateDetail = Estimate.extend({
 }).meta({ id: 'EstimateDetail' });
 export type EstimateDetail = z.infer<typeof EstimateDetail>;
 
+/** One line the caller confirmed before a change was made; stored in the audit trail. */
+export const ChangeSummary = z
+  .string()
+  .trim()
+  .min(1)
+  .max(300)
+  .meta({ id: 'ChangeSummary', example: 'Synthetic: set team weeks to 12' });
+
 export const EstimateCreate = z
   .object({
     name: z.string().trim().min(1).max(160),
@@ -242,6 +250,7 @@ export const EstimateCreate = z
     template: z.enum(['example', 'blank']).default('example'),
     /** Assumption profile to copy; defaults to the published global default. */
     profileId: Id.optional(),
+    summary: ChangeSummary.optional(),
   })
   .meta({
     id: 'EstimateCreate',
@@ -252,6 +261,7 @@ export const DraftCreate = z
   .object({
     /** Version to copy into the new draft; defaults to the latest version. */
     fromVersion: z.number().int().min(1).optional(),
+    summary: ChangeSummary.optional(),
   })
   .meta({ id: 'DraftCreate' });
 
@@ -262,6 +272,8 @@ export const DraftPatch = z
     inputs: EstimateInputs.optional(),
     assumptions: Assumptions.optional(),
     note: z.string().trim().max(2000).nullable().optional(),
+    /** Audited when present; autosaves without it are not. Does not count as a change. */
+    summary: ChangeSummary.optional(),
   })
   .refine((v) => v.inputs !== undefined || v.assumptions !== undefined || v.note !== undefined, {
     message: 'Nothing to update',
@@ -277,7 +289,7 @@ export const LockRequest = z
 
 /** Optional note when submitting or approving (release 2, V-01). */
 export const ReviewNote = z
-  .object({ note: z.string().trim().max(2000).optional() })
+  .object({ note: z.string().trim().max(2000).optional(), summary: ChangeSummary.optional() })
   .meta({ id: 'ReviewNote', example: { note: 'Synthetic: scope agreed with the delivery lead' } });
 
 /** Returning a version for changes always says why. */
@@ -324,7 +336,7 @@ export const CompareQuery = z.object({
 });
 
 export const VersionSave = z
-  .object({ note: z.string().trim().max(2000).optional() })
+  .object({ note: z.string().trim().max(2000).optional(), summary: ChangeSummary.optional() })
   .meta({ id: 'VersionSave' });
 
 // ---------- assumption profiles ----------
@@ -397,6 +409,7 @@ export const ProfileApply = z
     profileId: Id,
     /** Optimistic lock: the draft's rowVersion the client last saw. */
     rowVersion: z.number().int().min(1),
+    summary: ChangeSummary.optional(),
   })
   .meta({ id: 'ProfileApply' });
 

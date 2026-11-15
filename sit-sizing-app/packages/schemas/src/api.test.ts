@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ChangeSummary,
+  DraftCreate,
   DraftPatch,
+  EstimateCreate,
+  ProfileApply,
+  ReviewNote,
+  VersionSave,
   Me,
   MeUpdate,
   MembersPut,
@@ -104,5 +110,38 @@ describe('tours', () => {
       lastLoginAt: null,
     };
     expect(Me.parse(sample).lastLoginAt).toBeNull();
+  });
+});
+
+describe('confirmation summary', () => {
+  const base: [
+    string,
+    { parse: (v: unknown) => unknown; safeParse: (v: unknown) => { success: boolean } },
+    object,
+  ][] = [
+    ['EstimateCreate', EstimateCreate, { name: 'Synthetic estimate' }],
+    ['DraftCreate', DraftCreate, {}],
+    ['DraftPatch', DraftPatch, { rowVersion: 1, note: 'Synthetic note' }],
+    ['ProfileApply', ProfileApply, { profileId: 'clx0synthetic0001', rowVersion: 1 }],
+    ['VersionSave', VersionSave, {}],
+    ['ReviewNote', ReviewNote, {}],
+  ];
+
+  it.each(base)('%s accepts a summary and rejects empty or over-long ones', (_n, schema, body) => {
+    expect(schema.safeParse({ ...body, summary: 'Synthetic summary' }).success).toBe(true);
+    expect(schema.safeParse({ ...body, summary: 'x'.repeat(300) }).success).toBe(true);
+    expect(schema.safeParse({ ...body, summary: 'x'.repeat(301) }).success).toBe(false);
+    expect(schema.safeParse({ ...body, summary: '' }).success).toBe(false);
+    expect(schema.safeParse({ ...body, summary: '   ' }).success).toBe(false);
+  });
+
+  it('ChangeSummary trims', () => {
+    expect(ChangeSummary.parse('  hello  ')).toBe('hello');
+  });
+
+  it('DraftPatch with only rowVersion and summary is "Nothing to update"', () => {
+    const r = DraftPatch.safeParse({ rowVersion: 1, summary: 'Synthetic summary' });
+    expect(r.success).toBe(false);
+    expect(JSON.stringify(r.error?.issues)).toContain('Nothing to update');
   });
 });

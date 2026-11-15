@@ -997,7 +997,8 @@
               },
               "example": {
                 "name": "Synthetic · Mobile onboarding R3",
-                "template": "example"
+                "template": "example",
+                "summary": "Synthetic: new estimate for the onboarding release"
               }
             }
           }
@@ -1363,7 +1364,9 @@
               "schema": {
                 "$ref": "#/components/schemas/DraftCreate"
               },
-              "example": {}
+              "example": {
+                "summary": "Synthetic: start a draft from the latest version"
+              }
             }
           }
         }
@@ -1374,7 +1377,7 @@
           "Versions"
         ],
         "summary": "Autosave the draft",
-        "description": "Lock holder only. The server recomputes the result. Send the rowVersion you last saw; a stale one returns 409. Minimum role: ESTIMATOR.",
+        "description": "Lock holder only. The server recomputes the result. Send the rowVersion you last saw; a stale one returns 409. A `summary` (1-300 characters) records one `estimate.draft.update` audit event naming the areas changed; without it an autosave is not audited. Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -1492,7 +1495,8 @@
               },
               "example": {
                 "rowVersion": 3,
-                "note": "Synthetic note"
+                "note": "Synthetic note",
+                "summary": "Synthetic: add a note to the draft"
               }
             }
           }
@@ -1746,7 +1750,7 @@
           "Versions"
         ],
         "summary": "Save the draft as a version",
-        "description": "Lock holder only. The saved version is immutable. Minimum role: ESTIMATOR.",
+        "description": "Lock holder only. The saved version is immutable. A `summary` becomes the version note when no `note` is given. Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -1863,7 +1867,7 @@
                 "$ref": "#/components/schemas/VersionSave"
               },
               "example": {
-                "note": "Synthetic · ready for review"
+                "summary": "Synthetic · ready for review"
               }
             }
           }
@@ -2004,7 +2008,8 @@
                 "$ref": "#/components/schemas/ReviewNote"
               },
               "example": {
-                "note": "Synthetic · ready for review"
+                "note": "Synthetic · ready for review",
+                "summary": "Synthetic: submit version 2"
               }
             }
           }
@@ -3854,7 +3859,8 @@
               },
               "example": {
                 "profileId": "cm0profile0000000000000",
-                "rowVersion": 3
+                "rowVersion": 3,
+                "summary": "Synthetic: apply the calibrated profile"
               }
             }
           }
@@ -5721,6 +5727,12 @@
         ],
         "additionalProperties": false
       },
+      "ChangeSummary": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300,
+        "example": "Synthetic: set team weeks to 12"
+      },
       "DraftCreate": {
         "type": "object",
         "properties": {
@@ -5728,6 +5740,9 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ChangeSummary"
           }
         }
       },
@@ -8617,6 +8632,9 @@
                 "type": "null"
               }
             ]
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ChangeSummary"
           }
         },
         "required": [
@@ -8781,6 +8799,9 @@
             "maxLength": 40,
             "description": "Opaque identifier (cuid)",
             "example": "clx0synthetic0001"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ChangeSummary"
           }
         },
         "required": [
@@ -9570,6 +9591,9 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ChangeSummary"
           }
         },
         "required": [
@@ -14179,6 +14203,9 @@
           "note": {
             "type": "string",
             "maxLength": 2000
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ChangeSummary"
           }
         },
         "example": {
@@ -19378,6 +19405,9 @@
           "note": {
             "type": "string",
             "maxLength": 2000
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ChangeSummary"
           }
         }
       },
