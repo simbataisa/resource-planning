@@ -52,14 +52,27 @@ export class KeySetUnavailable extends Error {
 }
 
 /**
- * jose error codes for a key set that could not be fetched (timeout, non-200 answer, not
- * JSON) or read; a fetch that fails outright throws a plain error without a code.
+ * Whether a verification error means the key set itself could not be fetched or read.
+ * Pinned to jose 6.2.x (`jwks/remote.js`); re-check on a jose upgrade:
+ * - `ERR_JWKS_TIMEOUT`: the key set request timed out;
+ * - `ERR_JOSE_GENERIC`: a non-200 answer or a body that is not JSON (jose throws this code
+ *   only there);
+ * - `ERR_JWKS_INVALID`: the answer is not a key set;
+ * - Node fetch's `TypeError: fetch failed`: the IdP is unreachable (network, DNS, TLS).
+ * `ERR_JWKS_NO_MATCHING_KEY` is about the token's `kid` (jose refetches the set first), so
+ * it stays a refused token. Every other jose error (`ERR_…`) is a refused token too; an
+ * error without a jose code is a bug and is rethrown, never treated as an outage.
  */
-const KEY_SET_CODES: ReadonlySet<string> = new Set([
-  'ERR_JWKS_TIMEOUT',
-  'ERR_JWKS_INVALID',
-  'ERR_JOSE_GENERIC',
-]);
+function keySetUnavailable(err: unknown): boolean {
+  if (err instanceof TypeError) return err.message === 'fetch failed';
+  const code = (err as { code?: unknown } | null)?.code;
+  return code === 'ERR_JWKS_TIMEOUT' || code === 'ERR_JOSE_GENERIC' || code === 'ERR_JWKS_INVALID';
+}
+
+/** jose errors carry an `ERR_…` code; anything else is unexpected. */
+const isJoseError = (err: unknown) =>
+  typeof (err as { code?: unknown } | null)?.code === 'string' &&
+  String((err as { code: string }).code).startsWith('ERR_');
 
 export interface VerifiedToken {
   sub: string;
@@ -124,14 +137,16 @@ export async function verifyAccessToken(
   } catch (err) {
     // A refused token is routine and stays silent: the error can quote token content.
     // Only an unreachable or broken key set is logged, by error code alone.
-    const code = (err as { code?: unknown } | null)?.code;
-    if (typeof code === 'string' ? KEY_SET_CODES.has(code) : true) {
+    if (keySetUnavailable(err)) {
+      const code = (err as { code?: unknown } | null)?.code;
       logger.warn(
         { code: typeof code === 'string' ? code : 'JWKS_FETCH_FAILED' },
         'bearer key set unavailable',
       );
       throw new KeySetUnavailable();
     }
-    return null;
+    if (isJoseError(err)) return null;
+    // Not a token problem nor an outage: a bug. Rethrow (500); the token is not accepted.
+    throw err;
   }
 }

@@ -177,6 +177,17 @@ describe('verifyAccessToken when the key set is unavailable', () => {
     }
   });
 
+  it('rethrows an unexpected error instead of reporting an outage, and never accepts the token', async () => {
+    const t = await token();
+    for (const err of [new Error('boom'), new TypeError('x is not a function')]) {
+      warn.mockClear();
+      const p = verifyAccessToken(t, { keys: () => Promise.reject(err), now: NOW });
+      await expect(p).rejects.toBe(err);
+      await expect(p).rejects.not.toBeInstanceOf(KeySetUnavailable);
+      expect(warn).not.toHaveBeenCalled();
+    }
+  });
+
   it('still refuses a malformed token or one with an unknown key id (null)', async () => {
     const down = () => Promise.reject(new TypeError('fetch failed'));
     expect(await verifyAccessToken('not-a-jwt', { keys: down, now: NOW })).toBeNull();

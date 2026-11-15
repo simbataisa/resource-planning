@@ -127,6 +127,16 @@ describe('verifyAccessToken (ADR-0016)', () => {
     );
   });
 
+  it('rethrows an unexpected error instead of reporting an outage', async () => {
+    const t = await token();
+    for (const err of [new Error('boom'), new TypeError('x is not a function')]) {
+      const log = { warn: vi.fn() };
+      const p = verifyAccessToken(t, env, { keys: () => Promise.reject(err), now: NOW, log });
+      await expect(p).rejects.toBe(err);
+      expect(log.warn).not.toHaveBeenCalled();
+    }
+  });
+
   it('still refuses a malformed token (null) when the key set is down', async () => {
     const down = () => Promise.reject(new TypeError('fetch failed'));
     expect(await verifyAccessToken('not-a-jwt', env, { keys: down, now: NOW })).toBeNull();

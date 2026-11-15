@@ -3,6 +3,7 @@ import {
   computeBoth,
   DEFAULT_ASSUMPTIONS,
   gapRows,
+  isDefaultRow,
   sensitivity,
   toStoredResult,
   topGap,
@@ -174,7 +175,9 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
         const n = await versionNumber(ctx, estimateId, number);
         const version = await ctx.api.get(`/estimates/${seg(estimateId)}/versions/${n}`, Version);
         values = version.assumptions;
-        if (version.profileId) calibration = await profileCalibration(ctx, version.profileId);
+        if (version.profileId) {
+          calibration = await profileCalibration(ctx, version.profileId, version.assumptions);
+        }
       } else if (profileId) {
         const profile = await ctx.api.get(`/profiles/${seg(profileId)}`, ProfileDetail);
         values = profile.values;
@@ -228,19 +231,28 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
 }
 
 /**
- * The calibration notes of the profile a version was built from; undefined when the
- * caller cannot read that profile (gone or out of reach), so the rows still answer.
+ * The calibration notes of the profile a version was built from, kept only for rows whose
+ * value still equals the profile's (a row edited afterwards is no longer that measurement).
+ * Undefined when the caller cannot read that profile (gone or out of reach), so the rows
+ * still answer.
  */
 async function profileCalibration(
   ctx: ToolContext,
   profileId: string,
+  values: Assumptions,
 ): Promise<ProfileDetail['calibration'] | undefined> {
+  let profile: ProfileDetail;
   try {
-    return (await ctx.api.get(`/profiles/${seg(profileId)}`, ProfileDetail)).calibration;
+    profile = await ctx.api.get(`/profiles/${seg(profileId)}`, ProfileDetail);
   } catch (err) {
     if (err instanceof ApiCallError && (err.status === 404 || err.status === 403)) return undefined;
     throw err;
   }
+  return Object.fromEntries(
+    Object.entries(profile.calibration).filter(([path]) =>
+      isDefaultRow(values, profile.values, path),
+    ),
+  );
 }
 
 function preview(

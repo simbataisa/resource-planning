@@ -111,6 +111,13 @@ describe('HTTP transport', () => {
     expect(JSON.stringify(calls)).not.toContain(goodToken);
   });
 
+  it('answers 500, not 503, when token checking fails unexpectedly', async () => {
+    const { base, apiFetch } = await start({ keys: () => Promise.reject(new Error('boom')) });
+    const res = await rpc(base, callWhoami, { authorization: `Bearer ${goodToken}` });
+    expect(res.status).toBe(500);
+    expect(apiFetch).not.toHaveBeenCalled();
+  });
+
   it('serves /.well-known/oauth-protected-resource, /health and /ready', async () => {
     const { base } = await start();
     const expected = {

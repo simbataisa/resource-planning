@@ -191,7 +191,12 @@ describe('understand tools', () => {
 
   it("describe_assumptions on a version uses its profile's calibration notes", async () => {
     const { call, get } = await connect({
-      [`/estimates/${EST_ID}/versions/2`]: { ...VERSION, number: 2, profileId: PROFILE_ID },
+      [`/estimates/${EST_ID}/versions/2`]: {
+        ...VERSION,
+        number: 2,
+        profileId: PROFILE_ID,
+        assumptions: PROFILE.values,
+      },
     });
     const r = (
       await call('describe_assumptions', {
@@ -206,6 +211,28 @@ describe('understand tools', () => {
       `/estimates/${EST_ID}/versions/2`,
       `/profiles/${PROFILE_ID}`,
     ]);
+  });
+
+  it('describe_assumptions on a version drops the note of a row edited after the profile', async () => {
+    const { call } = await connect({
+      [`/estimates/${EST_ID}/versions/5`]: {
+        ...VERSION,
+        number: 5,
+        profileId: PROFILE_ID,
+        assumptions: { ...PROFILE.values, wiringCases: 5 },
+      },
+    });
+    const r = (
+      await call('describe_assumptions', {
+        estimateId: EST_ID,
+        number: 5,
+        paths: ['wiringCases'],
+        locale: 'en',
+      })
+    ).structuredContent as { rows: Array<Record<string, unknown>> };
+    expect(r.rows[0]).toMatchObject({ value: 5, calibrated: true });
+    expect(r.rows[0]).not.toHaveProperty('source');
+    expect(r.rows[0]).not.toHaveProperty('measuredAt');
   });
 
   it('describe_assumptions on a version still answers when its profile is not readable', async () => {
