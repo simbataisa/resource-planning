@@ -160,6 +160,67 @@ describe('realm baseline (design 10.4)', () => {
       expect(policies.filter((p) => p.subType === 'authenticated').length).toBeGreaterThan(0);
     });
 
+    it('point 2: self-registered clients cannot bring protocol mappers (no forged sub claim)', () => {
+      expect(anon('allowed-protocol-mappers').config['allowed-protocol-mapper-types']).toEqual([]);
+    });
+
+    it('point 2: self-registered clients are public, use PKCE S256, no implicit or password grant', () => {
+      type Exec = { executor: string; configuration: Record<string, unknown> };
+      type Policy = {
+        name: string;
+        enabled: boolean;
+        mode: string;
+        conditions: { condition: string; configuration: Record<string, string[]> }[];
+        profiles: string[];
+      };
+      const profiles: { name: string; executors: Exec[] }[] = realm.clientProfiles.profiles;
+      const rules: Policy[] = realm.clientPolicies.policies;
+      const selfRegistered = (p: Policy) => {
+        const ctx = p.conditions.find((c) => c.condition === 'client-updater-context');
+        return (
+          p.enabled &&
+          // STRICT: the context condition abstains at sign-in and token time, and an
+          // abstaining condition must switch the policy off, not on.
+          p.mode === 'STRICT' &&
+          [...(ctx?.configuration['update-client-source'] ?? [])].sort().join() ===
+            'ByAnonymous,ByRegistrationAccessToken'
+        );
+      };
+      const executorsOf = (p: Policy) =>
+        p.profiles.flatMap((n) => profiles.find((x) => x.name === n)?.executors ?? []);
+
+      const hardening = rules.find((p) => selfRegistered(p) && p.conditions.length === 1)!;
+      const execs = executorsOf(hardening);
+      const byId = (id: string) => execs.find((e) => e.executor === id)?.configuration;
+      expect(byId('pkce-enforcer')).toEqual({ 'auto-configure': 'true' }); // sets S256
+      expect(byId('reject-implicit-grant')).toEqual({ 'auto-configure': 'false' }); // refuses
+      expect(byId('reject-ropc-grant')).toEqual({ 'auto-configure': 'false' }); // refuses
+
+      const publicOnly = rules.find(
+        (p) =>
+          selfRegistered(p) &&
+          p.conditions.some(
+            (c) =>
+              c.condition === 'client-access-type' &&
+              c.configuration.type?.join() === 'confidential',
+          ),
+      )!;
+      expect(executorsOf(publicOnly).map((e) => e.executor)).toEqual(['reject-request']);
+      // Every policy in the export is scoped to self-registration, so no other client is hit.
+      for (const p of rules) expect(selfRegistered(p), p.name).toBe(true);
+    });
+
+    it('point 3: the built-in scopes stay realm defaults beside the audience scope', () => {
+      // basic (sub), profile and email are created as realm defaults by Keycloak itself;
+      // listing them in defaultDefaultClientScopes would have no effect, because import only
+      // resolves names of scopes defined in the export.
+      expect(realm.attributes.CreateDefaultClientScopes).toBe('true');
+      expect(realm.clientScopes.map((s: Named) => s.name).sort()).toEqual([
+        'offline_access',
+        'sit-sizing-api',
+      ]);
+    });
+
     it('point 3: a realm default scope adds the sit-sizing-api audience to access tokens', () => {
       expect(realm.defaultDefaultClientScopes).toContain('sit-sizing-api');
       const scope = realm.clientScopes.find((s: Named) => s.name === 'sit-sizing-api');

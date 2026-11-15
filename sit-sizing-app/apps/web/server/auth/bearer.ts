@@ -21,12 +21,27 @@ const ALGORITHMS = [
   'ES384',
   'ES512',
 ];
+/**
+ * Clients whose tokens are never accepted, whatever their audience: Keycloak's built-in
+ * clients (admin-cli allows the password grant by default) and the web app's own client,
+ * whose tokens are never meant for this API. MCP clients are `sit-sizing-mcp` or
+ * self-registered ones with generated IDs (ADR-0016).
+ */
+export const REFUSED_CLIENTS: ReadonlySet<string> = new Set([
+  'admin-cli',
+  'account',
+  'account-console',
+  'security-admin-console',
+  'broker',
+  'realm-management',
+  'sit-sizing-web',
+]);
 /** Allowed clock difference between Keycloak and this app. */
 const CLOCK_TOLERANCE_SECONDS = 30;
 
 export interface VerifiedToken {
   sub: string;
-  sid?: string;
+  sid: string;
   azp: string;
 }
 
@@ -56,7 +71,9 @@ export function bearerEnabled(): boolean {
 
 /**
  * Verifies a Keycloak access token. Returns the identity claims, or null on any failure
- * (bad signature, wrong issuer or audience, expired, malformed, missing `sub` or `azp`).
+ * (bad signature, wrong issuer or audience, expired, malformed, missing `sub`, `azp` or
+ * `sid`, or minted by a refused client). Without `sid` the revocation check could not run,
+ * so such a token is refused (fail closed).
  */
 export async function verifyAccessToken(
   token: string,
@@ -76,9 +93,11 @@ export async function verifyAccessToken(
     });
     const { sub, sid, azp, typ } = payload as Record<string, unknown>;
     if (typeof sub !== 'string' || !sub || typeof azp !== 'string' || !azp) return null;
+    if (typeof sid !== 'string' || !sid) return null;
+    if (REFUSED_CLIENTS.has(azp)) return null;
     // Keycloak marks access tokens typ=Bearer; ID, refresh and logout tokens are refused.
     if (typ !== undefined && typ !== 'Bearer') return null;
-    return { sub, azp, ...(typeof sid === 'string' && sid ? { sid } : {}) };
+    return { sub, sid, azp };
   } catch (err) {
     // A refused token is routine and stays silent: the error can quote token content.
     // Only an unreachable or broken key set is logged, by error code alone.

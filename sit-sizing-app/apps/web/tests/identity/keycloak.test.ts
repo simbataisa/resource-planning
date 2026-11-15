@@ -363,5 +363,103 @@ describe('Keycloak realm qe-tools', () => {
       const tokens = await signIn('sit-sizing-mcp', 'openid profile email');
       expect([claims(tokens.access_token).aud].flat()).toContain('sit-sizing-api');
     });
+
+    const native = (body: Record<string, unknown>) =>
+      json('/realms/qe-tools/clients-registrations/default', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ redirectUris: [LOOPBACK], publicClient: true, ...body }),
+      });
+    const refused = (status: number) => {
+      expect(status).toBeGreaterThanOrEqual(400);
+      expect(status).toBeLessThan(500);
+    };
+
+    it('refuses a self-registered client that brings a protocol mapper (forged sub)', async () => {
+      const res = await native({
+        clientId: 'synthetic-forger',
+        protocolMappers: [
+          {
+            name: 'forged-sub',
+            protocol: 'openid-connect',
+            protocolMapper: 'oidc-usermodel-property-mapper',
+            config: {
+              'user.attribute': 'firstName',
+              'claim.name': 'sub',
+              'access.token.claim': 'true',
+              'jsonType.label': 'String',
+            },
+          },
+        ],
+      });
+      refused(res.status);
+    });
+
+    it('gives a client that drops the basic scope no token the API accepts', async () => {
+      const res = await native({
+        clientId: 'synthetic-no-basic',
+        defaultClientScopes: ['profile', 'email', 'sit-sizing-api'],
+      });
+      if (res.status === 201) {
+        const tokens = await signIn('synthetic-no-basic', 'openid profile email');
+        // The API requires sub (server/auth/bearer.ts); without basic there is none.
+        expect(claims(tokens.access_token).sub).toBeUndefined();
+      } else {
+        refused(res.status);
+      }
+    });
+
+    it('refuses self-registration with the password grant, client credentials or implicit flow', async () => {
+      refused((await register({ grant_types: ['password'] })).status);
+      refused(
+        (
+          await register({
+            grant_types: ['client_credentials'],
+            token_endpoint_auth_method: 'client_secret_basic',
+          })
+        ).status,
+      );
+      refused(
+        (await register({ token_endpoint_auth_method: 'client_secret_basic', scope: 'openid' }))
+          .status,
+      );
+      refused((await register({ response_types: ['token'], grant_types: ['implicit'] })).status);
+    });
+
+    it('enforces PKCE S256 on a client that registered without asking for it', async () => {
+      const reg = await register({ scope: 'openid profile email' });
+      expect(reg.status).toBe(201);
+      const { body } = await json(
+        `/admin/realms/qe-tools/clients?clientId=${encodeURIComponent(reg.body.client_id)}`,
+        asAdmin(),
+      );
+      expect(body[0].publicClient).toBe(true);
+      expect(body[0].attributes['pkce.code.challenge.method']).toBe('S256');
+      expect(body[0].directAccessGrantsEnabled).toBe(false);
+      expect(body[0].implicitFlowEnabled).toBe(false);
+      expect(body[0].protocolMappers ?? []).toEqual([]);
+    });
+
+    it("gives Keycloak's built-in clients no API token by password grant", async () => {
+      for (const clientId of ['admin-cli', 'account-console']) {
+        const res = await fetch(`${base}/realms/qe-tools/protocol/openid-connect/token`, {
+          method: 'POST',
+          body: new URLSearchParams({
+            grant_type: 'password',
+            client_id: clientId,
+            username: 'dev-lead',
+            password: DEV_USER_PASSWORD,
+            scope: 'openid',
+          }),
+        });
+        if (res.status === 200) {
+          const access = claims(((await res.json()) as { access_token: string }).access_token);
+          // Also refused by azp in server/auth/bearer.ts (REFUSED_CLIENTS).
+          expect([access.aud].flat(), clientId).not.toContain('sit-sizing-api');
+        } else {
+          expect(res.status, clientId).toBeGreaterThanOrEqual(400);
+        }
+      }
+    });
   });
 });

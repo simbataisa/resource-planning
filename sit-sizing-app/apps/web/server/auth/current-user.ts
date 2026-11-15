@@ -3,6 +3,7 @@ import { db } from '../db';
 import { getEnv } from '../env';
 import { HttpError } from '../http/route';
 import { bearerEnabled, verifyAccessToken } from './bearer';
+import { bearerToken } from './bearer-header';
 import { parseCookies } from './cookies';
 import { isSessionRevoked } from './revocation';
 import { cookieNames, nowSeconds, openSession } from './session';
@@ -64,13 +65,6 @@ export async function currentUserFromCookies(
     if (subject) return loadUser({ subject }, 'web');
   }
   return null;
-}
-
-/** The token of an `Authorization: Bearer` header ('' when empty), or undefined for no bearer. */
-function bearerToken(header: string | null): string | undefined {
-  if (!header) return undefined;
-  const match = /^Bearer(?:\s+(.*))?$/i.exec(header.trim());
-  return match ? (match[1] ?? '').trim() : undefined;
 }
 
 async function userFromBearer(token: string): Promise<CurrentUser | null> {

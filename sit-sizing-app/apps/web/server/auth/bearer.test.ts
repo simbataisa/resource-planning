@@ -13,6 +13,7 @@ vi.mock('../env', () => ({
 }));
 
 const { verifyAccessToken } = await import('./bearer');
+const { bearerToken } = await import('./bearer-header');
 
 type Keys = Awaited<ReturnType<typeof generateKeyPair>>;
 let good: Keys;
@@ -102,5 +103,56 @@ describe('verifyAccessToken (ADR-0016)', () => {
       .setExpirationTime(nowSec + 500)
       .sign(good.privateKey);
     expect(await verifyAccessToken(noSub, { keys, now: NOW })).toBeNull();
+  });
+
+  it('refuses an HS256 token, even when the key set holds a matching secret', async () => {
+    const secret = new TextEncoder().encode('synthetic-hmac-secret-for-tests-0000000000');
+    const hs = await new SignJWT({ sid: 's', azp: 'x' })
+      .setProtectedHeader({ alg: 'HS256', kid: 'h1' })
+      .setSubject('dev-estimator')
+      .setIssuer(ISSUER)
+      .setAudience(AUDIENCE)
+      .setExpirationTime(nowSec + 500)
+      .sign(secret);
+    const withSecret = createLocalJWKSet({
+      keys: [{ kty: 'oct', k: Buffer.from(secret).toString('base64url'), kid: 'h1', alg: 'HS256' }],
+    });
+    expect(await verifyAccessToken(hs, { keys: withSecret, now: NOW })).toBeNull();
+    expect(await verifyAccessToken(hs, { keys, now: NOW })).toBeNull();
+  });
+
+  it('refuses a token without sid (revocation could not be checked)', async () => {
+    expect(await verifyAccessToken(await token({ sid: undefined }), { keys, now: NOW })).toBeNull();
+    expect(await verifyAccessToken(await token({ sid: '' }), { keys, now: NOW })).toBeNull();
+  });
+
+  it("refuses tokens minted by Keycloak's built-in clients and the web client", async () => {
+    for (const azp of [
+      'admin-cli',
+      'account',
+      'account-console',
+      'security-admin-console',
+      'broker',
+      'realm-management',
+      'sit-sizing-web',
+    ]) {
+      expect(await verifyAccessToken(await token({ azp }), { keys, now: NOW }), azp).toBeNull();
+    }
+    expect(
+      await verifyAccessToken(await token({ azp: 'sit-sizing-mcp' }), { keys, now: NOW }),
+    ).not.toBeNull();
+  });
+});
+
+describe('bearerToken', () => {
+  it('reads the token of an Authorization: Bearer header only', () => {
+    expect(bearerToken('Bearer abc.def')).toBe('abc.def');
+    expect(bearerToken('bearer   abc')).toBe('abc');
+    expect(bearerToken('Bearer')).toBe('');
+    expect(bearerToken('Bearer ')).toBe('');
+    expect(bearerToken('Basic dXNlcg==')).toBeUndefined();
+    expect(bearerToken('Bearerabc')).toBeUndefined();
+    expect(bearerToken(null)).toBeUndefined();
+    expect(bearerToken('')).toBeUndefined();
   });
 });

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { Logger } from 'pino';
 import { ZodError } from 'zod';
 import type { ApiError } from '@sit/schemas';
+import { isBearerRequest } from '../auth/bearer-header';
 import { logger as rootLogger } from '../logger';
 
 type ApiErrorCode = ApiError['error']['code'];
@@ -150,13 +151,14 @@ export function authedRoute<U, P = Record<string, never>>(
   return route<P>(async (request, ctx) => {
     const user = await getUser(request);
     if (!user) {
-      const bearer = /^bearer\b/i.test(request.headers.get('authorization')?.trim() ?? '');
       throw new HttpError(
         401,
         'UNAUTHENTICATED',
         'Sign in to continue.',
         undefined,
-        bearer ? { 'www-authenticate': 'Bearer error="invalid_token"' } : undefined,
+        isBearerRequest(request)
+          ? { 'www-authenticate': 'Bearer error="invalid_token"' }
+          : undefined,
       );
     }
     return handler(request, { ...ctx, user });

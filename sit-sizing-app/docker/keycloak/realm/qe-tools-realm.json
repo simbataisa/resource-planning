@@ -214,16 +214,7 @@
         "subType": "anonymous",
         "subComponents": {},
         "config": {
-          "allowed-protocol-mapper-types": [
-            "saml-user-attribute-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "saml-user-property-mapper",
-            "oidc-usermodel-property-mapper",
-            "oidc-full-name-mapper",
-            "oidc-address-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "saml-role-list-mapper"
-          ]
+          "allowed-protocol-mapper-types": []
         }
       },
       {
@@ -290,6 +281,84 @@
         "config": {
           "web-origins": []
         }
+      }
+    ]
+  },
+  "clientProfiles": {
+    "profiles": [
+      {
+        "name": "self-registered-public-pkce",
+        "description": "Self-registered MCP clients (ADR-0016): PKCE S256 set on the client, implicit flow and password grant refused.",
+        "executors": [
+          {
+            "executor": "pkce-enforcer",
+            "configuration": {
+              "auto-configure": "true"
+            }
+          },
+          {
+            "executor": "reject-implicit-grant",
+            "configuration": {
+              "auto-configure": "false"
+            }
+          },
+          {
+            "executor": "reject-ropc-grant",
+            "configuration": {
+              "auto-configure": "false"
+            }
+          }
+        ]
+      },
+      {
+        "name": "reject",
+        "description": "Refuses the request.",
+        "executors": [
+          {
+            "executor": "reject-request",
+            "configuration": {}
+          }
+        ]
+      }
+    ]
+  },
+  "clientPolicies": {
+    "policies": [
+      {
+        "name": "self-registered-clients",
+        "description": "Anonymous registration and updates with the registration access token (ADR-0016). STRICT: the condition abstains outside registration, so the policy never applies at sign-in or token time.",
+        "enabled": true,
+        "mode": "STRICT",
+        "conditions": [
+          {
+            "condition": "client-updater-context",
+            "configuration": {
+              "update-client-source": ["ByAnonymous", "ByRegistrationAccessToken"]
+            }
+          }
+        ],
+        "profiles": ["self-registered-public-pkce"]
+      },
+      {
+        "name": "self-registered-clients-are-public",
+        "description": "Refuses a confidential client (client secret, service account) from anonymous registration or its updates (ADR-0016). STRICT, as above, so existing confidential clients are not affected.",
+        "enabled": true,
+        "mode": "STRICT",
+        "conditions": [
+          {
+            "condition": "client-updater-context",
+            "configuration": {
+              "update-client-source": ["ByAnonymous", "ByRegistrationAccessToken"]
+            }
+          },
+          {
+            "condition": "client-access-type",
+            "configuration": {
+              "type": ["confidential"]
+            }
+          }
+        ],
+        "profiles": ["reject"]
       }
     ]
   }
