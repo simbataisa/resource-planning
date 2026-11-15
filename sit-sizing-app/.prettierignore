@@ -8,3 +8,4 @@ packages/db/src/generated
 apps/web/public/vendor
 packages/engine/golden
 packages/tokens/tokens.css
+apps/mcp/src/generated

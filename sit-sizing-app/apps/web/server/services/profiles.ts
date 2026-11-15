@@ -25,6 +25,7 @@ import { enqueue } from '../notifications/outbox';
 import { recordAudit } from '../repositories/audit';
 import { VERSION_FULL_INCLUDE } from '../repositories/includes';
 import { ensure, estimateFor, notFound, projectFor, type RequestMeta } from './access';
+import { changeDetail } from './change-meta';
 import { readStored } from '../stored';
 import { requireOwnLockedDraft, snapshotData } from './versions';
 
@@ -283,7 +284,12 @@ export async function applyProfile(
       entity: 'EstimateVersion',
       entityId: draft.id,
       projectId: est.projectId,
-      detail: { number: draft.number, profileId: p.id, previousProfileId: draft.profileId },
+      detail: {
+        number: draft.number,
+        profileId: p.id,
+        previousProfileId: draft.profileId,
+        ...changeDetail(user, input.summary),
+      },
       requestId: meta.requestId,
     });
     const v = await tx.estimateVersion.findUniqueOrThrow({

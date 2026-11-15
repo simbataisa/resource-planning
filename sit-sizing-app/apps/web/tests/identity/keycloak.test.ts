@@ -1,6 +1,8 @@
+import { createHash, randomBytes } from 'node:crypto';
 import { createWriteStream, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { REFUSED_CLIENTS } from '../../server/auth/bearer';
 import { configureContainerRuntime } from '../support/container-runtime';
 
 /**
@@ -17,6 +19,7 @@ const docker = (p: string) =>
   fileURLToPath(new URL(`../../../../docker/keycloak/${p}`, import.meta.url));
 const ADMIN_PASSWORD = 'synthetic-test-admin-only';
 const CLIENT_SECRET = 'synthetic-test-client-secret';
+const DEV_USER_PASSWORD = 'synthetic-Dev-user-pass-01';
 
 let kc: Started;
 let base: string;
@@ -49,7 +52,7 @@ beforeAll(async () => {
       SIT_WEB_BASE_URL: 'http://localhost:3000',
       SIT_WEB_BACKCHANNEL_URL: 'http://web:3000/api/auth/backchannel-logout',
       SIT_WEB_CLIENT_SECRET: CLIENT_SECRET,
-      KC_DEV_USER_PASSWORD: 'synthetic-Dev-user-pass-01',
+      KC_DEV_USER_PASSWORD: DEV_USER_PASSWORD,
     })
     // Explicit modes: Keycloak runs as uid 1000 and cannot read files copied with the host's 0600.
     .withCopyFilesToContainer([
@@ -177,5 +180,387 @@ describe('Keycloak realm qe-tools', () => {
     expect((await set('Short1!')).status).toBe(400);
     expect((await set('password123456')).status).toBe(400); // blacklisted
     expect((await set('synthetic-Ok-Passphrase-42')).status).toBe(204);
+  });
+
+  describe('MCP clients (ADR-0016)', () => {
+    const LOOPBACK = 'http://127.0.0.1:53682/callback';
+    /** Client IDs created by self-registration in this file (OIDC DCR or native endpoint). */
+    const selfRegistered = new Set<string>();
+    const track = (res: Awaited<ReturnType<typeof json>>) => {
+      const id = res.status === 201 ? (res.body.client_id ?? res.body.clientId) : undefined;
+      if (typeof id === 'string') selfRegistered.add(id);
+      return res;
+    };
+    /** OIDC DCR as an MCP client does it: public (`token_endpoint_auth_method: none`). */
+    const register = async (body: Record<string, unknown>) =>
+      track(
+        await json('/realms/qe-tools/clients-registrations/openid-connect', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            client_name: 'synthetic-test-assistant',
+            redirect_uris: [LOOPBACK],
+            token_endpoint_auth_method: 'none',
+            grant_types: ['authorization_code', 'refresh_token'],
+            response_types: ['code'],
+            ...body,
+          }),
+        }),
+      );
+    const claims = (jwt: string) =>
+      JSON.parse(Buffer.from(jwt.split('.')[1]!, 'base64url').toString('utf8')) as Record<
+        string,
+        unknown
+      >;
+
+    /** Browser sign-in with PKCE, consent included, without following the final redirect. */
+    async function signIn(clientId: string, scope: string) {
+      const verifier = randomBytes(32).toString('base64url');
+      const challenge = createHash('sha256').update(verifier).digest('base64url');
+      const jar = new Map<string, string>();
+      const send = async (url: string, init: RequestInit = {}) => {
+        const res = await fetch(url, {
+          ...init,
+          redirect: 'manual',
+          headers: {
+            ...(init.headers ?? {}),
+            cookie: [...jar].map(([k, v]) => `${k}=${v}`).join('; '),
+          },
+        });
+        for (const c of res.headers.getSetCookie()) {
+          const [pair] = c.split(';');
+          const i = pair!.indexOf('=');
+          jar.set(pair!.slice(0, i), pair!.slice(i + 1));
+        }
+        return res;
+      };
+      const formOf = (html: string) => {
+        const action = /<form[^>]*action="([^"]+)"/.exec(html)?.[1]?.replaceAll('&amp;', '&');
+        const hidden = [...html.matchAll(/<input[^>]*type="hidden"[^>]*>/g)].map((m) => [
+          /name="([^"]+)"/.exec(m[0])?.[1] ?? '',
+          /value="([^"]*)"/.exec(m[0])?.[1] ?? '',
+        ]);
+        if (!action) throw new Error('no form on the page');
+        // Keycloak 26.8's consent form posts to a relative URL.
+        return {
+          action: new URL(action, base).toString(),
+          hidden: Object.fromEntries(hidden) as Record<string, string>,
+        };
+      };
+      const auth = new URL(`${base}/realms/qe-tools/protocol/openid-connect/auth`);
+      for (const [k, v] of Object.entries({
+        client_id: clientId,
+        redirect_uri: LOOPBACK,
+        response_type: 'code',
+        scope,
+        state: 'synthetic-state',
+        code_challenge: challenge,
+        code_challenge_method: 'S256',
+      }))
+        auth.searchParams.set(k, v);
+      const login = formOf(await (await send(auth.toString())).text());
+      let res = await send(login.action, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ username: 'dev-lead', password: DEV_USER_PASSWORD }),
+      });
+      // Keycloak 26.8 redirects to the consent required action (`execution=OAUTH_GRANT`)
+      // instead of rendering it inline: follow redirects that stay on Keycloak.
+      for (let hops = 0; hops < 5 && res.status === 302; hops++) {
+        const next = res.headers.get('location') ?? '';
+        if (!next.startsWith(base)) break;
+        res = await send(next);
+      }
+      if (res.status === 200) {
+        // Self-registered clients require consent (anonymous policy "Consent Required").
+        const consent = formOf(await res.text());
+        res = await send(consent.action, {
+          method: 'POST',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ ...consent.hidden, accept: 'Yes' }),
+        });
+      }
+      const location = res.headers.get('location') ?? '';
+      expect(location.startsWith(LOOPBACK)).toBe(true);
+      const code = new URL(location).searchParams.get('code');
+      expect(code).toBeTruthy();
+      const tok = await fetch(`${base}/realms/qe-tools/protocol/openid-connect/token`, {
+        method: 'POST',
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: clientId,
+          code: code!,
+          redirect_uri: LOOPBACK,
+          code_verifier: verifier,
+        }),
+      });
+      expect(tok.status).toBe(200);
+      return (await tok.json()) as { access_token: string; refresh_token: string; scope: string };
+    }
+
+    it('pre-registers a public client with code flow and PKCE S256 only', async () => {
+      const { body } = await json(
+        '/admin/realms/qe-tools/clients?clientId=sit-sizing-mcp',
+        asAdmin(),
+      );
+      const c = body[0];
+      expect(c.publicClient).toBe(true);
+      expect(c.standardFlowEnabled).toBe(true);
+      expect(c.implicitFlowEnabled).toBe(false);
+      expect(c.directAccessGrantsEnabled).toBe(false);
+      expect(c.serviceAccountsEnabled).toBe(false);
+      expect(c.attributes['pkce.code.challenge.method']).toBe('S256');
+      expect(c.redirectUris.sort()).toEqual(['http://127.0.0.1/*', 'http://localhost/*']);
+    });
+
+    it('does not advertise offline_access', async () => {
+      const { body } = await json('/realms/qe-tools/.well-known/openid-configuration');
+      expect(body.scopes_supported).toEqual(expect.arrayContaining(['openid', 'profile', 'email']));
+      expect(body.scopes_supported).not.toContain('offline_access');
+      const defaults = await json(
+        '/admin/realms/qe-tools/default-default-client-scopes',
+        asAdmin(),
+      );
+      const optional = await json(
+        '/admin/realms/qe-tools/default-optional-client-scopes',
+        asAdmin(),
+      );
+      const names = [...defaults.body, ...optional.body].map((s: { name: string }) => s.name);
+      expect(names).toContain('sit-sizing-api');
+      expect(names).not.toContain('offline_access');
+      const role = await json(
+        '/admin/realms/qe-tools/roles/default-roles-qe-tools/composites',
+        asAdmin(),
+      );
+      expect(role.body.map((r: { name: string }) => r.name)).not.toContain('offline_access');
+    });
+
+    it('lets a loopback client register itself with openid profile email only', async () => {
+      expect((await register({ scope: 'openid profile email' })).status).toBe(201);
+      const offline = await register({ scope: 'openid profile email offline_access' });
+      expect(offline.status).toBeGreaterThanOrEqual(400);
+      expect(offline.status).toBeLessThan(500);
+    });
+
+    it('refuses registration with a non-loopback redirect URI or scope service_account', async () => {
+      const remote = await register({
+        scope: 'openid profile email',
+        redirect_uris: ['https://attacker.example.invalid/callback'],
+      });
+      expect(remote.status).toBeGreaterThanOrEqual(400);
+      expect(remote.status).toBeLessThan(500);
+      const sa = await register({ scope: 'openid service_account' });
+      expect(sa.status).toBeGreaterThanOrEqual(400);
+      expect(sa.status).toBeLessThan(500);
+    });
+
+    it('gives a self-registered client the API audience and an ordinary refresh token that ends with the session', async () => {
+      const reg = await register({ scope: 'openid profile email' });
+      expect(reg.status).toBe(201);
+      const tokens = await signIn(reg.body.client_id, 'openid profile email');
+      const access = claims(tokens.access_token);
+      expect([access.aud].flat()).toContain('sit-sizing-api');
+      expect(access.sub).toBe('dev-lead');
+      expect(typeof access.sid).toBe('string');
+      expect(claims(tokens.refresh_token).typ).toBe('Refresh'); // not 'Offline'
+
+      const { status } = await json(
+        '/admin/realms/qe-tools/users/dev-lead/logout',
+        asAdmin({ method: 'POST' }),
+      );
+      expect(status).toBe(204);
+      const refresh = await fetch(`${base}/realms/qe-tools/protocol/openid-connect/token`, {
+        method: 'POST',
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: reg.body.client_id,
+          refresh_token: tokens.refresh_token,
+        }),
+      });
+      expect(refresh.status).toBe(400);
+      expect(((await refresh.json()) as { error: string }).error).toBe('invalid_grant');
+    });
+
+    it('gives the pre-registered client the API audience and a session id too', async () => {
+      const tokens = await signIn('sit-sizing-mcp', 'openid profile email');
+      const access = claims(tokens.access_token);
+      expect([access.aud].flat()).toContain('sit-sizing-api');
+      expect(typeof access.sid).toBe('string'); // the API refuses tokens without sid
+    });
+
+    it('keeps both self-registration client policies in STRICT mode', async () => {
+      const { status, body } = await json(
+        '/admin/realms/qe-tools/client-policies/policies',
+        asAdmin(),
+      );
+      expect(status).toBe(200);
+      const byName = new Map(
+        (body.policies as { name: string; mode?: string; enabled?: boolean }[]).map((p) => [
+          p.name,
+          p,
+        ]),
+      );
+      for (const name of ['self-registered-clients', 'self-registered-clients-are-public']) {
+        expect(byName.get(name)?.mode, name).toBe('STRICT');
+        expect(byName.get(name)?.enabled, name).toBe(true);
+      }
+    });
+
+    it('has no client that can mint API tokens other than MCP clients', async () => {
+      // Every client not created by self-registration must be refused by azp in the API
+      // (REFUSED_CLIENTS) or be the pre-registered MCP client. A new client fails here
+      // until someone decides whether it may call the API.
+      const { body } = await json('/admin/realms/qe-tools/clients', asAdmin());
+      for (const { clientId } of body as { clientId: string }[]) {
+        if (selfRegistered.has(clientId)) continue;
+        expect(
+          REFUSED_CLIENTS.has(clientId) || clientId === 'sit-sizing-mcp',
+          `${clientId} is neither refused by the API nor the MCP client`,
+        ).toBe(true);
+      }
+    });
+
+    /**
+     * Keycloak's native registration endpoint, as a public client unless the body says
+     * otherwise. The flow flags are explicit: Keycloak 26.8's "reject implicit grant"
+     * executor fails with a 500 when `implicitFlowEnabled` is missing, before any policy
+     * is evaluated, so a body without it would test nothing (see the test below).
+     */
+    const native = async (body: Record<string, unknown>) =>
+      track(
+        await json('/realms/qe-tools/clients-registrations/default', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            redirectUris: [LOOPBACK],
+            publicClient: true,
+            implicitFlowEnabled: false,
+            directAccessGrantsEnabled: false,
+            ...body,
+          }),
+        }),
+      );
+    /**
+     * A policy refusal: 400 (invalid client metadata) or 403 (policy rejected). Any other
+     * 4xx (404, 405, 415, …) means the request itself was wrong and proves nothing.
+     */
+    const refused = (status: number) => {
+      expect([400, 403]).toContain(status);
+    };
+
+    it('creates no client from a native registration that omits the flow flags', async () => {
+      // Keycloak 26.8 answers 500 here (NPE in RejectImplicitGrantExecutor). Whatever the
+      // status, the registration must not succeed and no client may exist afterwards.
+      const res = await json('/realms/qe-tools/clients-registrations/default', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          clientId: 'synthetic-no-flags',
+          redirectUris: [LOOPBACK],
+          publicClient: true,
+        }),
+      });
+      track(res);
+      expect(res.status).not.toBe(201);
+      const { body } = await json(
+        '/admin/realms/qe-tools/clients?clientId=synthetic-no-flags',
+        asAdmin(),
+      );
+      expect(body).toEqual([]);
+    });
+
+    it('refuses a native registration that enables the password grant', async () => {
+      refused(
+        (await native({ clientId: 'synthetic-direct-grants', directAccessGrantsEnabled: true }))
+          .status,
+      );
+    });
+
+    it('refuses a self-registered client that brings a protocol mapper (forged sub)', async () => {
+      const res = await native({
+        clientId: 'synthetic-forger',
+        protocolMappers: [
+          {
+            name: 'forged-sub',
+            protocol: 'openid-connect',
+            protocolMapper: 'oidc-usermodel-property-mapper',
+            config: {
+              'user.attribute': 'firstName',
+              'claim.name': 'sub',
+              'access.token.claim': 'true',
+              'jsonType.label': 'String',
+            },
+          },
+        ],
+      });
+      refused(res.status);
+    });
+
+    it('gives a client that drops the basic scope no token the API accepts', async () => {
+      const res = await native({
+        clientId: 'synthetic-no-basic',
+        defaultClientScopes: ['profile', 'email', 'sit-sizing-api'],
+      });
+      if (res.status === 201) {
+        const tokens = await signIn('synthetic-no-basic', 'openid profile email');
+        // The API requires sub (server/auth/bearer.ts); without basic there is none.
+        expect(claims(tokens.access_token).sub).toBeUndefined();
+      } else {
+        refused(res.status);
+      }
+    });
+
+    it('refuses self-registration with the password grant, client credentials or implicit flow', async () => {
+      refused((await register({ grant_types: ['password'] })).status);
+      refused(
+        (
+          await register({
+            grant_types: ['client_credentials'],
+            token_endpoint_auth_method: 'client_secret_basic',
+          })
+        ).status,
+      );
+      refused(
+        (await register({ token_endpoint_auth_method: 'client_secret_basic', scope: 'openid' }))
+          .status,
+      );
+      refused((await register({ response_types: ['token'], grant_types: ['implicit'] })).status);
+    });
+
+    it('enforces PKCE S256 on a client that registered without asking for it', async () => {
+      const reg = await register({ scope: 'openid profile email' });
+      expect(reg.status).toBe(201);
+      const { body } = await json(
+        `/admin/realms/qe-tools/clients?clientId=${encodeURIComponent(reg.body.client_id)}`,
+        asAdmin(),
+      );
+      expect(body[0].publicClient).toBe(true);
+      expect(body[0].attributes['pkce.code.challenge.method']).toBe('S256');
+      expect(body[0].directAccessGrantsEnabled).toBe(false);
+      expect(body[0].implicitFlowEnabled).toBe(false);
+      expect(body[0].protocolMappers ?? []).toEqual([]);
+    });
+
+    it("gives Keycloak's built-in clients no API token by password grant", async () => {
+      for (const clientId of ['admin-cli', 'account-console']) {
+        const res = await fetch(`${base}/realms/qe-tools/protocol/openid-connect/token`, {
+          method: 'POST',
+          body: new URLSearchParams({
+            grant_type: 'password',
+            client_id: clientId,
+            username: 'dev-lead',
+            password: DEV_USER_PASSWORD,
+            scope: 'openid',
+          }),
+        });
+        if (res.status === 200) {
+          const access = claims(((await res.json()) as { access_token: string }).access_token);
+          // Also refused by azp in server/auth/bearer.ts (REFUSED_CLIENTS).
+          expect([access.aud].flat(), clientId).not.toContain('sit-sizing-api');
+        } else {
+          expect(res.status, clientId).toBeGreaterThanOrEqual(400);
+        }
+      }
+    });
   });
 });

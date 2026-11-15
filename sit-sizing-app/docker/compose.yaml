@@ -196,6 +196,55 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  mcp:
+    # MCP server for AI assistants (ADR-0016, runbook section 11): tools over Streamable HTTP
+    # at /mcp; every call goes to the web API with the caller's own Keycloak token.
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: mcp
+      args:
+        REGISTRY_PREFIX: ${REGISTRY_PREFIX:-}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
+        APP_VERSION: ${APP_VERSION:-0.0.0-dev}
+    image: sit-sizing-mcp:local
+    environment:
+      # Explicit, never the server's own default (`local`, which allows a dev user).
+      APP_ENV: ${APP_ENV:?run pnpm dev:env to create .env}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SIT_API_BASE_URL: http://web:3000
+      OIDC_ISSUER: http://localhost:${KEYCLOAK_PORT:-18080}/realms/qe-tools
+      OIDC_INTERNAL_URL: http://keycloak:8080
+      OIDC_API_AUDIENCE: sit-sizing-api
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:${MCP_PORT:-3100}}
+      MCP_PORT: '3100'
+      MCP_RATE_LIMIT_PER_MINUTE: ${MCP_RATE_LIMIT_PER_MINUTE:-60}
+      # MCP_DEV_USER is set only by compose.dev.yaml.
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:${MCP_PORT:-3100}:3100'
+    user: node
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
   mail:
     # Local mail catcher for invitation, reset and notification emails. Development only.
     image: ${REGISTRY_PREFIX:-}axllent/mailpit:v1.31.4

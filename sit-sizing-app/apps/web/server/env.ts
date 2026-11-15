@@ -31,6 +31,11 @@ const EnvSchema = z
     OIDC_INTERNAL_URL: z.url().optional(),
     OIDC_CLIENT_ID: z.string().min(1).default('sit-sizing-web'),
     OIDC_CLIENT_SECRET: z.string().min(16).optional(),
+    /**
+     * Audience a bearer access token must carry to call /api/v1 (ADR-0016). Set by the
+     * realm's `sit-sizing-api` audience client scope.
+     */
+    OIDC_API_AUDIENCE: z.string().min(1).default('sit-sizing-api'),
     /** Encrypts the session cookie. At least 32 characters; from the secret store outside local. */
     SESSION_SECRET: z.string().min(32).optional(),
     /** API requests per user per minute and app instance (design 11, threat model T-11; Q10). */

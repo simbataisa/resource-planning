@@ -36,6 +36,7 @@ services:
       - nm-tokens:/repo/packages/tokens/node_modules
       - nm-config:/repo/packages/config/node_modules
       - nm-db:/repo/packages/db/node_modules
+      - nm-mcp:/repo/apps/mcp/node_modules
       - next-cache:/repo/apps/web/.next
       - pnpm-store:/pnpm/store
     healthcheck:
@@ -59,13 +60,50 @@ services:
       - nm-tokens:/repo/packages/tokens/node_modules
       - nm-config:/repo/packages/config/node_modules
       - nm-db:/repo/packages/db/node_modules
+      - nm-mcp:/repo/apps/mcp/node_modules
     depends_on:
       web:
         condition: service_healthy
 
+  mcp:
+    # Mirrors web and worker: same image, bind mount and node_modules volumes (nm-mcp included);
+    # web's `pnpm install` fills them, so mcp starts only once web is healthy. Runs as root on a
+    # writable filesystem with the base hardening reset, like web. Dev sign-in: acts as the
+    # seeded dev-estimator through the API's x-dev-user header (needs AUTH_MODE=dev), so no
+    # Keycloak sign-in is needed. tsx watch restarts on source changes when the bind mount
+    # delivers file events (not always on macOS: then `restart mcp`; runbook section 11).
+    build: !reset null
+    image: sit-sizing-web:dev
+    working_dir: /repo/apps/mcp
+    command: ['node_modules/.bin/tsx', 'watch', 'src/main.ts']
+    environment:
+      NODE_ENV: development
+      APP_ENV: local
+      MCP_DEV_USER: dev-estimator
+    user: !reset null
+    read_only: false
+    tmpfs: !reset []
+    cap_drop: !reset []
+    volumes:
+      - ..:/repo
+      - nm-root:/repo/node_modules
+      - nm-web:/repo/apps/web/node_modules
+      - nm-mcp:/repo/apps/mcp/node_modules
+      - nm-engine:/repo/packages/engine/node_modules
+      - nm-schemas:/repo/packages/schemas/node_modules
+      - nm-tokens:/repo/packages/tokens/node_modules
+      - nm-config:/repo/packages/config/node_modules
+      - nm-db:/repo/packages/db/node_modules
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      start_period: 60s
+
 volumes:
   nm-root:
   nm-web:
+  nm-mcp:
   nm-engine:
   nm-schemas:
   nm-tokens:

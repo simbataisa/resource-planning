@@ -21,6 +21,7 @@ import { HttpError } from '../http/route';
 import { recordAudit } from '../repositories/audit';
 import { VERSION_FULL_INCLUDE } from '../repositories/includes';
 import { estimateFor, notFound, type RequestMeta } from './access';
+import { changeDetail } from './change-meta';
 
 const conflict = (message: string, reason: string, extra: Record<string, unknown> = {}) =>
   new HttpError(409, 'CONFLICT', message, [{ reason, ...extra }]);
@@ -118,7 +119,11 @@ export async function createDraft(
       entity: 'EstimateVersion',
       entityId: v.id,
       projectId: est.projectId,
-      detail: { number: v.number, fromVersion: source.number },
+      detail: {
+        number: v.number,
+        fromVersion: source.number,
+        ...changeDetail(user, input.summary),
+      },
       requestId: meta.requestId,
     });
     return versionDto(v, user.id, now);
@@ -202,15 +207,18 @@ export async function unlockDraft(user: CurrentUser, estimateId: string) {
 /**
  * Autosave (PATCH /draft): the server recomputes with the engine and never trusts client
  * totals (design 4.1). Optimistic locking on rowVersion; the save also renews the lock.
- * Autosaves are not audited individually; saving a version is.
+ * Autosaves are not audited individually; saving a version is. A request that carries a
+ * `summary` (a confirmed change, e.g. from the MCP client) writes one `estimate.draft.update`
+ * event; its detail names the areas changed, never their values.
  */
 export async function patchDraft(
   user: CurrentUser,
   estimateId: string,
   input: z.output<typeof DraftPatch>,
+  meta: RequestMeta,
 ) {
   return db().$transaction(async (tx) => {
-    await estimateFor(tx, user, estimateId, 'draft.edit');
+    const est = await estimateFor(tx, user, estimateId, 'draft.edit');
     const draft = await requireOwnLockedDraft(tx, user, estimateId);
     if (draft.rowVersion !== input.rowVersion) {
       throw conflict('The draft changed since you loaded it.', 'STALE', {
@@ -231,6 +239,25 @@ export async function patchDraft(
       },
     });
     if (updated.count === 0) throw conflict('The draft changed since you loaded it.', 'STALE');
+    if (input.summary !== undefined) {
+      await recordAudit(tx, {
+        actorId: user.id,
+        action: 'estimate.draft.update',
+        entity: 'EstimateVersion',
+        entityId: draft.id,
+        projectId: est.projectId,
+        detail: {
+          number: draft.number,
+          changed: [
+            ...(input.inputs !== undefined ? ['inputs'] : []),
+            ...(input.assumptions !== undefined ? ['assumptions'] : []),
+            ...(input.note !== undefined ? ['note'] : []),
+          ],
+          ...changeDetail(user, input.summary),
+        },
+        requestId: meta.requestId,
+      });
+    }
     const v = await tx.estimateVersion.findUniqueOrThrow({
       where: { id: draft.id },
       include: VERSION_FULL_INCLUDE,
@@ -259,7 +286,8 @@ export async function saveVersion(
           return snapshotData(stored.inputs, stored.assumptions);
         })(),
         status: 'SAVED',
-        note: input.note ?? draft.note,
+        // A confirmed change summary doubles as the version note when none is given.
+        note: input.note ?? input.summary ?? draft.note,
         rowVersion: { increment: 1 },
         lockedById: null,
         lockExpiresAt: null,
@@ -272,7 +300,7 @@ export async function saveVersion(
       entity: 'EstimateVersion',
       entityId: draft.id,
       projectId: est.projectId,
-      detail: { number: draft.number },
+      detail: { number: draft.number, ...changeDetail(user, input.summary) },
       requestId: meta.requestId,
     });
     const v = await tx.estimateVersion.findUniqueOrThrow({

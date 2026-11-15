@@ -92,6 +92,164 @@ describe('realm baseline (design 10.4)', () => {
     expect(mapper.config['full.path']).toBe('false');
   });
 
+  describe('MCP clients (ADR-0016)', () => {
+    type Named = { name: string };
+    const mcp = realm.clients.find((c: { clientId: string }) => c.clientId === 'sit-sizing-mcp');
+    const policies: {
+      name: string;
+      providerId: string;
+      subType: string;
+      config: Record<string, string[]>;
+    }[] =
+      realm.components['org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy'];
+    const anon = (providerId: string) =>
+      policies.find((p) => p.subType === 'anonymous' && p.providerId === providerId)!;
+
+    it('point 1: public client, code flow with PKCE S256 only, loopback redirect URIs', () => {
+      expect(mcp.publicClient).toBe(true);
+      expect(mcp.standardFlowEnabled).toBe(true);
+      expect(mcp.implicitFlowEnabled).toBe(false);
+      expect(mcp.directAccessGrantsEnabled).toBe(false);
+      expect(mcp.serviceAccountsEnabled).toBe(false);
+      expect(mcp.fullScopeAllowed).toBe(false);
+      expect(mcp.attributes['pkce.code.challenge.method']).toBe('S256');
+      expect(mcp.attributes['oauth2.device.authorization.grant.enabled']).toBe('false');
+      expect(mcp.redirectUris).toEqual(['http://127.0.0.1/*', 'http://localhost/*']);
+      expect(mcp.webOrigins).toEqual([]);
+      expect(mcp.defaultClientScopes).toContain('sit-sizing-api');
+      expect(mcp.optionalClientScopes).toEqual([]);
+    });
+
+    it('point 2: anonymous registration only for loopback clients and the allowed scopes', () => {
+      // Every policy is listed: Keycloak adds its defaults only when the export has none.
+      expect(
+        policies
+          .filter((p) => p.subType === 'anonymous')
+          .map((p) => p.providerId)
+          .sort(),
+      ).toEqual([
+        'allowed-client-templates',
+        'allowed-protocol-mappers',
+        'consent-required',
+        'max-clients',
+        'registration-web-origins',
+        'scope',
+        'trusted-hosts',
+      ]);
+      const hosts = anon('trusted-hosts').config;
+      expect(hosts['trusted-hosts']).toEqual(['127.0.0.1', 'localhost']);
+      expect(hosts['client-uris-must-match']).toEqual(['true']);
+      expect(hosts['host-sending-registration-request-must-match']).toEqual(['false']);
+      const scopes = anon('allowed-client-templates').config;
+      expect(scopes['allow-default-scopes']).toEqual(['false']);
+      // Keycloak copies the realm default scopes into a registration request before the
+      // policy runs, so those (basic, acr, web-origins, roles) must be allowed too.
+      expect([...scopes['allowed-client-scopes']!].sort()).toEqual([
+        'acr',
+        'basic',
+        'email',
+        'openid',
+        'profile',
+        'roles',
+        'sit-sizing-api',
+        'web-origins',
+      ]);
+      for (const s of ['offline_access', 'service_account', 'address', 'phone'])
+        expect(scopes['allowed-client-scopes']).not.toContain(s);
+      expect(anon('max-clients').config['max-clients']).toEqual(['200']);
+      expect(policies.filter((p) => p.subType === 'authenticated').length).toBeGreaterThan(0);
+    });
+
+    it('point 2: self-registered clients cannot bring protocol mappers (no forged sub claim)', () => {
+      expect(anon('allowed-protocol-mappers').config['allowed-protocol-mapper-types']).toEqual([]);
+    });
+
+    it('point 2: self-registered clients are public, use PKCE S256, no implicit or password grant', () => {
+      type Exec = { executor: string; configuration: Record<string, unknown> };
+      type Policy = {
+        name: string;
+        enabled: boolean;
+        mode: string;
+        conditions: { condition: string; configuration: Record<string, string[]> }[];
+        profiles: string[];
+      };
+      const profiles: { name: string; executors: Exec[] }[] = realm.clientProfiles.profiles;
+      const rules: Policy[] = realm.clientPolicies.policies;
+      const selfRegistered = (p: Policy) => {
+        const ctx = p.conditions.find((c) => c.condition === 'client-updater-context');
+        return (
+          p.enabled &&
+          // STRICT: the context condition abstains at sign-in and token time, and an
+          // abstaining condition must switch the policy off, not on.
+          p.mode === 'STRICT' &&
+          [...(ctx?.configuration['update-client-source'] ?? [])].sort().join() ===
+            'ByAnonymous,ByRegistrationAccessToken'
+        );
+      };
+      const executorsOf = (p: Policy) =>
+        p.profiles.flatMap((n) => profiles.find((x) => x.name === n)?.executors ?? []);
+
+      const hardening = rules.find((p) => selfRegistered(p) && p.conditions.length === 1)!;
+      const execs = executorsOf(hardening);
+      const byId = (id: string) => execs.find((e) => e.executor === id)?.configuration;
+      expect(byId('pkce-enforcer')).toEqual({ 'auto-configure': 'true' }); // sets S256
+      expect(byId('reject-implicit-grant')).toEqual({ 'auto-configure': 'false' }); // refuses
+      expect(byId('reject-ropc-grant')).toEqual({ 'auto-configure': 'false' }); // refuses
+
+      const publicOnly = rules.find(
+        (p) =>
+          selfRegistered(p) &&
+          p.conditions.some(
+            (c) =>
+              c.condition === 'client-access-type' &&
+              c.configuration.type?.join() === 'confidential',
+          ),
+      )!;
+      expect(executorsOf(publicOnly).map((e) => e.executor)).toEqual(['reject-request']);
+      // Every policy in the export is scoped to self-registration, so no other client is hit.
+      for (const p of rules) expect(selfRegistered(p), p.name).toBe(true);
+    });
+
+    it('point 3: the built-in scopes stay realm defaults beside the audience scope', () => {
+      // basic (sub), profile and email are created as realm defaults by Keycloak itself;
+      // listing them in defaultDefaultClientScopes would have no effect, because import only
+      // resolves names of scopes defined in the export.
+      expect(realm.attributes.CreateDefaultClientScopes).toBe('true');
+      expect(realm.clientScopes.map((s: Named) => s.name).sort()).toEqual([
+        'offline_access',
+        'sit-sizing-api',
+      ]);
+    });
+
+    it('point 3: a realm default scope adds the sit-sizing-api audience to access tokens', () => {
+      expect(realm.defaultDefaultClientScopes).toContain('sit-sizing-api');
+      const scope = realm.clientScopes.find((s: Named) => s.name === 'sit-sizing-api');
+      const mapper = scope.protocolMappers.find(
+        (m: { protocolMapper: string }) => m.protocolMapper === 'oidc-audience-mapper',
+      );
+      expect(mapper.config['included.custom.audience']).toBe('sit-sizing-api');
+      expect(mapper.config['access.token.claim']).toBe('true');
+    });
+
+    it('point 4: no offline tokens: scope unadvertised and unassigned, role given to nobody', () => {
+      // Keycloak creates offline_access (scope, and role as a default role) on every import
+      // unless the export defines both, so both are defined here, switched off.
+      const offline = realm.clientScopes.find((s: Named) => s.name === 'offline_access');
+      expect(offline.attributes['include.in.openid.provider.metadata']).toBe('false');
+      expect(offline.protocolMappers ?? []).toEqual([]);
+      expect(realm.scopeMappings ?? []).toEqual([]);
+      expect(realm.defaultDefaultClientScopes).not.toContain('offline_access');
+      expect(realm.defaultOptionalClientScopes ?? []).not.toContain('offline_access');
+      for (const c of realm.clients) {
+        expect(c.defaultClientScopes, c.clientId).not.toContain('offline_access');
+        expect(c.optionalClientScopes, c.clientId).not.toContain('offline_access');
+      }
+      expect(realm.roles.realm.map((r: Named) => r.name)).toContain('offline_access');
+      expect(realm.defaultRole?.composites?.realm ?? []).not.toContain('offline_access');
+      for (const u of devUsers.users) expect(u.realmRoles ?? []).not.toContain('offline_access');
+    });
+  });
+
   it('dev users are synthetic, use a placeholder password, and match the seeded subjects', () => {
     for (const u of devUsers.users) {
       expect(u.email).toMatch(/@example\.invalid$/);

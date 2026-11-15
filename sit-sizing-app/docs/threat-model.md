@@ -24,6 +24,8 @@
 3. Web app ↔ Keycloak (OIDC back channel: token exchange, JWKS)
 4. Web app ↔ PostgreSQL `app` database
 5. Pipeline ↔ Nexus ↔ runtime environments
+6. MCP client on a laptop ↔ MCP server ↔ web app API (`Authorization: Bearer` Keycloak access token; ADR-0016)
+7. Anyone on the network ↔ Keycloak anonymous client registration endpoint (ADR-0016)
 
 ## STRIDE
 
@@ -49,11 +51,21 @@
 
 | T-18 | **Open redirect / login CSRF** in the sign-in flow | 1, 2 | `state`, `nonce`, PKCE; redirect URI from `APP_BASE_URL`; `next` limited to same-site paths | **1.3 ✓** |
 | T-19 | **Forced sign-out** through a link to `/api/auth/signout` | 1 | Accepted risk (nuisance only); a GET keeps sign-out working under `form-action 'self'` | 1.3 (accepted) |
+| T-20 | **Spoofing**: forged or altered bearer token on `/api/v1` | 6 | `server/auth/bearer.ts`: signature against the realm JWKS, asymmetric algorithms only (no `none`, no HMAC), issuer = `OIDC_ISSUER`, expiry with 30 s tolerance, `typ` `Bearer`, and `sub`, `azp` and `sid` required; accepted only with `AUTH_MODE=oidc`. One check decides whether a request carries a bearer token (`server/auth/bearer-header.ts`); such a request ignores cookies and `x-dev-user`. Any failure is 401 with `WWW-Authenticate: Bearer error="invalid_token"`; the token is never logged | MCP task 1 |
+| T-21 | **Spoofing**: token stolen from a laptop MCP client and replayed | 6 | Access tokens live at most 10 minutes; no offline tokens (T-24); refresh tokens rotate and end with the Keycloak session; roles still come from app memberships, so a stolen token has exactly the user's rights. Residual: a token is usable until it expires | MCP task 1 (accepted residual) |
+| T-22 | **Spoofing**: audience confusion (a token from another client accepted here) | 6 | `aud` must contain `OIDC_API_AUDIENCE` (`sit-sizing-api`). The audience scope is a realm default, so every client created after import gets it, including self-registered ones (by design) and any future client (a reviewer must check each new client). Built-in clients are created before the scope during import and so probably do not get it (not yet verified on a running Keycloak); the guaranteed control is the `azp` refusal: whatever their audience, tokens whose `azp` is a built-in client (`admin-cli`, `account`, `account-console`, `security-admin-console`, `broker`, `realm-management`) or `sit-sizing-web` are refused (`REFUSED_CLIENTS`) | MCP task 1 |
+| T-23 | **Spoofing**: bearer token used after sign-out or session end | 6 | A token whose `sid` is in `RevokedSession` is refused, as on the cookie path; a token without `sid` is refused (fail closed). Residual: `RevokedSession` is filled by back-channel logout to `sit-sizing-web`; a Keycloak session that never included the web client sends no logout to the app, so its last access token stays valid for up to 10 minutes (its refresh token stops at once) | MCP task 1 (accepted residual) |
+| T-24 | **Elevation of privilege**: long-lived offline token outliving the session limits | 2, 7 | Not offered: the `offline_access` scope is not advertised or assigned to any client, no user or default role has the `offline_access` role, and anonymous registration refuses it (realm-baseline and identity tests) | MCP task 1 |
+| T-25 | **Elevation / DoS**: abuse of anonymous client registration | 7 | Registration policies: redirect URIs only `127.0.0.1`/`localhost`; scopes limited to `openid profile email`, the realm defaults and the audience scope (no `service_account`, no `offline_access`); no protocol mappers (T-27); consent required; full scope disabled; at most 200 clients. Client policies (STRICT, matching anonymous registration and registration-access-token updates only): PKCE S256 set on the client, implicit flow and password grant refused, confidential clients (secret, service account) refused, so a registered client is public and can only start a user's own sign-in. Residual: the 200-client limit can be exhausted, blocking new Codex sign-ins; stale self-registered clients are removed by the clean-up procedure in runbook section 11, run by a person on a schedule | MCP task 1 (accepted residual) |
+| T-26 | **Spoofing**: valid token for someone with no app user creates an account | 6 | The bearer path never creates users; it answers 403 `NOT_PROVISIONED` (sign in once in the browser). Inactive users get the same answer | MCP task 1 |
+| T-27 | **Spoofing**: claim forgery through a self-registered client's protocol mapper (e.g. a user property mapped to `sub`) | 7 | The anonymous "Allowed Protocol Mapper Types" list is empty, so registration with any mapper is refused (realm-baseline and identity tests). A client that drops the `basic` scope gets tokens without `sub`, which the API refuses | MCP task 1 |
+| T-28 | **SSRF from Keycloak** through URL fields on the anonymous registration endpoint (`sector_identifier_uri`, fetched when the registration is validated; `jwks_uri` and `request_uris`, fetched at authorization or token time; the back-channel logout URL, called when a session ends) | 7 | Not mitigated by a realm setting: Trusted Hosts checks the redirect and client URLs, not every URL field. Keycloak must not reach internal services it does not need (network egress rules). In the penetration test scope | MCP task 1 (pentest) |
 
 ## Open items
 
 - ~~Back-channel logout~~ **Done in 1.7:** Keycloak posts a signed logout token to `/api/auth/backchannel-logout`; the session id is recorded in `RevokedSession` and refused on the next request (T-01).
 
+- Clean-up of stale self-registered MCP clients before the 200-client limit is reached (T-25, ADR-0016): procedure in runbook section 11; a person still has to run it on a schedule.
 - Session lifetime and MFA scope: confirm with information security (Q2).
 - Rate-limit thresholds: derive from the non-functional targets (Q10).
 - Penetration test of the IdP configuration before the pilot: scope in `docs/security/pentest-scope.md`, configuration review in `docs/security/idp-review.md` (release gates, `docs/release-checklist.md`).

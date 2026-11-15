@@ -17,7 +17,7 @@ type JsonObject = { [k: string]: Json };
 const STATUS_TEXT: Record<number, string> = {
   400: 'Validation failed',
   401: 'Not signed in',
-  403: 'Role does not allow this',
+  403: 'Role does not allow this (FORBIDDEN), or a valid bearer token for someone who has not signed in to SIT Sizing in the browser yet (NOT_PROVISIONED)',
   404: 'Not found (or not visible to you)',
   409: 'Conflict: stale rowVersion, lock held by someone else, or duplicate',
   422: 'Request understood but cannot be applied',
@@ -113,9 +113,10 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
       success.content = { 'text/html': { schema: { type: 'string' } } };
     }
     responses[String(op.success.status)] = success;
-    // Every signed-in operation is rate limited per user (threat model T-11).
-    const limited = op.minRole !== 'none' ? [429] : [];
-    for (const status of [...op.errors, ...limited, 500]) {
+    // Every signed-in operation is rate limited per user (threat model T-11), and a bearer
+    // caller with no app user yet gets 403 NOT_PROVISIONED (ADR-0016).
+    const signedIn = op.minRole !== 'none' ? [403, 429] : [];
+    for (const status of [...new Set([...op.errors, ...signedIn, 500])].sort((a, b) => a - b)) {
       responses[String(status)] = {
         description: STATUS_TEXT[status] ?? 'Error',
         content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
@@ -134,7 +135,8 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
       'x-required-role': op.minRole,
       parameters: parameters(op, components),
       responses,
-      security: op.minRole === 'none' ? [] : [{ cookieAuth: [] }, { devUser: [] }],
+      security:
+        op.minRole === 'none' ? [] : [{ cookieAuth: [] }, { bearerAuth: [] }, { devUser: [] }],
     };
     if (op.body) {
       const media: JsonObject = { schema: toSchema(op.body, 'input', components) };
@@ -206,6 +208,13 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
           name: '__Host-sit.session',
           description:
             'Encrypted session cookie set after Keycloak sign-in (/api/auth/signin). Named sit.session on plain http locally.',
+        },
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description:
+            'Keycloak access token for the SIT Sizing API (audience sit-sizing-api), sent by the MCP server for its signed-in user (ADR-0016). Same permissions as the browser session. A valid token for someone with no active app user gets 403 NOT_PROVISIONED: sign in once in the browser first.',
         },
         devUser: {
           type: 'apiKey',
