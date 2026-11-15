@@ -4626,7 +4626,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "The signed-in user with the saved language",
+            "description": "The signed-in user with the saved language and guided-tour state",
             "content": {
               "application/json": {
                 "schema": {
@@ -13893,6 +13893,7 @@
       },
       "TourKey": {
         "type": "string",
+        "maxLength": 64,
         "pattern": "^[a-z0-9-]+@\\d{1,3}$",
         "example": "first-estimate@1"
       },
@@ -13957,6 +13958,7 @@
             }
           ]
         },
+        "maxProperties": 100,
         "example": {
           "first-estimate@1": {
             "status": "completed"

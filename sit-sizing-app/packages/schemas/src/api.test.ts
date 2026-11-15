@@ -8,6 +8,7 @@ import {
   ProjectCreate,
   ProjectUpdate,
   TourKey,
+  TourUpdate,
 } from './api';
 
 describe('API request schemas', () => {
@@ -59,6 +60,19 @@ describe('tours', () => {
     for (const bad of ['First@1', 'tour', 'x@1234']) {
       expect(TourKey.safeParse(bad).success).toBe(false);
     }
+  });
+
+  it('TourKey is at most 64 characters', () => {
+    expect(TourKey.safeParse(`${'a'.repeat(62)}@1`).success).toBe(true);
+    expect(TourKey.safeParse(`${'a'.repeat(63)}@1`).success).toBe(false);
+  });
+
+  it('TourUpdate carries at most 100 keys', () => {
+    const keys = (n: number) =>
+      Object.fromEntries(Array.from({ length: n }, (_, i) => [`t${i}@1`, { status: 'skipped' }]));
+    expect(TourUpdate.safeParse(keys(100)).success).toBe(true);
+    expect(TourUpdate.safeParse(keys(101)).success).toBe(false);
+    expect(MeUpdate.safeParse({ tours: keys(101) }).success).toBe(false);
   });
 
   it('MeUpdate accepts tours alone, and null to remove a key', () => {

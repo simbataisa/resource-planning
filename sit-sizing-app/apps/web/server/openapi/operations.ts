@@ -667,7 +667,7 @@ export const OPERATIONS: Operation[] = [
     bodyExample: { locale: 'vi', tours: { 'first-estimate@1': { status: 'completed' } } },
     success: {
       status: 200,
-      description: 'The signed-in user with the saved language',
+      description: 'The signed-in user with the saved language and guided-tour state',
       schema: Me,
       example: {
         ...EX_USER,

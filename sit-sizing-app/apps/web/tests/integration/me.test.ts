@@ -75,6 +75,18 @@ describe('PATCH /me tours (guided tours)', () => {
     expect((await patch({})).status).toBe(400);
   });
 
+  it('rejects an over-long key and more than 100 keys in one update', async () => {
+    const long = await patch({ tours: { [`${'a'.repeat(63)}@1`]: { status: 'completed' } } });
+    expect(long.status).toBe(400);
+    expect(long.json.error.code).toBe('VALIDATION_FAILED');
+    const many = Object.fromEntries(
+      Array.from({ length: 101 }, (_, i) => [`t${i}@1`, { status: 'skipped' }]),
+    );
+    const tooMany = await patch({ tours: many });
+    expect(tooMany.status).toBe(400);
+    expect(tooMany.json.error.code).toBe('VALIDATION_FAILED');
+  });
+
   it('GET /me returns createdAt and lastLoginAt', async () => {
     const { json } = await call(me.GET, { who: 'dev-viewer', path: '/me' });
     expect(new Date(json.createdAt).toISOString()).toBe(json.createdAt);

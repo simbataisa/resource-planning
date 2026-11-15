@@ -45,9 +45,10 @@ export const page = <T extends z.ZodType>(item: T) =>
 export const UserRef = z.object({ id: Id, displayName: z.string(), email: z.email() });
 export type UserRef = z.infer<typeof UserRef>;
 
-/** Guided-tour id: lower-case slug plus a 1-3 digit version, e.g. `first-estimate@1`. */
+/** Guided-tour id: lower-case slug plus a 1-3 digit version, e.g. `first-estimate@1`; at most 64 characters. */
 export const TourKey = z
   .string()
+  .max(64)
   .regex(/^[a-z0-9-]+@\d{1,3}$/, 'Lower-case slug, "@", then a 1-3 digit version')
   .meta({ id: 'TourKey', example: 'first-estimate@1' });
 export type TourKey = z.infer<typeof TourKey>;
@@ -63,10 +64,20 @@ export const TourState = z.record(TourKey, z.object({ status: TourStatus, at: Is
 });
 export type TourState = z.infer<typeof TourState>;
 
-/** A null value removes the key; the server stamps `at`. */
+/** Most keys one tour update may carry (the server keeps at most this many). */
+export const MAX_TOUR_KEYS = 100;
+
+/** A null value removes the key; the server stamps `at`. At most 100 keys per update. */
 export const TourUpdate = z
   .record(TourKey, z.object({ status: TourStatus }).nullable())
-  .meta({ id: 'TourUpdate', example: { 'first-estimate@1': { status: 'completed' } } });
+  .refine((o) => Object.keys(o).length <= MAX_TOUR_KEYS, {
+    message: `At most ${MAX_TOUR_KEYS} tour keys`,
+  })
+  .meta({
+    id: 'TourUpdate',
+    maxProperties: MAX_TOUR_KEYS,
+    example: { 'first-estimate@1': { status: 'completed' } },
+  });
 export type TourUpdate = z.infer<typeof TourUpdate>;
 
 export const Me = UserRef.extend({
