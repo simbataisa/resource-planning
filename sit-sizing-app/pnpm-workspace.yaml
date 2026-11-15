@@ -13,8 +13,18 @@ onlyBuiltDependencies:
   - '@prisma/engines'
   - esbuild
   - prisma
-  - sharp
   - unrs-resolver
+
+# Licence policy (deploy/ci/license-check.mjs): drop dependencies the app never runs that
+# carry denied or missing licences, instead of allow-listing them.
+# - unzipper 0.10 pulls in `buffers` (no licence field). ExcelJS only uses unzipper in its
+#   streaming WorkbookReader, which we never call; 0.12 drops binary/buffers.
+# - sharp (Next's optional image optimiser) bundles LGPL-3.0 libvips. Nothing uses
+#   next/image, and next.config sets images.unoptimized. Remove this override (and
+#   get the licence reviewed) before adding image optimisation.
+overrides:
+  exceljs>unzipper: 0.12.3
+  sharp: '-'
 
 # One version of the shared toolchain across every package.
 catalog:
