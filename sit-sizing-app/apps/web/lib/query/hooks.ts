@@ -160,6 +160,30 @@ export function useReleaseLockOnPageHide(estimateId: string, busy?: () => boolea
   }, [estimateId]);
 }
 
+/**
+ * Releases this tab's draft lock when the editor unmounts (in-app navigation away), with the
+ * same rules as {@link useReleaseLockOnPageHide}: never without a token, and not while `keep`
+ * says so (a save pending or in flight, or a renewal under way). The release waits one task so
+ * the development double mount (Strict Mode) does not free the lock.
+ */
+export function useReleaseLockOnUnmount(estimateId: string, keep?: () => boolean) {
+  const keepRef = useRef(keep);
+  useEffect(() => {
+    keepRef.current = keep;
+  });
+  const pending = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    clearTimeout(pending.current);
+    return () => {
+      pending.current = setTimeout(() => {
+        if (keepRef.current?.()) return;
+        const token = lockTokenFor(estimateId);
+        if (token) api.estimates.releaseOnPageHide(estimateId, token);
+      }, 0);
+    };
+  }, [estimateId]);
+}
+
 /** Starts a new draft from the latest version; the editor then loads it. */
 export function useCreateDraft(estimateId: string) {
   const qc = useQueryClient();

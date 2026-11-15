@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ReactNode } from 'react';
+import { StrictMode, type ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,6 +8,7 @@ import {
   useCreateDraft,
   useCreateEstimate,
   useReleaseLockOnPageHide,
+  useReleaseLockOnUnmount,
   useSaveVersion,
 } from './hooks';
 
@@ -73,6 +74,45 @@ describe('Release on page hide', () => {
   it('sends nothing when this tab holds no token', () => {
     renderHook(() => useReleaseLockOnPageHide('e1'), { wrapper });
     window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+  });
+});
+
+describe('Release when the editor unmounts', () => {
+  const flush = () => act(() => new Promise((r) => setTimeout(r, 0)));
+
+  it('releases with this tab token once the editor goes away (in-app navigation)', async () => {
+    rememberLockToken('e1', 'tok-1');
+    const { unmount } = renderHook(() => useReleaseLockOnUnmount('e1'), { wrapper });
+    await flush();
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+    unmount();
+    await flush();
+    expect(api.estimates.releaseOnPageHide).toHaveBeenCalledWith('e1', 'tok-1');
+  });
+
+  it('skips the release while a save is pending or in flight', async () => {
+    rememberLockToken('e1', 'tok-1');
+    const { unmount } = renderHook(() => useReleaseLockOnUnmount('e1', () => true), { wrapper });
+    unmount();
+    await flush();
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing when this tab holds no token', async () => {
+    const { unmount } = renderHook(() => useReleaseLockOnUnmount('e1'), { wrapper });
+    unmount();
+    await flush();
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+  });
+
+  it('does not release on the development double mount (Strict Mode)', async () => {
+    rememberLockToken('e1', 'tok-1');
+    const strict = ({ children }: { children: ReactNode }) => (
+      <StrictMode>{wrapper({ children })}</StrictMode>
+    );
+    renderHook(() => useReleaseLockOnUnmount('e1'), { wrapper: strict });
+    await flush();
     expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
   });
 });
