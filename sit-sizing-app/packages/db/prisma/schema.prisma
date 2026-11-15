@@ -80,6 +80,8 @@ model User {
   active      Boolean    @default(true)
   createdAt   DateTime   @default(now())
   lastLoginAt DateTime?
+  /// Guided-tour state: { "<tour>@<n>": { status, at } }, at most 100 keys
+  tours       Json       @default("{}")
 
   memberships       ProjectMember[]    @relation("MemberUser")
   membersAdded      ProjectMember[]    @relation("MemberAddedBy")
