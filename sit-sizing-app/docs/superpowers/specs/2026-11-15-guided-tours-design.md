@@ -21,6 +21,7 @@ The tour teaches by doing: the user's first estimate is real work in their own p
 4. **"Already seen" is stored on the account, updated optimistically, with a browser copy as fallback** (section 6.3).
 5. **Different first-time experience per role** (section 6.5): full guided estimate for Estimators and QE Leads, a reading tour for Viewers, a one-card message for people in no project yet, and an extra admin step for Admins.
 6. **No new-feature tour content ships with this work.** It ships the mechanism and a how-to for adding one.
+7. **Existing accounts see the first-time tour too** (decided 2026-11-15, after the final review). `User.tours` starts empty for everyone, so every current user gets their onboarding tour at the next sign-in after release. No backfill and no `since` rule for onboarding.
 
 ## 3. Goals, non-goals, anti-goals
 

@@ -43,6 +43,7 @@ Import `react-joyride` only under `apps/web/components/features/tours/`. An ESLi
 
 - Easier: adding a tour for a new feature is a registry entry, step messages and `data-tour` targets. Tours follow the user across devices.
 - New column `User.tours` (additive, expand-only migration `user_tours`); `packages/db` changes need a named human reviewer.
+- Existing accounts start with no tours seen, so every current user gets the first-time tour at their next sign-in after release (product-owner decision, 2026-11-15). Tell users in the release notes; they can choose "Skip tour".
 - New dependency: `react-joyride` 3.2.0 (MIT) with small transitive packages (`@gilbarbara/*`, `@fastify/deepmerge`, `is-lite`, `react-innertext`, `scroll`, `scrollparent`, `type-fest`). It is bundled with the app, so the CSP is unchanged. Joyride's inline styles are allowed by the existing `style-src 'unsafe-inline'`.
 - `pnpm licenses:check` already fails on two unrelated packages on macOS (`@img/sharp-libvips-darwin-arm64`, `buffers`) before this change; Joyride and its additions are not among them.
 - Harder: a later change that needs Joyride outside the tours folder must change this rule and this ADR.
