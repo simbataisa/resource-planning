@@ -241,7 +241,11 @@ describe('Keycloak realm qe-tools', () => {
           /value="([^"]*)"/.exec(m[0])?.[1] ?? '',
         ]);
         if (!action) throw new Error('no form on the page');
-        return { action, hidden: Object.fromEntries(hidden) as Record<string, string> };
+        // Keycloak 26.8's consent form posts to a relative URL.
+        return {
+          action: new URL(action, base).toString(),
+          hidden: Object.fromEntries(hidden) as Record<string, string>,
+        };
       };
       const auth = new URL(`${base}/realms/qe-tools/protocol/openid-connect/auth`);
       for (const [k, v] of Object.entries({
@@ -260,6 +264,13 @@ describe('Keycloak realm qe-tools', () => {
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ username: 'dev-lead', password: DEV_USER_PASSWORD }),
       });
+      // Keycloak 26.8 redirects to the consent required action (`execution=OAUTH_GRANT`)
+      // instead of rendering it inline: follow redirects that stay on Keycloak.
+      for (let hops = 0; hops < 5 && res.status === 302; hops++) {
+        const next = res.headers.get('location') ?? '';
+        if (!next.startsWith(base)) break;
+        res = await send(next);
+      }
       if (res.status === 200) {
         // Self-registered clients require consent (anonymous policy "Consent Required").
         const consent = formOf(await res.text());
@@ -409,19 +420,54 @@ describe('Keycloak realm qe-tools', () => {
       }
     });
 
-    /** Keycloak's native registration endpoint, as a public client unless the body says otherwise. */
+    /**
+     * Keycloak's native registration endpoint, as a public client unless the body says
+     * otherwise. The flow flags are explicit: Keycloak 26.8's "reject implicit grant"
+     * executor fails with a 500 when `implicitFlowEnabled` is missing, before any policy
+     * is evaluated, so a body without it would test nothing (see the test below).
+     */
     const native = async (body: Record<string, unknown>) =>
       track(
         await json('/realms/qe-tools/clients-registrations/default', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ redirectUris: [LOOPBACK], publicClient: true, ...body }),
+          body: JSON.stringify({
+            redirectUris: [LOOPBACK],
+            publicClient: true,
+            implicitFlowEnabled: false,
+            directAccessGrantsEnabled: false,
+            ...body,
+          }),
         }),
       );
+    /**
+     * A policy refusal: 400 (invalid client metadata) or 403 (policy rejected). Any other
+     * 4xx (404, 405, 415, …) means the request itself was wrong and proves nothing.
+     */
     const refused = (status: number) => {
-      expect(status).toBeGreaterThanOrEqual(400);
-      expect(status).toBeLessThan(500);
+      expect([400, 403]).toContain(status);
     };
+
+    it('creates no client from a native registration that omits the flow flags', async () => {
+      // Keycloak 26.8 answers 500 here (NPE in RejectImplicitGrantExecutor). Whatever the
+      // status, the registration must not succeed and no client may exist afterwards.
+      const res = await json('/realms/qe-tools/clients-registrations/default', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          clientId: 'synthetic-no-flags',
+          redirectUris: [LOOPBACK],
+          publicClient: true,
+        }),
+      });
+      track(res);
+      expect(res.status).not.toBe(201);
+      const { body } = await json(
+        '/admin/realms/qe-tools/clients?clientId=synthetic-no-flags',
+        asAdmin(),
+      );
+      expect(body).toEqual([]);
+    });
 
     it('refuses a native registration that enables the password grant', async () => {
       refused(
