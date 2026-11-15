@@ -133,3 +133,14 @@ Found while building Task 1 against Keycloak 26.8. The security reviewer accepts
    - Accept the residual risks in T-21, T-23 and T-25.
    - Accept T-27, claim forgery through registered mappers, as mitigated by the empty mapper list.
    - Accept that T-28, SSRF through registration URL fields, is mitigated by network egress rules and pentest coverage, not by a realm setting.
+
+## Amendment: the assistant and the editor's lock (2026-11-15)
+
+The write tools check that the user does not have the draft open, take the edit lock, write and release it. Locks belonged to a user, not a session, so a residual race remained: if the same user opened the editor between the tool's check and its lock call, the lock call renewed the editor's lock and the tool's release then ended it.
+
+**This race is closed by the draft lock token** (design: `docs/superpowers/specs/2026-11-15-draft-lock-token-design.md`).
+
+- Taking a lock returns a random token to that caller only. The API stores only its SHA-256, and every draft write, renewal and release must send it in `X-Lock-Token`.
+- The assistant takes the lock with `takeover: false` and no token. If the editor took it first, the lock call is refused with 409 `LOCKED_ELSEWHERE` (or `RACE`). The tool answers `EDITOR_OPEN`, makes no write and no release, and the editor's lock is untouched.
+- The assistant never sends `takeover: true`, so it cannot take a lock back from the editor.
+- Tests: `apps/mcp` unit tests (Review Focus 5) and the `pnpm --filter @sit/mcp test:e2e:stack` case "editor holds the lock".

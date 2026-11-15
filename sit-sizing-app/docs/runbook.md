@@ -191,7 +191,7 @@ pnpm test:e2e:report  # open the last HTML report (traces and screenshots of fai
 - **Why the gate uses the production build.** `next dev` compiles every page on first request and restarts itself on config changes or near its memory limit. Under a full suite that means minute-long gaps at random points, so failures depend on timing rather than on the code. `pnpm test:e2e` builds the web image and runs `deploy/ci/smoke.sh` with `E2E_RUNNER=host`: the same stack CI uses, as compose project `sit-ci-local` on ports 23000 (web), 28080 (Keycloak) and 28025 (Mailpit). It has fresh random secrets and the synthetic seed, and is removed afterwards. It can run while `pnpm dev:up` is running.
 - **Dev server restarts.** The dev container logs `[dev] next dev exited with code …` before Docker restarts it. If restarts are frequent, check `pnpm dev:logs` for "approaching the used memory threshold" or "Found a change in". The container already gets a 4 GB heap (`NODE_OPTIONS` in `compose.dev.yaml`).
 - **Sign-in.** A setup step signs in through Keycloak as `dev-estimator` and `dev-lead` (password from `.env` or the stack's generated env, never printed), and the tests reuse those sessions.
-- **Suite.** `release3.spec.ts` covers the release 3 exit criteria: actuals from one SIT cycle used to publish a calibrated profile, and portfolio totals equal to the underlying versions (on screen and in CSV), plus the audit log and project members. `release2.spec.ts` covers the release 2 exit criteria: approval end to end with notices and email, a published profile used by a new estimate, and the Excel export equal to the screen. The smoke suite:
+- **Suite.** `lock-token.spec.ts` opens one draft in two tabs as the same user ("open elsewhere", "Open here instead", recovery in the first tab). `release3.spec.ts` covers the release 3 exit criteria: actuals from one SIT cycle used to publish a calibrated profile, and portfolio totals equal to the underlying versions (on screen and in CSV), plus the audit log and project members. `release2.spec.ts` covers the release 2 exit criteria: approval end to end with notices and email, a published profile used by a new estimate, and the Excel export equal to the screen. The smoke suite:
   - creates an estimate from the worked example and checks the prototype's numbers;
   - edits a quantity and checks autosave;
   - exports the profile and saves a version;
@@ -208,6 +208,16 @@ pnpm test:e2e:report  # open the last HTML report (traces and screenshots of fai
 | Rate limit              | `RATE_LIMIT_PER_MINUTE` (default 300) | Per user and app instance; 429 with `Retry-After`. Tune with the non-functional targets (Q10)               |
 | Back-channel logout     | `/api/auth/backchannel-logout`, realm | Keycloak ends a session → the app refuses it on the next request (`RevokedSession`, rows expire after 12 h) |
 | Security headers        | `next.config.ts`                      | HSTS, `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`                                 |
+
+### Draft lock token and `LOCKED_ELSEWHERE`
+
+The draft edit lock (15 minutes, renewed every 5 minutes while the editor is open) belongs to the browser tab or assistant session that took it, through a lock token (design `docs/superpowers/specs/2026-11-15-draft-lock-token-design.md`, threat model T-29).
+
+- **What `LOCKED_ELSEWHERE` means.** The API answers 409 `CONFLICT` with details reason `LOCKED_ELSEWHERE` ("This draft is open in another tab or in the assistant.") when the request comes from the lock holder but without that tab's token: the same draft is open in another tab, or the assistant is writing to it. `RACE` means another session won a free lock at the same moment. Neither is a fault.
+- **What the user sees.** The editor shows the draft read-only with "Open here instead". Clicking it moves editing to this tab (audited as `estimate.draft.lock.takeover` with `own: true`); the other tab then shows recovery with its unsaved values and a download button. If the draft changed meanwhile, unsaved values are never saved over it.
+- **Refresh, close and back/forward.** Refreshing or closing a tab releases its lock (a `keepalive` request on page hide), so a reload takes the lock again and edits as before. The release is skipped while an autosave is pending or in flight. A page restored from the browser's back/forward cache renews the lock with its token before editing resumes. If the release request is lost, the reload shows "Open here instead"; one click fixes it, or the lock expires after 15 minutes.
+- **The assistant.** A write tool refused this way returns `EDITOR_OPEN` (section 11): close the draft in the editor, then ask again.
+- **Support.** No data repair is needed. The token is never logged (it is redacted) and only its SHA-256 is stored, in `EstimateVersion.lockTokenHash`, which is null whenever the draft is not locked.
 
 ## 8. Release, promotion and rollback (design 12.5)
 
@@ -347,13 +357,13 @@ Before the first use, the QE signs in to SIT Sizing once in the browser: the app
 
 ### Tool errors the assistant may report
 
-| Code              | Meaning                                                                                                    | What to do                                                                        |
-| ----------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `NOT_PROVISIONED` | The token is valid, but the person has no active SIT Sizing account yet (or it was deactivated)            | Sign in to SIT Sizing once in the browser; an admin reactivates deactivated users |
-| `EDITOR_OPEN`     | The user has the draft open in the editor (they hold its edit lock), so the assistant will not write to it | Close the draft in the editor (or wait for the lock to expire), then ask again    |
-| `LOCKED`          | Someone else holds the draft's edit lock; the message names them and the expiry time                       | Wait, or ask that person or a QE Lead (who can take the lock over in the editor)  |
-| `NO_DRAFT`        | The estimate has no open draft                                                                             | Ask the assistant to start a draft (`start_draft`) first                          |
-| `RATE_LIMITED`    | Too many tool calls this minute (server or API limit); the message gives the retry time                    | Wait and retry                                                                    |
+| Code              | Meaning                                                                                                                                                                | What to do                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `NOT_PROVISIONED` | The token is valid, but the person has no active SIT Sizing account yet (or it was deactivated)                                                                        | Sign in to SIT Sizing once in the browser; an admin reactivates deactivated users |
+| `EDITOR_OPEN`     | The user has the draft open in the editor (the editor's tab holds its edit lock and token; the API answered `LOCKED_ELSEWHERE`), so the assistant will not write to it | Close the draft in the editor (or wait for the lock to expire), then ask again    |
+| `LOCKED`          | Someone else holds the draft's edit lock; the message names them and the expiry time                                                                                   | Wait, or ask that person or a QE Lead (who can take the lock over in the editor)  |
+| `NO_DRAFT`        | The estimate has no open draft                                                                                                                                         | Ask the assistant to start a draft (`start_draft`) first                          |
+| `RATE_LIMITED`    | Too many tool calls this minute (server or API limit); the message gives the retry time                                                                                | Wait and retry                                                                    |
 
 A refused or expired token is not a tool error: the server answers with an OAuth challenge and the client asks the user to sign in again.
 
