@@ -92,12 +92,14 @@ export function AppShell({
                     label={t('app.projects')}
                     icon={NAV_ICONS.projects}
                     active={section === 'projects'}
+                    tour="nav-projects"
                   />
                   <SidebarNavLink
                     href="/profiles"
                     label={t('app.profiles')}
                     icon={NAV_ICONS.profiles}
                     active={section === 'profiles'}
+                    tour="nav-profiles"
                   />
                   <PortfolioNavItem active={section === 'portfolio'} />
                 </SidebarMenu>

@@ -19,6 +19,7 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Field } from '@/components/patterns/field';
 import { useRouter } from '@/i18n/navigation';
+import { useTourEvent } from '../tours/use-tour-event';
 import { useCreateEstimate, useProfiles } from '@/lib/query/hooks';
 
 type Template = 'example' | 'blank';
@@ -27,6 +28,7 @@ type Template = 'example' | 'blank';
 export function NewEstimateDialog({ projectId }: { projectId: string }) {
   const t = useTranslations();
   const router = useRouter();
+  const tourEvent = useTourEvent();
   const create = useCreateEstimate(projectId);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -51,14 +53,19 @@ export function NewEstimateDialog({ projectId }: { projectId: string }) {
         template,
         profileId: profileId || undefined,
       },
-      { onSuccess: (estimate) => router.push(`/estimates/${estimate.id}`) },
+      {
+        onSuccess: (estimate) => {
+          tourEvent('estimate-created');
+          router.push(`/estimates/${estimate.id}`);
+        },
+      },
     );
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button data-tour="new-estimate">
           <Plus aria-hidden="true" />
           {t('estimates.new')}
         </Button>
@@ -77,6 +84,7 @@ export function NewEstimateDialog({ projectId }: { projectId: string }) {
             {(control) => (
               <Input
                 {...control}
+                data-tour="estimate-name"
                 value={name}
                 maxLength={160}
                 autoComplete="off"
@@ -155,7 +163,7 @@ export function NewEstimateDialog({ projectId }: { projectId: string }) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={create.isPending}>
+            <Button type="submit" data-tour="create-estimate" disabled={create.isPending}>
               {create.isPending ? t('estimates.creating') : t('estimates.create')}
             </Button>
           </DialogFooter>

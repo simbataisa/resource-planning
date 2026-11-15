@@ -307,7 +307,7 @@ function EditorLayout({
       <section aria-label={t('editor.inputs')} className="rounded-lg border bg-card shadow-card">
         <Tabs defaultValue="rough" className="gap-0">
           <TabsList className="px-3.5 pt-3.5">
-            <TabsTrigger value="rough">
+            <TabsTrigger value="rough" data-tour="tab-rough">
               <Dot className="bg-rough" />
               {t('editor.tabs.rough')}
             </TabsTrigger>
@@ -315,7 +315,9 @@ function EditorLayout({
               <Dot className="bg-detailed" />
               {t('editor.tabs.detail')}
             </TabsTrigger>
-            <TabsTrigger value="team">{t('editor.tabs.team')}</TabsTrigger>
+            <TabsTrigger value="team" data-tour="tab-team">
+              {t('editor.tabs.team')}
+            </TabsTrigger>
             <TabsTrigger value="evidence">{t('editor.tabs.evidence')}</TabsTrigger>
             <TabsTrigger value="assumptions">
               {t('editor.tabs.assumptions')}

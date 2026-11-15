@@ -37,6 +37,7 @@ export function AdminNavGroup({ active }: { active: NavSection | null }) {
             label={t('audit')}
             icon={NAV_ICONS.audit}
             active={active === 'audit'}
+            tour="nav-audit"
           />
           {isAdmin ? (
             <SidebarNavLink
@@ -44,6 +45,7 @@ export function AdminNavGroup({ active }: { active: NavSection | null }) {
               label={t('users')}
               icon={NAV_ICONS.users}
               active={active === 'users'}
+              tour="nav-users"
             />
           ) : null}
         </SidebarMenu>

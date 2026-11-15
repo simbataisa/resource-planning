@@ -42,6 +42,7 @@ export function SummaryCards() {
 
   return (
     <section
+      data-tour="summary-cards"
       aria-label={t('label')}
       aria-live="polite"
       className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
