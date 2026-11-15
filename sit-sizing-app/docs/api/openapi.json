@@ -3,7 +3,7 @@
   "info": {
     "title": "SIT Sizing API",
     "version": "1.0.0",
-    "description": "REST API of the SIT Sizing tool. Errors use one envelope (ApiError). Lists page with `cursor` and `limit`. Results are planning ranges, not commitments. Examples use synthetic data only."
+    "description": "REST API of the SIT Sizing tool. Errors use one envelope (ApiError); its `code` is an extensible set, so handle a code you do not know by the HTTP status and the message. Lists page with `cursor` and `limit`. Results are planning ranges, not commitments. Examples use synthetic data only."
   },
   "servers": [
     {
@@ -5254,7 +5254,8 @@
             "properties": {
               "code": {
                 "type": "string",
-                "enum": [
+                "description": "Machine-readable error code. Known codes: VALIDATION_FAILED, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, CONFLICT, RATE_LIMITED, NOT_READY, INTERNAL. The set is extensible: new codes may be added without a new API version. Clients must handle an unknown code by falling back to the HTTP status and the message.",
+                "x-extensible-enum": [
                   "VALIDATION_FAILED",
                   "UNAUTHENTICATED",
                   "FORBIDDEN",
