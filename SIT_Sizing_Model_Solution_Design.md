@@ -535,6 +535,7 @@ What happens to saved estimates when a formula or default changes:
 | **Notifications** | Email and in-app notice on submit, approve, return and profile publish (release 2). |
 | **Portfolio view** | Totals and ranges across projects and releases for QBR, with calibration status (release 3). |
 | **Guide and reference** | "How to use this tool", method, standards and rationale, as content pages in EN/VI. |
+| **Guided tours** | First-time guided estimate per role (Viewer reading tour, no-project card, admin extras), short tours for new features, replay from the help menu. ADR-0017. |
 | **Admin** | Users and global roles, global profiles, audit log viewer. |
 
 ---
