@@ -25,10 +25,13 @@ export const REDACT_PATHS = [
   '*.refreshToken',
   '*.idToken',
   '*.clientSecret',
+  '*.lockToken',
   'headers.authorization',
   'headers.cookie',
   '*.headers.authorization',
   '*.headers.cookie',
+  'headers["x-lock-token"]',
+  '*.headers["x-lock-token"]',
 ];
 
 export function createLogger(destination?: pino.DestinationStream): Logger {
