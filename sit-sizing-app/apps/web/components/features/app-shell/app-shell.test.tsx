@@ -18,9 +18,33 @@ const updateLocale = vi.hoisted(() => ({ mutate: vi.fn() }));
 vi.mock('@/lib/query/hooks', () => ({
   useUpdateLocale: () => updateLocale,
   useNotifications: () => ({ data: { items: [], unread: 0 } }),
-  useMe: () => ({ data: undefined }),
+  useMe: () => ({
+    data: {
+      id: 'u1',
+      displayName: 'Synthetic Estimator',
+      email: 'estimator@example.test',
+      globalRole: 'USER',
+      locale: 'en',
+      memberships: [
+        { projectId: 'p1', projectKey: 'DEMO', projectName: 'Demo', role: 'ESTIMATOR' },
+      ],
+      tours: {},
+      createdAt: '2026-01-01T00:00:00.000Z',
+      lastLoginAt: null,
+    },
+  }),
   useMarkNotifications: () => ({ read: { mutate: vi.fn() }, readAll: { mutate: vi.fn() } }),
 }));
+
+// The phone sheet focuses the first button, which opens its tooltip; Radix measures the arrow.
+vi.stubGlobal(
+  'ResizeObserver',
+  class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+);
 
 describe('AppShell (U-04)', () => {
   it('shows grouped navigation, the account menu and a skip link', async () => {
@@ -49,6 +73,10 @@ describe('AppShell (U-04)', () => {
     const sidebar = screen.getByRole('complementary', { name: 'Navigation and account' });
     expect(within(sidebar).getByRole('button', { name: 'Toggle sidebar' })).toBeInTheDocument();
     expect(within(sidebar).getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+    expect(within(sidebar).getByRole('button', { name: 'Tours' })).toHaveAttribute(
+      'data-tour',
+      'tour-menu',
+    );
     // The title is the short brand only.
     expect(within(sidebar).getByRole('link', { name: 'Quality engineering' })).toHaveAttribute(
       'href',

@@ -11,6 +11,7 @@ import viMessages from '@/messages/vi.json';
 import type { TourDefinition, TourEvent, TourStep } from '@/lib/tours/types';
 import { joyrideOptions, TourProvider, useTours } from './tour-provider';
 import { useTourEvent } from './use-tour-event';
+import { TourMenu, TakeTourButton } from './tour-menu';
 import { TOURS } from '@/lib/tours/registry';
 
 const nav = vi.hoisted(() => ({ pathname: '/projects', push: vi.fn() }));
@@ -146,6 +147,15 @@ const startAt = (id: string, stepIndex: number) =>
   );
 
 beforeEach(() => {
+  // Closing the menu returns focus to its button, which opens the tooltip; Radix measures it.
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
   nav.pathname = '/projects';
   nav.push.mockReset();
   api.updateMe.mockReset();
@@ -506,5 +516,86 @@ describe('TourProvider', () => {
     setup([SHORT]);
     expect(await dialog()).toBeInTheDocument();
     vi.restoreAllMocks();
+  });
+});
+
+describe('entry points', () => {
+  const ONBOARD = tour('first-estimate@1', [step('one')]);
+
+  function menuSetup(registryForProvider: TourDefinition[]) {
+    return render(
+      <Harness client={makeClient()} registry={registryForProvider}>
+        <TourMenu />
+        <TakeTourButton />
+        <Page />
+      </Harness>,
+    );
+  }
+
+  it('labels the menu button and carries the tour target', async () => {
+    const user = userEvent.setup();
+    window.sessionStorage.clear();
+    menuSetup([ONBOARD]);
+    const button = screen.getByRole('button', { name: 'Tours' });
+    expect(button).toHaveAttribute('data-tour', 'tour-menu');
+    await dialog();
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Close tour' }),
+    );
+    await user.click(button);
+    expect(await screen.findByRole('menuitem', { name: 'Take the tour' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Resume tour' })).toBeNull();
+  });
+
+  it('Take the tour goes to /projects and starts the onboarding tour even when seen', async () => {
+    const user = userEvent.setup();
+    const me: Me = {
+      ...ME,
+      tours: { 'first-estimate@1': { status: 'completed', at: '2026-02-01T00:00:00.000Z' } },
+    };
+    render(
+      <Harness client={makeClient(me)} registry={[ONBOARD]}>
+        <TourMenu />
+        <Page />
+      </Harness>,
+    );
+    nav.pathname = '/admin';
+    await user.click(screen.getByRole('button', { name: 'Tours' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Take the tour' }));
+    expect(nav.push).toHaveBeenCalledWith('/projects');
+    expect(probe.tours!.active?.id).toBe('first-estimate@1');
+  });
+
+  it('shows Resume tour only when paused, and Resume goes back to where it paused', async () => {
+    const user = userEvent.setup();
+    const deep = tour('first-estimate@1', [step('one', { route: /^\/projects\/[^/]+$/ })]);
+    nav.pathname = '/projects/abc';
+    const view = menuSetup([deep]);
+    await dialog();
+    nav.pathname = '/profiles';
+    view.rerender(
+      <Harness client={makeClient()} registry={[deep]}>
+        <TourMenu />
+        <TakeTourButton />
+        <Page />
+      </Harness>,
+    );
+    await waitFor(() => expect(probe.tours!.paused).toBe(true));
+    await user.click(screen.getAllByRole('button', { name: 'Tours' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Resume tour' }));
+    expect(nav.push).toHaveBeenCalledWith('/projects/abc');
+  });
+
+  it('the Guide button starts the tour from /projects', async () => {
+    const user = userEvent.setup();
+    menuSetup([ONBOARD]);
+    await dialog();
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Close tour' }),
+    );
+    nav.push.mockReset();
+    await user.click(screen.getByRole('button', { name: 'Take the tour' }));
+    expect(nav.push).toHaveBeenCalledWith('/projects');
+    expect(probe.tours!.active?.id).toBe('first-estimate@1');
   });
 });

@@ -28,6 +28,7 @@ import { Eyebrow } from '@/components/patterns/eyebrow';
 import { usePathname } from '@/i18n/navigation';
 import type { Locale } from '@/lib/i18n';
 import { AdminNavGroup } from '../admin/admin-nav';
+import { TourMenu } from '../tours/tour-menu';
 import { NotificationBell } from '../notifications/notification-bell';
 import { PortfolioNavItem } from '../portfolio/portfolio-page';
 import { AdoptProfileLocale, LanguageSwitch } from './language-switch';
@@ -78,6 +79,7 @@ export function AppShell({
           <SidebarBrandLink className="min-w-0 flex-1 px-2 py-1 group-data-[collapsible=icon]:hidden">
             <Eyebrow className="text-[0.7rem]">{t('app.brand')}</Eyebrow>
           </SidebarBrandLink>
+          {userName ? <TourMenu /> : null}
           {userName ? <NotificationBell /> : null}
           <SidebarHeaderToggle label={t('app.toggleNav')} />
         </SidebarHeader>

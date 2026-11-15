@@ -53,3 +53,11 @@ export function selectTour(
     null
   );
 }
+
+/**
+ * The onboarding tour for this user's role, for "Take the tour": the first onboarding tour whose
+ * audience matches, whatever was seen and whatever `after` says.
+ */
+export function onboardingFor(me: Me, registry: TourDefinition[]): TourDefinition | null {
+  return registry.find((t) => t.kind === 'onboarding' && t.audience(me)) ?? null;
+}

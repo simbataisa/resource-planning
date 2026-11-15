@@ -1,6 +1,7 @@
 import type { Me } from '@sit/schemas';
 import { describe, expect, it } from 'vitest';
-import { isSeen, selectTour } from './select';
+import { isSeen, onboardingFor, selectTour } from './select';
+import { TOURS } from './registry';
 import type { TourDefinition } from './types';
 
 const CREATED = '2026-01-01T00:00:00.000Z';
@@ -164,5 +165,23 @@ describe('selectTour', () => {
   it('offers first-estimate when a former Viewer finished reading-tour and is now an Estimator', () => {
     const m = me({ tours: { 'reading-tour@1': done('completed') } });
     expect(selectTour(m, '/projects', [reading, firstEstimate], {})?.id).toBe('first-estimate@1');
+  });
+});
+
+describe('onboardingFor', () => {
+  it('picks the onboarding tour for the role, whatever was seen', () => {
+    expect(onboardingFor(me(), TOURS)?.id).toBe('first-estimate@1');
+    const viewer = me({
+      memberships: [{ projectId: 'p1', projectKey: 'DEMO', projectName: 'Demo', role: 'VIEWER' }],
+    });
+    expect(onboardingFor(viewer, TOURS)?.id).toBe('reading-tour@1');
+    expect(onboardingFor(me({ memberships: [] }), TOURS)?.id).toBe('no-project@1');
+    const seen = me({ tours: { 'first-estimate@1': done('completed') } });
+    expect(onboardingFor(seen, TOURS)?.id).toBe('first-estimate@1');
+  });
+
+  it('ignores feature tours and returns null when nothing matches', () => {
+    expect(onboardingFor(me(), [feature])).toBeNull();
+    expect(onboardingFor(me({ memberships: [] }), [firstEstimate])).toBeNull();
   });
 });

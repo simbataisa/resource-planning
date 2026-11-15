@@ -2021,7 +2021,8 @@
       "close": "Đóng hướng dẫn",
       "progress": "{current} trên {total}",
       "resume": "Tiếp tục hướng dẫn",
-      "take": "Xem hướng dẫn"
+      "take": "Xem hướng dẫn",
+      "menu": "Hướng dẫn tương tác"
     },
     "firstEstimate": {
       "welcome": {

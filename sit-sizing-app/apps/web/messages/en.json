@@ -2021,7 +2021,8 @@
       "close": "Close tour",
       "progress": "{current} of {total}",
       "resume": "Resume tour",
-      "take": "Take the tour"
+      "take": "Take the tour",
+      "menu": "Tours"
     },
     "firstEstimate": {
       "welcome": {
