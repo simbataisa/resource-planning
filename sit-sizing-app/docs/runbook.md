@@ -1,6 +1,6 @@
 # Runbook
 
-Covers local development and the pipeline as of step 1.0. Later steps add sections for migrations (1.2), Keycloak (1.3), backup and restore (1.7), and release promotion.
+Covers local development, tests, the pipeline, Keycloak, release and deployment, backup and restore, and notifications (releases 1 to 3). For a visual walkthrough, open [guide/run-and-deploy.html](guide/run-and-deploy.html) in a browser.
 
 ## 1. Prerequisites
 
@@ -14,11 +14,11 @@ Covers local development and the pipeline as of step 1.0. Later steps add sectio
 
 ```bash
 corepack enable
-pnpm install            # creates pnpm-lock.yaml on the very first run — commit it
-pnpm format             # first run only: normalise formatting of the generated scaffold
+pnpm install            # installs dependencies and generates the Prisma client
 pnpm check              # type check, lint, format check, unit tests
-pnpm dev:up             # creates .env with random local passwords, then starts db, web, mail
-open http://localhost:3000            # placeholder home page
+pnpm dev:up             # creates .env with random local passwords, then starts db, migrate, seed,
+                        # Keycloak, web, worker and mail
+open http://localhost:3000            # redirects to Keycloak; sign in as dev-estimator
 curl -s localhost:3000/api/v1/health  # {"status":"ok",...}
 curl -s localhost:3000/api/v1/ready   # {"status":"ready",...} once the database is reachable
 ```
@@ -207,6 +207,48 @@ pnpm test:e2e:report  # open the last HTML report (traces and screenshots of fai
 4. **Promotion to `prod`** needs a human approval in Jenkins.
 5. **Rollback.** Redeploy the previous image tag. Migrations are expand-only within a release (design 12.5), so the previous version runs on the new schema. Never edit or roll back a merged migration; fix forward.
 6. **Keycloak realm changes** go through the reviewed import job, not the console (section 5).
+
+### 8.1 What runs in a server environment
+
+| Component     | Image and command                                                         | Notes                                                                  |
+| ------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Migration job | `tools` stage, `pnpm db:migrate`                                          | Run once per release, before the web rollout                           |
+| Web app       | `sit-sizing-web:<APP_VERSION>` (`runner` stage), port 3000                | Read-only root filesystem, non-root, writable `/tmp` and `.next/cache` |
+| Worker        | `tools` stage, `node_modules/.bin/tsx worker/main.ts` in `/repo/apps/web` | `PROCESS_ROLE=worker`; several replicas are safe                       |
+| PostgreSQL 17 | Platform-managed                                                          | Databases `app` and `keycloak` (see `docker/postgres/init`)            |
+| Keycloak 26.8 | Platform-managed, realm from `docker/keycloak/realm/qe-tools-realm.json`  | Never import `docker/keycloak/dev/` (synthetic users) outside local    |
+
+The pipeline publishes only the web image today. Build the `tools` image from the same commit (`docker build -f docker/Dockerfile --target tools .`) until a publish step is added for it.
+
+### 8.2 Environment variables outside local
+
+All values come from the platform secret store (design 11, Q4), never from a committed file. `apps/web/server/env.ts` validates them at start-up and refuses to start when a rule is broken.
+
+| Variable                               | Value                                                    |
+| -------------------------------------- | -------------------------------------------------------- |
+| `APP_ENV`                              | `dev`, `sit` or `prod`                                   |
+| `APP_VERSION`                          | The image tag                                            |
+| `DATABASE_URL`                         | `postgresql://…/app` for the app user                    |
+| `APP_BASE_URL`                         | Public URL of the app; must be `https://` outside local  |
+| `AUTH_MODE`                            | `oidc` (`dev` is refused outside local)                  |
+| `OIDC_ISSUER`                          | `https://<idp>/realms/qe-tools`, as the browser sees it  |
+| `OIDC_INTERNAL_URL`                    | Only when the server reaches Keycloak on a different URL |
+| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | `sit-sizing-web` and its secret (16+ characters)         |
+| `SESSION_SECRET`                       | 32+ random characters; rotating it signs everyone out    |
+| `LOG_LEVEL`                            | `info`; `debug` and `trace` are refused in `prod`        |
+| `RATE_LIMIT_PER_MINUTE`                | Default 300 (Q10)                                        |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`          | Tracing collector, optional                              |
+| `SMTP_URL`, `MAIL_FROM` (worker)       | The approved relay (Q12); unset keeps emails queued      |
+
+### 8.3 Deployment steps
+
+1. Confirm the release checklist is complete and the Jenkins run on `main` is green.
+2. Back up `app` and `keycloak` (or confirm the nightly backup), then run the migration job and wait for it to finish successfully.
+3. Roll out the web image and the worker with the new `APP_VERSION`.
+4. Check `GET /api/v1/health` (process up) and `GET /api/v1/ready` (database and identity provider reachable), then sign in once.
+5. On failure, redeploy the previous tag of both web and worker (step 5 above).
+
+**Still open:** the hosting platform, secret store and import job for the realm are decided with the platform team (design section 16, Q4). Until then, these steps describe what any container platform must provide; they are not a platform-specific procedure.
 
 ## 9. Backup and restore (design 12.7)
 
