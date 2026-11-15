@@ -50,6 +50,20 @@ describe('Axios client', () => {
     expect(onUnauthenticated).toHaveBeenCalledOnce();
   });
 
+  it('keeps message and status for an error code it does not know (ADR-0018)', async () => {
+    const http = createHttp();
+    http.defaults.adapter = adapter(403, {
+      error: { code: 'SOME_FUTURE_CODE', message: 'Not set up for you yet', requestId: 'r2' },
+    });
+    const err = await http.get('/x').catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ApiClientError);
+    const e = err as ApiClientError;
+    expect(e.status).toBe(403);
+    expect(e.code).toBe('SOME_FUTURE_CODE');
+    expect(e.message).toBe('Not set up for you yet');
+    expect(e.requestId).toBe('r2');
+  });
+
   it('parses responses with the contract and fails on drift', async () => {
     const http = createHttp();
     http.defaults.adapter = adapter(200, {

@@ -155,7 +155,8 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
       title: 'SIT Sizing API',
       version: API_VERSION,
       description:
-        'REST API of the SIT Sizing tool. Errors use one envelope (ApiError). Lists page with `cursor` and `limit`. ' +
+        'REST API of the SIT Sizing tool. Errors use one envelope (ApiError); its `code` is an extensible set, ' +
+        'so handle a code you do not know by the HTTP status and the message. Lists page with `cursor` and `limit`. ' +
         'Results are planning ranges, not commitments. Examples use synthetic data only.',
     },
     servers: [{ url: '/api/v1' }],

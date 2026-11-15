@@ -1,5 +1,5 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
-import { ApiErrorEnvelope, type ApiError } from '@sit/schemas';
+import { ApiErrorEnvelope, type ApiError, type KnownApiErrorCode } from '@sit/schemas';
 
 /**
  * The one Axios instance (design 9.3). Components never import this directly:
@@ -7,7 +7,11 @@ import { ApiErrorEnvelope, type ApiError } from '@sit/schemas';
  */
 export class ApiClientError extends Error {
   readonly status: number;
-  readonly code: ApiError['error']['code'] | 'NETWORK';
+  /**
+   * A known code, 'NETWORK' when no envelope came back, or a code this client does
+   * not know yet (ADR-0018): callers fall back to `status` and `message` for those.
+   */
+  readonly code: KnownApiErrorCode | 'NETWORK' | (string & {});
   readonly details: unknown[] | undefined;
   readonly requestId: string | undefined;
 

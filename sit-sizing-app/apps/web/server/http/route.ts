@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { Logger } from 'pino';
 import { ZodError } from 'zod';
-import type { ApiError } from '@sit/schemas';
+import type { ApiError, KnownApiErrorCode } from '@sit/schemas';
 import { isBearerRequest } from '../auth/bearer-header';
 import { logger as rootLogger } from '../logger';
 
-type ApiErrorCode = ApiError['error']['code'];
+/** The server emits only known codes; clients accept any (ADR-0018). */
+type ApiErrorCode = KnownApiErrorCode;
 
 /** Throw from a handler or service to return a typed error envelope. */
 export class HttpError extends Error {
