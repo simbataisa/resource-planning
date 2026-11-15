@@ -618,63 +618,68 @@
       }
 
       /* Timeline for autosave and lock */
+      /* Five equal columns: every stop stays inside the card at any width. Label rows have a
+         fixed height, so the dots line up on the rail (rail and cursor centre = 44px). */
       .timeline {
         position: relative;
-        height: 120px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         margin: 8px 0 0;
       }
       .timeline .rail {
         position: absolute;
-        left: 0;
-        right: 0;
-        top: 58px;
+        left: 10%;
+        right: 10%;
+        top: 43px;
         height: 2px;
         background: var(--line);
       }
       .timeline .ev {
-        position: absolute;
-        top: 0;
-        transform: translateX(-50%);
+        position: relative;
         text-align: center;
         font-size: 12px;
-        width: 110px;
+        line-height: 1.3;
+        padding: 0 2px;
+        overflow-wrap: anywhere;
+      }
+      .timeline .ev b {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        height: 31px;
+        font-size: 12px;
       }
       .timeline .ev i {
         display: block;
         width: 14px;
         height: 14px;
         border-radius: 50%;
-        margin: 4px auto 0;
+        margin: 6px auto;
         background: var(--surface);
         border: 2px solid var(--line);
         position: relative;
-        top: 34px;
+        z-index: 1;
       }
       .timeline .ev.on i {
         background: var(--red);
         border-color: var(--red);
       }
-      .timeline .ev.ok i {
+      .timeline .ev.ok.on i {
         background: var(--green);
         border-color: var(--green);
       }
       .timeline .ev span {
         display: block;
-        position: relative;
-        top: 52px;
         color: var(--muted);
-      }
-      .timeline .ev b {
-        display: block;
-        font-size: 12px;
       }
       .cursor {
         position: absolute;
-        top: 50px;
+        top: 35px;
         width: 2px;
         height: 18px;
         background: var(--red);
-        left: 0;
+        left: 10%;
+        z-index: 2;
         transition: left 0.25s linear;
       }
 
@@ -1328,31 +1333,19 @@
               <div class="timeline">
                 <div class="rail"></div>
                 <div class="cursor"></div>
-                <div class="ev s" style="left: 8%" data-cap="You open the draft and take the lock.">
+                <div class="ev s" data-cap="You open the draft and take the lock.">
                   <b>Open</b><i></i><span>lock taken</span>
                 </div>
-                <div
-                  class="ev s"
-                  style="left: 30%"
-                  data-cap="You type; results update live in the browser."
-                >
+                <div class="ev s" data-cap="You type; results update live in the browser.">
                   <b>Typing</b><i></i><span>live results</span>
                 </div>
-                <div class="ev s" style="left: 52%" data-cap="1.5 s of quiet: the draft is saved.">
+                <div class="ev s" data-cap="1.5 s of quiet: the draft is saved.">
                   <b>Pause 1.5 s</b><i></i><span>autosave</span>
                 </div>
-                <div
-                  class="ev s ok"
-                  style="left: 74%"
-                  data-cap="The server recomputes and stores the result."
-                >
+                <div class="ev s ok" data-cap="The server recomputes and stores the result.">
                   <b>Saved</b><i></i><span>server result</span>
                 </div>
-                <div
-                  class="ev s"
-                  style="left: 93%"
-                  data-cap="A heartbeat renews the 15-minute lock."
-                >
+                <div class="ev s" data-cap="A heartbeat renews the 15-minute lock.">
                   <b>Heartbeat</b><i></i><span>lock renewed</span>
                 </div>
               </div>
@@ -2186,12 +2179,14 @@
             s.querySelectorAll('.fill').forEach((f) => (f.style.width = '0'));
           });
           if (cap) cap.textContent = '';
+          if (cursor) cursor.style.left = '10%';
           await sleep(300);
           for (const s of steps) {
             if (runs.get(card) !== run) return;
             s.classList.add('on');
             s.querySelectorAll('.fill').forEach((f) => (f.style.width = f.dataset.w + '%'));
-            if (cursor && s.style.left) cursor.style.left = s.style.left;
+            if (cursor && s.classList.contains('ev'))
+              cursor.style.left = s.offsetLeft + s.offsetWidth / 2 - 1 + 'px';
             if (cap && s.dataset.cap) cap.textContent = s.dataset.cap;
             await sleep(s.dataset.cap ? 1100 : 420);
           }
