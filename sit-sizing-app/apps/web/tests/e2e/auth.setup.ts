@@ -1,7 +1,19 @@
 import { expect, test as setup, type Page } from '@playwright/test';
-import { LEAD_STATE, STATE } from '../../playwright.config';
+import { LEAD_STATE, OUTSIDER_STATE, STATE, VIEWER_STATE } from '../../playwright.config';
 
-/** Signs in through Keycloak once per synthetic user; the tests reuse the sessions. */
+/** Onboarding tours marked seen for every E2E user, so no tour opens over the screens tested. */
+const TOURS_SEEN = {
+  tours: {
+    'first-estimate@1': { status: 'completed' },
+    'first-estimate-admin@1': { status: 'completed' },
+    'reading-tour@1': { status: 'completed' },
+  },
+};
+
+/**
+ * Signs in through Keycloak once per synthetic user; the tests reuse the sessions. The welcome
+ * card may open over the page before the tours are marked seen; nothing here clicks it.
+ */
 async function signIn(page: Page, baseURL: string, username: string, path: string) {
   const password = process.env.KC_DEV_USER_PASSWORD;
   if (!password) throw new Error('KC_DEV_USER_PASSWORD is not set: run `pnpm dev:env`');
@@ -11,11 +23,13 @@ async function signIn(page: Page, baseURL: string, username: string, path: strin
   await page.locator('#password').fill(password);
   await page.locator('#kc-login').click();
   await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+  const seen = await page.request.patch('/api/v1/me', { data: TOURS_SEEN });
+  expect(seen.status()).toBe(200);
   await page.context().storageState({ path });
 }
 
 setup(
-  'sign in through Keycloak as the synthetic Estimator and QE Lead',
+  'sign in through Keycloak as the synthetic Estimator, QE Leads and Viewer',
   async ({ page, browser, baseURL, request }) => {
     // Wait for the stack (the dev server may still be compiling or restarting).
     await expect
@@ -25,9 +39,15 @@ setup(
       })
       .toBe(200);
     await signIn(page, baseURL!, 'dev-estimator', STATE);
-    // A separate browser context, so the two Keycloak sessions do not mix.
-    const lead = await browser.newContext({ baseURL });
-    await signIn(await lead.newPage(), baseURL!, 'dev-lead', LEAD_STATE);
-    await lead.close();
+    // A separate browser context per user, so the Keycloak sessions do not mix.
+    for (const [username, path] of [
+      ['dev-lead', LEAD_STATE],
+      ['dev-outsider', OUTSIDER_STATE],
+      ['dev-viewer', VIEWER_STATE],
+    ] as const) {
+      const context = await browser.newContext({ baseURL });
+      await signIn(await context.newPage(), baseURL!, username, path);
+      await context.close();
+    }
   },
 );

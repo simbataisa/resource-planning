@@ -14,6 +14,10 @@ if (!process.env.KC_DEV_USER_PASSWORD && existsSync('../../.env'))
 export const STATE = '../../reports/e2e/.auth/estimator.json';
 /** The synthetic QE Lead (release 2: approvals, profiles). */
 export const LEAD_STATE = '../../reports/e2e/.auth/lead.json';
+/** The synthetic QE Lead of project OTHER only (guided tours: a project no other spec uses). */
+export const OUTSIDER_STATE = '../../reports/e2e/.auth/outsider.json';
+/** The synthetic Viewer of the DEMO project (guided tours: the reading tour). */
+export const VIEWER_STATE = '../../reports/e2e/.auth/viewer.json';
 
 export default defineConfig({
   testDir: 'tests/e2e',
