@@ -42,10 +42,12 @@ function refusal(code: string, message: string): ApiCallError {
 /**
  * Releases the draft lock. A failure is logged with its error code only (no arguments,
  * no tokens) and reported as `false`; it never throws, so it cannot mask another error.
+ * `noChallenge`: a 401 here must not turn a write that already happened into an auth
+ * challenge, which a client would answer by replaying the (non-idempotent) call.
  */
 async function releaseLock(ctx: ToolContext, estimateId: string): Promise<boolean> {
   try {
-    await ctx.api.del(`/estimates/${seg(estimateId)}/draft/lock`);
+    await ctx.api.del(`/estimates/${seg(estimateId)}/draft/lock`, { noChallenge: true });
     return true;
   } catch (err) {
     ctx.log.warn(
@@ -57,20 +59,44 @@ async function releaseLock(ctx: ToolContext, estimateId: string): Promise<boolea
 }
 
 export interface DraftLockOptions {
-  /** Runs after the lock-state checks and before the lock is taken (validation). */
+  /** Validation before the lock state is checked and the lock taken; gets the draft number. */
   beforeLock?: (draftNumber: number) => Promise<void>;
   /** The call in `fn` releases the lock itself when it succeeds (saving a version). */
   consumesLock?: boolean;
 }
 
 /**
+ * Reads the estimate and refuses unless it has a draft that nobody holds. Any lock the
+ * server reports counts: `draftLock` is null unless the lock is active on the server's
+ * clock, so no local expiry check is made (a fast client clock would otherwise treat the
+ * user's live editor lock as expired, renew it and then release it).
+ */
+async function unlockedDraft(ctx: ToolContext, base: string) {
+  const estimate = await ctx.api.get(base, EstimateDetail);
+  const draft = estimate.hasDraft ? estimate.versions.find((v) => v.status === 'DRAFT') : undefined;
+  if (!draft) throw refusal('NO_DRAFT', 'call start_draft first');
+  const lock = estimate.draftLock;
+  if (lock?.mine) throw refusal('EDITOR_OPEN', 'close the draft in the editor first');
+  if (lock) throw refusal('LOCKED', `held by ${lock.holder.displayName} until ${lock.expiresAt}`);
+  return draft;
+}
+
+/**
  * Takes the draft edit lock for one write and always gives it back (Review Focus 1):
- * 1. Reads the estimate. No draft ⇒ `NO_DRAFT`. An unexpired lock held by the user (the
- *    editor is open) ⇒ `EDITOR_OPEN`; held by someone else ⇒ `LOCKED`. No lock call then.
- * 2. Takes the lock with `takeover: false` (never a takeover), and passes the draft the
+ * 1. Reads the estimate. No draft ⇒ `NO_DRAFT`. A lock held by the user (the editor is
+ *    open) ⇒ `EDITOR_OPEN`; by someone else ⇒ `LOCKED`. No lock call then.
+ * 2. With `beforeLock`: runs it (the validation read), then reads the lock state again,
+ *    so the last check sits right before the lock call.
+ * 3. Takes the lock with `takeover: false` (never a takeover), and passes the draft the
  *    lock call returned (its `rowVersion` is the one to send) to `fn`.
- * 3. Releases the lock afterwards, also when `fn` throws. No retry on any error.
- * A lock it did not take (a failed lock call, or a refusal in step 1) is never released.
+ * 4. Releases the lock afterwards, also when `fn` throws. No retry on any error.
+ * A lock it did not take (a failed lock call, or a refusal) is never released.
+ *
+ * Residual race: locks belong to a user, not a session, and the API renews a lock its
+ * holder asks for again. If the same user opens the editor between the last check and the
+ * lock call, the lock call renews the editor's lock and the release in step 4 ends it. The
+ * window is one request wide; closing it needs a server-side lock owner (session token) on
+ * the lock API — a follow-up, not something this client can do.
  */
 export async function withDraftLock<T>(
   ctx: ToolContext,
@@ -79,15 +105,11 @@ export async function withDraftLock<T>(
   opts: DraftLockOptions = {},
 ): Promise<T> {
   const base = `/estimates/${seg(estimateId)}`;
-  const estimate = await ctx.api.get(base, EstimateDetail);
-  const draft = estimate.hasDraft ? estimate.versions.find((v) => v.status === 'DRAFT') : undefined;
-  if (!draft) throw refusal('NO_DRAFT', 'call start_draft first');
-  const lock = estimate.draftLock;
-  if (lock && Date.parse(lock.expiresAt) > Date.now()) {
-    if (lock.mine) throw refusal('EDITOR_OPEN', 'close the draft in the editor first');
-    throw refusal('LOCKED', `held by ${lock.holder.displayName} until ${lock.expiresAt}`);
+  const draft = await unlockedDraft(ctx, base);
+  if (opts.beforeLock) {
+    await opts.beforeLock(draft.number);
+    await unlockedDraft(ctx, base);
   }
-  await opts.beforeLock?.(draft.number);
 
   const locked = await ctx.api.post(`${base}/draft/lock`, { takeover: false }, Version);
   let succeeded = false;

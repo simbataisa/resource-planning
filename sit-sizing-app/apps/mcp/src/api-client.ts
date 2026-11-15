@@ -13,7 +13,15 @@ export interface ApiClient {
   get<T>(path: string, schema: ZodType<T>, query?: Query): Promise<T>;
   post<T>(path: string, body: unknown, schema: ZodType<T>): Promise<T>;
   patch<T>(path: string, body: unknown, schema: ZodType<T>): Promise<T>;
-  del(path: string): Promise<void>;
+  del(path: string, opts?: CallOptions): Promise<void>;
+}
+
+export interface CallOptions {
+  /**
+   * Best-effort call (the lock release after a write): a 401 still rejects, but does not
+   * call `onUnauthorized`, so it cannot turn a completed write into an auth challenge.
+   */
+  noChallenge?: boolean;
 }
 
 export interface ApiClientOptions {
@@ -62,6 +70,7 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
     path: string,
     body?: unknown,
     query?: Query,
+    callOpts: CallOptions = {},
   ): Promise<Response> {
     const url = new URL(root + path);
     for (const [k, v] of Object.entries(query ?? {}))
@@ -80,7 +89,7 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
     });
     if (res.ok) return res;
 
-    if (res.status === 401) opts.onUnauthorized?.();
+    if (res.status === 401 && !callOpts.noChallenge) opts.onUnauthorized?.();
     const json = await readJson(res);
     const envelope = json.ok ? ApiErrorEnvelope.safeParse(json.value) : undefined;
     const ra = retryAfter(res);
@@ -118,8 +127,8 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
     get: async (path, schema, query) => parse(await send('GET', path, undefined, query), schema),
     post: async (path, body, schema) => parse(await send('POST', path, body), schema),
     patch: async (path, body, schema) => parse(await send('PATCH', path, body), schema),
-    del: async (path) => {
-      await send('DELETE', path);
+    del: async (path, callOpts) => {
+      await send('DELETE', path, undefined, undefined, callOpts);
     },
   };
 }

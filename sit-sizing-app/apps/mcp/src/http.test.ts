@@ -160,6 +160,61 @@ describe('HTTP transport', () => {
     expect(res.headers.get('www-authenticate')).toBe(`Bearer error="invalid_token", ${META}`);
   });
 
+  it('a 401 on the lock release after a successful write does not become an auth challenge', async () => {
+    const AT = '2026-01-01T00:00:00.000Z';
+    const estimate = {
+      id: 'clx0synthetic0e01',
+      projectId: 'clx0synthetic0p01',
+      name: 'Synthetic estimate',
+      description: null,
+      archived: false,
+      createdBy: { id: ME.id, displayName: ME.displayName, email: ME.email },
+      createdAt: AT,
+      latest: null,
+      hasDraft: true,
+    };
+    const { base, apiFetch, calls } = await start({
+      api: (url, init) => {
+        if (url.endsWith('/api/v1/me')) return Response.json(ME);
+        if (init.method === 'POST' && url.endsWith('/estimates'))
+          return Response.json(estimate, { status: 201 });
+        if (init.method === 'DELETE' && url.endsWith('/draft/lock'))
+          return Response.json(
+            { error: { code: 'UNAUTHENTICATED', message: 'Token expired' } },
+            { status: 401 },
+          );
+        return new Response(null, { status: 404 });
+      },
+    });
+    const res = await rpc(
+      base,
+      {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {
+          name: 'create_estimate',
+          arguments: {
+            projectId: 'clx0synthetic0p01',
+            name: 'Synthetic estimate',
+            summary: MARKER,
+          },
+        },
+      },
+      { authorization: `Bearer ${goodToken}` },
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      result: { isError?: boolean; structuredContent: { id: string } };
+    };
+    expect(body.result.isError).toBeFalsy();
+    expect(body.result.structuredContent.id).toBe(estimate.id);
+    expect(apiFetch.mock.calls.map((c) => c[1]?.method)).toContain('DELETE');
+    const logged = JSON.stringify(calls);
+    expect(logged).toContain('draft_unlock_failed');
+    expect(logged).not.toContain(MARKER);
+  });
+
   it('uses x-dev-user in dev mode without a token', async () => {
     const { base, apiFetch } = await start({ env: { MCP_DEV_USER: 'dev-estimator' } });
     const res = await rpc(base, callWhoami);

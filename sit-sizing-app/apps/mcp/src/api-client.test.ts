@@ -157,6 +157,9 @@ describe('createApiClient', () => {
     });
     await expect(api.del('/x')).rejects.toMatchObject({ status: 401, code: 'UNAUTHENTICATED' });
     expect(onUnauthorized).toHaveBeenCalledOnce();
+    // A best-effort call (lock release) still rejects but never asks for an auth challenge.
+    await expect(api.del('/x', { noChallenge: true })).rejects.toMatchObject({ status: 401 });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
 
     const cases: Array<[number, string]> = [
       [400, 'VALIDATION_FAILED'],

@@ -123,11 +123,16 @@ function recordingApi(overrides: Record<string, Answer> = {}) {
     get: async (path, schema) => answer('GET', path, undefined, schema),
     post: async (path, body, schema) => answer('POST', path, body, schema),
     patch: async (path, body, schema) => answer('PATCH', path, body, schema),
-    del: async (path) => answer('DELETE', path, undefined),
+    del: async (path, opts) => {
+      delOpts.push(opts);
+      return answer('DELETE', path, undefined);
+    },
   };
+  /** The options of every `del` call (the lock release must pass `noChallenge`). */
+  const delOpts: unknown[] = [];
   /** Calls other than the per-request `GET /me`. */
   const made = () => calls.filter((c) => c[1] !== '/me');
-  return { api, calls, made };
+  return { api, calls, made, delOpts };
 }
 
 async function connect(overrides: Record<string, Answer> = {}) {
@@ -255,15 +260,18 @@ describe('write tools', () => {
     expect(r.isError).toBeFalsy();
     expect(r.structuredContent).toMatchObject({ rowVersion: 6 });
     const made = t.made();
+    // Validation read first, then the lock state again right before the lock call.
     expect(made.map((c) => `${c[0]} ${c[1]}`)).toEqual([
       `GET ${BASE}`,
       `GET ${BASE}/versions/2`,
+      `GET ${BASE}`,
       `POST ${BASE}/draft/lock`,
       `PATCH ${BASE}/draft`,
       `DELETE ${BASE}/draft/lock`,
     ]);
-    expect(made[2]?.[2]).toEqual({ takeover: false });
-    const patch = made[3]?.[2] as Record<string, unknown>;
+    expect(made[3]?.[2]).toEqual({ takeover: false });
+    expect(t.delOpts).toEqual([{ noChallenge: true }]);
+    const patch = made[4]?.[2] as Record<string, unknown>;
     expect(patch).toMatchObject({ rowVersion: 5, note: 'Synthetic note', summary: SUMMARY });
     expect((patch.inputs as { team: { weeks: number } }).team.weeks).toBe(12);
   });
@@ -397,16 +405,76 @@ describe('write tools', () => {
     expect(JSON.stringify(t.calls)).not.toContain('"takeover":true');
   });
 
-  it('proceeds when the reported lock has already expired', async () => {
-    const lock = { holder: OTHER, expiresAt: PAST, mine: false };
-    const t = await connect({ [`GET ${BASE}`]: detail(lock) });
+  it('refuses any lock the server reports, whatever the local clock says', async () => {
+    // The server only reports active locks; a client clock ahead of it must not override that.
+    const t = await connect({ [`GET ${BASE}`]: detail({ ...MY_LOCK, expiresAt: PAST }) });
+    const r = await t.call('update_draft', { ...WRITE_TOOLS.update_draft, summary: SUMMARY });
+    expect(t.text(r)).toBe('EDITOR_OPEN: close the draft in the editor first');
+    expect(t.made()).toEqual([['GET', BASE]]);
+  });
+
+  it('refuses when the editor takes the lock while update_draft validates', async () => {
+    let reads = 0;
+    const t = await connect({
+      [`GET ${BASE}`]: () => (++reads === 1 ? detail() : detail(MY_LOCK)),
+    });
+    const r = await t.call('update_draft', { ...WRITE_TOOLS.update_draft, summary: SUMMARY });
+    expect(t.text(r)).toBe('EDITOR_OPEN: close the draft in the editor first');
+    expect(t.made().map((c) => `${c[0]} ${c[1]}`)).toEqual([
+      `GET ${BASE}`,
+      `GET ${BASE}/versions/2`,
+      `GET ${BASE}`,
+    ]);
+  });
+
+  it('update_draft returns NO_DRAFT when the draft is saved while it validates', async () => {
+    let reads = 0;
+    const t = await connect({
+      [`GET ${BASE}`]: () => (++reads === 1 ? detail() : detail(null, false)),
+    });
+    const r = await t.call('update_draft', { ...WRITE_TOOLS.update_draft, summary: SUMMARY });
+    expect(t.text(r)).toBe('NO_DRAFT: call start_draft first');
+    expect(t.made().some((c) => c[0] !== 'GET')).toBe(false);
+  });
+
+  it('an unlock answering 401 is logged, not challenged, and keeps the successful result', async () => {
+    const t = await connect({
+      [`DELETE ${BASE}/draft/lock`]: new ApiCallError({
+        status: 401,
+        code: 'UNAUTHENTICATED',
+        message: 'Token expired',
+      }),
+    });
     const r = await t.call('update_draft', { ...WRITE_TOOLS.update_draft, summary: SUMMARY });
     expect(r.isError).toBeFalsy();
-    expect(t.made().find((c) => c[0] === 'POST')).toEqual([
-      'POST',
-      `${BASE}/draft/lock`,
-      { takeover: false },
-    ]);
+    expect(r.structuredContent).toMatchObject({ rowVersion: 6 });
+    expect(t.delOpts).toEqual([{ noChallenge: true }]);
+    expect(JSON.stringify(t.logs)).toContain('UNAUTHENTICATED');
+    expect(JSON.stringify(t.logs)).toContain('"status":"ok"');
+  });
+
+  it('an unlock answering 409 NOT_HOLDER (lock expired mid-call) masks neither result nor error', async () => {
+    const notHolder = conflict('NOT_HOLDER');
+    const ok = await connect({ [`DELETE ${BASE}/draft/lock`]: notHolder });
+    const r1 = await ok.call('update_draft', { ...WRITE_TOOLS.update_draft, summary: SUMMARY });
+    expect(r1.isError).toBeFalsy();
+    expect(r1.structuredContent).toMatchObject({ rowVersion: 6 });
+    expect(JSON.stringify(ok.logs)).toContain('draft_unlock_failed');
+
+    const failed = await connect({
+      [`DELETE ${BASE}/draft/lock`]: notHolder,
+      [`PATCH ${BASE}/draft`]: new ApiCallError({
+        status: 422,
+        code: 'VALIDATION_FAILED',
+        message: 'Invalid input',
+      }),
+    });
+    const r2 = await failed.call('update_draft', {
+      ...WRITE_TOOLS.update_draft,
+      summary: SUMMARY,
+    });
+    expect(failed.text(r2)).toBe('VALIDATION_FAILED: Invalid input');
+    expect(JSON.stringify(failed.logs)).toContain('draft_unlock_failed');
   });
 
   it('does not unlock when taking the lock fails', async () => {
