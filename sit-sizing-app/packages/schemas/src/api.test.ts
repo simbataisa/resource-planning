@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { DraftPatch, MeUpdate, MembersPut, PageQuery, ProjectCreate, ProjectUpdate } from './api';
+import {
+  DraftPatch,
+  Me,
+  MeUpdate,
+  MembersPut,
+  PageQuery,
+  ProjectCreate,
+  ProjectUpdate,
+  TourKey,
+} from './api';
 
 describe('API request schemas', () => {
   it('ProjectCreate: key is upper-case letters and digits, 2–16 characters', () => {
@@ -41,5 +50,45 @@ describe('API request schemas', () => {
     expect(MeUpdate.safeParse({ locale: 'vi' }).success).toBe(true);
     expect(MeUpdate.safeParse({ locale: 'fr' }).success).toBe(false);
     expect(MeUpdate.safeParse({}).success).toBe(false);
+  });
+});
+
+describe('tours', () => {
+  it('TourKey is a lower-case id with a 1-3 digit version', () => {
+    expect(TourKey.safeParse('first-estimate@1').success).toBe(true);
+    for (const bad of ['First@1', 'tour', 'x@1234']) {
+      expect(TourKey.safeParse(bad).success).toBe(false);
+    }
+  });
+
+  it('MeUpdate accepts tours alone, and null to remove a key', () => {
+    const set = MeUpdate.parse({ tours: { 'first-estimate@1': { status: 'skipped' } } });
+    expect(set.locale).toBeUndefined();
+    expect(MeUpdate.safeParse({ tours: { 'first-estimate@1': null } }).success).toBe(true);
+  });
+
+  it('MeUpdate rejects empty bodies, bad keys and unknown statuses', () => {
+    expect(MeUpdate.safeParse({}).success).toBe(false);
+    expect(MeUpdate.safeParse({ tours: { 'bad key': { status: 'completed' } } }).success).toBe(
+      false,
+    );
+    expect(MeUpdate.safeParse({ tours: { 'first-estimate@1': { status: 'seen' } } }).success).toBe(
+      false,
+    );
+  });
+
+  it('Me carries tours, createdAt and lastLoginAt', () => {
+    const sample = {
+      id: 'clx0synthetic0001',
+      displayName: 'Sample User',
+      email: 'sample.user@example.test',
+      globalRole: 'USER',
+      locale: 'en',
+      memberships: [],
+      tours: {},
+      createdAt: '2026-01-01T00:00:00.000Z',
+      lastLoginAt: null,
+    };
+    expect(Me.parse(sample).lastLoginAt).toBeNull();
   });
 });

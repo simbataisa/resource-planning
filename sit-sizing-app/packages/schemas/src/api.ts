@@ -45,18 +45,48 @@ export const page = <T extends z.ZodType>(item: T) =>
 export const UserRef = z.object({ id: Id, displayName: z.string(), email: z.email() });
 export type UserRef = z.infer<typeof UserRef>;
 
+/** Guided-tour id: lower-case slug plus a 1-3 digit version, e.g. `first-estimate@1`. */
+export const TourKey = z
+  .string()
+  .regex(/^[a-z0-9-]+@\d{1,3}$/, 'Lower-case slug, "@", then a 1-3 digit version')
+  .meta({ id: 'TourKey', example: 'first-estimate@1' });
+export type TourKey = z.infer<typeof TourKey>;
+
+export const TOUR_STATUSES = ['completed', 'skipped', 'dismissed'] as const;
+export const TourStatus = z.enum(TOUR_STATUSES).meta({ id: 'TourStatus' });
+export type TourStatus = z.infer<typeof TourStatus>;
+
+/** Stored tour state: how the user last closed each tour, and when. */
+export const TourState = z.record(TourKey, z.object({ status: TourStatus, at: IsoDateTime })).meta({
+  id: 'TourState',
+  example: { 'first-estimate@1': { status: 'completed', at: '2026-01-01T00:00:00.000Z' } },
+});
+export type TourState = z.infer<typeof TourState>;
+
+/** A null value removes the key; the server stamps `at`. */
+export const TourUpdate = z
+  .record(TourKey, z.object({ status: TourStatus }).nullable())
+  .meta({ id: 'TourUpdate', example: { 'first-estimate@1': { status: 'completed' } } });
+export type TourUpdate = z.infer<typeof TourUpdate>;
+
 export const Me = UserRef.extend({
   globalRole: GlobalRole,
   locale: z.enum(['en', 'vi']),
   memberships: z.array(
     z.object({ projectId: Id, projectKey: z.string(), projectName: z.string(), role: ProjectRole }),
   ),
+  tours: TourState,
+  createdAt: IsoDateTime,
+  lastLoginAt: IsoDateTime.nullable(),
 }).meta({ id: 'Me' });
 export type Me = z.infer<typeof Me>;
 
 /** The user's own preferences (design 8.5: the language is saved to the profile). */
 export const MeUpdate = z
-  .object({ locale: z.enum(['en', 'vi']) })
+  .object({ locale: z.enum(['en', 'vi']).optional(), tours: TourUpdate.optional() })
+  .refine((v) => v.locale !== undefined || v.tours !== undefined, {
+    message: 'Provide locale or tours',
+  })
   .meta({ id: 'MeUpdate', example: { locale: 'vi' } });
 
 // ---------- projects ----------
