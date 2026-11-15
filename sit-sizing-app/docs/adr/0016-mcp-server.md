@@ -1,11 +1,11 @@
 # ADR-0016: MCP server and client compatibility
 
-|                           |                                                                       |
-| ------------------------- | --------------------------------------------------------------------- |
-| **Status**                | Proposed (needs security review, rule 13)                             |
-| **Date**                  | 2026-11-13                                                            |
-| **Deciders**              | Product owner; security reviewer (realm decision)                     |
-| **Backlog / design refs** | MCP server design spec 2026-11-13, sections 2, 6.2, 6.2a; plan task 0 |
+|                           |                                                                                                |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Status**                | Accepted 2026-11-15 (security review confirmed by the product owner; reviewer named in the PR) |
+| **Date**                  | 2026-11-13                                                                                     |
+| **Deciders**              | Product owner; security reviewer (realm decision)                                              |
+| **Backlog / design refs** | MCP server design spec 2026-11-13, sections 2, 6.2, 6.2a; plan task 0                          |
 
 ## Context
 
