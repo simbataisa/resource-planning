@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { Check, CircleAlert, Loader2, Save } from 'lucide-react';
 import type { Version } from '@sit/schemas';
@@ -80,12 +80,15 @@ export function DraftToolbar({
   versionNumber,
   onLost,
   onResume,
+  busyRef,
 }: {
   estimateId: string;
   versionNumber: number;
   onLost: (reason: LostReason) => void;
   /** The page came back from the back/forward cache: renew the lock before editing resumes. */
   onResume: (reclaim: (v: Version) => Reclaim) => void;
+  /** Receives "is a save pending or in flight?", so the editor keeps the lock on unmount. */
+  busyRef?: MutableRefObject<() => boolean>;
 }) {
   const { state, dispatch, editable } = useEditor();
   const patch = usePatchDraft(estimateId);
@@ -93,6 +96,7 @@ export function DraftToolbar({
   const latest = useRef({ state, busy: false, onLost, onResume });
   useEffect(() => {
     latest.current = { state, busy: state.dirty || patch.isPending, onLost, onResume };
+    if (busyRef) busyRef.current = () => latest.current.busy;
   });
   // Refreshing or closing this tab frees the lock, so a reload renews instead of "open elsewhere".
   // Not while an autosave is pending or in flight: that save would be refused.
@@ -168,7 +172,12 @@ export function DraftToolbar({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <SaveStatus status={status} />
-      <SaveVersionDialog estimateId={estimateId} number={versionNumber} flush={flush} />
+      <SaveVersionDialog
+        estimateId={estimateId}
+        number={versionNumber}
+        flush={flush}
+        onLost={(reason) => latest.current.onLost(reason)}
+      />
     </div>
   );
 }
@@ -195,10 +204,13 @@ function SaveVersionDialog({
   estimateId,
   number,
   flush,
+  onLost,
 }: {
   estimateId: string;
   number: number;
   flush: () => Promise<boolean>;
+  /** Saving was refused because the draft is open elsewhere: switch to recovery. */
+  onLost: (reason: LostReason) => void;
 }) {
   const t = useTranslations();
   const save = useSaveVersion(estimateId);
@@ -221,7 +233,15 @@ function SaveVersionDialog({
         });
         tourEvent('version-saved');
         setOpen(false);
-      } catch {
+      } catch (e) {
+        if (lockConflict(e) === 'elsewhere') {
+          // Open in another tab or the assistant: recovery keeps the values and offers the
+          // download, rather than a generic error inside a dialog that can no longer save.
+          setOpen(false);
+          setBusy(false);
+          onLost('elsewhere');
+          return;
+        }
         setError(true);
       }
     } else {

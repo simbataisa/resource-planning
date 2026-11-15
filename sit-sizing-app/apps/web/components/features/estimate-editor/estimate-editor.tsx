@@ -21,6 +21,7 @@ import {
   useLockDraft,
   useMe,
   useProject,
+  useReleaseLockOnUnmount,
   useVersion,
 } from '@/lib/query/hooks';
 import { can } from '@/lib/rbac';
@@ -155,6 +156,21 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
   }, [isDraft, mayEdit, heldByOther, session]);
   const effective: LockState = lockState === 'none' && heldByOther ? 'other' : lockState;
 
+  // Leaving the editor in the app frees the lock with this tab's token: while editing (unless a
+  // save is pending or in flight), or in recovery after a conflict, where this tab may still
+  // hold it. Never while renewing, and not where another tab or user holds it.
+  const toolbarBusy = useRef<() => boolean>(() => false);
+  const lockStateNow = useRef(effective);
+  useEffect(() => {
+    lockStateNow.current = effective;
+  });
+  useReleaseLockOnUnmount(estimate.id, () => {
+    const s = lockStateNow.current;
+    if (s === 'lost') return false;
+    if (s === 'mine') return toolbarBusy.current();
+    return true;
+  });
+
   const reload = async () => {
     await qc.invalidateQueries({ queryKey: qk.estimate(estimate.id) });
     await qc.invalidateQueries({ queryKey: qk.version(estimate.id, version.number) });
@@ -176,6 +192,7 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
       <EditorLayout
         estimate={estimate}
         version={version}
+        onLost={() => setLockState('lostElsewhere')}
         notice={
           <>
             <SessionNotice
@@ -202,6 +219,7 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
             <DraftToolbar
               estimateId={estimate.id}
               versionNumber={version.number}
+              busyRef={toolbarBusy}
               onLost={(reason) => setLockState(reason === 'elsewhere' ? 'lostElsewhere' : 'lost')}
               onResume={(reclaim) => {
                 setLockState('resuming');
@@ -351,6 +369,14 @@ function SessionNotice({
       </Alert>
     );
   }
+  if (lockState === 'resuming') {
+    // Back/forward restore: read-only until the renewal answers; say so politely.
+    return (
+      <p role="status" className="text-sm text-muted-foreground">
+        {t('draft.resuming')}
+      </p>
+    );
+  }
   return null;
 }
 
@@ -359,11 +385,14 @@ function EditorLayout({
   version,
   notice,
   toolbar,
+  onLost,
 }: {
   estimate: EstimateDetail;
   version: Version;
   notice: ReactNode;
   toolbar: ReactNode;
+  /** Applying a profile found the draft open elsewhere. */
+  onLost: () => void;
 }) {
   const t = useTranslations();
   const { uncalibrated } = useEditor();
@@ -428,6 +457,7 @@ function EditorLayout({
                   estimateId={estimate.id}
                   projectId={estimate.projectId}
                   profileId={version.profileId}
+                  onLost={onLost}
                 />
               }
             />

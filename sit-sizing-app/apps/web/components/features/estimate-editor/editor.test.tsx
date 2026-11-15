@@ -6,6 +6,7 @@ import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS } from '@sit/engine';
 import type { Assumptions, EstimateInputs, Version } from '@sit/schemas';
 import { ApiClientError } from '@/lib/http';
 import { forgetLockToken, rememberLockToken } from '@/lib/lock-tokens';
+import viMessages from '@/messages/vi.json';
 import { renderWithIntl } from '@/tests/support/intl';
 import { HEARTBEAT_MS } from './draft-toolbar';
 import { EstimateEditor } from './estimate-editor';
@@ -28,6 +29,7 @@ const hooks = vi.hoisted(() => ({
   useProfiles: vi.fn(),
   useApplyProfile: vi.fn(),
   useReleaseLockOnPageHide: vi.fn(),
+  useReleaseLockOnUnmount: vi.fn(),
 }));
 vi.mock('@/lib/query/hooks', () => hooks);
 
@@ -98,7 +100,11 @@ let patch: { mutateAsync: ReturnType<typeof vi.fn>; isPending: boolean };
 let save: { mutateAsync: ReturnType<typeof vi.fn> };
 let createDraft: { mutate: ReturnType<typeof vi.fn>; isPending: boolean };
 
-function setup(v: Version, role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' = 'ESTIMATOR') {
+function setup(
+  v: Version,
+  role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' = 'ESTIMATOR',
+  locale: 'en' | 'vi' = 'en',
+) {
   hooks.useEstimate.mockReturnValue(ok(estimate(v)));
   hooks.useVersion.mockReturnValue(ok(v));
   hooks.useMe.mockReturnValue(me(role));
@@ -107,6 +113,7 @@ function setup(v: Version, role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' = 'ESTIMATOR
     <QueryClientProvider client={client}>
       <EstimateEditor estimateId="e1" />
     </QueryClientProvider>,
+    { locale },
   );
 }
 
@@ -276,6 +283,12 @@ const conflict = (reason: string) =>
     'conflict',
   );
 const mineLock = { holder: user, expiresAt: LATER, mine: true };
+
+function pageShow(persisted: boolean) {
+  const e = new Event('pageshow') as Event & { persisted: boolean };
+  Object.defineProperty(e, 'persisted', { value: persisted });
+  window.dispatchEvent(e);
+}
 
 describe('Draft lock token (per tab)', () => {
   it('keeps the token from the lock and sends it with autosave, heartbeat and save version', async () => {
@@ -517,12 +530,6 @@ describe('Draft lock token (per tab)', () => {
     expect(busy()).toBe(false);
   });
 
-  function pageShow(persisted: boolean) {
-    const e = new Event('pageshow') as Event & { persisted: boolean };
-    Object.defineProperty(e, 'persisted', { value: persisted });
-    window.dispatchEvent(e);
-  }
-
   it('renews the lock with the kept token when the page comes back from the back/forward cache', async () => {
     let n = 0;
     lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
@@ -668,6 +675,156 @@ describe('Draft lock token (per tab)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
     expect(lock.mutate).toHaveBeenLastCalledWith({ takeover: true }, expect.anything());
     expect(qtyOf(0)).not.toBeDisabled();
+  });
+});
+
+describe('Lock token review fixes', () => {
+  it.each(['LOCKED_ELSEWHERE', 'RACE'])(
+    'switches to recovery with the values kept when saving a version is refused (%s)',
+    async (why) => {
+      save.mutateAsync.mockRejectedValue(conflict(why));
+      setup(version());
+      fireEvent.change(qtyOf(0), { target: { value: '6' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Save version' }));
+      const dialog = screen.getByRole('dialog', { name: 'Save version 2' });
+      await act(async () => {
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Save version' }));
+      });
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.getByText('Your last changes were not saved')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Download my unsaved values (JSON)' }),
+      ).toBeInTheDocument();
+      expect(qtyOf(0)).toBeDisabled();
+      expect(qtyOf(0).value).toBe('6');
+    },
+  );
+
+  function profiles() {
+    hooks.useProfiles.mockReturnValue(
+      ok({
+        items: [
+          {
+            id: 'pr1',
+            name: 'Synthetic profile',
+            status: 'PUBLISHED',
+            scope: 'GLOBAL',
+            projectId: null,
+          },
+        ],
+      }),
+    );
+  }
+
+  it.each(['LOCKED_ELSEWHERE', 'RACE'])(
+    'a refused profile apply (%s) shows Vietnamese text, not the server message, and recovery',
+    async (why) => {
+      const apply: {
+        mutate: ReturnType<typeof vi.fn>;
+        isPending: boolean;
+        isError: boolean;
+        error: unknown;
+      } = { mutate: vi.fn(), isPending: false, isError: false, error: null };
+      apply.mutate.mockImplementation(
+        (_v: unknown, o: { onError?: (e: unknown) => void; onSettled?: () => void }) => {
+          const e = conflict(why);
+          apply.isError = true;
+          apply.error = e;
+          o.onError?.(e);
+          o.onSettled?.();
+        },
+      );
+      hooks.useApplyProfile.mockReturnValue(apply);
+      profiles();
+      setup(version(), 'ESTIMATOR', 'vi');
+      const tab = screen.getAllByRole('tab')[4]!;
+      fireEvent.mouseDown(tab);
+      fireEvent.click(tab);
+      fireEvent.change(screen.getByRole('combobox', { name: viMessages.profiles.apply.choose }), {
+        target: { value: 'pr1' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: viMessages.profiles.apply.apply }));
+      await act(async () => {
+        fireEvent.click(
+          within(screen.getByRole('dialog')).getByRole('button', {
+            name: viMessages.profiles.apply.apply,
+          }),
+        );
+      });
+      expect(screen.getByText(viMessages.profiles.apply.lockedElsewhere)).toBeInTheDocument();
+      expect(
+        screen.queryByText('This draft is open in another tab or in the assistant.'),
+      ).toBeNull();
+      expect(screen.getByText(viMessages.draft.openElsewhereLost)).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: viMessages.draft.downloadUnsaved }),
+      ).toBeInTheDocument();
+    },
+  );
+
+  /** The latest "keep the lock" check the editor handed to the unmount release. */
+  const keepOnUnmount = () => {
+    const calls = hooks.useReleaseLockOnUnmount.mock.calls;
+    const last = calls[calls.length - 1] as [string, () => boolean];
+    expect(last[0]).toBe('e1');
+    return last[1]();
+  };
+
+  it('releases the lock when the editor unmounts, but not while a save is pending or in flight', async () => {
+    vi.useFakeTimers();
+    let resolveSave: (v: Version) => void = () => {};
+    patch.mutateAsync.mockImplementation(() => new Promise<Version>((r) => (resolveSave = r)));
+    setup(version());
+    expect(keepOnUnmount()).toBe(false);
+    fireEvent.change(qtyOf(0), { target: { value: '4' } });
+    expect(keepOnUnmount()).toBe(true); // autosave pending
+    patch.isPending = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(keepOnUnmount()).toBe(true); // in flight
+    patch.isPending = false;
+    await act(async () => {
+      resolveSave(version({ rowVersion: 4 }));
+    });
+    expect(keepOnUnmount()).toBe(false);
+  });
+
+  it('releases the lock on unmount in lost state, even with unsaved values', async () => {
+    vi.useFakeTimers();
+    patch.mutateAsync.mockRejectedValue(conflict('VERSION_CONFLICT'));
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: '5' } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(screen.getByText('Your last changes were not saved')).toBeInTheDocument();
+    expect(keepOnUnmount()).toBe(false);
+  });
+
+  it('keeps the lock on unmount while it is being renewed after a back/forward restore', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+    });
+    setup(version());
+    await act(async () => pageShow(true));
+    expect(keepOnUnmount()).toBe(true);
+  });
+
+  it('says politely that the lock is being renewed after a back/forward restore', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+    });
+    setup(version(), 'ESTIMATOR', 'vi');
+    await act(async () => pageShow(true));
+    expect(
+      screen.getAllByRole('status').some((s) => s.textContent === viMessages.draft.resuming),
+    ).toBe(true);
   });
 });
 
