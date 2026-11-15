@@ -21,7 +21,8 @@ export async function sendParsed<S extends z.ZodType>(
   url: string,
   body: unknown,
   schema: S,
+  headers?: Record<string, string>,
 ): Promise<z.output<S>> {
-  const res = await http.request({ method, url, data: body });
+  const res = await http.request({ method, url, data: body, headers });
   return schema.parse(res.data);
 }

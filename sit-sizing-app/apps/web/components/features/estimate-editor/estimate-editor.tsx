@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/patterns/page-header';
 import { QueryState } from '@/components/patterns/query-state';
 import { Link } from '@/i18n/navigation';
-import { ApiClientError } from '@/lib/http';
+import { lockTokenFor, rememberLockToken } from '@/lib/lock-tokens';
 import { principalFromMe } from '@/lib/me';
 import { qk } from '@/lib/query/keys';
 import {
@@ -30,7 +30,7 @@ import { useQueryState } from '../shared/use-query-state';
 import { ApplyProfile } from './apply-profile';
 import { AssumptionsTab } from './assumptions-tab';
 import { DetailScopeTab } from './detail-scope-tab';
-import { DraftToolbar } from './draft-toolbar';
+import { DraftToolbar, lockConflict } from './draft-toolbar';
 import { EvidenceTab } from './evidence-tab';
 import { ExportPanel, prototypeProfileJson } from './export-panel';
 import { RoughScopeTab } from './rough-scope-tab';
@@ -69,9 +69,13 @@ function VersionLoader({ estimate, number }: { estimate: EstimateDetail; number:
  * Who may edit right now (design 8.3, U-09): the user needs the role and the draft's edit lock.
  * - 'mine': this user holds the lock, so inputs are editable and autosave runs.
  * - 'other': someone else holds it; read-only, a QE Lead can take it over.
+ * - 'elsewhere': this user's lock is held by another tab or the assistant (lock token); read-only
+ *   with "Open here instead".
  * - 'lost': a save hit a 409; the user's unsaved values stay on the page for download.
+ * - 'lostElsewhere': a save or heartbeat found the draft open elsewhere; unsaved values stay on
+ *   the page and "Open here instead" carries on with them.
  */
-type LockState = 'none' | 'mine' | 'other' | 'lost';
+type LockState = 'none' | 'mine' | 'other' | 'elsewhere' | 'lost' | 'lostElsewhere';
 
 function DraftSession({ estimate, version }: { estimate: EstimateDetail; version: Version }) {
   const me = useMe();
@@ -85,20 +89,32 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
   const [session, setSession] = useState(0);
   const asked = useRef(false);
 
-  const acquire = (takeover: boolean) => {
-    lock.mutate(takeover, {
-      onSuccess: (v) => {
-        qc.setQueryData(qk.version(estimate.id, v.number), v);
-        // Start editing from the server's copy: after a takeover or an expired lock it may be
-        // newer than what this page loaded. Inputs were read-only until now, so nothing is lost.
-        setSession((n) => n + 1);
-        setLockState('mine');
+  /**
+   * Takes, renews or takes over the lock with this tab's token (memory only). With `keep`, the
+   * values on screen stay (recovery's "Open here instead"); otherwise editing restarts from the
+   * server's copy.
+   */
+  const acquire = (takeover: boolean, keep?: (v: Version) => void) => {
+    lock.mutate(
+      { takeover, lockToken: lockTokenFor(estimate.id) },
+      {
+        onSuccess: (v) => {
+          rememberLockToken(estimate.id, v.lockToken);
+          qc.setQueryData(qk.version(estimate.id, v.number), v);
+          if (keep) keep(v);
+          // Start editing from the server's copy: after a takeover or an expired lock it may be
+          // newer than what this page loaded. Inputs were read-only until now, so nothing is lost.
+          else setSession((n) => n + 1);
+          setLockState('mine');
+        },
+        onError: (e) => {
+          const reason = lockConflict(e);
+          if (keep) setLockState('lost');
+          else setLockState(reason === 'elsewhere' ? 'elsewhere' : reason ? 'other' : 'none');
+          void qc.invalidateQueries({ queryKey: qk.version(estimate.id, version.number) });
+        },
       },
-      onError: (e) => {
-        setLockState(e instanceof ApiClientError && e.status === 409 ? 'other' : 'none');
-        void qc.invalidateQueries({ queryKey: qk.version(estimate.id, version.number) });
-      },
-    });
+    );
   };
 
   // Someone else holds an unexpired lock: read-only until they finish (or a QE Lead takes over).
@@ -145,6 +161,7 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
               canCreateDraft={principal ? can(principal, 'draft.create', pid) : false}
               canTakeover={principal ? can(principal, 'draft.lock.takeover', pid) : false}
               onTakeover={() => acquire(true)}
+              onOpenHere={(keep) => acquire(true, keep)}
               onReload={() => void reload()}
             />
             <EngineNotice
@@ -159,7 +176,7 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
             <DraftToolbar
               estimateId={estimate.id}
               versionNumber={version.number}
-              onLost={() => setLockState('lost')}
+              onLost={(reason) => setLockState(reason === 'elsewhere' ? 'lostElsewhere' : 'lost')}
             />
           ) : null
         }
@@ -176,6 +193,7 @@ function SessionNotice({
   canCreateDraft,
   canTakeover,
   onTakeover,
+  onOpenHere,
   onReload,
 }: {
   estimate: EstimateDetail;
@@ -185,12 +203,35 @@ function SessionNotice({
   canCreateDraft: boolean;
   canTakeover: boolean;
   onTakeover: () => void;
+  /** Takes this user's lock back from another tab or the assistant, keeping the values shown. */
+  onOpenHere: (keep?: (v: Version) => void) => void;
   onReload: () => void;
 }) {
   const t = useTranslations();
   const locale = useLocale();
   const createDraft = useCreateDraft(estimate.id);
-  const { state, uncalibrated } = useEditor();
+  const { state, uncalibrated, dispatch } = useEditor();
+
+  const downloadUnsaved = () => {
+    const text = prototypeProfileJson(
+      estimate.name,
+      state.inputs,
+      state.assumptions,
+      uncalibrated,
+      new Date(),
+    );
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sit-sizing-unsaved-v${version.number}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const downloadButton = (
+    <Button size="sm" variant="outline" onClick={downloadUnsaved}>
+      {t('draft.downloadUnsaved')}
+    </Button>
+  );
 
   if (version.status !== 'DRAFT') {
     return (
@@ -231,6 +272,39 @@ function SessionNotice({
       </Alert>
     );
   }
+  if (lockState === 'elsewhere') {
+    return (
+      <Alert>
+        <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+          <span>{t('draft.openElsewhere')}</span>
+          <Button size="sm" variant="outline" onClick={() => onOpenHere()}>
+            {t('draft.openHere')}
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  if (lockState === 'lostElsewhere') {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>{t('draft.lockLostTitle')}</AlertTitle>
+        <AlertDescription>
+          <p>{t('draft.openElsewhereLost')}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              onClick={() =>
+                onOpenHere((v) => dispatch({ type: 'relocked', rowVersion: v.rowVersion }))
+              }
+            >
+              {t('draft.openHere')}
+            </Button>
+            {downloadButton}
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  }
   if (lockState === 'lost') {
     return (
       <Alert variant="destructive">
@@ -238,27 +312,7 @@ function SessionNotice({
         <AlertDescription>
           <p>{t('draft.lockLostBody')}</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                const text = prototypeProfileJson(
-                  estimate.name,
-                  state.inputs,
-                  state.assumptions,
-                  uncalibrated,
-                  new Date(),
-                );
-                const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `sit-sizing-unsaved-v${version.number}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-            >
-              {t('draft.downloadUnsaved')}
-            </Button>
+            {downloadButton}
             <Button size="sm" onClick={onReload}>
               <RotateCcw aria-hidden="true" />
               {t('draft.reload')}

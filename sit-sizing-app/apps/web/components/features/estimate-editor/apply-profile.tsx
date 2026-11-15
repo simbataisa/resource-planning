@@ -15,6 +15,7 @@ import {
 import { NativeSelect } from '@/components/ui/native-select';
 import { Field } from '@/components/patterns/field';
 import { Link } from '@/i18n/navigation';
+import { lockTokenFor } from '@/lib/lock-tokens';
 import { useApplyProfile, useProfiles } from '@/lib/query/hooks';
 import { useEditor } from './store';
 
@@ -105,7 +106,11 @@ export function ApplyProfile({
                 disabled={apply.isPending}
                 onClick={() =>
                   apply.mutate(
-                    { profileId: picked.id, rowVersion: state.rowVersion },
+                    {
+                      profileId: picked.id,
+                      rowVersion: state.rowVersion,
+                      lockToken: lockTokenFor(estimateId),
+                    },
                     {
                       onSuccess: (v) => {
                         dispatch({

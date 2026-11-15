@@ -5,6 +5,7 @@ import {
   Actuals,
   ActualsList,
   Estimate,
+  EstimateCreated,
   EstimateDetail,
   Me,
   Portfolio,
@@ -43,6 +44,10 @@ const ProjectPage = page(Project);
 const EstimatePage = page(Estimate);
 const ProfileList = z.object({ items: z.array(Profile) });
 
+/** The `X-Lock-Token` header for calls that use the draft lock (none until the tab has one). */
+const lockHeader = (lockToken?: string): Record<string, string> | undefined =>
+  lockToken ? { 'X-Lock-Token': lockToken } : undefined;
+
 /** Typed endpoint functions (design 9.3). Build with a custom Axios instance in tests. */
 export function createApi(http: AxiosInstance = defaultHttp) {
   return {
@@ -62,21 +67,45 @@ export function createApi(http: AxiosInstance = defaultHttp) {
       list: (projectId: string, q?: Partial<PageQuery>) =>
         getParsed(http, `/projects/${projectId}/estimates`, EstimatePage, q),
       create: (projectId: string, body: In<typeof EstimateCreate>) =>
-        sendParsed(http, 'post', `/projects/${projectId}/estimates`, body, Estimate),
+        sendParsed(http, 'post', `/projects/${projectId}/estimates`, body, EstimateCreated),
       get: (estimateId: string) => getParsed(http, `/estimates/${estimateId}`, EstimateDetail),
       getVersion: (estimateId: string, n: number) =>
         getParsed(http, `/estimates/${estimateId}/versions/${n}`, Version),
       createDraft: (estimateId: string, body: In<typeof DraftCreate> = {}) =>
         sendParsed(http, 'post', `/estimates/${estimateId}/draft`, body, Version),
-      patchDraft: (estimateId: string, body: In<typeof DraftPatch>) =>
-        sendParsed(http, 'patch', `/estimates/${estimateId}/draft`, body, Version),
-      lock: (estimateId: string, body: In<typeof LockRequest> = {}) =>
-        sendParsed(http, 'post', `/estimates/${estimateId}/draft/lock`, body, Version),
-      unlock: async (estimateId: string) => {
-        await http.delete(`/estimates/${estimateId}/draft/lock`);
+      patchDraft: (estimateId: string, body: In<typeof DraftPatch>, lockToken?: string) =>
+        sendParsed(
+          http,
+          'patch',
+          `/estimates/${estimateId}/draft`,
+          body,
+          Version,
+          lockHeader(lockToken),
+        ),
+      /** Takes, renews (with this tab's token) or takes over the lock. */
+      lock: (estimateId: string, body: In<typeof LockRequest> = {}, lockToken?: string) =>
+        sendParsed(
+          http,
+          'post',
+          `/estimates/${estimateId}/draft/lock`,
+          body,
+          Version,
+          lockHeader(lockToken),
+        ),
+      unlock: async (estimateId: string, lockToken?: string) => {
+        await http.delete(`/estimates/${estimateId}/draft/lock`, {
+          headers: lockHeader(lockToken),
+        });
       },
-      saveVersion: (estimateId: string, body: In<typeof VersionSave> = {}) =>
-        sendParsed(http, 'post', `/estimates/${estimateId}/versions`, body, Version),
+      saveVersion: (estimateId: string, body: In<typeof VersionSave> = {}, lockToken?: string) =>
+        sendParsed(
+          http,
+          'post',
+          `/estimates/${estimateId}/versions`,
+          body,
+          Version,
+          lockHeader(lockToken),
+        ),
       /** Approval workflow (release 2, V-01). */
       review: (
         estimateId: string,
@@ -86,8 +115,15 @@ export function createApi(http: AxiosInstance = defaultHttp) {
       ) =>
         sendParsed(http, 'post', `/estimates/${estimateId}/versions/${n}/${action}`, body, Version),
       /** Replace the draft's assumptions with a published profile (P-01). */
-      applyProfile: (estimateId: string, body: In<typeof ProfileApply>) =>
-        sendParsed(http, 'post', `/estimates/${estimateId}/draft/profile`, body, Version),
+      applyProfile: (estimateId: string, body: In<typeof ProfileApply>, lockToken?: string) =>
+        sendParsed(
+          http,
+          'post',
+          `/estimates/${estimateId}/draft/profile`,
+          body,
+          Version,
+          lockHeader(lockToken),
+        ),
       /** SIT cycles recorded against a version (release 3, P-02). */
       actuals: (estimateId: string, n: number) =>
         getParsed(http, `/estimates/${estimateId}/versions/${n}/actuals`, ActualsList),

@@ -17,6 +17,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Field } from '@/components/patterns/field';
 import { ApiClientError } from '@/lib/http';
+import { lockTokenFor, rememberLockToken } from '@/lib/lock-tokens';
 import { useLockDraft, usePatchDraft, useSaveVersion } from '@/lib/query/hooks';
 import { useEditor } from './store';
 import { useTourEvent } from '../tours/use-tour-event';
@@ -28,10 +29,23 @@ export const HEARTBEAT_MS = 5 * 60_000;
 
 type SaveState = 'saved' | 'unsaved' | 'saving' | 'failed';
 
+/** Why the lock was lost: open in another tab or the assistant, or any other conflict. */
+export type LostReason = 'elsewhere' | 'conflict';
+
+/**
+ * Classifies a 409: `LOCKED_ELSEWHERE` (another tab or the assistant has my lock) and `RACE`
+ * (another session won a free lock) both mean "open elsewhere"; other 409s are conflicts.
+ */
+export function lockConflict(e: unknown): LostReason | null {
+  if (!(e instanceof ApiClientError) || e.status !== 409) return null;
+  return e.reason === 'LOCKED_ELSEWHERE' || e.reason === 'RACE' ? 'elsewhere' : 'conflict';
+}
+
 /**
  * Keeps the open draft in sync with the server while the user holds the edit lock (U-09):
  * debounced autosave with `rowVersion`, a lock heartbeat, the save status and "Save version".
- * A 409 means the lock or the draft was lost: `onLost` switches the editor to recovery.
+ * Every call sends this tab's lock token (memory only). A 409 means the lock or the draft was
+ * lost: `onLost` switches the editor to recovery.
  */
 export function DraftToolbar({
   estimateId,
@@ -40,7 +54,7 @@ export function DraftToolbar({
 }: {
   estimateId: string;
   versionNumber: number;
-  onLost: () => void;
+  onLost: (reason: LostReason) => void;
 }) {
   const { state, dispatch, editable } = useEditor();
   const patch = usePatchDraft(estimateId);
@@ -51,7 +65,11 @@ export function DraftToolbar({
     onLostRef.current = onLost;
   });
 
-  const isConflict = (e: unknown) => e instanceof ApiClientError && e.status === 409;
+  const lost = (e: unknown) => {
+    const reason = lockConflict(e);
+    if (reason) onLostRef.current(reason);
+    return reason !== null;
+  };
 
   async function flush(): Promise<boolean> {
     if (!state.dirty) return true;
@@ -61,13 +79,13 @@ export function DraftToolbar({
         rowVersion: state.rowVersion,
         inputs: state.inputs,
         assumptions: state.assumptions,
+        lockToken: lockTokenFor(estimateId),
       });
       dispatch({ type: 'saved', rowVersion: v.rowVersion, revision });
       setFailed(false);
       return true;
     } catch (e) {
-      if (isConflict(e)) onLostRef.current();
-      else setFailed(true);
+      if (!lost(e)) setFailed(true);
       return false;
     }
   }
@@ -84,7 +102,14 @@ export function DraftToolbar({
   useEffect(() => {
     if (!editable) return;
     const h = setInterval(() => {
-      lock.mutate(false, { onError: (e) => isConflict(e) && onLostRef.current() });
+      lock.mutate(
+        { takeover: false, lockToken: lockTokenFor(estimateId) },
+        {
+          // A lapsed lock taken again comes back with a new token.
+          onSuccess: (v) => rememberLockToken(estimateId, v.lockToken),
+          onError: (e) => void lost(e),
+        },
+      );
     }, HEARTBEAT_MS);
     return () => clearInterval(h);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the mutation object is stable enough
@@ -148,7 +173,10 @@ function SaveVersionDialog({
     const ok = await flush();
     if (ok) {
       try {
-        await save.mutateAsync(note.trim() || undefined);
+        await save.mutateAsync({
+          note: note.trim() || undefined,
+          lockToken: lockTokenFor(estimateId),
+        });
         tourEvent('version-saved');
         setOpen(false);
       } catch {

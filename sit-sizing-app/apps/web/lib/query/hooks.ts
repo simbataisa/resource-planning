@@ -15,6 +15,7 @@ import type {
 import type { z } from 'zod';
 import { api } from '../api';
 import { ApiClientError } from '../http';
+import { forgetLockToken, rememberLockToken } from '../lock-tokens';
 import { writeLocal } from '../tours/storage';
 import { qk } from './keys';
 
@@ -104,24 +105,36 @@ export function useCreateEstimate(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: z.input<typeof EstimateCreate>) => api.estimates.create(projectId, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', projectId] }),
+    onSuccess: (e) => {
+      // Draft 1 is locked to this tab; the editor renews with this token.
+      rememberLockToken(e.id, e.lockToken);
+      return qc.invalidateQueries({ queryKey: ['estimates', projectId] });
+    },
   });
 }
+
+/** A call that uses the draft lock carries this tab's lock token (draft lock token design). */
+type WithLockToken = { lockToken?: string };
 
 /** Autosave. A 409 (stale or lost lock) is not retried; the editor shows recovery options (U-09). */
 export function usePatchDraft(estimateId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: z.input<typeof DraftPatch>) => api.estimates.patchDraft(estimateId, body),
+    mutationFn: ({ lockToken, ...body }: z.input<typeof DraftPatch> & WithLockToken) =>
+      api.estimates.patchDraft(estimateId, body, lockToken),
     retry: (count, err) => !(err instanceof ApiClientError && err.status < 500) && count < 2,
     onSuccess: (v) => qc.setQueryData(qk.version(estimateId, v.number), v),
   });
 }
 
-/** Take or renew the draft edit lock (also the heartbeat); `true` takes it over (QE Lead). */
+/**
+ * Take or renew the draft edit lock (also the heartbeat). `takeover` takes it from someone else
+ * (QE Lead) or from another tab of mine. A newly taken lock comes back with `lockToken`.
+ */
 export function useLockDraft(estimateId: string) {
   return useMutation({
-    mutationFn: (takeover: boolean = false) => api.estimates.lock(estimateId, { takeover }),
+    mutationFn: ({ takeover = false, lockToken }: { takeover?: boolean } & WithLockToken) =>
+      api.estimates.lock(estimateId, { takeover }, lockToken),
   });
 }
 
@@ -132,6 +145,8 @@ export function useCreateDraft(estimateId: string) {
     mutationFn: (fromVersion?: number) =>
       api.estimates.createDraft(estimateId, fromVersion ? { fromVersion } : {}),
     onSuccess: async (v) => {
+      // The new draft is locked to this tab; the editor renews with this token.
+      rememberLockToken(estimateId, v.lockToken);
       qc.setQueryData(qk.version(estimateId, v.number), v);
       await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
     },
@@ -141,8 +156,11 @@ export function useCreateDraft(estimateId: string) {
 export function useSaveVersion(estimateId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (note?: string) => api.estimates.saveVersion(estimateId, note ? { note } : {}),
+    mutationFn: ({ note, lockToken }: { note?: string } & WithLockToken = {}) =>
+      api.estimates.saveVersion(estimateId, note ? { note } : {}, lockToken),
     onSuccess: async (v) => {
+      // Saving freezes the draft and clears its lock, so the token has no further use.
+      forgetLockToken(estimateId);
       qc.setQueryData(qk.version(estimateId, v.number), v);
       await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
     },
@@ -196,8 +214,11 @@ export function useUpdateProfile(id: string) {
 export function useApplyProfile(estimateId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { profileId: string; rowVersion: number }) =>
-      api.estimates.applyProfile(estimateId, body),
+    mutationFn: ({
+      lockToken,
+      ...body
+    }: { profileId: string; rowVersion: number } & WithLockToken) =>
+      api.estimates.applyProfile(estimateId, body, lockToken),
     onSuccess: (v) => qc.setQueryData(qk.version(estimateId, v.number), v),
   });
 }

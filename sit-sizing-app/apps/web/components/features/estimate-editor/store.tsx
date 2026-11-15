@@ -21,7 +21,9 @@ export type EditorAction =
   | { type: 'editInputs'; recipe: (draft: EstimateInputs) => void }
   | { type: 'editAssumptions'; recipe: (draft: Assumptions) => void }
   | { type: 'replace'; inputs: EstimateInputs; assumptions: Assumptions }
-  | { type: 'saved'; rowVersion: number; revision: number };
+  | { type: 'saved'; rowVersion: number; revision: number }
+  /** This tab took the lock back ("Open here instead"): keep the values on screen. */
+  | { type: 'relocked'; rowVersion: number };
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
@@ -58,6 +60,16 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         rowVersion: action.rowVersion,
         dirty: state.revision !== action.revision,
       };
+    case 'relocked': {
+      // If the draft changed elsewhere, the values on screen win: save them over it.
+      const changed = action.rowVersion !== state.rowVersion;
+      return {
+        ...state,
+        rowVersion: action.rowVersion,
+        dirty: state.dirty || changed,
+        revision: changed ? state.revision + 1 : state.revision,
+      };
+    }
   }
 }
 
