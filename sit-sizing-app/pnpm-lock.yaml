@@ -72,6 +72,9 @@ importers:
       '@sit/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@sit/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.2

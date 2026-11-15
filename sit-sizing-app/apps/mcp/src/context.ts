@@ -12,8 +12,10 @@ export type Locale = 'en' | 'vi';
 /** What every tool handler gets: one per MCP request, built from that request's token. */
 export interface ToolContext {
   api: ApiClient;
-  /** The user's locale from `GET /me`, read once per request on first use; `'en'` on failure. */
+  /** The user's locale from `GET /me`, read once per request; `'en'` on failure, except a 401, which rejects. */
   locale: () => Promise<Locale>;
+  /** `GET /me`, fetched once per request and shared by `locale` and the `whoami` tool. */
+  me: () => Promise<Me>;
   log: Logger;
   /** Stable key for the caller (token subject, or `dev:<user>`), used for the rate limit. */
   userKey: string;
@@ -21,15 +23,22 @@ export interface ToolContext {
   limiter: RateLimiter;
 }
 
-export function createToolContext(init: Omit<ToolContext, 'locale'>): ToolContext {
-  let locale: Promise<Locale> | undefined;
+export function createToolContext(init: Omit<ToolContext, 'locale' | 'me'>): ToolContext {
+  let me: Promise<Me> | undefined;
+  const getMe = () => (me ??= init.api.get('/me', Me));
   return {
     ...init,
+    me: getMe,
     locale: () =>
-      (locale ??= init.api.get('/me', Me).then(
-        (me) => me.locale,
-        () => 'en' as const,
-      )),
+      getMe().then(
+        (m) => m.locale,
+        (err) => {
+          // A refused token must reach the caller as an auth challenge; anything else
+          // (e.g. not provisioned yet) falls back to English and the tool decides.
+          if (err instanceof ApiCallError && err.status === 401) throw err;
+          return 'en' as const;
+        },
+      ),
   };
 }
 
@@ -71,6 +80,9 @@ export function defineTool<I extends z.ZodObject | undefined, O extends z.ZodObj
           }),
         );
       }
+      // Every tool call reaches the API, so its token checks (refused `azp`, revoked
+      // session, deactivated user) apply even to a tool that answers locally.
+      await ctx.locale();
       const result = (await handler(args)) as Record<string, unknown>;
       return {
         content: [{ type: 'text', text: JSON.stringify(result) }],

@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@sit/config": "workspace:*",
+    "@sit/engine": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

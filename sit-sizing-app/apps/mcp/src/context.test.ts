@@ -4,13 +4,14 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createToolContext, defineTool } from './context';
+import { ApiCallError } from './errors';
 import { createRateLimiter } from './rate-limit';
 import { fakeApi, fakeLogger } from './test-support';
 
 const Out = z.object({ doubled: z.number() }).meta({ id: 'SyntheticOut' });
 
-async function setup() {
-  const { api, get } = fakeApi();
+async function setup(bodies?: Record<string, unknown>) {
+  const { api, get } = fakeApi(bodies);
   const { log, calls } = fakeLogger();
   const ctx = createToolContext({
     api,
@@ -68,5 +69,33 @@ describe('defineTool', () => {
     expect((r.content as Array<{ text: string }>)[0]?.text).not.toContain('internal detail');
     expect(JSON.stringify(calls)).not.toContain('SYNTHETIC-NOTE-91');
     expect(JSON.stringify(calls)).toContain('"status":"error"');
+  });
+
+  it('reaches the API once per request even when the handler makes no API call', async () => {
+    const { client, get } = await setup();
+    await client.callTool({ name: 'double', arguments: { n: 1 } });
+    await client.callTool({ name: 'double', arguments: { n: 2 } });
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledWith('/me', expect.anything());
+  });
+
+  it('turns an API 401 on that call into the auth challenge', async () => {
+    const { client, calls } = await setup({
+      '/me': new ApiCallError({ status: 401, code: 'UNAUTHENTICATED', message: 'expired' }),
+    });
+    // The SDK reports a throw from the tool as an error result; the HTTP layer answers 401
+    // from the API client's `onUnauthorized` hook, so here the message and log line show it.
+    const r = await client.callTool({ name: 'double', arguments: { n: 1 } });
+    expect(r.isError).toBe(true);
+    expect((r.content as Array<{ text: string }>)[0]?.text).toMatch(/Authentication required/);
+    expect(JSON.stringify(calls)).toContain('"status":"auth_challenge"');
+  });
+
+  it('still runs the tool when GET /me fails for another reason', async () => {
+    const { client } = await setup({
+      '/me': new ApiCallError({ status: 403, code: 'NOT_PROVISIONED', message: 'no' }),
+    });
+    const r = await client.callTool({ name: 'double', arguments: { n: 4 } });
+    expect(r.structuredContent).toEqual({ doubled: 8 });
   });
 });

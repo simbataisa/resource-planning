@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import type { ZodType } from 'zod';
-import type { ApiClient } from './api-client';
+import type { ApiClient, Query } from './api-client';
 import type { Logger } from './logger';
 
 /** Synthetic `GET /me` body (no real person). */
@@ -25,7 +25,7 @@ export const ME = {
 
 /** A fake API client whose `get` answers from a path → body map. */
 export function fakeApi(bodies: Record<string, unknown | Error> = { '/me': ME }) {
-  const get = vi.fn(async <T>(path: string, schema: ZodType<T>): Promise<T> => {
+  const get = vi.fn(async <T>(path: string, schema: ZodType<T>, _query?: Query): Promise<T> => {
     const body = bodies[path];
     if (body instanceof Error) throw body;
     return schema.parse(body);
