@@ -140,6 +140,8 @@ Jenkins configuration that the platform team provides:
 | Free ports 23000, 28080 and 23100 on the agent         | The E2E stack (`E2E_WEB_PORT`, `E2E_KEYCLOAK_PORT`, `E2E_MCP_PORT`) |
 | Push rights for `sit-sizing-mcp` in Nexus              | The MCP image is published beside `sit-sizing-web`                  |
 
+The web and MCP runtime images (`runner`, `mcp`) have no npm or npx: the `runtime` stage in `docker/Dockerfile` removes the npm bundled with the Node base image. They only run `node` and `tsx`, and the bundled npm's own dependencies otherwise fail the Trivy gate with CVEs that are not in the app. Do not run `npm` inside these containers; use the `tools` image (pnpm) for workspace tasks.
+
 ### Branch protection (F-05) — set on the Git host
 
 - `main` is protected: no direct pushes, no force pushes, linear history.
