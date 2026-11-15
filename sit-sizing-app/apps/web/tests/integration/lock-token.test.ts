@@ -277,6 +277,17 @@ describe('draft lock token', () => {
     expect(res.json.error.code).toBe('VALIDATION_FAILED');
   });
 
+  it('the database refuses a token hash without a lock holder', async () => {
+    const { estimateId } = await newEstimate('check');
+    const row = await draftRow(estimateId);
+    await expect(
+      db().estimateVersion.update({
+        where: { id: row.id },
+        data: { lockedById: null, lockExpiresAt: null },
+      }),
+    ).rejects.toThrow(/EstimateVersion_lock_token_needs_lock/);
+  });
+
   it('createDraft returns a token; reads never do', async () => {
     const { estimateId, token } = await newEstimate('reads');
     const save = await call(versions.POST, {
