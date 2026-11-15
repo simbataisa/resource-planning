@@ -99,3 +99,37 @@ Realm changes are made only through `docker/keycloak/realm/qe-tools-realm.json` 
 - The realm's anonymous registration endpoint becomes usable from the network the server is exposed on; this goes into the threat model.
 - Unsupported clients get no workaround in this version.
 - We will know the decision was wrong if a client in regular use cannot sign in; revisit then.
+
+## Amendments pending security review (2026-11-15)
+
+Found while building Task 1 against Keycloak 26.8. The security reviewer accepts or rejects each item; until then the decision above stands as written and the realm export implements the list below.
+
+1. **Point 4 wording.** The export defines the `offline_access` client scope and realm role only so that Keycloak does not create them as defaults.
+   - The scope is not advertised (`include.in.openid.provider.metadata=false`), is not a realm default, is on no client and has no role mapping.
+   - No user and no default role has the role.
+   - Anonymous registration refuses the scope.
+   - Reason: Keycloak 26.8 creates both on every import unless the export defines them.
+2. **Point 2, "Allowed Client Scopes".**
+   - Add `basic`, `acr`, `web-origins` and `roles` to the allowed list, and drop "not `roles`". Keycloak copies the realm default scopes into a scoped registration request before the policy runs.
+   - Drop `offline_access` from line 75.
+   - Record `allow-default-scopes=false`.
+3. **Point 2, "Allowed Protocol Mapper Types".** Empty: self-registered clients cannot add protocol mappers (no forged claims; T-27).
+4. **Point 2, client policies.**
+   - STRICT client policies for anonymous registration and registration-access-token updates: PKCE S256 set on the client; implicit flow, password grant and confidential clients (client secret, service account) refused.
+   - STRICT is required so that the policies never apply at sign-in or token time. The `pnpm test:e2e` run on `a1761ed` with a fresh import (web sign-in, code exchange, back-channel logout) suggests STRICT is honoured.
+5. **Scope of the anonymous policies.**
+   - The anonymous registration policies and the client policies cover OIDC dynamic client registration and Keycloak's native endpoint `/clients-registrations/default`.
+   - Registration with an initial access token, or as an authenticated user, is for administrators only. It is outside these client policies; their conditions name only `ByAnonymous` and `ByRegistrationAccessToken`.
+6. **MCP clients register as public** (`token_endpoint_auth_method: none`). A confidential registration is refused.
+7. **Keycloak upgrade check item.** On every Keycloak upgrade, confirm that client-policy `mode: STRICT` still exists and behaves the same:
+   - the identity test (STRICT policies);
+   - the `pnpm test:e2e` sign-in check, which fails if a policy starts applying at token time.
+8. **Consequence for the API.**
+   - Tokens without `sid` are refused.
+   - Tokens whose `azp` is a Keycloak built-in client or `sit-sizing-web` are refused, whatever their audience.
+   - Built-in clients probably do not receive the audience scope, because they are created before it during import. The `azp` refusal is the guaranteed control (T-22).
+   - The realm default audience scope reaches every client created after import, so each new realm client needs a decision. The identity test fails until one is made.
+9. **Threat model.**
+   - Accept the residual risks in T-21, T-23 and T-25.
+   - Accept T-27, claim forgery through registered mappers, as mitigated by the empty mapper list.
+   - Accept that T-28, SSRF through registration URL fields, is mitigated by network egress rules and pentest coverage, not by a realm setting.
