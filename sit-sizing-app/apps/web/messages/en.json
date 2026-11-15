@@ -2011,5 +2011,17 @@
       "needLead": "Keep at least one QE Lead.",
       "notSignedIn": "These people have not signed in yet: {emails}. Ask them to sign in once, then add them."
     }
+  },
+  "tours": {
+    "controls": {
+      "back": "Back",
+      "next": "Next",
+      "skip": "Skip tour",
+      "finish": "Finish",
+      "close": "Close tour",
+      "progress": "{current} of {total}",
+      "resume": "Resume tour",
+      "take": "Take the tour"
+    }
   }
 }

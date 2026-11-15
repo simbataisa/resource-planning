@@ -2011,5 +2011,17 @@
       "needLead": "Giữ ít nhất một QE Lead.",
       "notSignedIn": "Những người này chưa đăng nhập: {emails}. Hãy nhờ họ đăng nhập một lần rồi thêm lại."
     }
+  },
+  "tours": {
+    "controls": {
+      "back": "Quay lại",
+      "next": "Tiếp",
+      "skip": "Bỏ qua hướng dẫn",
+      "finish": "Hoàn tất",
+      "close": "Đóng hướng dẫn",
+      "progress": "{current} trên {total}",
+      "resume": "Tiếp tục hướng dẫn",
+      "take": "Xem hướng dẫn"
+    }
   }
 }

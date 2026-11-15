@@ -5,23 +5,65 @@ import type {
   ActualsCreate,
   DraftPatch,
   EstimateCreate,
+  Me,
   ProfileCreate,
   ProfileDetail,
   ProfileUpdate,
+  TourState,
+  TourUpdate,
 } from '@sit/schemas';
 import type { z } from 'zod';
 import { api } from '../api';
 import { ApiClientError } from '../http';
+import { writeLocal } from '../tours/storage';
 import { qk } from './keys';
 
 /** Query hooks: the only way components talk to the API (design 9.3). */
-export const useMe = () => useQuery({ queryKey: qk.me, queryFn: api.me });
+export const useMe = (enabled = true) => useQuery({ queryKey: qk.me, queryFn: api.me, enabled });
 
 /** Saves the user's language to their profile (design 8.5). */
 export function useUpdateLocale() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (locale: 'en' | 'vi') => api.updateMe({ locale }),
+    onSuccess: (me) => qc.setQueryData(qk.me, me),
+  });
+}
+
+/**
+ * Records how guided tours were closed, optimistically (guided-tours spec 6.3): the `['me']` cache
+ * and the browser copy change first, then `PATCH /me` runs. A failed save is never rolled back, so
+ * a tour the user closed does not come back; the browser copy is resent on the next load.
+ */
+export function useSaveTours() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (update: TourUpdate) => api.updateMe({ tours: update }),
+    onMutate: (update: TourUpdate) => {
+      const at = new Date().toISOString();
+      const me = qc.getQueryData<Me>(qk.me);
+      if (!me) return;
+      const tours: TourState = { ...me.tours };
+      for (const [id, entry] of Object.entries(update)) {
+        if (entry === null) {
+          delete tours[id];
+        } else {
+          tours[id] = { status: entry.status, at };
+          writeLocal(me.id, id, entry.status, at);
+        }
+      }
+      qc.setQueryData<Me>(qk.me, { ...me, tours });
+    },
+    onSuccess: (me) => qc.setQueryData(qk.me, me),
+    // No onError: the cache and the browser copy keep the closed state (no rollback).
+  });
+}
+
+/** Resends browser-copy tour entries the server lacks, without touching the browser copy. */
+export function useSyncTours() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (update: TourUpdate) => api.updateMe({ tours: update }),
     onSuccess: (me) => qc.setQueryData(qk.me, me),
   });
 }
