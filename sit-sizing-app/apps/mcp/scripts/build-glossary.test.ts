@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { ASSUMPTION_PATHS } from '@sit/engine';
 import { describe, expect, it } from 'vitest';
-import { buildGlossary, GENERATED_DIR } from './build-glossary';
+import { buildGlossary, GENERATED_DIR, parseApprovalRecord } from './build-glossary';
 
 type Tree = { [k: string]: string | Tree };
 
@@ -40,5 +40,74 @@ describe('build-glossary', () => {
         if (r.unitKey) expect(typeof lookup(messages, r.unitKey), r.unitKey).toBe('string');
       }
     }
+  });
+});
+
+describe('approved explanations gate', () => {
+  const HELP = 'assumptionsTab.help.';
+  const source = (approval: unknown, vi: Record<string, string> = { minutes_1: 'Giải thích' }) => ({
+    approval,
+    messages: {
+      en: { assumptionsTab: { help: { minutes_1: 'Explains', minutes_2: 'Draft' }, units: {} } },
+      vi: { assumptionsTab: { help: vi, units: {} } },
+    },
+  });
+  const help = (files: Record<string, string>, locale: 'en' | 'vi') =>
+    (JSON.parse(files[`messages.${locale}.json`]!) as Tree).assumptionsTab as Tree;
+
+  it('drops help keys that are not in the approval record', () => {
+    const files = buildGlossary(source({ approvedBy: null, approvedOn: null, rows: [] }));
+    expect(help(files, 'en').help).toBeUndefined();
+    expect(help(files, 'vi').help).toBeUndefined();
+    expect(help(files, 'en').units).toEqual({});
+  });
+
+  it('keeps an approved key in EN and VI and drops the others', () => {
+    const files = buildGlossary(
+      source({ approvedBy: 'Lead', approvedOn: '2026-11-20', rows: [`${HELP}minutes_1`] }),
+    );
+    expect(help(files, 'en').help).toEqual({ minutes_1: 'Explains' });
+    expect(help(files, 'vi').help).toEqual({ minutes_1: 'Giải thích' });
+  });
+
+  it('fails when an approved key is missing in VI', () => {
+    expect(() =>
+      buildGlossary(
+        source({ approvedBy: 'Lead', approvedOn: '2026-11-20', rows: [`${HELP}minutes_1`] }, {}),
+      ),
+    ).toThrow(/assumptionsTab\.help\.minutes_1.*Vietnamese/);
+  });
+
+  it('fails when an approved key is missing in EN', () => {
+    expect(() =>
+      buildGlossary(
+        source({ approvedBy: 'Lead', approvedOn: '2026-11-20', rows: [`${HELP}nope`] }),
+      ),
+    ).toThrow(/assumptionsTab\.help\.nope.*English/);
+  });
+
+  it('rejects a bad record shape', () => {
+    expect(() => parseApprovalRecord({ rows: [] })).toThrow();
+    expect(() =>
+      parseApprovalRecord({ approvedBy: null, approvedOn: null, rows: ['minutes_1'] }),
+    ).toThrow();
+    expect(() =>
+      parseApprovalRecord({ approvedBy: null, approvedOn: 'x', rows: [], extra: 1 }),
+    ).toThrow();
+    expect(() =>
+      parseApprovalRecord({ approvedBy: 'Lead', approvedOn: null, rows: [`${HELP}a`] }),
+    ).toThrow();
+  });
+
+  it('the committed record parses and approves nothing yet', () => {
+    const record = parseApprovalRecord(
+      JSON.parse(
+        readFileSync(
+          new URL('../../../docs/i18n/assumption-help-approved.json', import.meta.url),
+          'utf8',
+        ),
+      ),
+    );
+    expect(record.rows).toEqual([]);
   });
 });

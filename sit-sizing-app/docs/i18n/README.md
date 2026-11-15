@@ -32,3 +32,14 @@ The app is in English and Vietnamese (design 8.5). Most Vietnamese text is reuse
 ## Sign-off
 
 The reviewer's name and date go into the pull request that applies the review, and the step 1.6 row in the README is marked done.
+
+## Releasing assumption explanations
+
+The MCP server's `describe_assumptions` tool only serves an explanation once the QE practice lead has approved it (design spec 6.4). Until then a row shows its label only.
+
+1. The approver opens `docs/i18n/assumption-help-approved.json`, fills `approvedBy` and `approvedOn` (`YYYY-MM-DD`), and lists the approved rows. Each row is the full message key, for example `assumptionsTab.help.minutes_1` (the draft sheet `assumption-help-draft.md` has the keys).
+2. The approved English texts go into `apps/web/messages/en.json` under `assumptionsTab.help`.
+3. The Vietnamese texts go into `vi.json` under the same keys, through `pnpm i18n:review` and `pnpm i18n:apply` (above). Every approved row needs both languages, or the next step fails.
+4. Run `pnpm --filter @sit/mcp glossary` and commit the files it writes in `apps/mcp/src/generated/`.
+
+A help key that is in the web messages but not in the record is left out of the generated files, so unapproved text never reaches the assistant.
