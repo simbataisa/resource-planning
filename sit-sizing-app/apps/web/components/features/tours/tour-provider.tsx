@@ -324,9 +324,13 @@ export function TourProvider({
         placement: s.target === 'center' ? 'center' : (s.placement ?? 'bottom'),
         title: t(`${s.messageKey}.title`),
         content: t(`${s.messageKey}.body`),
+        // Steps that wait for the page (click, event, navigate) must let keyboard users leave the
+        // tooltip and reach the target, so Joyride's focus trap is off there (WCAG 2.1.1).
+        disableFocusTrap: s.advance !== 'next',
         data: {
           advance: typeof s.advance === 'object' ? 'event' : s.advance,
           recorded,
+          target: s.target === 'center' ? null : s.target,
         } satisfies TourStepData,
       })),
     [tour, t, recorded],

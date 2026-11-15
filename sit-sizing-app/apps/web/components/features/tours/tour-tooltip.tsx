@@ -2,7 +2,7 @@
 
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, type KeyboardEvent } from 'react';
 import type { TooltipRenderProps } from 'react-joyride';
 import { Button } from '@/components/ui/button';
 
@@ -12,7 +12,11 @@ export interface TourStepData {
   advance: 'next' | 'click' | 'navigate' | 'event';
   /** The tour was already recorded (Done card after `version-saved`): no Back, no Skip. */
   recorded: boolean;
+  /** Selector of the step's element, or null for a centred card. */
+  target: string | null;
 }
+
+const TABBABLE = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
 /**
  * The tour step card (guided-tours spec 6.7): TCB-DS surface and buttons, next-intl strings,
@@ -32,7 +36,19 @@ export function TourTooltip({
   const t = useTranslations('tours.controls');
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
-  const data = (step.data ?? { advance: 'next', recorded: false }) as TourStepData;
+  const data = (step.data ?? { advance: 'next', recorded: false, target: null }) as TourStepData;
+
+  // On steps that wait for the page, Tab past the last button goes to the target, so keyboard
+  // users can do what the step asks (the tooltip is portalled at the end of the document).
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab' || e.shiftKey || data.advance === 'next' || !data.target) return;
+    const items = ref.current ? [...ref.current.querySelectorAll<HTMLElement>(TABBABLE)] : [];
+    const last = items.at(-1);
+    const target = document.querySelector<HTMLElement>(data.target);
+    if (!target || (last && document.activeElement !== last)) return;
+    e.preventDefault();
+    target.focus();
+  };
 
   useEffect(() => {
     const el = ref.current;
@@ -46,6 +62,7 @@ export function TourTooltip({
       aria-labelledby={`${id}-title`}
       aria-describedby={`${id}-body ${id}-progress`}
       tabIndex={-1}
+      onKeyDown={onKeyDown}
       className="w-[22rem] max-w-[calc(100vw-2rem)] rounded-lg border bg-card p-4 text-left text-card-foreground shadow-card outline-none"
     >
       <div className="flex items-start gap-2">

@@ -197,8 +197,32 @@ describe('TourProvider', () => {
     expect(await screen.findByRole('heading', { name: 'New estimate' })).toBeInTheDocument();
     // No Next button: the step waits for the click.
     expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'New estimate', hidden: true }));
+    await user.click(screen.getByRole('button', { name: 'New estimate' }));
     expect(await screen.findByRole('heading', { name: 'Save a version' })).toBeInTheDocument();
+  });
+
+  it('gives keyboard users a path from a click step to its target (no focus trap)', async () => {
+    const user = userEvent.setup();
+    startAt('demo@1', 2);
+    setup([DEMO]);
+    const d = await dialog();
+    await waitFor(() => expect(d).toContainElement(document.activeElement as HTMLElement));
+    const target = screen.getByRole('button', { name: 'New estimate' });
+    for (let i = 0; i < 6 && document.activeElement !== target; i++) await user.tab();
+    expect(document.activeElement).toBe(target);
+    await user.keyboard('{Enter}');
+    expect(await screen.findByRole('heading', { name: 'Save a version' })).toBeInTheDocument();
+  });
+
+  it('gives keyboard users a path from an event step to its target', async () => {
+    const user = userEvent.setup();
+    startAt('demo@1', 3);
+    setup([DEMO]);
+    const d = await dialog();
+    await waitFor(() => expect(d).toContainElement(document.activeElement as HTMLElement));
+    const target = screen.getByRole('button', { name: 'Save version' });
+    for (let i = 0; i < 6 && document.activeElement !== target; i++) await user.tab();
+    expect(document.activeElement).toBe(target);
   });
 
   it('on version-saved records completed first, then shows the Done card; closing it records nothing more', async () => {
@@ -246,6 +270,30 @@ describe('TourProvider', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(meIn(client).tours['demo@1']?.status).toBe('skipped');
     expect(local()['demo@1'].status).toBe('skipped');
+  });
+
+  it('keeps both entries when an earlier PATCH resolves after a later close (no stale overwrite)', async () => {
+    const user = userEvent.setup();
+    const pending: Array<(v: Me) => void> = [];
+    api.updateMe.mockImplementation(() => new Promise<Me>((r) => pending.push(r)));
+    const at = '2026-11-15T00:00:00.000Z';
+    const { client } = setup([DEMO, SHORT]);
+    await user.click(within(await dialog()).getByRole('button', { name: 'Skip tour' }));
+    await waitFor(() => expect(pending).toHaveLength(1));
+    act(() => probe.tours!.start('short@1'));
+    await user.click(within(await dialog()).getByRole('button', { name: 'Skip tour' }));
+    await waitFor(() => expect(pending).toHaveLength(2));
+    // The first response knows only the first close.
+    await act(async () => pending[0]!({ ...ME, tours: { 'demo@1': { status: 'skipped', at } } }));
+    expect(meIn(client).tours['demo@1']?.status).toBe('skipped');
+    expect(meIn(client).tours['short@1']?.status).toBe('skipped');
+    await act(async () =>
+      pending[1]!({
+        ...ME,
+        tours: { 'demo@1': { status: 'skipped', at }, 'short@1': { status: 'skipped', at } },
+      }),
+    );
+    expect(Object.keys(meIn(client).tours).sort()).toEqual(['demo@1', 'short@1']);
   });
 
   it('Esc records dismissed the same way', async () => {

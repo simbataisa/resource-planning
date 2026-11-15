@@ -30,6 +30,21 @@ export function useUpdateLocale() {
   });
 }
 
+const TOURS_KEY = ['me', 'tours'] as const;
+
+/**
+ * Applies a tour PATCH response. While another tour save is still in flight, the response may
+ * predate an optimistic entry, so the cached entries win and nothing is rolled back.
+ */
+function applyToursResponse(qc: ReturnType<typeof useQueryClient>, me: Me) {
+  const cached = qc.getQueryData<Me>(qk.me);
+  const othersPending = qc.isMutating({ mutationKey: TOURS_KEY }) > 1;
+  qc.setQueryData<Me>(
+    qk.me,
+    othersPending && cached ? { ...me, tours: { ...me.tours, ...cached.tours } } : me,
+  );
+}
+
 /**
  * Records how guided tours were closed, optimistically (guided-tours spec 6.3): the `['me']` cache
  * and the browser copy change first, then `PATCH /me` runs. A failed save is never rolled back, so
@@ -38,6 +53,7 @@ export function useUpdateLocale() {
 export function useSaveTours() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: TOURS_KEY,
     mutationFn: (update: TourUpdate) => api.updateMe({ tours: update }),
     onMutate: (update: TourUpdate) => {
       const at = new Date().toISOString();
@@ -54,7 +70,7 @@ export function useSaveTours() {
       }
       qc.setQueryData<Me>(qk.me, { ...me, tours });
     },
-    onSuccess: (me) => qc.setQueryData(qk.me, me),
+    onSuccess: (me) => applyToursResponse(qc, me),
     // No onError: the cache and the browser copy keep the closed state (no rollback).
   });
 }
@@ -63,8 +79,9 @@ export function useSaveTours() {
 export function useSyncTours() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: TOURS_KEY,
     mutationFn: (update: TourUpdate) => api.updateMe({ tours: update }),
-    onSuccess: (me) => qc.setQueryData(qk.me, me),
+    onSuccess: (me) => applyToursResponse(qc, me),
   });
 }
 export const useProjects = () =>
