@@ -126,4 +126,55 @@ describe('MCP server scripted flow (dev mode)', () => {
     expect(event!.actor.email).toBe('estimator@example.invalid');
     expect(event!.detail.changed).toEqual(['inputs', 'assumptions']);
   });
+
+  it('leaves the draft unlocked after a write, and never touches a lock the editor holds', async () => {
+    const projects = await call<{ items: Array<{ id: string; key: string }> }>('list_projects');
+    const projectId = projects.items.find((p) => p.key === 'DEMO')!.id;
+    const { id: estimateId } = await call<{ id: string }>('create_estimate', {
+      projectId,
+      name: `MCP lock ${new Date().toISOString()}`,
+      summary: 'Create a blank synthetic estimate for the lock check.',
+    });
+    const asEditor = (path: string, init: RequestInit = {}) =>
+      fetch(`${API_URL}/api/v1/estimates/${estimateId}${path}`, {
+        ...init,
+        headers: {
+          'x-dev-user': 'dev-estimator',
+          'content-type': 'application/json',
+          ...(init.headers as Record<string, string> | undefined),
+        },
+      });
+    const draftLock = async () =>
+      ((await (await asEditor('')).json()) as { draftLock: unknown }).draftLock;
+
+    // The tool released its own lock with its own token.
+    await call('update_draft', {
+      estimateId,
+      changes: [{ path: 'inputs.team.weeks', value: 10 }],
+      summary: 'Set team weeks to 10.',
+    });
+    expect(await draftLock()).toBeNull();
+
+    // The editor (same user, its own session) takes the lock; the tool is refused and the
+    // editor's lock stays in place.
+    const lock = await asEditor('/draft/lock', { method: 'POST', body: '{"takeover":false}' });
+    expect(lock.status).toBe(200);
+    const { lockToken } = (await lock.json()) as { lockToken: string };
+    const refused = (await client.callTool({
+      name: 'update_draft',
+      arguments: {
+        estimateId,
+        changes: [{ path: 'inputs.team.weeks', value: 11 }],
+        summary: 'Set team weeks to 11.',
+      },
+    })) as ToolResult;
+    expect(refused.isError).toBe(true);
+    expect(refused.content?.[0]?.text).toMatch(/^EDITOR_OPEN: /);
+    expect(await draftLock()).toMatchObject({ mine: true });
+    const release = await asEditor('/draft/lock', {
+      method: 'DELETE',
+      headers: { 'x-lock-token': lockToken },
+    });
+    expect(release.status).toBe(204);
+  });
 });

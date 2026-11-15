@@ -183,7 +183,10 @@ describe('HTTP transport', () => {
       api: (url, init) => {
         if (url.endsWith('/api/v1/me')) return Response.json(ME);
         if (init.method === 'POST' && url.endsWith('/estimates'))
-          return Response.json(estimate, { status: 201 });
+          return Response.json(
+            { ...estimate, lockToken: 'synthetic-lock-token-http' },
+            { status: 201 },
+          );
         if (init.method === 'DELETE' && url.endsWith('/draft/lock'))
           return Response.json(
             { error: { code: 'UNAUTHENTICATED', message: 'Token expired' } },
@@ -215,10 +218,15 @@ describe('HTTP transport', () => {
     };
     expect(body.result.isError).toBeFalsy();
     expect(body.result.structuredContent.id).toBe(estimate.id);
-    expect(apiFetch.mock.calls.map((c) => c[1]?.method)).toContain('DELETE');
+    const release = apiFetch.mock.calls.find((c) => c[1]?.method === 'DELETE');
+    expect(new Headers(release?.[1]?.headers).get('x-lock-token')).toBe(
+      'synthetic-lock-token-http',
+    );
+    expect(JSON.stringify(body)).not.toContain('synthetic-lock-token-http');
     const logged = JSON.stringify(calls);
     expect(logged).toContain('draft_unlock_failed');
     expect(logged).not.toContain(MARKER);
+    expect(logged).not.toContain('synthetic-lock-token-http');
   });
 
   it('uses x-dev-user in dev mode without a token', async () => {

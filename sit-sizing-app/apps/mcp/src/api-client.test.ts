@@ -116,6 +116,28 @@ describe('createApiClient', () => {
     expect(call(d).init.method).toBe('DELETE');
   });
 
+  it('sends X-Lock-Token only on the calls given a lock token', async () => {
+    const f = fakeFetch(200, { id: 'x1', count: 1 });
+    const api = createApiClient({
+      baseUrl: 'http://web:3000',
+      token: 't',
+      fetch: f,
+      requestId: 'r',
+    });
+    await api.post('/things', {}, Thing);
+    await api.post('/things', {}, Thing, { lockToken: 'synthetic-lock-a' });
+    await api.patch('/things/x1', {}, Thing, { lockToken: 'synthetic-lock-b' });
+    expect(call(f, 0).headers.get('x-lock-token')).toBeNull();
+    expect(call(f, 1).headers.get('x-lock-token')).toBe('synthetic-lock-a');
+    expect(call(f, 2).headers.get('x-lock-token')).toBe('synthetic-lock-b');
+    const d = fakeFetch(204);
+    await createApiClient({ baseUrl: 'http://web:3000', token: 't', fetch: d, requestId: 'r' }).del(
+      '/things/x1',
+      { noChallenge: true, lockToken: 'synthetic-lock-c' },
+    );
+    expect(call(d).headers.get('x-lock-token')).toBe('synthetic-lock-c');
+  });
+
   it('throws ApiCallError with code, message, details and retryAfter from a 429 envelope', async () => {
     const f = fakeFetch(
       429,

@@ -46,6 +46,16 @@ export function invalidInput(path: string, message: string): z.ZodError {
   return new z.ZodError([{ code: 'custom', path: path.split('.'), message, input: undefined }]);
 }
 
+/** The draft is open in the editor (the user's own lock, held by another session). */
+export const EDITOR_OPEN = 'EDITOR_OPEN: close the draft in the editor first';
+
+/** True when the API error's details carry `{ reason }` (e.g. `LOCKED_ELSEWHERE`, `RACE`). */
+export function hasReason(err: ApiCallError, reason: string): boolean {
+  return (err.details ?? []).some(
+    (d) => typeof d === 'object' && d !== null && (d as { reason?: unknown }).reason === reason,
+  );
+}
+
 function toolError(text: string): CallToolResult {
   return { content: [{ type: 'text', text }], isError: true };
 }
@@ -59,6 +69,7 @@ export function toToolResult(err: unknown): CallToolResult {
   if (err instanceof AuthChallenge) throw err;
   if (err instanceof ApiCallError) {
     if (err.status === 401) throw new AuthChallenge();
+    if (hasReason(err, 'LOCKED_ELSEWHERE')) return toolError(EDITOR_OPEN);
     let text = `${err.code}: ${err.message}`;
     if (err.retryAfter !== undefined) text += ` Retry after ${err.retryAfter} seconds.`;
     if (err.details?.length) text += `\n${JSON.stringify(err.details)}`;

@@ -85,6 +85,10 @@ function detail(draftLock: unknown = null, hasDraft = true) {
   };
 }
 const MY_LOCK = { holder: USER, expiresAt: FUTURE, mine: true };
+/** Synthetic lock tokens: the one from the lock call, and the ones from creating. */
+const TOKEN = 'synthetic-lock-token-from-lock-call';
+const CREATE_TOKEN = 'synthetic-lock-token-from-create';
+const DRAFT_TOKEN = 'synthetic-lock-token-from-start-draft';
 
 type Call = [method: string, path: string, body?: unknown];
 type Answer = unknown | Error | ((body: unknown) => unknown);
@@ -99,14 +103,18 @@ function recordingApi(overrides: Record<string, Answer> = {}) {
     'GET /me': ME,
     [`GET ${BASE}`]: detail(),
     [`GET ${BASE}/versions/2`]: version(2, 'DRAFT', 4),
-    [`POST ${BASE}/draft/lock`]: version(2, 'DRAFT', 5, MY_LOCK),
+    [`POST ${BASE}/draft/lock`]: { ...version(2, 'DRAFT', 5, MY_LOCK), lockToken: TOKEN },
     [`DELETE ${BASE}/draft/lock`]: undefined,
     [`PATCH ${BASE}/draft`]: version(2, 'DRAFT', 6, MY_LOCK),
     [`POST ${BASE}/draft/profile`]: version(2, 'DRAFT', 6, MY_LOCK),
-    [`POST ${BASE}/draft`]: version(2, 'DRAFT', 1, MY_LOCK),
+    [`POST ${BASE}/draft`]: { ...version(2, 'DRAFT', 1, MY_LOCK), lockToken: DRAFT_TOKEN },
     [`POST ${BASE}/versions`]: version(2, 'SAVED', 6),
     [`POST ${BASE}/versions/1/submit`]: version(1, 'SUBMITTED', 3),
-    [`POST /projects/${PROJECT_ID}/estimates`]: { ...ESTIMATE, latest: null },
+    [`POST /projects/${PROJECT_ID}/estimates`]: {
+      ...ESTIMATE,
+      latest: null,
+      lockToken: CREATE_TOKEN,
+    },
     ...overrides,
   };
   const calls: Call[] = [];
@@ -121,18 +129,27 @@ function recordingApi(overrides: Record<string, Answer> = {}) {
   };
   const api: ApiClient = {
     get: async (path, schema) => answer('GET', path, undefined, schema),
-    post: async (path, body, schema) => answer('POST', path, body, schema),
-    patch: async (path, body, schema) => answer('PATCH', path, body, schema),
+    post: async (path, body, schema, opts) => {
+      tokens.push([`POST ${path}`, opts?.lockToken]);
+      return answer('POST', path, body, schema);
+    },
+    patch: async (path, body, schema, opts) => {
+      tokens.push([`PATCH ${path}`, opts?.lockToken]);
+      return answer('PATCH', path, body, schema);
+    },
     del: async (path, opts) => {
       delOpts.push(opts);
+      tokens.push([`DELETE ${path}`, opts?.lockToken]);
       return answer('DELETE', path, undefined);
     },
   };
   /** The options of every `del` call (the lock release must pass `noChallenge`). */
   const delOpts: unknown[] = [];
+  /** The lock token each non-GET call sent (`undefined`: none). */
+  const tokens: Array<[call: string, token: string | undefined]> = [];
   /** Calls other than the per-request `GET /me`. */
   const made = () => calls.filter((c) => c[1] !== '/me');
-  return { api, calls, made, delOpts };
+  return { api, calls, made, delOpts, tokens };
 }
 
 async function connect(overrides: Record<string, Answer> = {}) {
@@ -270,7 +287,7 @@ describe('write tools', () => {
       `DELETE ${BASE}/draft/lock`,
     ]);
     expect(made[3]?.[2]).toEqual({ takeover: false });
-    expect(t.delOpts).toEqual([{ noChallenge: true }]);
+    expect(t.delOpts).toEqual([{ noChallenge: true, lockToken: TOKEN }]);
     const patch = made[4]?.[2] as Record<string, unknown>;
     expect(patch).toMatchObject({ rowVersion: 5, note: 'Synthetic note', summary: SUMMARY });
     expect((patch.inputs as { team: { weeks: number } }).team.weeks).toBe(12);
@@ -448,7 +465,7 @@ describe('write tools', () => {
     const r = await t.call('update_draft', { ...WRITE_TOOLS.update_draft, summary: SUMMARY });
     expect(r.isError).toBeFalsy();
     expect(r.structuredContent).toMatchObject({ rowVersion: 6 });
-    expect(t.delOpts).toEqual([{ noChallenge: true }]);
+    expect(t.delOpts).toEqual([{ noChallenge: true, lockToken: TOKEN }]);
     expect(JSON.stringify(t.logs)).toContain('UNAUTHENTICATED');
     expect(JSON.stringify(t.logs)).toContain('"status":"ok"');
   });
@@ -581,6 +598,110 @@ describe('write tools', () => {
       'whoami',
     ]);
     for (const x of tools) expect(x.name).not.toMatch(/approve|return|delete|publish|takeover/);
+  });
+
+  it('withDraftLock sends the token from its own lock call on the write and on release', async () => {
+    const t = await connect();
+    for (const name of ['update_draft', 'apply_profile']) {
+      t.tokens.length = 0;
+      const r = await t.call(name, { ...WRITE_TOOLS[name], summary: SUMMARY });
+      expect(r.isError, name).toBeFalsy();
+      const write = name === 'update_draft' ? `PATCH ${BASE}/draft` : `POST ${BASE}/draft/profile`;
+      expect(t.tokens, name).toEqual([
+        // A fresh lock call presents no token (the MCP never renews someone else's lock).
+        [`POST ${BASE}/draft/lock`, undefined],
+        [write, TOKEN],
+        [`DELETE ${BASE}/draft/lock`, TOKEN],
+      ]);
+    }
+    t.tokens.length = 0;
+    await t.call('save_version', { ...WRITE_TOOLS.save_version, summary: SUMMARY });
+    expect(t.tokens).toEqual([
+      [`POST ${BASE}/draft/lock`, undefined],
+      [`POST ${BASE}/versions`, TOKEN],
+    ]);
+  });
+
+  it('save_version that fails still releases with its own token', async () => {
+    const t = await connect({ [`POST ${BASE}/versions`]: conflict('STALE') });
+    await t.call('save_version', { ...WRITE_TOOLS.save_version, summary: SUMMARY });
+    expect(t.tokens.at(-1)).toEqual([`DELETE ${BASE}/draft/lock`, TOKEN]);
+    expect(t.delOpts).toEqual([{ noChallenge: true, lockToken: TOKEN }]);
+  });
+
+  it('create_estimate and start_draft release with the token from their own POST', async () => {
+    const t = await connect();
+    await t.call('create_estimate', { ...WRITE_TOOLS.create_estimate, summary: SUMMARY });
+    expect(t.tokens).toEqual([
+      [`POST /projects/${PROJECT_ID}/estimates`, undefined],
+      [`DELETE ${BASE}/draft/lock`, CREATE_TOKEN],
+    ]);
+    t.tokens.length = 0;
+    await t.call('start_draft', { ...WRITE_TOOLS.start_draft, summary: SUMMARY });
+    expect(t.tokens).toEqual([
+      [`POST ${BASE}/draft`, undefined],
+      [`DELETE ${BASE}/draft/lock`, DRAFT_TOKEN],
+    ]);
+    expect(t.delOpts).toEqual([
+      { noChallenge: true, lockToken: CREATE_TOKEN },
+      { noChallenge: true, lockToken: DRAFT_TOKEN },
+    ]);
+  });
+
+  it('start_draft without a token in the answer skips the release and keeps the lock in its answer', async () => {
+    const t = await connect({ [`POST ${BASE}/draft`]: version(2, 'DRAFT', 1, MY_LOCK) });
+    const r = await t.call('start_draft', { ...WRITE_TOOLS.start_draft, summary: SUMMARY });
+    expect(r.isError).toBeFalsy();
+    expect(r.structuredContent).toMatchObject({ lock: { mine: true } });
+    expect(t.made().some((c) => c[0] === 'DELETE')).toBe(false);
+    expect(JSON.stringify(t.logs)).toContain('draft_unlock_failed');
+  });
+
+  it('never returns or logs a lock token', async () => {
+    const t = await connect();
+    const results = [];
+    for (const [name, args] of Object.entries(WRITE_TOOLS)) {
+      results.push(await t.call(name, { ...args, summary: SUMMARY }));
+    }
+    const out = JSON.stringify(results) + JSON.stringify(t.logs);
+    for (const token of [TOKEN, CREATE_TOKEN, DRAFT_TOKEN]) expect(out).not.toContain(token);
+    expect(out).not.toContain('lockToken');
+  });
+
+  it('withDraftLock passes fn the locked draft without its token', async () => {
+    const t = await connect();
+    const seen = await withDraftLock(t.ctx, EST_ID, async (draft) => draft);
+    expect(seen).toMatchObject({ rowVersion: 5 });
+    expect(seen).not.toHaveProperty('lockToken');
+  });
+
+  it('a write refused with LOCKED_ELSEWHERE becomes EDITOR_OPEN and still releases', async () => {
+    const t = await connect({ [`PATCH ${BASE}/draft`]: conflict('LOCKED_ELSEWHERE') });
+    const r = await t.call('update_draft', { ...WRITE_TOOLS.update_draft, summary: SUMMARY });
+    expect(r.isError).toBe(true);
+    expect(t.text(r)).toBe('EDITOR_OPEN: close the draft in the editor first');
+    expect(t.tokens.at(-1)).toEqual([`DELETE ${BASE}/draft/lock`, TOKEN]);
+  });
+
+  it('editor takes the lock after the last check: the lock call is refused, EDITOR_OPEN, no write or release', async () => {
+    // ADR-0016 race (Review Focus 5): the read said the draft was free, but the editor took
+    // the lock before the tool's lock call. Without the editor's token the API refuses.
+    for (const [reason, text] of [
+      ['LOCKED_ELSEWHERE', 'EDITOR_OPEN: close the draft in the editor first'],
+      ['RACE', 'EDITOR_OPEN: close the draft in the editor first, or another session took it'],
+    ] as const) {
+      const t = await connect({ [`POST ${BASE}/draft/lock`]: conflict(reason) });
+      for (const name of ['update_draft', 'apply_profile', 'save_version']) {
+        t.calls.length = 0;
+        const r = await t.call(name, { ...WRITE_TOOLS[name], summary: SUMMARY });
+        expect(r.isError, `${reason} ${name}`).toBe(true);
+        expect(t.text(r), `${reason} ${name}`).toBe(text);
+        const made = t.made().map((c) => `${c[0]} ${c[1]}`);
+        expect(made.at(-1)).toBe(`POST ${BASE}/draft/lock`);
+        expect(made.filter((c) => !c.startsWith('GET'))).toEqual([`POST ${BASE}/draft/lock`]);
+      }
+      expect(JSON.stringify(t.calls)).not.toContain('"takeover":true');
+    }
   });
 
   it('write tools are not marked read-only', async () => {
