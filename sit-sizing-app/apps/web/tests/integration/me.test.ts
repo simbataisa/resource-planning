@@ -48,15 +48,17 @@ describe('PATCH /me tours (guided tours)', () => {
     call(me.PATCH, { who, method: 'PATCH', path: '/me', body });
 
   it('saves tour state for the caller only, without changing the language', async () => {
-    const before = (await call(me.GET, { who: 'dev-viewer', path: '/me' })).json.locale;
+    expect((await patch({ locale: 'vi' })).json.locale).toBe('vi');
     const saved = await patch({ tours: { 'first-estimate@1': { status: 'skipped' } } });
     expect(saved.status).toBe(200);
     expect(saved.json.tours['first-estimate@1'].status).toBe('skipped');
-    expect(saved.json.locale).toBe(before);
+    expect(saved.json.locale).toBe('vi');
     const got = await call(me.GET, { who: 'dev-viewer', path: '/me' });
+    expect(got.json.locale).toBe('vi');
     expect(got.json.tours['first-estimate@1'].status).toBe('skipped');
     const other = await call(me.GET, { who: 'dev-estimator', path: '/me' });
     expect(other.json.tours).toEqual({});
+    expect((await patch({ locale: 'en' })).json.locale).toBe('en');
   });
 
   it('removes a key given null', async () => {
