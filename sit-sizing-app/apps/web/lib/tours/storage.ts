@@ -24,11 +24,19 @@ export function writeLocal(userId: string, id: string, status: TourStatus, at: s
   }
 }
 
-/** Entries in the browser copy that the server copy lacks or holds with a different status. */
+/** Completed and skipped are final; dismissed is not, so it never replaces them. */
+const rank = (status: TourStatus) => (status === 'dismissed' ? 0 : 1);
+
+/**
+ * Entries in the browser copy to send again: those the server copy lacks, or holds with a lower
+ * rank (a local completed over a server dismissed). A stale local dismissed never overwrites a
+ * server completed or skipped. Times are not compared: client and server clocks differ.
+ */
 export function pendingSync(me: Me, local: TourState): Record<string, { status: TourStatus }> {
   const out: Record<string, { status: TourStatus }> = {};
   for (const [id, entry] of Object.entries(local)) {
-    if (me.tours[id]?.status !== entry.status) out[id] = { status: entry.status };
+    const server = me.tours[id];
+    if (!server || rank(entry.status) > rank(server.status)) out[id] = { status: entry.status };
   }
   return out;
 }

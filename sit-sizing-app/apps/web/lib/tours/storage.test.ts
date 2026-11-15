@@ -65,6 +65,23 @@ describe('pendingSync', () => {
     });
   });
 
+  it('never resends a local dismissed over a server completed or skipped', () => {
+    const local: TourState = {
+      'a@1': { status: 'dismissed', at: '2026-12-01T00:00:00.000Z' },
+      'b@1': { status: 'dismissed', at: AT },
+      'c@1': { status: 'skipped', at: AT },
+      'd@1': { status: 'completed', at: AT },
+    };
+    const me = meWith({
+      'a@1': { status: 'completed', at: AT },
+      'b@1': { status: 'skipped', at: AT },
+      'c@1': { status: 'completed', at: AT },
+      'd@1': { status: 'skipped', at: AT },
+    });
+    // Completed and skipped rank the same: neither replaces the other; dismissed never wins.
+    expect(pendingSync(me, local)).toEqual({});
+  });
+
   it('returns {} when local is empty', () => {
     expect(pendingSync(meWith({}), {})).toEqual({});
   });
