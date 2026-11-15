@@ -24,6 +24,15 @@ const ALGORITHMS = [
 /** Allowed clock difference between Keycloak and this server (same as the API). */
 const CLOCK_TOLERANCE_SECONDS = 30;
 export const METADATA_PATH = '/.well-known/oauth-protected-resource';
+/** The MCP endpoint path; the protected resource identifier is the public URL plus this. */
+export const MCP_PATH = '/mcp';
+/**
+ * Scopes a client should ask for (ADR-0016). Without this list some clients ask for every
+ * scope the realm advertises, and the anonymous "Allowed Client Scopes" policy refuses them.
+ */
+export const SCOPES_SUPPORTED = ['openid', 'profile', 'email'];
+
+const publicOrigin = (env: McpEnv) => env.MCP_PUBLIC_URL.replace(/\/$/, '');
 
 interface WarnLog {
   warn(obj: object, msg?: string): void;
@@ -83,18 +92,23 @@ export async function verifyAccessToken(
   }
 }
 
-/** RFC 9728 protected resource metadata, served at `/.well-known/oauth-protected-resource`. */
+/**
+ * RFC 9728 protected resource metadata, served at `/.well-known/oauth-protected-resource`
+ * (named in the challenge) and at its path-aware form `…/oauth-protected-resource/mcp`.
+ * `resource` is the URL clients connect to, as RFC 9728 3.3 requires.
+ */
 export function protectedResourceMetadata(env: McpEnv) {
   return {
-    resource: env.MCP_PUBLIC_URL,
+    resource: `${publicOrigin(env)}${MCP_PATH}`,
     authorization_servers: [env.OIDC_ISSUER],
     bearer_methods_supported: ['header'],
+    scopes_supported: SCOPES_SUPPORTED,
   };
 }
 
 /** The `WWW-Authenticate` value of a 401 (RFC 6750 and the MCP authorization spec). */
 export function challengeHeader(env: McpEnv, error?: 'invalid_token'): string {
-  const metadata = `resource_metadata="${env.MCP_PUBLIC_URL.replace(/\/$/, '')}${METADATA_PATH}"`;
+  const metadata = `resource_metadata="${publicOrigin(env)}${METADATA_PATH}"`;
   return error ? `Bearer error="${error}", ${metadata}` : `Bearer ${metadata}`;
 }
 

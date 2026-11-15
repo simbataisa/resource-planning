@@ -6,6 +6,7 @@ import { createApiClient } from './api-client';
 import {
   bearerFromHeader,
   challengeHeader,
+  MCP_PATH,
   METADATA_PATH,
   protectedResourceMetadata,
   verifyAccessToken,
@@ -20,7 +21,8 @@ import { createMcpServer } from './server';
  * HTTP entry point on `node:http` (design spec 6.1, 6.2, 6.7):
  * - `POST /mcp`: MCP Streamable HTTP in stateless mode with JSON responses. Each request
  *   is checked for a bearer token, then gets its own MCP server built from that token.
- * - `GET /.well-known/oauth-protected-resource`: RFC 9728 metadata naming Keycloak.
+ * - `GET /.well-known/oauth-protected-resource` (and its path-aware form `…/mcp`):
+ *   RFC 9728 metadata naming Keycloak, with `${MCP_PUBLIC_URL}/mcp` as the resource.
  * - `GET /health` (always 200) and `GET /ready` (200 when the API is ready).
  *
  * The SDK's web-standard transport is used (the Node transport wraps the same class) so
@@ -38,7 +40,6 @@ export interface HttpDeps {
   keys?: JWTVerifyGetKey;
 }
 
-export const MCP_PATH = '/mcp';
 const MAX_BODY_BYTES = 1024 * 1024;
 const READY_TIMEOUT_MS = 3000;
 const REQUEST_ID = /^[\w.-]{1,128}$/;
@@ -201,7 +202,7 @@ export function createHttpServer(deps: HttpDeps): Server {
     }
     if (req.method === 'GET' && path === '/health') return sendJson(res, 200, { status: 'ok' });
     if (req.method === 'GET' && path === '/ready') return ready(res);
-    if (req.method === 'GET' && path === METADATA_PATH)
+    if (req.method === 'GET' && (path === METADATA_PATH || path === METADATA_PATH + MCP_PATH))
       return sendJson(res, 200, protectedResourceMetadata(env));
     sendJson(res, 404, { error: { code: 'NOT_FOUND', message: 'Not found' } });
   }

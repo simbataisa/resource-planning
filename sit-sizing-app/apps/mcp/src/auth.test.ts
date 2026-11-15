@@ -120,12 +120,22 @@ describe('verifyAccessToken (ADR-0016)', () => {
 });
 
 describe('protected resource metadata (RFC 9728)', () => {
-  it('metadata names the issuer and the public URL', () => {
+  it('metadata names the issuer, the /mcp endpoint as the resource and the scopes', () => {
     expect(protectedResourceMetadata(env)).toEqual({
-      resource: 'http://localhost:3100',
+      resource: 'http://localhost:3100/mcp',
       authorization_servers: [ISSUER],
       bearer_methods_supported: ['header'],
+      scopes_supported: ['openid', 'profile', 'email'],
     });
+  });
+
+  it('builds the resource without a double slash when the public URL ends in /', () => {
+    const slash = parseEnv({
+      SIT_API_BASE_URL: 'http://web:3000',
+      OIDC_ISSUER: ISSUER,
+      MCP_PUBLIC_URL: 'http://localhost:3100/',
+    });
+    expect(protectedResourceMetadata(slash).resource).toBe('http://localhost:3100/mcp');
   });
 
   it('builds the WWW-Authenticate challenge and reads the bearer header', () => {

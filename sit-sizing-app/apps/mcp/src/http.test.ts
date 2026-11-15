@@ -97,13 +97,19 @@ describe('HTTP transport', () => {
 
   it('serves /.well-known/oauth-protected-resource, /health and /ready', async () => {
     const { base } = await start();
-    const meta = await fetch(`${base}/.well-known/oauth-protected-resource`);
-    expect(meta.status).toBe(200);
-    expect(await meta.json()).toEqual({
-      resource: 'http://localhost:3100',
+    const expected = {
+      resource: 'http://localhost:3100/mcp',
       authorization_servers: [ISSUER],
       bearer_methods_supported: ['header'],
-    });
+      scopes_supported: ['openid', 'profile', 'email'],
+    };
+    const meta = await fetch(`${base}/.well-known/oauth-protected-resource`);
+    expect(meta.status).toBe(200);
+    expect(await meta.json()).toEqual(expected);
+    // RFC 9728 3.1: the path-aware location for the `/mcp` resource serves the same document.
+    const pathAware = await fetch(`${base}/.well-known/oauth-protected-resource/mcp`);
+    expect(pathAware.status).toBe(200);
+    expect(await pathAware.json()).toEqual(expected);
     expect((await fetch(`${base}/health`)).status).toBe(200);
     expect((await fetch(`${base}/ready`)).status).toBe(200);
     expect((await fetch(`${base}/nowhere`)).status).toBe(404);
