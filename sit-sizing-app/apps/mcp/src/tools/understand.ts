@@ -20,7 +20,7 @@ import {
 } from '@sit/schemas';
 import { z } from 'zod';
 import { defineTool, type Locale, type ToolContext } from '../context';
-import { invalidInput } from '../errors';
+import { ApiCallError, invalidInput } from '../errors';
 import {
   ASSUMPTION_GROUPS,
   AssumptionRow,
@@ -169,8 +169,9 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       let calibration: ProfileDetail['calibration'] | undefined;
       if (estimateId && number !== undefined) {
         const n = await versionNumber(ctx, estimateId, number);
-        values = (await ctx.api.get(`/estimates/${seg(estimateId)}/versions/${n}`, Version))
-          .assumptions;
+        const version = await ctx.api.get(`/estimates/${seg(estimateId)}/versions/${n}`, Version);
+        values = version.assumptions;
+        if (version.profileId) calibration = await profileCalibration(ctx, version.profileId);
       } else if (profileId) {
         const profile = await ctx.api.get(`/profiles/${seg(profileId)}`, ProfileDetail);
         values = profile.values;
@@ -221,6 +222,22 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       return preview(doc.inputs, doc.assumptions);
     },
   );
+}
+
+/**
+ * The calibration notes of the profile a version was built from; undefined when the
+ * caller cannot read that profile (gone or out of reach), so the rows still answer.
+ */
+async function profileCalibration(
+  ctx: ToolContext,
+  profileId: string,
+): Promise<ProfileDetail['calibration'] | undefined> {
+  try {
+    return (await ctx.api.get(`/profiles/${seg(profileId)}`, ProfileDetail)).calibration;
+  } catch (err) {
+    if (err instanceof ApiCallError && (err.status === 404 || err.status === 403)) return undefined;
+    throw err;
+  }
 }
 
 function preview(inputs: EstimateInputs, assumptions: Assumptions): z.infer<typeof PreviewResult> {
