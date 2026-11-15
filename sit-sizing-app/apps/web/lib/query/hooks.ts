@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ActualsCreate,
@@ -141,11 +141,17 @@ export function useLockDraft(estimateId: string) {
 
 /**
  * While mounted, releases this tab's draft lock when the page is hidden (refresh, close,
- * navigate away), so the same tab renews on reload. Sends nothing without a token.
+ * navigate away), so the same tab renews on reload. Sends nothing without a token, or while
+ * `busy()` says an autosave is pending or in flight (releasing would get that save refused).
  */
-export function useReleaseLockOnPageHide(estimateId: string) {
+export function useReleaseLockOnPageHide(estimateId: string, busy?: () => boolean) {
+  const busyRef = useRef(busy);
+  useEffect(() => {
+    busyRef.current = busy;
+  });
   useEffect(() => {
     const onHide = () => {
+      if (busyRef.current?.()) return;
       const token = lockTokenFor(estimateId);
       if (token) api.estimates.releaseOnPageHide(estimateId, token);
     };

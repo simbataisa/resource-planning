@@ -3,8 +3,7 @@ import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { forgetLockToken, lockTokenFor } from '../lock-tokens';
-import { rememberLockToken } from '../lock-tokens';
+import { forgetLockToken, lockTokenFor, rememberLockToken } from '../lock-tokens';
 import {
   useCreateDraft,
   useCreateEstimate,
@@ -58,6 +57,17 @@ describe('Release on page hide', () => {
     unmount();
     window.dispatchEvent(new Event('pagehide'));
     expect(api.estimates.releaseOnPageHide).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips the release while an autosave is pending or in flight', () => {
+    rememberLockToken('e1', 'tok-1');
+    let busy = true;
+    renderHook(() => useReleaseLockOnPageHide('e1', () => busy), { wrapper });
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+    busy = false;
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).toHaveBeenCalledWith('e1', 'tok-1');
   });
 
   it('sends nothing when this tab holds no token', () => {

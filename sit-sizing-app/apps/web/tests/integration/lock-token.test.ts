@@ -234,7 +234,7 @@ describe('draft lock token', () => {
     expect((await lockCall(estimateId, won)).status).toBe(200);
   });
 
-  it('after a QE Lead takes over, the previous holder\'s token is refused', async () => {
+  it("after a QE Lead takes over, the previous holder's token is refused", async () => {
     const { estimateId, token } = await newEstimate('lead takeover');
     const taken = await call(lock.POST, {
       who: 'dev-lead',

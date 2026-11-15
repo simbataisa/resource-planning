@@ -490,9 +490,140 @@ describe('Draft lock token (per tab)', () => {
     },
   );
 
-  it('releases the lock on page hide while this tab edits', () => {
+  it('releases the lock on page hide while this tab edits, but not while a save is pending', async () => {
+    vi.useFakeTimers();
+    let resolveSave: (v: Version) => void = () => {};
+    patch.mutateAsync.mockImplementation(() => new Promise<Version>((r) => (resolveSave = r)));
     setup(version());
-    expect(hooks.useReleaseLockOnPageHide).toHaveBeenCalledWith('e1');
+    const busy = () => {
+      const calls = hooks.useReleaseLockOnPageHide.mock.calls;
+      const last = calls[calls.length - 1] as [string, () => boolean];
+      expect(last[0]).toBe('e1');
+      return last[1]();
+    };
+    expect(busy()).toBe(false);
+    fireEvent.change(qtyOf(0), { target: { value: '4' } });
+    expect(busy()).toBe(true); // autosave pending
+    patch.isPending = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(patch.mutateAsync).toHaveBeenCalledTimes(1);
+    expect(busy()).toBe(true); // in flight
+    patch.isPending = false;
+    await act(async () => {
+      resolveSave(version({ rowVersion: 4 }));
+    });
+    expect(busy()).toBe(false);
+  });
+
+  function pageShow(persisted: boolean) {
+    const e = new Event('pageshow') as Event & { persisted: boolean };
+    Object.defineProperty(e, 'persisted', { value: persisted });
+    window.dispatchEvent(e);
+  }
+
+  it('renews the lock with the kept token when the page comes back from the back/forward cache', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      o.onSuccess(version({ lock: mineLock, lockToken: n === 1 ? 'tok-1' : 'tok-2' }));
+    });
+    setup(version());
+    pageShow(false);
+    expect(lock.mutate).toHaveBeenCalledTimes(1);
+    await act(async () => pageShow(true));
+    expect(lock.mutate).toHaveBeenCalledTimes(2);
+    expect(lock.mutate).toHaveBeenLastCalledWith(
+      { takeover: false, lockToken: 'tok-1' },
+      expect.anything(),
+    );
+    expect(qtyOf(0)).not.toBeDisabled();
+    expect(screen.queryByText('Your last changes were not saved')).toBeNull();
+  });
+
+  it('keeps editing read-only until the renewal after a back/forward restore answers', async () => {
+    let held: ((v: Version) => void) | undefined;
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+      else held = o.onSuccess;
+    });
+    setup(version());
+    await act(async () => pageShow(true));
+    expect(qtyOf(0)).toBeDisabled();
+    await act(async () => held!(version({ lock: mineLock, lockToken: 'tok-2' })));
+    expect(qtyOf(0)).not.toBeDisabled();
+  });
+
+  it('after a back/forward restore, shows recovery when the draft is open elsewhere', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation(
+      (_v: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        n += 1;
+        if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+        else o.onError(conflict('LOCKED_ELSEWHERE'));
+      },
+    );
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: '7' } });
+    await act(async () => pageShow(true));
+    expect(
+      screen.getByText(/This draft is open in another tab or in the assistant/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/The draft could not be opened here/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    expect(qtyOf(0).value).toBe('7');
+  });
+
+  it('after a back/forward restore, never keeps unsaved values over a draft that changed', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      o.onSuccess(version({ lock: mineLock, lockToken: `tok-${n}`, rowVersion: n === 1 ? 3 : 6 }));
+    });
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: '9' } });
+    await act(async () => pageShow(true));
+    expect(screen.getByText('Your last changes were not saved')).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    expect(qtyOf(0).value).toBe('9');
+    expect(patch.mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('clears the "could not be opened here" note once the lock state moves on', async () => {
+    vi.useFakeTimers();
+    let takeovers = 0;
+    lock.mutate.mockImplementation(
+      (vars: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        if (!vars.takeover) return o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+        takeovers += 1;
+        if (takeovers === 1) return o.onError(conflict('LOCKED_ELSEWHERE'));
+        o.onSuccess(version({ lock: mineLock, lockToken: 'tok-2' }));
+      },
+    );
+    patch.mutateAsync.mockRejectedValue(conflict('LOCKED_ELSEWHERE'));
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: '2' } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(screen.getByText(/The draft could not be opened here/)).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(qtyOf(0)).not.toBeDisabled();
+    // The next autosave finds it open elsewhere again: a fresh notice, not the old failure.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+    expect(screen.queryByText(/The draft could not be opened here/)).toBeNull();
   });
 
   it('shows recovery with unsaved values when the heartbeat finds the lock taken by another tab', async () => {

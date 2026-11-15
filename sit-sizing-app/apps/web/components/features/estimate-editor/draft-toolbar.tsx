@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Check, CircleAlert, Loader2, Save } from 'lucide-react';
+import type { Version } from '@sit/schemas';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +25,7 @@ import {
   useReleaseLockOnPageHide,
   useSaveVersion,
 } from '@/lib/query/hooks';
-import { useEditor } from './store';
+import { useEditor, type EditorAction, type EditorState } from './store';
 import { useTourEvent } from '../tours/use-tour-event';
 
 /** Autosave debounce (design 8.3). */
@@ -47,6 +48,28 @@ export function lockConflict(e: unknown): LostReason | null {
 }
 
 /**
+ * What this tab does once it holds the lock again ("Open here instead", or the renewal after a
+ * back/forward cache restore): carry on with the values on screen (the draft did not change),
+ * restart from the server's copy (nothing unsaved), or show recovery (the draft changed and there
+ * are unsaved values; never save them over newer work).
+ */
+export type Reclaim = 'continue' | 'reload' | 'lost';
+
+/** Decides the {@link Reclaim} outcome from the draft the lock call returned. */
+export function reclaimWith(
+  state: Pick<EditorState, 'rowVersion' | 'dirty'>,
+  dispatch: (action: EditorAction) => void,
+): (v: Version) => Reclaim {
+  return (v) => {
+    if (v.rowVersion === state.rowVersion) {
+      dispatch({ type: 'relocked', rowVersion: v.rowVersion });
+      return 'continue';
+    }
+    return state.dirty ? 'lost' : 'reload';
+  };
+}
+
+/**
  * Keeps the open draft in sync with the server while the user holds the edit lock (U-09):
  * debounced autosave with `rowVersion`, a lock heartbeat, the save status and "Save version".
  * Every call sends this tab's lock token (memory only). A 409 means the lock or the draft was
@@ -56,25 +79,37 @@ export function DraftToolbar({
   estimateId,
   versionNumber,
   onLost,
+  onResume,
 }: {
   estimateId: string;
   versionNumber: number;
   onLost: (reason: LostReason) => void;
+  /** The page came back from the back/forward cache: renew the lock before editing resumes. */
+  onResume: (reclaim: (v: Version) => Reclaim) => void;
 }) {
   const { state, dispatch, editable } = useEditor();
   const patch = usePatchDraft(estimateId);
   const lock = useLockDraft(estimateId);
-  // Refreshing or closing this tab frees the lock, so a reload renews instead of "open elsewhere".
-  useReleaseLockOnPageHide(estimateId);
-  const [failed, setFailed] = useState(false);
-  const onLostRef = useRef(onLost);
+  const latest = useRef({ state, busy: false, onLost, onResume });
   useEffect(() => {
-    onLostRef.current = onLost;
+    latest.current = { state, busy: state.dirty || patch.isPending, onLost, onResume };
   });
+  // Refreshing or closing this tab frees the lock, so a reload renews instead of "open elsewhere".
+  // Not while an autosave is pending or in flight: that save would be refused.
+  useReleaseLockOnPageHide(estimateId, () => latest.current.busy);
+  // Back/forward cache restore: the lock may have been released on page hide, or lapsed.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) latest.current.onResume(reclaimWith(latest.current.state, dispatch));
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, [dispatch]);
+  const [failed, setFailed] = useState(false);
 
   const lost = (e: unknown) => {
     const reason = lockConflict(e);
-    if (reason) onLostRef.current(reason);
+    if (reason) latest.current.onLost(reason);
     return reason !== null;
   };
 
