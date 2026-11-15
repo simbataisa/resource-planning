@@ -514,6 +514,22 @@ describe('write tools', () => {
     expect(NOTE_PREFIX).toBe('Prepared with the estimation assistant: ');
   });
 
+  it("save_version without a note keeps the locked draft's note", async () => {
+    const t = await connect({
+      [`POST ${BASE}/draft/lock`]: {
+        ...version(2, 'DRAFT', 5, MY_LOCK),
+        note: 'Synthetic draft note',
+      },
+    });
+    const r = await t.call('save_version', { estimateId: EST_ID, summary: SUMMARY });
+    expect(r.isError).toBeFalsy();
+    expect(t.made()[2]).toEqual([
+      'POST',
+      `${BASE}/versions`,
+      { note: 'Synthetic draft note', summary: SUMMARY },
+    ]);
+  });
+
   it('save_version keeps a given note and releases the lock when saving fails', async () => {
     const t = await connect({ [`POST ${BASE}/versions`]: conflict('STALE') });
     const r = await t.call('save_version', {

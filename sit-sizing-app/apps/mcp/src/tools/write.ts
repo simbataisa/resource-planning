@@ -287,7 +287,7 @@ export function registerWriteTools(server: McpServer, ctx: ToolContext): void {
     {
       title: 'Save version',
       description:
-        'Saves the open draft as a numbered, unchangeable version. Without a note, the note says it was prepared with the assistant and repeats the summary. Saving never submits for review. Ask the user to confirm first.',
+        'Saves the open draft as a numbered, unchangeable version. Without a note, the note of the draft is kept; if the draft has none, the note says it was prepared with the assistant and repeats the summary. Saving never submits for review. Ask the user to confirm first.',
       inputSchema: z.object({ estimateId: Id, note: Note.optional(), summary: Summary }),
       outputSchema: Version,
       annotations: WRITE,
@@ -297,10 +297,11 @@ export function registerWriteTools(server: McpServer, ctx: ToolContext): void {
       withDraftLock(
         ctx,
         estimateId,
-        () =>
+        (draft) =>
           ctx.api.post(
             `/estimates/${seg(estimateId)}/versions`,
-            { note: note ?? `${NOTE_PREFIX}${summary}`, summary },
+            // Like the API, keep the draft's own note; the assistant note only fills a gap.
+            { note: note ?? (draft.note ? draft.note : `${NOTE_PREFIX}${summary}`), summary },
             Version,
           ),
         { consumesLock: true },
