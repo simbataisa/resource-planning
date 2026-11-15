@@ -53,7 +53,7 @@ Other synthetic users: `dev-lead` (QE Lead), `dev-viewer`, `dev-outsider`, and `
 claude mcp add --transport http sit-sizing http://localhost:3100/mcp
 ```
 
-Start, logs, environment, how to add it in each client and the error codes: [runbook section 11](docs/runbook.md#11-mcp-server-adr-0016).
+For QEs, step by step (install, connect, sign in, first estimate, test with the sample BRD and FSD): [assistant quickstart](docs/guide/assistant-quickstart.md). Start, logs, environment, how to add it in each client and the error codes: [runbook section 11](docs/runbook.md#11-mcp-server-adr-0016).
 
 ## Test
 

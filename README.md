@@ -26,7 +26,8 @@ open http://localhost:3000
 ## Guides
 
 - **[Run and deploy, step by step](sit-sizing-app/docs/guide/run-and-deploy.html)**: an illustrated HTML guide. Open it in a browser.
-- **[How every feature works](sit-sizing-app/docs/guide/features.html)**: an illustrated, animated HTML guide to each feature, including the proposed AI assistant (MCP).
+- **[How every feature works](sit-sizing-app/docs/guide/features.html)**: an illustrated, animated HTML guide to each feature, including the AI assistant (MCP).
+- **[AI assistant quickstart for QEs](sit-sizing-app/docs/guide/assistant-quickstart.md)**: install Claude Code or Codex, connect it to SIT Sizing, make a first estimate and test it with the sample BRD and FSD.
 - [App README](sit-sizing-app/README.md): commands, layout and delivery status.
 - [Runbook](sit-sizing-app/docs/runbook.md): full detail for local setup, troubleshooting, the pipeline, release, backup and operations.
 - [Release checklist](sit-sizing-app/docs/release-checklist.md): what must be true before a release.

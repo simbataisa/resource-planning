@@ -344,6 +344,8 @@ Outside local the URL must be reachable over HTTPS from QE laptops, and so must 
 
 ### How a QE adds the server to an assistant
 
+The QE-facing walkthrough (install, connect, first estimate, testing with the samples) is [docs/guide/assistant-quickstart.md](guide/assistant-quickstart.md). This section is the reference.
+
 Supported clients follow ADR-0016's compatibility table. Replace the URL with the environment's MCP URL (`https://…/mcp`; locally `http://localhost:3100/mcp`). On first use the assistant opens Keycloak in the browser; sign in as usual.
 
 | Client      | Status      | How to add it                                                                                                                                                                                                                                                                                 |

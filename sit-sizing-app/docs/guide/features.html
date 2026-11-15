@@ -79,7 +79,7 @@
       .layout {
         display: grid;
         grid-template-columns: 250px minmax(0, 1fr);
-        max-width: 1200px;
+        max-width: 1440px;
         margin: 0 auto;
       }
       aside {
@@ -207,9 +207,19 @@
       }
       .cols {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
         gap: 20px;
         align-items: start;
+      }
+      /* Keep the illustration beside the text while the reader scrolls */
+      @media (min-width: 1051px) {
+        .cols > :last-child {
+          position: sticky;
+          top: 24px;
+        }
+      }
+      .cols + .card {
+        margin-top: 20px;
       }
       @media (max-width: 1050px) {
         .cols {
@@ -766,7 +776,7 @@
         <a href="#engineversion">Engine versions</a>
         <a href="#admin">Admin and audit log</a>
         <a href="#i18n">Languages</a>
-        <div class="group">Proposed</div>
+        <div class="group">AI assistant</div>
         <a href="#mcp">AI assistant (MCP)</a>
       </aside>
 
@@ -847,59 +857,6 @@
                   </li>
                 </ol>
               </div>
-              <div class="card table-wrap">
-                <h3>Roles</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Can</th>
-                      <th>Viewer</th>
-                      <th>Estimator</th>
-                      <th>QE Lead</th>
-                      <th>Admin</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Read estimates, versions, profiles, exports</td>
-                      <td class="y">✓</td>
-                      <td class="y">✓</td>
-                      <td class="y">✓</td>
-                      <td class="y">✓</td>
-                    </tr>
-                    <tr>
-                      <td>Edit estimates, save and submit versions, record actuals</td>
-                      <td class="n">–</td>
-                      <td class="y">✓</td>
-                      <td class="y">✓</td>
-                      <td class="y">✓</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Approve or return, project profiles, members, take over a lock, project
-                        audit
-                      </td>
-                      <td class="n">–</td>
-                      <td class="n">–</td>
-                      <td class="y">✓</td>
-                      <td class="y">✓</td>
-                    </tr>
-                    <tr>
-                      <td>Projects, global profiles, users, all portfolios</td>
-                      <td class="n">–</td>
-                      <td class="n">–</td>
-                      <td class="n">–</td>
-                      <td class="y">✓</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <p class="note">
-                  Viewer, Estimator and QE Lead are per project. Admin is global and comes from the
-                  Keycloak group
-                  <code>sit-sizing-admins</code>. Asking for a project you are not in returns "not
-                  found", so its existence is not revealed.
-                </p>
-              </div>
             </div>
             <div class="card" data-seq>
               <div class="stage-head">
@@ -964,6 +921,58 @@
               </div>
               <p class="caption" data-caption></p>
             </div>
+          </div>
+          <div class="card table-wrap">
+            <h3>Roles</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Can</th>
+                  <th>Viewer</th>
+                  <th>Estimator</th>
+                  <th>QE Lead</th>
+                  <th>Admin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Read estimates, versions, profiles, exports</td>
+                  <td class="y">✓</td>
+                  <td class="y">✓</td>
+                  <td class="y">✓</td>
+                  <td class="y">✓</td>
+                </tr>
+                <tr>
+                  <td>Edit estimates, save and submit versions, record actuals</td>
+                  <td class="n">–</td>
+                  <td class="y">✓</td>
+                  <td class="y">✓</td>
+                  <td class="y">✓</td>
+                </tr>
+                <tr>
+                  <td>
+                    Approve or return, project profiles, members, take over a lock, project audit
+                  </td>
+                  <td class="n">–</td>
+                  <td class="n">–</td>
+                  <td class="y">✓</td>
+                  <td class="y">✓</td>
+                </tr>
+                <tr>
+                  <td>Projects, global profiles, users, all portfolios</td>
+                  <td class="n">–</td>
+                  <td class="n">–</td>
+                  <td class="n">–</td>
+                  <td class="y">✓</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="note">
+              Viewer, Estimator and QE Lead are per project. Admin is global and comes from the
+              Keycloak group
+              <code>sit-sizing-admins</code>. Asking for a project you are not in returns "not
+              found", so its existence is not revealed.
+            </p>
           </div>
         </section>
 
@@ -1377,6 +1386,16 @@
                   Opening the draft for editing takes a <b>lock</b> for 15 minutes, renewed by a
                   heartbeat while you work. Others see "being edited by …" and a read-only view.
                 </li>
+                <li>
+                  The lock belongs to <b>that tab</b>, not just to you. If you open the same draft
+                  in a second tab, or the AI assistant is using it, you see "open in another tab or
+                  in the assistant". <b>Open here instead</b> moves editing to this tab; it never
+                  saves an older copy over newer work.
+                </li>
+                <li>
+                  Leaving the editor or refreshing the page releases the lock, so the next tab or
+                  the assistant can take it straight away.
+                </li>
                 <li>Every keystroke recomputes the results in your browser.</li>
                 <li>
                   1.5 seconds after you stop typing, the draft is <b>autosaved</b>. The server
@@ -1418,7 +1437,10 @@
                 </div>
               </div>
               <p class="caption" data-caption></p>
-              <p class="note">Meanwhile, a colleague opening the same draft sees it read-only.</p>
+              <p class="note">
+                Meanwhile, a colleague opening the same draft sees it read-only, and your second tab
+                or the assistant sees "open elsewhere".
+              </p>
             </div>
           </div>
         </section>
@@ -2070,23 +2092,25 @@
 
         <!-- MCP -->
         <section class="feature" id="mcp">
-          <div class="eyebrow">Proposed</div>
-          <h2>AI assistant through MCP <span class="proposed">Proposed · not built</span></h2>
+          <div class="eyebrow">AI assistant</div>
+          <h2>AI assistant through MCP</h2>
           <p class="summary">
-            Filling in many inputs and judging 142 assumptions is hard. The proposal lets a Quality
-            Engineer give a requirements document to an AI assistant, which proposes the inputs,
-            explains every value, and saves a version only after an explicit yes. An MCP server
-            gives the assistant access to SIT Sizing through the existing API.
+            Filling in many inputs and judging 142 assumptions is hard. A Quality Engineer can
+            instead give a requirements document to an AI assistant on their laptop. The assistant
+            proposes the inputs, explains every value, and saves a version only after an explicit
+            yes. The SIT Sizing MCP server gives it access to the app through the existing API.
           </p>
-          <div class="note" style="margin: 0 0 16px">
-            This feature is <b>not</b> in the solution design. It is described in its own design
-            spec and ADR-0016 on the <code>feature/mcp-server</code> branch, and is waiting for
-            security review before any build.
+          <div class="note good" style="margin: 0 0 16px">
+            Built and merged (ADR-0016, ADR-0018). Tested with Claude Code and Codex; Antigravity is
+            not supported yet and Kiro is untested. How to install and connect an assistant, and
+            test it with the sample BRD and FSD, is in the
+            <a href="assistant-quickstart.md">assistant quickstart</a>. Assumption explanations
+            appear only once the QE practice lead has approved them.
           </div>
           <div class="cols">
             <div>
               <div class="card">
-                <h3>How it would work</h3>
+                <h3>How it works</h3>
                 <ol class="how">
                   <li>
                     The QE connects their assistant (Claude Code, Codex and others) to one hosted
@@ -2116,7 +2140,7 @@
                 </ol>
               </div>
               <div class="card table-wrap">
-                <h3>Proposed tools</h3>
+                <h3>Tools</h3>
                 <table>
                   <tbody>
                     <tr>
@@ -2144,85 +2168,114 @@
                 </table>
               </div>
             </div>
-            <div class="card" data-seq>
-              <div class="stage-head">
-                <h3>From document to saved version</h3>
-                <button class="replay" data-replay>↻ Replay</button>
+            <div>
+              <div class="card" data-seq>
+                <div class="stage-head">
+                  <h3>From document to saved version</h3>
+                  <button class="replay" data-replay>↻ Replay</button>
+                </div>
+                <div class="lane-heads" style="grid-template-columns: repeat(4, 1fr)">
+                  <div class="lane-head">QE</div>
+                  <div class="lane-head">Assistant</div>
+                  <div class="lane-head">MCP server</div>
+                  <div class="lane-head">SIT Sizing</div>
+                </div>
+                <div class="lanes">
+                  <div
+                    class="msg r s"
+                    data-cap="The QE shares an FSD in the chat."
+                    style="grid-template-columns: repeat(4, 1fr)"
+                  >
+                    <div class="bar" style="grid-column: 1 / 3">FSD</div>
+                  </div>
+                  <div
+                    class="msg r s"
+                    data-cap="The assistant asks what each input and assumption means."
+                    style="grid-template-columns: repeat(4, 1fr)"
+                  >
+                    <div class="bar" style="grid-column: 2 / 4">describe inputs</div>
+                  </div>
+                  <div
+                    class="msg l s"
+                    data-cap="The assistant asks the QE about open questions in the document."
+                    style="grid-template-columns: repeat(4, 1fr)"
+                  >
+                    <div class="bar" style="grid-column: 1 / 3">questions</div>
+                  </div>
+                  <div
+                    class="msg r s"
+                    data-cap="Proposed values go to the engine for a preview; nothing is saved."
+                    style="grid-template-columns: repeat(4, 1fr)"
+                  >
+                    <div class="bar" style="grid-column: 2 / 4">preview</div>
+                  </div>
+                  <div
+                    class="msg l s"
+                    data-cap="The assistant shows the inputs and the engine's result, and asks for a yes."
+                    style="grid-template-columns: repeat(4, 1fr)"
+                  >
+                    <div class="bar" style="grid-column: 1 / 3">result · save?</div>
+                  </div>
+                  <div
+                    class="msg r s"
+                    data-cap="The QE says yes."
+                    style="grid-template-columns: repeat(4, 1fr)"
+                  >
+                    <div class="bar" style="grid-column: 1 / 3">yes</div>
+                  </div>
+                  <div
+                    class="msg r s"
+                    data-cap="Only now does the server write, as the user, through the normal API."
+                    style="grid-template-columns: repeat(4, 1fr)"
+                  >
+                    <div class="bar" style="grid-column: 2 / 5">save version (as the user)</div>
+                  </div>
+                  <div
+                    class="msg l s"
+                    data-cap="The stored result comes back, with an audit event in the app."
+                    style="grid-template-columns: repeat(4, 1fr)"
+                  >
+                    <div class="bar" style="grid-column: 1 / 5">version 1 saved · audited</div>
+                  </div>
+                </div>
+                <p class="caption" data-caption></p>
               </div>
-              <div class="lane-heads" style="grid-template-columns: repeat(4, 1fr)">
-                <div class="lane-head">QE</div>
-                <div class="lane-head">Assistant</div>
-                <div class="lane-head">MCP server</div>
-                <div class="lane-head">SIT Sizing</div>
+              <div class="card">
+                <h3>Safeguards</h3>
+                <ol class="how">
+                  <li>
+                    <b>Sign-in as yourself.</b> The assistant signs in through Keycloak; there are
+                    no shared or service accounts. If you have never signed in to the web app, the
+                    server answers "not provisioned" and asks you to sign in there once.
+                  </li>
+                  <li>
+                    <b>Every call is checked by the app.</b> Each tool call is authorised by the API
+                    first, so a revoked session or a deactivated account stops working at once.
+                  </li>
+                  <li>
+                    <b>One editor at a time.</b> The assistant takes its own edit lock with its own
+                    token. If the draft is open in your editor it answers "close the draft in the
+                    editor first", and it can never release your editor's lock.
+                  </li>
+                  <li>
+                    <b>Every change says what you agreed to.</b> Each write carries a one-line
+                    summary that is stored in the audit trail, marked as coming from the assistant.
+                  </li>
+                  <li>
+                    <b>Documents stay in the chat.</b> Only counts, values and short notes reach the
+                    app; tokens and free text are never logged.
+                  </li>
+                </ol>
               </div>
-              <div class="lanes">
-                <div
-                  class="msg r s"
-                  data-cap="The QE shares an FSD in the chat."
-                  style="grid-template-columns: repeat(4, 1fr)"
-                >
-                  <div class="bar" style="grid-column: 1 / 3">FSD</div>
-                </div>
-                <div
-                  class="msg r s"
-                  data-cap="The assistant asks what each input and assumption means."
-                  style="grid-template-columns: repeat(4, 1fr)"
-                >
-                  <div class="bar" style="grid-column: 2 / 4">describe inputs</div>
-                </div>
-                <div
-                  class="msg l s"
-                  data-cap="The assistant asks the QE about open questions in the document."
-                  style="grid-template-columns: repeat(4, 1fr)"
-                >
-                  <div class="bar" style="grid-column: 1 / 3">questions</div>
-                </div>
-                <div
-                  class="msg r s"
-                  data-cap="Proposed values go to the engine for a preview; nothing is saved."
-                  style="grid-template-columns: repeat(4, 1fr)"
-                >
-                  <div class="bar" style="grid-column: 2 / 4">preview</div>
-                </div>
-                <div
-                  class="msg l s"
-                  data-cap="The assistant shows the inputs and the engine's result, and asks for a yes."
-                  style="grid-template-columns: repeat(4, 1fr)"
-                >
-                  <div class="bar" style="grid-column: 1 / 3">result · save?</div>
-                </div>
-                <div
-                  class="msg r s"
-                  data-cap="The QE says yes."
-                  style="grid-template-columns: repeat(4, 1fr)"
-                >
-                  <div class="bar" style="grid-column: 1 / 3">yes</div>
-                </div>
-                <div
-                  class="msg r s"
-                  data-cap="Only now does the server write, as the user, through the normal API."
-                  style="grid-template-columns: repeat(4, 1fr)"
-                >
-                  <div class="bar" style="grid-column: 2 / 5">save version (as the user)</div>
-                </div>
-                <div
-                  class="msg l s"
-                  data-cap="The stored result comes back, with an audit event in the app."
-                  style="grid-template-columns: repeat(4, 1fr)"
-                >
-                  <div class="bar" style="grid-column: 1 / 5">version 1 saved · audited</div>
-                </div>
-              </div>
-              <p class="caption" data-caption></p>
             </div>
           </div>
         </section>
 
         <footer>
-          Sources: the solution design, ADR-0002 to ADR-0014, the engine package and, for the
-          proposed assistant, the MCP design spec and ADR-0016. Example figures marked illustrative
-          or synthetic are invented; the worked example figures are the prototype's own. If this
-          guide and those documents disagree, the documents win.
+          Sources: the solution design, ADR-0002 to ADR-0018, the engine package and, for the
+          assistant, the MCP design spec, ADR-0016 and the draft lock token design. Example figures
+          marked illustrative or synthetic are invented; the worked example figures are the
+          prototype's own. If this guide and those documents disagree, the documents win.
         </footer>
       </main>
     </div>
