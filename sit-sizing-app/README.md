@@ -23,7 +23,7 @@ Behind a corporate proxy with TLS inspection, see `docker/certs/README.txt` (on 
 ```bash
 corepack enable
 pnpm install       # also generates the Prisma client
-pnpm dev:up        # creates .env, then starts db, migrations, seed, Keycloak, web (hot reload), worker, mail
+pnpm dev:up        # creates .env, then starts db, migrations, seed, Keycloak, web (hot reload), worker, mail, mcp
 ```
 
 | What               | Where                                                                                             |
@@ -44,6 +44,16 @@ Other synthetic users: `dev-lead` (QE Lead), `dev-viewer`, `dev-outsider`, and `
 | `pnpm stack:up` / `pnpm stack:down` | The production-like image instead of hot reload                         |
 | `pnpm dev:obs`                      | Adds Jaeger tracing at http://localhost:16686                           |
 | `pnpm dev`                          | Next.js on the host; needs the `db` container and `apps/web/.env.local` |
+
+### MCP server (AI assistants)
+
+`pnpm dev:up` also starts the MCP server (`apps/mcp`, ADR-0016) at http://localhost:3100/mcp. It lets an AI assistant such as Claude Code or Codex read estimates, explain inputs and assumptions, preview results and, after the user confirms in chat, save and submit versions, always through the API with the user's own permissions. Locally it acts as `dev-estimator` without sign-in. To try it from Claude Code:
+
+```bash
+claude mcp add --transport http sit-sizing http://localhost:3100/mcp
+```
+
+Start, logs, environment, how to add it in each client and the error codes: [runbook section 11](docs/runbook.md#11-mcp-server-adr-0016).
 
 ## Test
 

@@ -65,7 +65,7 @@
 
 - ~~Back-channel logout~~ **Done in 1.7:** Keycloak posts a signed logout token to `/api/auth/backchannel-logout`; the session id is recorded in `RevokedSession` and refused on the next request (T-01).
 
-- Clean-up of stale self-registered MCP clients before the 200-client limit is reached (T-25, ADR-0016): runbook entry still to write.
+- Clean-up of stale self-registered MCP clients before the 200-client limit is reached (T-25, ADR-0016): procedure in runbook section 11; a person still has to run it on a schedule.
 - Session lifetime and MFA scope: confirm with information security (Q2).
 - Rate-limit thresholds: derive from the non-functional targets (Q10).
 - Penetration test of the IdP configuration before the pilot: scope in `docs/security/pentest-scope.md`, configuration review in `docs/security/idp-review.md` (release gates, `docs/release-checklist.md`).

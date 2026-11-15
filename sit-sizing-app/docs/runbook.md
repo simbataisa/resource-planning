@@ -1,6 +1,6 @@
 # Runbook
 
-Covers local development, tests, the pipeline, Keycloak, release and deployment, backup and restore, and notifications (releases 1 to 3). For a visual walkthrough, open [guide/run-and-deploy.html](guide/run-and-deploy.html) in a browser.
+Covers local development, tests, the pipeline, Keycloak, release and deployment, backup and restore, notifications (releases 1 to 3) and the MCP server. For a visual walkthrough, open [guide/run-and-deploy.html](guide/run-and-deploy.html) in a browser.
 
 ## 1. Prerequisites
 
@@ -17,7 +17,7 @@ corepack enable
 pnpm install            # installs dependencies and generates the Prisma client
 pnpm check              # type check, lint, format check, unit tests
 pnpm dev:up             # creates .env with random local passwords, then starts db, migrate, seed,
-                        # Keycloak, web, worker and mail
+                        # Keycloak, web, worker, mail and the MCP server
 open http://localhost:3000            # redirects to Keycloak; sign in as dev-estimator
 curl -s localhost:3000/api/v1/health  # {"status":"ok",...}
 curl -s localhost:3000/api/v1/ready   # {"status":"ready",...} once the database is reachable
@@ -284,3 +284,84 @@ All values come from the platform secret store (design 11, Q4), never from a com
   WHERE channel = 'EMAIL' AND status = 'FAILED' AND "createdAt" > now() - interval '7 days';
   ```
 - **Scaling:** several worker replicas are safe; rows are claimed with `SKIP LOCKED`.
+
+## 11. MCP server (ADR-0016)
+
+The `mcp` service lets AI assistants (Claude Code, Codex) read and edit estimates through the API, as the signed-in user, with that user's permissions. It holds no data and no secrets: every tool call goes to `/api/v1` with the caller's Keycloak access token. Code: `apps/mcp`; image target `mcp` in `docker/Dockerfile` (`sit-sizing-mcp:local`).
+
+### Start, stop, logs, health
+
+| What          | How                                                                                                                                                                                                                                             |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Start         | `pnpm dev:up` (dev sign-in, see below) or `pnpm stack:up` (production-like image, Keycloak sign-in). Both wait for `mcp` to be healthy. MCP endpoint: http://localhost:3100/mcp                                                                 |
+| Stop          | `pnpm dev:down` / `pnpm stack:down`, or only this service: `docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml stop mcp`                                                                                          |
+| Logs          | `docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml logs -f mcp`. One line per request (method, path, status, duration) and per tool call (tool name, status, duration); never tool arguments or tokens           |
+| Liveness      | `curl -s localhost:3100/health` → `{"status":"ok"}` (the compose healthcheck)                                                                                                                                                                   |
+| Readiness     | `curl -s localhost:3100/ready` → `{"status":"ready"}` when the API's `/api/v1/ready` answers 200, otherwise 503 `not_ready`                                                                                                                     |
+| Scripted flow | `pnpm --filter @sit/mcp test:e2e` against `pnpm dev:up`, or `pnpm --filter @sit/mcp test:e2e:stack`: builds the images and runs the flow in an isolated stack (project `sit-mcp-flow-local`, ports 23300/23310, fresh secrets), then removes it |
+| Hardening     | Non-root user, read-only root filesystem with a tmpfs on `/tmp` (tsx compile cache), all capabilities dropped, `no-new-privileges`                                                                                                              |
+
+**Dev sign-in.** `compose.dev.yaml` sets `APP_ENV=local` and `MCP_DEV_USER=dev-estimator`: the server then sends the API's `x-dev-user` header instead of a token, so tools work without signing in. It needs the API in dev mode (`AUTH_MODE=dev`, the default in the generated `.env`). The server refuses to start with `MCP_DEV_USER` unless `APP_ENV=local`, and `compose.yaml` never sets it. For real Keycloak sign-in locally, use `pnpm stack:up` with `AUTH_MODE=oidc` in `.env` (the API accepts bearer tokens only in OIDC mode).
+
+### Environment
+
+Validated at start-up by `apps/mcp/src/env.ts`; a bad value stops the server with the variable's name (never its value). All are in `.env.example`.
+
+| Variable                    | Compose value                            | Meaning                                                                                       |
+| --------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `APP_ENV`                   | from `.env` (required)                   | `local`, `dev`, `sit` or `prod`. Outside `local`: `MCP_PUBLIC_URL` must be https, no dev user |
+| `LOG_LEVEL`                 | from `.env`, default `info`              | `debug`/`trace` are refused in `prod`                                                         |
+| `SIT_API_BASE_URL`          | `http://web:3000`                        | Origin of the web app; the server calls `<origin>/api/v1`                                     |
+| `OIDC_ISSUER`               | `http://localhost:18080/realms/qe-tools` | Must equal the token's `iss` (the browser-facing Keycloak URL)                                |
+| `OIDC_INTERNAL_URL`         | `http://keycloak:8080`                   | Where the server fetches the realm's signing keys                                             |
+| `OIDC_API_AUDIENCE`         | `sit-sizing-api`                         | Audience every token must carry                                                               |
+| `MCP_PUBLIC_URL`            | `http://localhost:3100`                  | This server's public origin (OAuth protected resource). https outside local                   |
+| `MCP_PORT`                  | `3100` (host port from `.env`)           | Listening port                                                                                |
+| `MCP_RATE_LIMIT_PER_MINUTE` | `60`                                     | Tool calls per user per minute and instance; keep below the API's `RATE_LIMIT_PER_MINUTE`     |
+| `MCP_DEV_USER`              | `dev-estimator` in the dev overlay only  | Seeded user to act as, without Keycloak. Local only                                           |
+
+Outside local the URL must be reachable over HTTPS from QE laptops, and so must Keycloak (sign-in runs in the user's browser). Network exposure is the platform team's decision (threat model).
+
+### How a QE adds the server to an assistant
+
+Supported clients follow ADR-0016's compatibility table. Replace the URL with the environment's MCP URL (`https://…/mcp`; locally `http://localhost:3100/mcp`). On first use the assistant opens Keycloak in the browser; sign in as usual.
+
+| Client      | Status      | How to add it                                                                                                                                                                                                                                                                                 |
+| ----------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code | Supported   | `claude mcp add --transport http --client-id sit-sizing-mcp sit-sizing https://<host>/mcp`, then `/mcp` in Claude Code to sign in. Uses the pre-registered public client                                                                                                                      |
+| Codex       | Supported   | Add the URL as a Streamable HTTP server in Codex's MCP settings (for example `codex mcp add sit-sizing --url https://<host>/mcp`; check the syntax of the installed version), then sign in when Codex asks. No client ID: Codex registers its own client on each sign-in (see clean-up below) |
+| Antigravity | Unsupported | It never starts a sign-in (`initialize: Unauthorized`). No workaround in this version                                                                                                                                                                                                         |
+| Kiro        | Not tested  | Unknown until someone tests it; record the result in ADR-0016                                                                                                                                                                                                                                 |
+
+Before the first use, the QE signs in to SIT Sizing once in the browser: the app account is created there, never through the MCP server.
+
+### Tool errors the assistant may report
+
+| Code              | Meaning                                                                                                    | What to do                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `NOT_PROVISIONED` | The token is valid, but the person has no active SIT Sizing account yet (or it was deactivated)            | Sign in to SIT Sizing once in the browser; an admin reactivates deactivated users |
+| `EDITOR_OPEN`     | The user has the draft open in the editor (they hold its edit lock), so the assistant will not write to it | Close the draft in the editor (or wait for the lock to expire), then ask again    |
+| `LOCKED`          | Someone else holds the draft's edit lock; the message names them and the expiry time                       | Wait, or ask that person or a QE Lead (who can take the lock over in the editor)  |
+| `NO_DRAFT`        | The estimate has no open draft                                                                             | Ask the assistant to start a draft (`start_draft`) first                          |
+| `RATE_LIMITED`    | Too many tool calls this minute (server or API limit); the message gives the retry time                    | Wait and retry                                                                    |
+
+A refused or expired token is not a tool error: the server answers with an OAuth challenge and the client asks the user to sign in again.
+
+### Clean-up of self-registered clients (Codex)
+
+Codex registers a new public client in the `qe-tools` realm on every sign-in, and the realm's anonymous registration policy allows at most **200 clients** ("Max Clients Limit"). When the limit is reached, new Codex sign-ins fail (registration refused with 403); Claude Code is unaffected. An admin checks monthly, and whenever a Codex sign-in fails that way:
+
+1. Sign in to the admin CLI (inside the Keycloak container locally; the internal admin endpoint elsewhere):
+   ```bash
+   kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin
+   ```
+2. List the self-registered clients. They have a generated UUID as `clientId` and only loopback redirect URIs; the clients defined in the realm export (`sit-sizing-web`, `sit-sizing-mcp` and Keycloak's built-in ones) have readable names and are never deleted:
+   ```bash
+   kcadm.sh get clients -r qe-tools --fields id,clientId,name,redirectUris \
+     | jq -r '.[] | select(.clientId | test("^[0-9a-f-]{36}$")) | [.id, .clientId, (.name // "")] | @tsv'
+   kcadm.sh get clients -r qe-tools | jq 'length'     # total, against the limit of 200
+   ```
+3. A client is stale when it has no active sessions (`kcadm.sh get clients/<id>/session-count -r qe-tools` → `{"count":0}`) and no recent `CODE_TO_TOKEN` or `REFRESH_TOKEN` event in the realm's events (Admin console → Events, filter by client).
+4. Delete each stale client: `kcadm.sh delete clients/<id> -r qe-tools`. Its user only has to sign in again; Codex then registers a new client.
+
+Record each clean-up (date, environment, clients deleted, by whom) in the release log.

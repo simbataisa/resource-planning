@@ -68,6 +68,8 @@ const env = ensureEnv(
     SESSION_SECRET: secret(32),
     // Password of the synthetic Keycloak users dev-admin, dev-lead, dev-estimator, ...
     KC_DEV_USER_PASSWORD: secret(),
+    // MCP server (ADR-0016): host port of the mcp service, http://localhost:3100/mcp
+    MCP_PORT: '3100',
   },
   '.env',
 );
