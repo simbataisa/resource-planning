@@ -6,6 +6,9 @@ import { expectNoAxeViolations } from '@/tests/support/axe';
 import { renderWithIntl } from '@/tests/support/intl';
 import { router } from '@/tests/support/navigation-mock';
 import { AppShell } from './app-shell';
+import { NAV_ICONS } from './nav-items';
+import { SidebarNavLink } from './sidebar-nav-link';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 vi.mock(
   '@/i18n/navigation',
@@ -154,5 +157,27 @@ describe('AppShell (U-04)', () => {
       </AppShell>,
     );
     expect(router.replace).not.toHaveBeenCalled();
+  });
+});
+
+describe('SidebarNavLink tour target', () => {
+  it('renders the tour name as data-tour on the link', () => {
+    renderWithIntl(
+      <SidebarProvider>
+        <ul>
+          <SidebarNavLink
+            href="/projects"
+            label="Projects"
+            icon={NAV_ICONS.projects}
+            active={false}
+            tour="nav-projects"
+          />
+        </ul>
+      </SidebarProvider>,
+    );
+    expect(screen.getByRole('link', { name: 'Projects' })).toHaveAttribute(
+      'data-tour',
+      'nav-projects',
+    );
   });
 });

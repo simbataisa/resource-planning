@@ -65,7 +65,7 @@ export const TOURS: TourDefinition[] = [
     kind: 'onboarding',
     since: '2026-11-15T00:00:00.000Z',
     // Viewer only: no Estimator or QE Lead role anywhere.
-    audience: (me) => hasRole(me, 'VIEWER') && !hasRole(me, 'ESTIMATOR', 'QE_LEAD'),
+    audience: (me) => !isAdmin(me) && hasRole(me, 'VIEWER') && !hasRole(me, 'ESTIMATOR', 'QE_LEAD'),
     steps: [
       step(PROJECTS, tgt('project-list'), `${RT}.project`, 'navigate', 'top'),
       step(PROJECT, tgt('estimate-list'), `${RT}.estimate`, 'navigate', 'top'),
@@ -81,6 +81,11 @@ export const TOURS: TourDefinition[] = [
     since: '2026-11-15T00:00:00.000Z',
     // In no project and not Admin. Closing it records `dismissed`, never `completed`.
     audience: (me) => me.memberships.length === 0 && !isAdmin(me),
-    steps: [step(ANY, 'center', 'tours.noProject.card')],
+    steps: [
+      {
+        ...step(ANY, 'center', 'tours.noProject.card'),
+        values: (me) => ({ email: me.email }),
+      },
+    ],
   },
 ];

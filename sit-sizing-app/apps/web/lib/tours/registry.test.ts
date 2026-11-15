@@ -108,6 +108,13 @@ describe('tour registry', () => {
     expect(steps[4]!.route.test('/estimates/e1')).toBe(true);
   });
 
+  it('shows the user email on the no-project card', () => {
+    const step = tour('no-project@1').steps[0]!;
+    expect(step.values?.(me([]))).toEqual({ email: 'test@example.invalid' });
+    expect(String(get(en as Tree, `${step.messageKey}.body`))).toContain('{email}');
+    expect(String(get(vi as Tree, `${step.messageKey}.body`))).toContain('{email}');
+  });
+
   it('selects the audiences from spec 6.5', () => {
     const who = {
       estimator: me(['ESTIMATOR']),
@@ -116,15 +123,22 @@ describe('tour registry', () => {
       viewer: me(['VIEWER']),
       none: me([]),
       mixed: me(['VIEWER', 'ESTIMATOR']),
+      adminViewer: me(['VIEWER'], 'ADMIN'),
     };
     const hits = (id: string) =>
       Object.entries(who)
         .filter(([, m]) => tour(id).audience(m))
         .map(([k]) => k)
         .sort();
-    expect(hits('first-estimate@1')).toEqual(['adminNoProject', 'estimator', 'lead', 'mixed']);
+    expect(hits('first-estimate@1')).toEqual([
+      'adminNoProject',
+      'adminViewer',
+      'estimator',
+      'lead',
+      'mixed',
+    ]);
     expect(hits('reading-tour@1')).toEqual(['viewer']);
     expect(hits('no-project@1')).toEqual(['none']);
-    expect(hits('first-estimate-admin@1')).toEqual(['adminNoProject']);
+    expect(hits('first-estimate-admin@1')).toEqual(['adminNoProject', 'adminViewer']);
   });
 });

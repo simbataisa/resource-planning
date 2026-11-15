@@ -2112,7 +2112,7 @@
     "noProject": {
       "card": {
         "title": "Ask your QE Lead to add you to a project",
-        "body": "You are not in a project yet. Ask your QE Lead to add you using the e-mail address you sign in with. The tour starts again the first time you sign in after that."
+        "body": "You are not in a project yet. Ask your QE Lead to add you using your e-mail address, {email}. The tour starts again the first time you sign in after that."
       }
     }
   }

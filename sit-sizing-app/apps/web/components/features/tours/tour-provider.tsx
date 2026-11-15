@@ -322,8 +322,8 @@ export function TourProvider({
       (tour?.steps ?? []).map((s) => ({
         target: s.target === 'center' ? 'body' : s.target,
         placement: s.target === 'center' ? 'center' : (s.placement ?? 'bottom'),
-        title: t(`${s.messageKey}.title`),
-        content: t(`${s.messageKey}.body`),
+        title: t(`${s.messageKey}.title`, s.values && me ? s.values(me) : undefined),
+        content: t(`${s.messageKey}.body`, s.values && me ? s.values(me) : undefined),
         // Steps that wait for the page (click, event, navigate) must let keyboard users leave the
         // tooltip and reach the target, so Joyride's focus trap is off there (WCAG 2.1.1).
         disableFocusTrap: s.advance !== 'next',
@@ -333,7 +333,7 @@ export function TourProvider({
           target: s.target === 'center' ? null : s.target,
         } satisfies TourStepData,
       })),
-    [tour, t, recorded],
+    [tour, t, recorded, me],
   );
   const options = useMemo(() => joyrideOptions(reducedMotion), [reducedMotion]);
 

@@ -2112,7 +2112,7 @@
     "noProject": {
       "card": {
         "title": "Hãy nhờ QE Lead thêm bạn vào một dự án",
-        "body": "Bạn chưa thuộc dự án nào. Hãy nhờ QE Lead thêm bạn bằng địa chỉ e-mail bạn dùng để đăng nhập. Hướng dẫn sẽ bắt đầu lại ở lần đăng nhập đầu tiên sau đó."
+        "body": "Bạn chưa thuộc dự án nào. Hãy nhờ QE Lead thêm bạn bằng địa chỉ e-mail của bạn, {email}. Hướng dẫn sẽ bắt đầu lại ở lần đăng nhập đầu tiên sau đó."
       }
     }
   }

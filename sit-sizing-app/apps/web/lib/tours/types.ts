@@ -12,6 +12,8 @@ export interface TourStep {
   messageKey: string;
   placement?: 'top' | 'bottom' | 'left' | 'right' | 'auto';
   advance: 'next' | 'click' | 'navigate' | { event: TourEvent };
+  /** ICU values for the step's title and body, from the signed-in user (e.g. `{ email }`). */
+  values?: (me: Me) => Record<string, string>;
 }
 
 export interface TourDefinition {

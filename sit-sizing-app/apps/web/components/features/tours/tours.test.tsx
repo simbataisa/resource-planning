@@ -11,6 +11,7 @@ import viMessages from '@/messages/vi.json';
 import type { TourDefinition, TourEvent, TourStep } from '@/lib/tours/types';
 import { joyrideOptions, TourProvider, useTours } from './tour-provider';
 import { useTourEvent } from './use-tour-event';
+import { TOURS } from '@/lib/tours/registry';
 
 const nav = vi.hoisted(() => ({ pathname: '/projects', push: vi.fn() }));
 vi.mock('@/i18n/navigation', () => ({
@@ -419,6 +420,13 @@ describe('TourProvider', () => {
     expect(api.updateMe).toHaveBeenCalledWith({
       tours: { 'no-project@1': { status: 'dismissed' } },
     });
+  });
+
+  it('shows the user email on the real no-project card', async () => {
+    const noProject = TOURS.filter((t) => t.id === 'no-project@1');
+    setup(noProject, makeClient({ ...ME, memberships: [] }));
+    const d = await dialog();
+    expect(within(d).getByText(/estimator@example\.test/)).toBeInTheDocument();
   });
 
   it('does not downgrade a completed tour to dismissed when a replay is closed', async () => {
