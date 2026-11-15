@@ -9,6 +9,11 @@ import { AppShell } from './app-shell';
 import { NAV_ICONS } from './nav-items';
 import { SidebarNavLink } from './sidebar-nav-link';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
+
+/** As in providers.tsx: the shell's tooltips (the tour "?" menu) use the app's TooltipProvider. */
+const renderShell = (...[ui, options]: Parameters<typeof renderWithIntl>) =>
+  renderWithIntl(<TooltipProvider delayDuration={300}>{ui}</TooltipProvider>, options);
 
 vi.mock(
   '@/i18n/navigation',
@@ -49,7 +54,7 @@ vi.stubGlobal(
 describe('AppShell (U-04)', () => {
   it('shows grouped navigation, the account menu and a skip link', async () => {
     const user = userEvent.setup();
-    const { container } = renderWithIntl(
+    const { container } = renderShell(
       <AppShell userName="Synthetic Estimator">
         <h1>Body</h1>
       </AppShell>,
@@ -103,7 +108,7 @@ describe('AppShell (U-04)', () => {
   });
 
   it('signed out shows sign-in and no account menu', () => {
-    renderWithIntl(<AppShell userName={null}>x</AppShell>);
+    renderShell(<AppShell userName={null}>x</AppShell>);
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
       'href',
       '/api/auth/signin',
@@ -113,7 +118,7 @@ describe('AppShell (U-04)', () => {
   });
 
   it('offers sign-in when nobody is signed in, in Vietnamese', () => {
-    renderWithIntl(<AppShell userName={null}>x</AppShell>, { locale: 'vi' });
+    renderShell(<AppShell userName={null}>x</AppShell>, { locale: 'vi' });
     expect(screen.getByRole('link', { name: 'Đăng nhập' })).toHaveAttribute(
       'href',
       '/api/auth/signin',
@@ -130,7 +135,7 @@ describe('AppShell (U-04)', () => {
     })) as unknown as typeof window.matchMedia;
     try {
       const user = userEvent.setup();
-      renderWithIntl(<AppShell userName="Synthetic Estimator">x</AppShell>);
+      renderShell(<AppShell userName="Synthetic Estimator">x</AppShell>);
       // On a phone the sidebar is hidden, so a slim bar keeps its toggle in reach.
       await user.click(screen.getByRole('button', { name: 'Toggle sidebar' }));
       const sheet = screen.getByRole('dialog', { name: 'Main' });
@@ -154,7 +159,7 @@ describe('AppShell (U-04)', () => {
 
   it('switches language, remembering the choice', async () => {
     const user = userEvent.setup();
-    renderWithIntl(<AppShell userName="Synthetic Viewer">x</AppShell>);
+    renderShell(<AppShell userName="Synthetic Viewer">x</AppShell>);
     expect(screen.getByRole('button', { name: 'EN English' })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -169,7 +174,7 @@ describe('AppShell (U-04)', () => {
 
   it('opens in the profile language when this browser has not chosen one', () => {
     router.replace.mockClear();
-    renderWithIntl(
+    renderShell(
       <AppShell userName="Synthetic Viewer" profileLocale="vi" localeChosen={false}>
         x
       </AppShell>,
@@ -179,7 +184,7 @@ describe('AppShell (U-04)', () => {
 
   it('keeps the browser choice over the profile language', () => {
     router.replace.mockClear();
-    renderWithIntl(
+    renderShell(
       <AppShell userName="Synthetic Viewer" profileLocale="vi" localeChosen>
         x
       </AppShell>,

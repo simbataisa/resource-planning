@@ -11,6 +11,10 @@ When a feature ships, add a short tour so people who already use the app find ou
 ## 1. Add the registry entry
 
 ```ts
+// Next to FE, RT and FA at the top of registry.ts:
+const CV = 'tours.compareVersions';
+
+// In TOURS:
 {
   id: 'compare-versions@1',
   kind: 'feature',

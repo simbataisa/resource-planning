@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useRouter } from '@/i18n/navigation';
 import { useMe } from '@/lib/query/hooks';
 import { TOURS } from '@/lib/tours/registry';
@@ -33,31 +33,32 @@ function useTakeTour() {
     : null;
 }
 
-/** The "?" menu in the sidebar header: take the tour, or resume one that paused (spec 6.6). */
+/**
+ * The "?" menu in the sidebar header: take the tour, or resume one that paused (spec 6.6).
+ * Uses the app's `TooltipProvider` (providers.tsx, 300 ms delay).
+ */
 export function TourMenu() {
   const t = useTranslations('tours.controls');
   const { paused, resume } = useTours();
   const take = useTakeTour();
   if (!take && !paused) return null;
   return (
-    <TooltipProvider>
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" aria-label={t('menu')} data-tour="tour-menu">
-                <HelpCircle aria-hidden="true" />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t('menu')}</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="start">
-          {paused ? <DropdownMenuItem onSelect={resume}>{t('resume')}</DropdownMenuItem> : null}
-          {take ? <DropdownMenuItem onSelect={take}>{t('take')}</DropdownMenuItem> : null}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </TooltipProvider>
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" aria-label={t('menu')} data-tour="tour-menu">
+              <HelpCircle aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="right">{t('menu')}</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="start">
+        {paused ? <DropdownMenuItem onSelect={resume}>{t('resume')}</DropdownMenuItem> : null}
+        {take ? <DropdownMenuItem onSelect={take}>{t('take')}</DropdownMenuItem> : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
