@@ -1,6 +1,6 @@
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
-import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT } from 'jose';
+import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWTVerifyGetKey } from 'jose';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { parseEnv } from './env';
 import { createHttpServer } from './http';
@@ -43,7 +43,7 @@ afterEach(async () => {
 type ApiRoute = (url: string, init: RequestInit) => Response;
 
 async function start(
-  opts: { env?: Record<string, string>; api?: ApiRoute; keys?: typeof keys } = {},
+  opts: { env?: Record<string, string>; api?: ApiRoute; keys?: JWTVerifyGetKey } = {},
 ) {
   const { log, calls } = fakeLogger();
   const apiFetch = vi.fn<typeof fetch>(async (input, init) => {
