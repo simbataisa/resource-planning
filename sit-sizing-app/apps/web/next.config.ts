@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   poweredByHeader: false,
   reactStrictMode: true,
+  // sharp (LGPL libvips) is removed by an override in pnpm-workspace.yaml (licence policy),
+  // and the app has no next/image usage, so never route images through the optimiser.
+  images: { unoptimized: true },
   transpilePackages: ['@sit/db', '@sit/engine', '@sit/schemas', '@sit/tokens'],
   // Node-only libraries loaded at runtime, not bundled (ExcelJS: X-02 export).
   serverExternalPackages: ['pino', '@opentelemetry/sdk-node', 'exceljs'],

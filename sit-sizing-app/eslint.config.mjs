@@ -89,6 +89,16 @@ export default defineConfig([
       // page, including the sign-in/out route handlers, which must be full-page navigations.
       // In-app links use the locale-aware Link from @/i18n/navigation (enforced below).
       '@next/next/no-html-link-for-pages': 'off',
+      // pnpm-workspace.yaml overrides ExcelJS's unzipper to 0.12 (licence policy), which breaks
+      // ExcelJS's streaming reader. Read workbooks with `workbook.xlsx.load()` instead.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[property.name='WorkbookReader']",
+          message:
+            'ExcelJS streaming WorkbookReader is broken by the unzipper override; use workbook.xlsx.load().',
+        },
+      ],
     },
   },
   {
