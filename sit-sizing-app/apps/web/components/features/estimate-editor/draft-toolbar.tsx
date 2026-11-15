@@ -19,6 +19,7 @@ import { Field } from '@/components/patterns/field';
 import { ApiClientError } from '@/lib/http';
 import { useLockDraft, usePatchDraft, useSaveVersion } from '@/lib/query/hooks';
 import { useEditor } from './store';
+import { useTourEvent } from '../tours/use-tour-event';
 
 /** Autosave debounce (design 8.3). */
 export const AUTOSAVE_MS = 1500;
@@ -111,6 +112,7 @@ function SaveStatus({ status }: { status: SaveState }) {
   return (
     <span
       role="status"
+      data-tour="save-status"
       className={`flex items-center gap-1.5 text-sm ${status === 'failed' ? 'text-bad' : 'text-muted-foreground'}`}
     >
       <Icon
@@ -133,6 +135,7 @@ function SaveVersionDialog({
 }) {
   const t = useTranslations();
   const save = useSaveVersion(estimateId);
+  const tourEvent = useTourEvent();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -146,6 +149,7 @@ function SaveVersionDialog({
     if (ok) {
       try {
         await save.mutateAsync(note.trim() || undefined);
+        tourEvent('version-saved');
         setOpen(false);
       } catch {
         setError(true);
@@ -159,7 +163,7 @@ function SaveVersionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button data-tour="save-version">
           <Save aria-hidden="true" />
           {t('draft.saveVersion')}
         </Button>

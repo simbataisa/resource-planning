@@ -14,6 +14,10 @@ The app's rules, layer boundaries, command list, definition of done and human co
 
 @sit-sizing-app/AGENTS.md
 
+## Before merging: full test suite
+
+Never merge a branch on a partial run. First run the full suite on the tree you are about to merge, from `sit-sizing-app/`: `pnpm check`, `pnpm test:coverage`, `pnpm test:int` and `pnpm test:e2e`. When `packages/engine` changed, also run `pnpm --filter @sit/engine parity`. All of them must pass, and you report each result. The details are in "Before any merge" in `sit-sizing-app/AGENTS.md`.
+
 ## Running a single test
 
 ```bash
@@ -46,7 +50,7 @@ Coverage gates (root `vitest.config.ts`): engine 95%, schemas 90%, `components/{
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **TCB** (1714 symbols, 3952 relationships, 112 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **TCB** (3343 symbols, 8874 relationships, 234 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 

@@ -91,6 +91,11 @@ const EX_USER = {
   displayName: 'Synthetic Estimator',
   email: 'estimator@example.invalid',
 };
+const EX_ME_EXTRA = {
+  tours: {},
+  createdAt: '2026-11-01T09:00:00.000Z',
+  lastLoginAt: '2026-11-17T08:00:00.000Z',
+};
 const EX_PROJECT = {
   id: 'clx0synthproj0001',
   key: 'DEMO',
@@ -645,7 +650,7 @@ export const OPERATIONS: Operation[] = [
       status: 200,
       description: 'The signed-in user',
       schema: Me,
-      example: { ...EX_USER, globalRole: 'USER', locale: 'en', memberships: [] },
+      example: { ...EX_USER, ...EX_ME_EXTRA, globalRole: 'USER', locale: 'en', memberships: [] },
     },
     errors: AUTH,
   },
@@ -655,15 +660,23 @@ export const OPERATIONS: Operation[] = [
     operationId: 'updateMe',
     tag: 'Session',
     minRole: 'USER',
-    summary: "Save the current user's language",
-    description: 'The language the app opens in when the browser has no language choice yet.',
+    summary: "Save the current user's language and guided-tour state",
+    description:
+      'Either field may be sent alone. `locale` is the language the app opens in when the browser has no language choice yet. `tours` merges guided-tour outcomes by key (a null value removes a key; at most 100 keys are kept).',
     body: MeUpdate,
-    bodyExample: { locale: 'vi' },
+    bodyExample: { locale: 'vi', tours: { 'first-estimate@1': { status: 'completed' } } },
     success: {
       status: 200,
-      description: 'The signed-in user with the saved language',
+      description: 'The signed-in user with the saved language and guided-tour state',
       schema: Me,
-      example: { ...EX_USER, globalRole: 'USER', locale: 'vi', memberships: [] },
+      example: {
+        ...EX_USER,
+        ...EX_ME_EXTRA,
+        globalRole: 'USER',
+        locale: 'vi',
+        tours: { 'first-estimate@1': { status: 'completed', at: '2026-11-17T09:00:00.000Z' } },
+        memberships: [],
+      },
     },
     errors: [400, 401],
   },

@@ -57,7 +57,7 @@ export function EstimateList({ projectId }: { projectId: string }) {
               description={canCreate ? t('estimates.emptyBody') : t('estimates.emptyBodyReadOnly')}
             />
           ) : (
-            <div className="overflow-x-auto rounded-lg border bg-card">
+            <div data-tour="estimate-list" className="overflow-x-auto rounded-lg border bg-card">
               <Table>
                 <TableHeader>
                   <TableRow>

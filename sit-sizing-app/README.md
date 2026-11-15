@@ -6,17 +6,68 @@ The solution design is `../SIT_Sizing_Model_Solution_Design.md`. AI agents must 
 
 **Status: releases 1, 2 and 3 are complete** (design 14). Each release ends with a Playwright suite for its exit criteria (`pnpm test:e2e`). Decisions made along the way are in [docs/adr](docs/adr) (ADR-0001 to ADR-0014).
 
-## Quick start
+**New here?** Open the illustrated guide [docs/guide/run-and-deploy.html](docs/guide/run-and-deploy.html) in a browser. It walks through every step below with diagrams. For what each feature does and how it works, open [docs/guide/features.html](docs/guide/features.html). To add a guided tour for a new feature, follow [docs/guide/adding-a-tour.md](docs/guide/adding-a-tour.md).
+
+## Prerequisites
+
+| Tool              | Version                                                                       |
+| ----------------- | ----------------------------------------------------------------------------- |
+| Node.js           | 24 (`nvm use` reads `.nvmrc`)                                                 |
+| pnpm              | 10.34.9, provided by `corepack enable`                                        |
+| Container runtime | Docker Desktop, or Rancher Desktop with the dockerd (moby) engine; Compose v2 |
+
+Behind a corporate proxy with TLS inspection, see `docker/certs/README.txt` (on macOS, `pnpm dev:env` exports the root certificates for you).
+
+## Run locally
 
 ```bash
 corepack enable
-pnpm install       # first run creates pnpm-lock.yaml — commit it
-pnpm format        # once: normalise formatting of the generated scaffold
-pnpm check         # type check, lint, format check, unit tests
-pnpm dev:up        # db, migrations, seed, Keycloak, web (hot reload), worker, mail in containers
+pnpm install       # also generates the Prisma client
+pnpm dev:up        # creates .env, then starts db, migrations, seed, Keycloak, web (hot reload), worker, mail
 ```
 
-Then open http://localhost:3000 and http://localhost:3000/api/v1/ready. See [docs/runbook.md](docs/runbook.md) for Rancher Desktop, tracing, troubleshooting and the pipeline.
+| What               | Where                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| App                | http://localhost:3000. Sign in as `dev-estimator`, password `KC_DEV_USER_PASSWORD` in `.env`      |
+| Health / readiness | http://localhost:3000/api/v1/health and `/api/v1/ready`                                           |
+| API reference      | http://localhost:3000/api/v1/docs                                                                 |
+| Keycloak           | http://localhost:18080 (admin console `/admin`, user `admin`, password `KEYCLOAK_ADMIN_PASSWORD`) |
+| Local inbox        | http://localhost:8025 (Mailpit)                                                                   |
+
+Other synthetic users: `dev-lead` (QE Lead), `dev-viewer`, `dev-outsider`, and `dev-admin` (sets up TOTP on first sign-in).
+
+| Command                             | What it does                                                            |
+| ----------------------------------- | ----------------------------------------------------------------------- |
+| `pnpm dev:logs`                     | Follow the web container logs                                           |
+| `pnpm dev:down`                     | Stop the stack, keep the data                                           |
+| `pnpm dev:reset`                    | Stop and **delete** local volumes (database, caches)                    |
+| `pnpm stack:up` / `pnpm stack:down` | The production-like image instead of hot reload                         |
+| `pnpm dev:obs`                      | Adds Jaeger tracing at http://localhost:16686                           |
+| `pnpm dev`                          | Next.js on the host; needs the `db` container and `apps/web/.env.local` |
+
+## Test
+
+```bash
+pnpm check           # type check, lint, format check, unit and golden tests
+pnpm test:coverage   # coverage gates per layer
+pnpm test:int        # API integration suite (needs Docker)
+pnpm test:e2e        # production image in its own stack + Playwright (needs Docker)
+```
+
+All four must pass before any merge (see [AGENTS.md](AGENTS.md)); add `pnpm --filter @sit/engine parity` when `packages/engine` changes.
+
+## Deploy
+
+The same image goes to every environment; only environment variables and secrets differ.
+
+1. **Build and verify.** Jenkins (`deploy/Jenkinsfile`) runs the tests, scans and E2E on every branch and publishes `sit-sizing-web:<APP_VERSION>` to Nexus from `main`.
+2. **Complete** [docs/release-checklist.md](docs/release-checklist.md) in the release pull request.
+3. **Migrate.** Run the `tools` image with `pnpm db:migrate` against the target database. Migrations never run at app start.
+4. **Roll out** the web image and the `worker` (tools image, `PROCESS_ROLE=worker`) to `dev` → `sit` → `prod`. Promotion to `prod` needs a human approval.
+5. **Check** `/api/v1/ready` reports the database and identity provider as ok.
+6. **Roll back** by redeploying the previous image tag. Migrations are expand-only, so no schema rollback is needed.
+
+Server environment variables, hosting assumptions and what is still open are in [runbook section 8](docs/runbook.md#8-release-promotion-and-rollback-design-125).
 
 ## Layout
 

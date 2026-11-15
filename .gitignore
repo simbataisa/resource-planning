@@ -1,0 +1,28 @@
+# Root ignore rules. App-specific rules (node_modules, build output, coverage,
+# generated Prisma client, certs) live in sit-sizing-app/.gitignore.
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local git worktrees
+.worktrees/
+
+# Agent and tooling state (local to each machine)
+.gitnexus/
+.remember/
+.superpowers/
+.claude/settings.local.json
+
+# Techcombank design-system source (kept local; tokens are ported into packages/tokens)
+tcb-ds/
+
+# Secrets: never commit real env files or keys
+.env
+.env.*
+!.env.example
+*.pem
+*.key

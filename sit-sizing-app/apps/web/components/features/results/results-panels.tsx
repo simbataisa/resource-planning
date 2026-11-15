@@ -118,7 +118,7 @@ function GapPanel() {
       }
     >
       <Callout>{callout}</Callout>
-      <div className="overflow-x-auto rounded-lg border">
+      <div data-tour="gap-table" className="overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>

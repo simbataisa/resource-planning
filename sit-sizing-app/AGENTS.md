@@ -77,6 +77,22 @@ pnpm --filter @sit/web exec vitest run tests/unit/prototype-ui-parity.test.tsx  
 - Docs updated: ADR for decisions, runbook for operational changes, `docs/engine-findings.md` for engine observations.
 - PR description states what changed, how it was verified, and what was not verified.
 
+## Before any merge: run the full suite
+
+Before you merge a branch into `main` or any other shared branch, run the whole suite on the exact tree you are about to merge. Run it from `sit-sizing-app/`:
+
+```bash
+pnpm check                       # type check, lint, format check, unit and golden tests
+pnpm test:coverage               # coverage gates per layer
+pnpm test:int                    # API integration suite (needs Docker)
+pnpm test:e2e                    # production-like image + Playwright E2E (needs Docker)
+pnpm --filter @sit/engine parity # also when anything under packages/engine changed
+```
+
+- **Every command must pass.** A green run of a few test files is not a green suite. Earlier runs on a different tree do not count either.
+- **Do not merge on a red, skipped or timed-out run.** Report the failing command and its output. Merge only after it is fixed, or after the user explicitly accepts that specific failure.
+- **Report the results.** In the PR or merge summary, list each command and its result.
+
 ## How a task is briefed (design 15.4)
 
 Give each session: the task ID and acceptance line from the table, links to this design and the relevant section, the files in `sit-sizing-reference/` it needs, and what is out of scope. Ask the agent to finish with a summary of what it changed, how it verified it, and anything it could not verify.
@@ -84,7 +100,7 @@ Give each session: the task ID and acceptance line from the table, links to this
 ## Human controls (design 15.5)
 
 - **Sensitive paths:** `packages/engine`, `packages/db/prisma/migrations`, `lib/rbac.ts`, auth code, `docker/keycloak` and the pipeline need review by a named human. Code-owner enforcement is **optional for now**: until it is turned on, the PR author ticks the sensitive-path box in the PR template and asks a named reviewer. `docs/CODEOWNERS.example` is ready to copy to the repository root when owners are agreed. An agent's approval never counts as that review.
-- **No self-merge.** Agents open pull requests; a person merges.
+- **No self-merge.** Agents open pull requests; a person merges. When a person tells an agent to merge, the agent first runs the full suite ("Before any merge" above).
 - **Small, traceable changes.** Each PR names its task ID and states what was verified and what was not.
 - **Golden files are protected.** Changing a file under `packages/engine/golden/` requires an ADR link in the PR.
 - **Stop conditions.** An agent stops and asks when a test can only pass by weakening a gate, when a requirement conflicts with this design, or when a task touches something outside its stated scope.

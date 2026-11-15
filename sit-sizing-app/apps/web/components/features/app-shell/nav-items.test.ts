@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAV_ICONS, SECTION_LABEL, sectionFor } from './nav-items';
+import { NAV_ICONS, type NavSection, sectionFor } from './nav-items';
 
 describe('navigation model', () => {
   it('sectionFor maps nested and localised paths', () => {
@@ -15,11 +15,18 @@ describe('navigation model', () => {
     expect(sectionFor('/signed-out')).toBeNull();
   });
 
-  it('every section has a label key and an icon', () => {
-    for (const section of Object.keys(SECTION_LABEL)) {
-      expect(NAV_ICONS[section as keyof typeof NAV_ICONS]).toBeTruthy();
-    }
+  it('every section has an icon', () => {
+    const sections: NavSection[] = [
+      'projects',
+      'profiles',
+      'portfolio',
+      'audit',
+      'users',
+      'guide',
+      'method',
+      'standards',
+    ];
+    for (const section of sections) expect(NAV_ICONS[section]).toBeTruthy();
     expect(NAV_ICONS.apiDocs).toBeTruthy();
-    expect(SECTION_LABEL.guide).toBe('content.nav.guide');
   });
 });

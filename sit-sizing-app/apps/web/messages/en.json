@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "SIT Sizing",
-    "tagline": "Quality engineering · SIT planning",
+    "brand": "Quality engineering",
     "skipToContent": "Skip to main content",
     "mainNav": "Main",
     "projects": "Projects",
@@ -2010,6 +2010,111 @@
       "duplicate": "This person is already in the list.",
       "needLead": "Keep at least one QE Lead.",
       "notSignedIn": "These people have not signed in yet: {emails}. Ask them to sign in once, then add them."
+    }
+  },
+  "tours": {
+    "controls": {
+      "back": "Back",
+      "next": "Next",
+      "skip": "Skip tour",
+      "finish": "Finish",
+      "close": "Close tour",
+      "progress": "{current} of {total}",
+      "resume": "Resume tour",
+      "take": "Take the tour",
+      "menu": "Tours"
+    },
+    "firstEstimate": {
+      "welcome": {
+        "title": "Welcome to SIT Sizing",
+        "body": "This short tour takes you from a project to your first saved estimate version. You can skip it at any time."
+      },
+      "projects": {
+        "title": "Open your project",
+        "body": "Your projects are listed here. Choose one to see its estimates."
+      },
+      "newEstimate": {
+        "title": "Start a new estimate",
+        "body": "Select New estimate to open the create dialog."
+      },
+      "name": {
+        "title": "Name it and create it",
+        "body": "Name it after your next release. The worked example is already selected, so you can see real numbers straight away. Then select Create estimate."
+      },
+      "rough": {
+        "title": "Rough scope",
+        "body": "Start here with a quick view of the size of the release."
+      },
+      "team": {
+        "title": "Window and team",
+        "body": "Set the test window and the team. The results below update as you type."
+      },
+      "summary": {
+        "title": "Rough and detailed side by side",
+        "body": "These cards compare the rough and detailed estimates and show the FTE range."
+      },
+      "gap": {
+        "title": "Where the two differ",
+        "body": "The gap table shows which drivers explain the difference between rough and detailed."
+      },
+      "autosave": {
+        "title": "Autosave and the edit lock",
+        "body": "Your changes save by themselves while you hold the edit lock. This status shows when they are saved."
+      },
+      "save": {
+        "title": "Save a version",
+        "body": "Select Save version, then confirm. A saved version cannot be changed afterwards."
+      },
+      "done": {
+        "title": "Version 1 is saved",
+        "body": "Next, submit it for review. The guide explains how reviews work."
+      }
+    },
+    "firstEstimateAdmin": {
+      "users": {
+        "title": "Users",
+        "body": "Admins manage who can use SIT Sizing here."
+      },
+      "audit": {
+        "title": "Audit log",
+        "body": "Every change to estimates, projects and people is recorded here."
+      },
+      "profiles": {
+        "title": "Global profiles",
+        "body": "Global assumption profiles are published here for every project to use."
+      }
+    },
+    "readingTour": {
+      "project": {
+        "title": "Open a project",
+        "body": "Your projects are listed here. Choose one to see its estimates."
+      },
+      "estimate": {
+        "title": "Open an estimate",
+        "body": "Choose an estimate to read its results."
+      },
+      "summary": {
+        "title": "Rough and detailed side by side",
+        "body": "These cards compare the rough and detailed estimates and show the FTE range."
+      },
+      "gap": {
+        "title": "Where the two differ",
+        "body": "The gap table shows which drivers explain the difference between rough and detailed."
+      },
+      "export": {
+        "title": "Export",
+        "body": "You can download this version as a spreadsheet."
+      },
+      "done": {
+        "title": "You can read everything here",
+        "body": "To edit estimates, ask a QE Lead in your project to make you an Estimator."
+      }
+    },
+    "noProject": {
+      "card": {
+        "title": "Ask your QE Lead to add you to a project",
+        "body": "You are not in a project yet. Ask your QE Lead to add you using your e-mail address, {email}. The tour starts again the first time you sign in after that."
+      }
     }
   }
 }
