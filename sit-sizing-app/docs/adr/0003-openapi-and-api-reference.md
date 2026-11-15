@@ -48,3 +48,4 @@ Record the outcome of each check in this ADR (date and result) when closing A-07
 - One source of truth: changing a Zod schema changes validation, the Axios client's parsing and the documentation together.
 - We own about 150 lines of builder code instead of depending on a generator's 3.2 support.
 - The committed `docs/api/openapi.json` must be regenerated in the same PR as any API change; CI fails otherwise.
+- Error codes in the `ApiError` envelope are published as an extensible set (`x-extensible-enum`), not a closed `enum`, so adding a code is not a breaking change for the oasdiff gate; see [ADR-0018](0018-extensible-error-codes.md).

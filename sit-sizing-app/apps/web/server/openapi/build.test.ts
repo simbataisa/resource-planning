@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { KNOWN_API_ERROR_CODES } from '@sit/schemas';
 import { describe, expect, it } from 'vitest';
 import { buildOpenApi, OPENAPI_VERSION } from './build';
 import { OPERATIONS } from './operations';
@@ -47,6 +48,11 @@ describe('OpenAPI contract (AGENTS.md rule 15)', () => {
     const doc = buildOpenApi() as Record<string, any>;
     expect(doc.openapi).toBe(OPENAPI_VERSION);
     expect(doc.components.schemas.ApiError).toBeDefined();
+    // Error codes are an extensible set (ADR-0018): no closed enum in the contract.
+    const code = doc.components.schemas.ApiError.properties.error.properties.code;
+    expect(code.type).toBe('string');
+    expect(code.enum).toBeUndefined();
+    expect(code['x-extensible-enum']).toEqual([...KNOWN_API_ERROR_CODES]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const [path, item] of Object.entries<Record<string, any>>(doc.paths)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
