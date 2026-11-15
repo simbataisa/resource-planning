@@ -277,15 +277,52 @@ describe('draft lock token', () => {
     expect(res.json.error.code).toBe('VALIDATION_FAILED');
   });
 
-  it('the database refuses a token hash without a lock holder', async () => {
-    const { estimateId } = await newEstimate('check');
+  it('the previous app version clears the lock without the hash; the database clears the hash', async () => {
+    // Rollback / rolling deploy: the old code path only knows lockedById and lockExpiresAt.
+    const { estimateId } = await newEstimate('old path');
     const row = await draftRow(estimateId);
-    await expect(
-      db().estimateVersion.update({
-        where: { id: row.id },
-        data: { lockedById: null, lockExpiresAt: null },
-      }),
-    ).rejects.toThrow(/EstimateVersion_lock_token_needs_lock/);
+    expect(row.lockTokenHash).not.toBeNull();
+    await db().estimateVersion.update({
+      where: { id: row.id },
+      data: { lockedById: null, lockExpiresAt: null },
+    });
+    const after = await draftRow(estimateId);
+    expect(after.lockedById).toBeNull();
+    expect(after.lockTokenHash).toBeNull();
+  });
+
+  it('the database never stores a token hash without a lock holder', async () => {
+    const { estimateId } = await newEstimate('no holder');
+    const row = await draftRow(estimateId);
+    await db().estimateVersion.update({
+      where: { id: row.id },
+      data: { lockedById: null, lockExpiresAt: null, lockTokenHash: 'f'.repeat(64) },
+    });
+    expect((await draftRow(estimateId)).lockTokenHash).toBeNull();
+  });
+
+  it('deleting a user who holds a hashed lock succeeds and clears the hash', async () => {
+    const { estimateId } = await newEstimate('user delete');
+    const user = await db().user.create({
+      data: {
+        subject: `synthetic-lock-holder-${run}`,
+        email: `synthetic.lock.holder.${run}@example.test`,
+        displayName: 'Synthetic Lock Holder',
+      },
+    });
+    const row = await draftRow(estimateId);
+    await db().estimateVersion.update({
+      where: { id: row.id },
+      data: {
+        lockedById: user.id,
+        lockExpiresAt: new Date(clock.now().getTime() + LOCK_MINUTES * 60_000),
+        lockTokenHash: hashLockToken('synthetic-token'),
+      },
+    });
+    await db().user.delete({ where: { id: user.id } });
+    const after = await draftRow(estimateId);
+    expect(after.lockedById).toBeNull();
+    expect(after.lockTokenHash).toBeNull();
   });
 
   it('createDraft returns a token; reads never do', async () => {
