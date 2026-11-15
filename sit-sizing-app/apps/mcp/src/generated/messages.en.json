@@ -814,5 +814,53 @@
       "expandAi": "{a} intents · {b} OCR types · {c} sources · {d} tools · {e} guardrails · {f} HITL",
       "ptScen": "+ {n} PT scenarios"
     }
+  },
+  "results": {
+    "sens": {
+      "items": {
+        "casesIntegration": "Cases per integration",
+        "casesApi": "Cases per API endpoint",
+        "casesScreen": "Cases per screen",
+        "casesRule": "Cases per business rule",
+        "criticalShare": "Critical-rule share",
+        "variantSampling": "Rule variant sampling",
+        "transitions": "Transitions per workflow",
+        "gatedShare": "Role-gated share of transitions",
+        "casesJourney": "Cases per E2E journey",
+        "casesBatch": "Cases per batch job or file",
+        "casesEvent": "Cases per event or message topic",
+        "channelShares": "Mobile channel share of web cases",
+        "mobileCases": "Mobile-only cases per screen",
+        "deviceExtra": "Device and OS matrix extra",
+        "mobileExec": "Mobile execution multiplier",
+        "languageShare": "Extra cases per language",
+        "envFactor": "Environment availability factor",
+        "fieldTypeCases": "Field validation cases per field",
+        "reqFields": "Request fields per API endpoint",
+        "respFields": "Response fields per API endpoint",
+        "validationExec": "Validation execution minutes",
+        "roleSampling": "Role sampling",
+        "minutes": "Execution minutes per case",
+        "designMinutes": "Design minutes per case",
+        "cycles": "SIT cycles",
+        "retest": "Defect retest rate",
+        "overhead": "Planning and coordination overhead",
+        "aiDesignCut": "AI design time saving",
+        "hoursPerDay": "Productive hours per day",
+        "capacity": "Capacity per FTE level",
+        "dataMinutes": "Data test minutes",
+        "dCol": "Source-to-target checks per column",
+        "dataCycles": "Data load cycles",
+        "aiUtt": "Golden-set utterances per intent",
+        "aiOcrSamples": "OCR samples per document type",
+        "labelMinutes": "Labelling minutes per sample",
+        "reviewShare": "Human review share per run",
+        "ptScript": "Performance scripting hours",
+        "ptCycles": "Performance test and tune cycles",
+        "ptRunHours": "Performance run hours",
+        "ptAnalysis": "Performance analysis share",
+        "proxies": "Feature size proxies"
+      }
+    }
   }
 }

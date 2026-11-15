@@ -39,6 +39,41 @@ interface WarnLog {
   warn(obj: object, msg?: string): void;
 }
 
+/**
+ * The realm's key set could not be fetched or read, so the token could not be checked
+ * either way. The HTTP layer answers 503, not a 401 challenge: signing in again cannot
+ * help, and a challenge would send the client round a sign-in loop.
+ */
+export class KeySetUnavailable extends Error {
+  constructor() {
+    super('Token signing keys are unavailable');
+    this.name = 'KeySetUnavailable';
+  }
+}
+
+/**
+ * Whether a verification error means the key set itself could not be fetched or read.
+ * Pinned to jose 6.2.x (`jwks/remote.js`); re-check on a jose upgrade:
+ * - `ERR_JWKS_TIMEOUT`: the key set request timed out;
+ * - `ERR_JOSE_GENERIC`: a non-200 answer or a body that is not JSON (jose throws this code
+ *   only there);
+ * - `ERR_JWKS_INVALID`: the answer is not a key set;
+ * - Node fetch's `TypeError: fetch failed`: the IdP is unreachable (network, DNS, TLS).
+ * `ERR_JWKS_NO_MATCHING_KEY` is about the token's `kid` (jose refetches the set first), so
+ * it stays a refused token. Every other jose error (`ERR_…`) is a refused token too; an
+ * error without a jose code is a bug and is rethrown, never treated as an outage.
+ */
+function keySetUnavailable(err: unknown): boolean {
+  if (err instanceof TypeError) return err.message === 'fetch failed';
+  const code = (err as { code?: unknown } | null)?.code;
+  return code === 'ERR_JWKS_TIMEOUT' || code === 'ERR_JOSE_GENERIC' || code === 'ERR_JWKS_INVALID';
+}
+
+/** jose errors carry an `ERR_…` code; anything else is unexpected. */
+const isJoseError = (err: unknown) =>
+  typeof (err as { code?: unknown } | null)?.code === 'string' &&
+  String((err as { code: string }).code).startsWith('ERR_');
+
 let remote: { url: string; keys: JWTVerifyGetKey } | undefined;
 
 /** Realm signing keys, fetched from the internal IdP origin when set, and cached by jose. */
@@ -54,8 +89,9 @@ function realmKeys(env: McpEnv): JWTVerifyGetKey {
 
 /**
  * Verifies a Keycloak access token: signature, issuer, audience `OIDC_API_AUDIENCE`,
- * expiry, `typ` Bearer when present, and `sub` and `sid` present. Returns the subject or
- * null on any failure.
+ * expiry, `typ` Bearer when present, and `sub` and `sid` present. Returns the subject, or
+ * null when the token is refused. Throws `KeySetUnavailable` when the key set cannot be
+ * fetched, since the token was then not judged at all.
  */
 export async function verifyAccessToken(
   token: string,
@@ -63,8 +99,10 @@ export async function verifyAccessToken(
   opts: { keys?: JWTVerifyGetKey; now?: Date; log?: WarnLog } = {},
 ): Promise<{ sub: string } | null> {
   if (!token) return null;
+  // Outside the try: a broken key set URL is a configuration bug, not an outage.
+  const keys = opts.keys ?? realmKeys(env);
   try {
-    const { payload } = await jwtVerify(token, opts.keys ?? realmKeys(env), {
+    const { payload } = await jwtVerify(token, keys, {
       issuer: env.OIDC_ISSUER,
       audience: env.OIDC_API_AUDIENCE,
       algorithms: ALGORITHMS,
@@ -82,14 +120,17 @@ export async function verifyAccessToken(
   } catch (err) {
     // A refused token is routine and stays silent: the error can quote token content.
     // Only an unreachable or broken key set is logged, by error code alone.
-    const code = (err as { code?: unknown } | null)?.code;
-    if (code === 'ERR_JWKS_TIMEOUT' || code === 'ERR_JWKS_INVALID' || !code) {
+    if (keySetUnavailable(err)) {
+      const code = (err as { code?: unknown } | null)?.code;
       opts.log?.warn(
         { code: typeof code === 'string' ? code : 'JWKS_FETCH_FAILED' },
         'bearer key set unavailable',
       );
+      throw new KeySetUnavailable();
     }
-    return null;
+    if (isJoseError(err)) return null;
+    // Not a token problem nor an outage: a bug. Rethrow (500); the token is not accepted.
+    throw err;
   }
 }
 

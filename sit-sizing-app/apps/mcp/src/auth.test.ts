@@ -1,9 +1,18 @@
-import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWK } from 'jose';
+import {
+  createLocalJWKSet,
+  createRemoteJWKSet,
+  customFetch,
+  exportJWK,
+  generateKeyPair,
+  SignJWT,
+  type JWK,
+} from 'jose';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { parseEnv } from './env';
 import {
   bearerFromHeader,
   challengeHeader,
+  KeySetUnavailable,
   protectedResourceMetadata,
   verifyAccessToken,
 } from './auth';
@@ -93,17 +102,44 @@ describe('verifyAccessToken (ADR-0016)', () => {
     expect(await verify(noSub)).toBeNull();
   });
 
-  it('logs only an error code when the key set is unavailable', async () => {
-    const log = { warn: vi.fn() };
-    const broken = () =>
-      Promise.reject(Object.assign(new Error('boom'), { code: 'ERR_JWKS_TIMEOUT' }));
+  it('throws KeySetUnavailable, logging only an error code, when the key set cannot be fetched', async () => {
+    /** A remote key set whose fetch fails as given. */
+    const remote = (f: () => Promise<Response>) =>
+      createRemoteJWKSet(new URL('http://keycloak.invalid/certs'), { [customFetch]: f });
     const t = await token();
-    expect(await verifyAccessToken(t, env, { keys: broken, now: NOW, log })).toBeNull();
-    expect(log.warn).toHaveBeenCalledWith(
-      { code: 'ERR_JWKS_TIMEOUT' },
-      'bearer key set unavailable',
+    const cases: Array<[() => Promise<Response>, string]> = [
+      [() => Promise.reject(new TypeError('fetch failed')), 'JWKS_FETCH_FAILED'],
+      [async () => new Response('down', { status: 503 }), 'ERR_JOSE_GENERIC'],
+      [async () => Response.json({ nope: true }), 'ERR_JWKS_INVALID'],
+    ];
+    for (const [f, code] of cases) {
+      const log = { warn: vi.fn() };
+      await expect(verifyAccessToken(t, env, { keys: remote(f), now: NOW, log })).rejects.toThrow(
+        KeySetUnavailable,
+      );
+      expect(log.warn).toHaveBeenCalledWith({ code }, 'bearer key set unavailable');
+      expect(JSON.stringify(log.warn.mock.calls)).not.toContain(t);
+    }
+    const timeout = () =>
+      Promise.reject(Object.assign(new Error('boom'), { code: 'ERR_JWKS_TIMEOUT' }));
+    await expect(verifyAccessToken(t, env, { keys: timeout, now: NOW })).rejects.toThrow(
+      KeySetUnavailable,
     );
-    expect(JSON.stringify(log.warn.mock.calls)).not.toContain(t);
+  });
+
+  it('rethrows an unexpected error instead of reporting an outage', async () => {
+    const t = await token();
+    for (const err of [new Error('boom'), new TypeError('x is not a function')]) {
+      const log = { warn: vi.fn() };
+      const p = verifyAccessToken(t, env, { keys: () => Promise.reject(err), now: NOW, log });
+      await expect(p).rejects.toBe(err);
+      expect(log.warn).not.toHaveBeenCalled();
+    }
+  });
+
+  it('still refuses a malformed token (null) when the key set is down', async () => {
+    const down = () => Promise.reject(new TypeError('fetch failed'));
+    expect(await verifyAccessToken('not-a-jwt', env, { keys: down, now: NOW })).toBeNull();
   });
 
   it('builds the remote key set from the internal URL without fetching it yet', async () => {

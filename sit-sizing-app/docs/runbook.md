@@ -367,6 +367,16 @@ Before the first use, the QE signs in to SIT Sizing once in the browser: the app
 
 A refused or expired token is not a tool error: the server answers with an OAuth challenge and the client asks the user to sign in again.
 
+### Keycloak signing keys unreachable (503 `NOT_READY`)
+
+Every bearer token is checked against the realm's signing keys (JWKS), which the API and the MCP server fetch from Keycloak (`OIDC_INTERNAL_URL`, else `OIDC_ISSUER`) and cache. When that fetch fails (Keycloak down, network or DNS failure, timeout, an error page or a body that is not a key set), the token cannot be checked at all:
+
+- The API answers bearer requests with **503 `NOT_READY`** and `Retry-After: 30`, without `WWW-Authenticate`. The MCP server answers `POST /mcp` the same way, before any tool runs. A token that is malformed or refused is still 401 with a challenge. Nothing is accepted while the keys are unreachable (fail closed).
+- Both log a warning **`bearer key set unavailable`** with an error code only (`ERR_JWKS_TIMEOUT`, `ERR_JOSE_GENERIC`, `ERR_JWKS_INVALID` or `JWKS_FETCH_FAILED`), never the token.
+- Browser sessions do not check the JWKS on each request, so they are not affected by this check. Assistants get 503 instead of a sign-in prompt, so users are not sent round a sign-in loop.
+
+**Alert on it.** Raise an alert when either service logs `bearer key set unavailable`, or when 503 `NOT_READY` answers to bearer or `/mcp` requests go above a few per minute. It means the Keycloak keys are unreachable from that service. Check Keycloak's health, then fetch the keys from inside the `web` or `mcp` container (both have `node`): `node -e "fetch(process.env.OIDC_INTERNAL_URL + '/realms/qe-tools/protocol/openid-connect/certs').then(r => console.log(r.status))"` should print 200 (use the issuer URL if `OIDC_INTERNAL_URL` is not set). Then check the network path and DNS between them. The services recover on their own once the keys can be fetched again; no restart is needed.
+
 ### Clean-up of self-registered clients (Codex)
 
 Codex registers a new public client in the `qe-tools` realm on every sign-in, and the realm's anonymous registration policy allows at most **200 clients** ("Max Clients Limit"). When the limit is reached, new Codex sign-ins fail (registration refused with 403); Claude Code is unaffected. An admin checks monthly, and whenever a Codex sign-in fails that way:

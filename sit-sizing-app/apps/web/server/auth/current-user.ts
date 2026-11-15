@@ -2,7 +2,7 @@ import type { Principal, ProjectRole } from '@/lib/rbac';
 import { db } from '../db';
 import { getEnv } from '../env';
 import { HttpError } from '../http/route';
-import { bearerEnabled, verifyAccessToken } from './bearer';
+import { bearerEnabled, KeySetUnavailable, verifyAccessToken } from './bearer';
 import { bearerToken } from './bearer-header';
 import { parseCookies } from './cookies';
 import { isSessionRevoked } from './revocation';
@@ -28,6 +28,8 @@ export const DEV_USER_COOKIE = 'sit-dev-user';
  *    is the only source: cookies and the dev header are ignored. Accepted only with
  *    AUTH_MODE=oidc. A token for someone with no active app user is refused with
  *    403 NOT_PROVISIONED; the bearer path never creates users (provision.ts does, at sign-in).
+ *    When Keycloak's signing keys cannot be fetched the answer is 503 NOT_READY, not 401,
+ *    so a client does not loop through sign-in during an IdP outage.
  * 1. The app session cookie set after Keycloak sign-in (ADR-0004). The proxy refreshes it;
  *    a session revoked by back-channel logout is refused.
  * 2. AUTH_MODE=dev only: a seeded user named in the `x-dev-user` header or `sit-dev-user`
@@ -69,7 +71,19 @@ export async function currentUserFromCookies(
 
 async function userFromBearer(token: string): Promise<CurrentUser | null> {
   if (!bearerEnabled()) return null;
-  const claims = await verifyAccessToken(token);
+  let claims: Awaited<ReturnType<typeof verifyAccessToken>>;
+  try {
+    claims = await verifyAccessToken(token);
+  } catch (err) {
+    if (!(err instanceof KeySetUnavailable)) throw err;
+    throw new HttpError(
+      503,
+      'NOT_READY',
+      'Sign-in keys are unavailable. Try again shortly.',
+      undefined,
+      { 'retry-after': '30' },
+    );
+  }
   if (!claims) return null;
   // A Keycloak session ended by back-channel logout ends its tokens here too.
   if (await isSessionRevoked(claims.sid)) return null;

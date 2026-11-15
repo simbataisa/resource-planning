@@ -814,5 +814,53 @@
       "expandAi": "{a} intent · {b} loại OCR · {c} nguồn tri thức · {d} công cụ · {e} guardrail · {f} HITL",
       "ptScen": "+ {n} kịch bản hiệu năng"
     }
+  },
+  "results": {
+    "sens": {
+      "items": {
+        "casesIntegration": "Số case mỗi tích hợp",
+        "casesApi": "Số case mỗi API endpoint",
+        "casesScreen": "Số case mỗi màn hình",
+        "casesRule": "Số case mỗi quy tắc nghiệp vụ",
+        "criticalShare": "Tỷ lệ quy tắc trọng yếu",
+        "variantSampling": "Lấy mẫu biến thể quy tắc",
+        "transitions": "Số chuyển trạng thái mỗi workflow",
+        "gatedShare": "Tỷ lệ chuyển trạng thái có kiểm tra vai trò",
+        "casesJourney": "Số case mỗi journey E2E",
+        "casesBatch": "Số case mỗi batch job hoặc file",
+        "casesEvent": "Số case mỗi topic event hoặc message",
+        "channelShares": "Tỷ lệ case web chạy lại trên kênh mobile",
+        "mobileCases": "Case chỉ có ở mobile mỗi màn hình",
+        "deviceExtra": "Phần thêm từ ma trận thiết bị và OS",
+        "mobileExec": "Hệ số thực thi mobile",
+        "languageShare": "Case bổ sung mỗi ngôn ngữ",
+        "envFactor": "Hệ số sẵn sàng của môi trường",
+        "fieldTypeCases": "Case validation mỗi trường",
+        "reqFields": "Số trường request mỗi API endpoint",
+        "respFields": "Số trường response mỗi API endpoint",
+        "validationExec": "Phút thực thi validation",
+        "roleSampling": "Lấy mẫu vai trò",
+        "minutes": "Phút thực thi mỗi case",
+        "designMinutes": "Phút thiết kế mỗi case",
+        "cycles": "Số chu kỳ SIT",
+        "retest": "Tỷ lệ retest lỗi",
+        "overhead": "Overhead lập kế hoạch và điều phối",
+        "aiDesignCut": "Thời gian thiết kế tiết kiệm nhờ AI",
+        "hoursPerDay": "Giờ hiệu quả mỗi ngày",
+        "capacity": "Năng lực theo cấp bậc FTE",
+        "dataMinutes": "Phút cho mỗi test dữ liệu",
+        "dCol": "Kiểm tra nguồn–đích mỗi cột",
+        "dataCycles": "Số chu kỳ nạp dữ liệu",
+        "aiUtt": "Số câu golden set mỗi intent",
+        "aiOcrSamples": "Số mẫu OCR mỗi loại tài liệu",
+        "labelMinutes": "Phút gán nhãn mỗi mẫu",
+        "reviewShare": "Tỷ lệ rà soát thủ công mỗi lượt",
+        "ptScript": "Giờ viết script hiệu năng",
+        "ptCycles": "Số chu kỳ test–tinh chỉnh hiệu năng",
+        "ptRunHours": "Giờ chạy test hiệu năng",
+        "ptAnalysis": "Tỷ lệ phân tích hiệu năng",
+        "proxies": "Hệ số quy đổi kích cỡ tính năng"
+      }
+    }
   }
 }

@@ -6,6 +6,7 @@ import { createApiClient } from './api-client';
 import {
   bearerFromHeader,
   challengeHeader,
+  KeySetUnavailable,
   MCP_PATH,
   METADATA_PATH,
   protectedResourceMetadata,
@@ -114,10 +115,27 @@ export function createHttpServer(deps: HttpDeps): Server {
     } else {
       const bearer = bearerFromHeader(req.headers.authorization);
       if (!bearer) return challenge(res);
-      const verified = await verifyAccessToken(bearer, env, {
-        log,
-        ...(deps.keys ? { keys: deps.keys } : {}),
-      });
+      let verified: Awaited<ReturnType<typeof verifyAccessToken>>;
+      try {
+        verified = await verifyAccessToken(bearer, env, {
+          log,
+          ...(deps.keys ? { keys: deps.keys } : {}),
+        });
+      } catch (err) {
+        if (!(err instanceof KeySetUnavailable)) throw err;
+        // Not a refused token: no challenge, or the client would loop through sign-in.
+        return sendJson(
+          res,
+          503,
+          {
+            error: {
+              code: 'NOT_READY',
+              message: 'Sign-in keys are unavailable. Try again shortly.',
+            },
+          },
+          { 'retry-after': '30' },
+        );
+      }
       if (!verified) return challenge(res, 'invalid_token');
       token = bearer;
       userKey = verified.sub;

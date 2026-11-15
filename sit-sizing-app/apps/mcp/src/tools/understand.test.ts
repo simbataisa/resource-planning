@@ -15,6 +15,7 @@ import {
 import type * as Engine from '@sit/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createToolContext } from '../context';
+import { ApiCallError } from '../errors';
 import { createRateLimiter } from '../rate-limit';
 import { fakeApi, fakeLogger, ME } from '../test-support';
 import { registerUnderstandTools } from './understand';
@@ -73,11 +74,12 @@ const PROFILE = {
   calibration: { wiringCases: { source: 'Synthetic retro', measuredAt: '2026-02-01' } },
 };
 
-async function connect() {
+async function connect(extra: Record<string, unknown> = {}) {
   const { api, get } = fakeApi({
     '/me': ME,
     [`/estimates/${EST_ID}/versions/1`]: VERSION,
     [`/profiles/${PROFILE_ID}`]: PROFILE,
+    ...extra,
   });
   const { log } = fakeLogger();
   const ctx = createToolContext({
@@ -187,6 +189,78 @@ describe('understand tools', () => {
     expect(text(unknown)).toContain('cases.nope');
   });
 
+  it("describe_assumptions on a version uses its profile's calibration notes", async () => {
+    const { call, get } = await connect({
+      [`/estimates/${EST_ID}/versions/2`]: {
+        ...VERSION,
+        number: 2,
+        profileId: PROFILE_ID,
+        assumptions: PROFILE.values,
+      },
+    });
+    const r = (
+      await call('describe_assumptions', {
+        estimateId: EST_ID,
+        number: 2,
+        paths: ['wiringCases'],
+        locale: 'en',
+      })
+    ).structuredContent as { rows: Array<Record<string, unknown>> };
+    expect(r.rows[0]).toMatchObject({ source: 'Synthetic retro', measuredAt: '2026-02-01' });
+    expect(get.mock.calls.map((c) => c[0]).filter((p) => p !== '/me')).toEqual([
+      `/estimates/${EST_ID}/versions/2`,
+      `/profiles/${PROFILE_ID}`,
+    ]);
+  });
+
+  it('describe_assumptions on a version drops the note of a row edited after the profile', async () => {
+    const { call } = await connect({
+      [`/estimates/${EST_ID}/versions/5`]: {
+        ...VERSION,
+        number: 5,
+        profileId: PROFILE_ID,
+        assumptions: { ...PROFILE.values, wiringCases: 5 },
+      },
+    });
+    const r = (
+      await call('describe_assumptions', {
+        estimateId: EST_ID,
+        number: 5,
+        paths: ['wiringCases'],
+        locale: 'en',
+      })
+    ).structuredContent as { rows: Array<Record<string, unknown>> };
+    expect(r.rows[0]).toMatchObject({ value: 5, calibrated: true });
+    expect(r.rows[0]).not.toHaveProperty('source');
+    expect(r.rows[0]).not.toHaveProperty('measuredAt');
+  });
+
+  it('describe_assumptions on a version still answers when its profile is not readable', async () => {
+    const GONE = 'clx0synthetic0f02';
+    const HIDDEN = 'clx0synthetic0f03';
+    const { call } = await connect({
+      [`/estimates/${EST_ID}/versions/3`]: { ...VERSION, number: 3, profileId: GONE },
+      [`/estimates/${EST_ID}/versions/4`]: { ...VERSION, number: 4, profileId: HIDDEN },
+      [`/profiles/${GONE}`]: new ApiCallError({ status: 404, code: 'NOT_FOUND', message: 'x' }),
+      [`/profiles/${HIDDEN}`]: new ApiCallError({ status: 403, code: 'FORBIDDEN', message: 'x' }),
+    });
+    for (const number of [3, 4]) {
+      const r = await call('describe_assumptions', {
+        estimateId: EST_ID,
+        number,
+        paths: ['wiringCases', 'criticalShare'],
+        locale: 'en',
+      });
+      expect(r.isError, String(number)).toBeFalsy();
+      const rows = (r.structuredContent as { rows: Array<Record<string, unknown>> }).rows;
+      expect(rows).toHaveLength(2);
+      for (const row of rows) {
+        expect(row).not.toHaveProperty('source');
+        expect(row).not.toHaveProperty('measuredAt');
+      }
+    }
+  });
+
   it('preview of EXAMPLE_INPUTS with DEFAULT_ASSUMPTIONS equals toStoredResult(computeBoth(...)) summary figures', async () => {
     const { call } = await connect();
     const r = await call('preview_estimate', { inputs: EXAMPLE_INPUTS });
@@ -212,6 +286,7 @@ describe('understand tools', () => {
     expect(sens.detailed.length).toBeGreaterThan(0);
     expect(sens.rough[0]).toEqual({
       key: expect.any(String),
+      label: expect.any(String),
       lo: expect.any(Number),
       hi: expect.any(Number),
       span: expect.any(Number),
@@ -258,6 +333,20 @@ describe('understand tools', () => {
         }
       }
     }
+  });
+
+  it('preview labels each sensitivity row in the requested locale', async () => {
+    const { call } = await connect();
+    type Rows = { sensitivity: { rough: Array<{ key: string; label: string | null }> } };
+    const en = (await call('preview_estimate', { inputs: EXAMPLE_INPUTS, locale: 'en' }))
+      .structuredContent as Rows;
+    const vi1 = (await call('preview_estimate', { inputs: EXAMPLE_INPUTS }))
+      .structuredContent as Rows;
+    const api = en.sensitivity.rough.find((r) => r.key === 'casesApi');
+    expect(api?.label).toBe('Cases per API endpoint');
+    const viApi = vi1.sensitivity.rough.find((r) => r.key === 'casesApi');
+    expect(viApi?.label).toBeTruthy();
+    expect(viApi?.label).not.toBe('Cases per API endpoint');
   });
 
   it('preview with base + changes fetches the version once and writes nothing', async () => {

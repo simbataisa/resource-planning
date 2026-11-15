@@ -3,6 +3,7 @@ import {
   computeBoth,
   DEFAULT_ASSUMPTIONS,
   gapRows,
+  isDefaultRow,
   sensitivity,
   toStoredResult,
   topGap,
@@ -20,7 +21,7 @@ import {
 } from '@sit/schemas';
 import { z } from 'zod';
 import { defineTool, type Locale, type ToolContext } from '../context';
-import { invalidInput } from '../errors';
+import { ApiCallError, invalidInput } from '../errors';
 import {
   ASSUMPTION_GROUPS,
   AssumptionRow,
@@ -28,6 +29,7 @@ import {
   describeInputs,
   INPUT_GROUPS,
   InputField,
+  sensitivityLabel,
 } from '../glossary';
 import { applyChanges, PathError } from '../merge';
 import { VersionRef, versionNumber } from './read';
@@ -45,6 +47,7 @@ const LocaleArg = z
 const Headline = ModeSummary.omit({ groups: true });
 const SensitivityRow = z.object({
   key: z.string().describe('Sensitivity item (same keys as the editor tornado chart).'),
+  label: z.string().nullable().describe('The editor label of the item; null when it has none.'),
   lo: z.number(),
   hi: z.number(),
   span: z.number(),
@@ -107,6 +110,7 @@ const PreviewArgs = z.object({
     .max(200)
     .optional()
     .describe('Values to replace before computing. Each path must already exist.'),
+  locale: LocaleArg,
 });
 
 /** Understand tools (design spec 6.3–6.4): explain fields and preview numbers; nothing is saved. */
@@ -169,8 +173,11 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       let calibration: ProfileDetail['calibration'] | undefined;
       if (estimateId && number !== undefined) {
         const n = await versionNumber(ctx, estimateId, number);
-        values = (await ctx.api.get(`/estimates/${seg(estimateId)}/versions/${n}`, Version))
-          .assumptions;
+        const version = await ctx.api.get(`/estimates/${seg(estimateId)}/versions/${n}`, Version);
+        values = version.assumptions;
+        if (version.profileId) {
+          calibration = await profileCalibration(ctx, version.profileId, version.assumptions);
+        }
       } else if (profileId) {
         const profile = await ctx.api.get(`/profiles/${seg(profileId)}`, ProfileDetail);
         values = profile.values;
@@ -195,7 +202,7 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       outputSchema: PreviewResult,
       annotations: READ_ONLY,
     },
-    async ({ inputs, assumptions, base, changes }) => {
+    async ({ inputs, assumptions, base, changes, locale }) => {
       if (inputs && base) throw invalidInput('base', 'Give either full inputs or base, not both.');
       if (!inputs && !base) {
         throw invalidInput('inputs', 'Give full inputs, or base with changes.');
@@ -218,12 +225,46 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       }
       // Validate the whole object before the engine sees it (Review Focus 5).
       const doc = PreviewDoc.parse(applyChanges(start, changes ?? []));
-      return preview(doc.inputs, doc.assumptions);
+      return preview(doc.inputs, doc.assumptions, await localeOf(locale));
     },
   );
 }
 
-function preview(inputs: EstimateInputs, assumptions: Assumptions): z.infer<typeof PreviewResult> {
+/**
+ * The calibration notes of the profile a version was built from, kept only for rows whose
+ * value still equals the profile's (a row edited afterwards is no longer that measurement).
+ * Undefined when the caller cannot read that profile (gone or out of reach), so the rows
+ * still answer.
+ */
+async function profileCalibration(
+  ctx: ToolContext,
+  profileId: string,
+  values: Assumptions,
+): Promise<ProfileDetail['calibration'] | undefined> {
+  let profile: ProfileDetail;
+  try {
+    profile = await ctx.api.get(`/profiles/${seg(profileId)}`, ProfileDetail);
+  } catch (err) {
+    if (err instanceof ApiCallError && (err.status === 404 || err.status === 403)) return undefined;
+    throw err;
+  }
+  return Object.fromEntries(
+    Object.entries(profile.calibration).filter(([path]) =>
+      isDefaultRow(values, profile.values, path),
+    ),
+  );
+}
+
+function preview(
+  inputs: EstimateInputs,
+  assumptions: Assumptions,
+  locale: Locale,
+): z.infer<typeof PreviewResult> {
+  const rows = (mode: 'rough' | 'detailed') =>
+    sensitivity(mode, inputs, assumptions, SWING).rows.map((r) => ({
+      ...r,
+      label: sensitivityLabel(locale, r.key),
+    }));
   const both = computeBoth(inputs, assumptions);
   const stored = toStoredResult(both);
   const { groups: roughGroups, ...rough } = stored.rough;
@@ -242,8 +283,8 @@ function preview(inputs: EstimateInputs, assumptions: Assumptions): z.infer<type
     topGap: topGap(both),
     sensitivity: {
       swing: SWING,
-      rough: sensitivity('rough', inputs, assumptions, SWING).rows,
-      detailed: sensitivity('detailed', inputs, assumptions, SWING).rows,
+      rough: rows('rough'),
+      detailed: rows('detailed'),
     },
     uncalibrated: uncalibratedCount(assumptions, DEFAULT_ASSUMPTIONS),
   };

@@ -2,7 +2,13 @@ import { ASSUMPTION_PATHS, DEFAULT_ASSUMPTIONS } from '@sit/engine';
 import { EstimateInputs } from '@sit/schemas';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { ASSUMPTION_GROUPS, describeAssumptions, describeInputs, INPUT_GROUPS } from './glossary';
+import {
+  ASSUMPTION_GROUPS,
+  describeAssumptions,
+  describeInputs,
+  INPUT_GROUPS,
+  sensitivityLabel,
+} from './glossary';
 import { PathError } from './merge';
 
 /** Every leaf path of a Zod object schema; array elements are written `*`. */
@@ -151,5 +157,15 @@ describe('describeInputs', () => {
       'ptTypes.failover',
     ]);
     expect(team.every((f) => f.type === 'boolean')).toBe(true);
+  });
+});
+
+describe('sensitivityLabel', () => {
+  it('gives the results-panel label in EN and VI, and null for a key without one', () => {
+    expect(sensitivityLabel('en', 'casesApi')).toBe('Cases per API endpoint');
+    const vi = sensitivityLabel('vi', 'casesApi');
+    expect(vi).toBeTruthy();
+    expect(vi).not.toBe('Cases per API endpoint');
+    expect(sensitivityLabel('en', 'noSuchItem')).toBeNull();
   });
 });

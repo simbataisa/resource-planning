@@ -128,6 +128,24 @@ describe('bearer access tokens on /api/v1 (ADR-0016)', () => {
     expect((await call(me.GET, { authorization: 'Bearer ', ...cookie })).status).toBe(401);
   });
 
+  it('answers 503 NOT_READY without a challenge when the key set is unreachable', async () => {
+    const good = await bearer('dev-estimator');
+    setKeysForTests(() => Promise.reject(new TypeError('fetch failed')));
+    try {
+      const res = await call(me.GET, good);
+      expect(res.status).toBe(503);
+      expect(res.json.error.code).toBe('NOT_READY');
+      expect(res.challenge).toBeNull();
+      // A malformed token is still refused as a token, not as an outage.
+      const bad = await call(me.GET, { authorization: 'Bearer not-a-valid-token' });
+      expect(bad.status).toBe(401);
+      expect(bad.challenge).toBe('Bearer error="invalid_token"');
+    } finally {
+      const jwk: JWK = { ...(await exportJWK(key.publicKey)), kid: 'k1', alg: 'RS256' };
+      setKeysForTests(createLocalJWKSet({ keys: [jwk] }));
+    }
+  });
+
   it('refuses a wrong audience', async () => {
     const res = await call(me.GET, await bearer('dev-estimator', { aud: 'account' }));
     expect(res.status).toBe(401);

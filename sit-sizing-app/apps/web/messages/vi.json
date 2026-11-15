@@ -1960,6 +1960,7 @@
     "emptyTitle": "Không có sự kiện",
     "emptyBody": "Không có gì khớp với bộ lọc này.",
     "more": "Xem sự kiện cũ hơn",
+    "summary": "Tóm tắt",
     "cols": {
       "when": "Thời điểm",
       "who": "Người thực hiện",

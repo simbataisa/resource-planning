@@ -107,6 +107,13 @@ export function describeAssumptions(opts: {
   );
 }
 
+// ---- Sensitivity ---------------------------------------------------------------
+
+/** The results panel's label for a sensitivity row key; null when it has none. */
+export function sensitivityLabel(locale: Locale, key: string): string | null {
+  return t(locale, `results.sens.items.${key}`) ?? null;
+}
+
 // ---- Inputs --------------------------------------------------------------------
 
 export const INPUT_GROUPS = [
