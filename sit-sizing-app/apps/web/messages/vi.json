@@ -2011,5 +2011,110 @@
       "needLead": "Giữ ít nhất một QE Lead.",
       "notSignedIn": "Những người này chưa đăng nhập: {emails}. Hãy nhờ họ đăng nhập một lần rồi thêm lại."
     }
+  },
+  "tours": {
+    "controls": {
+      "back": "Quay lại",
+      "next": "Tiếp",
+      "skip": "Bỏ qua hướng dẫn",
+      "finish": "Hoàn tất",
+      "close": "Đóng hướng dẫn",
+      "progress": "{current} trên {total}",
+      "resume": "Tiếp tục hướng dẫn",
+      "take": "Xem hướng dẫn",
+      "menu": "Hướng dẫn tương tác"
+    },
+    "firstEstimate": {
+      "welcome": {
+        "title": "Chào mừng đến với SIT Sizing",
+        "body": "Hướng dẫn ngắn này đưa bạn từ một dự án đến phiên bản ước lượng đầu tiên đã lưu. Bạn có thể bỏ qua bất cứ lúc nào."
+      },
+      "projects": {
+        "title": "Mở dự án của bạn",
+        "body": "Các dự án của bạn nằm ở đây. Chọn một dự án để xem các bản ước lượng."
+      },
+      "newEstimate": {
+        "title": "Bắt đầu một bản ước lượng mới",
+        "body": "Chọn Ước lượng mới để mở hộp thoại tạo."
+      },
+      "name": {
+        "title": "Đặt tên và tạo",
+        "body": "Đặt tên theo bản phát hành tiếp theo của bạn. Ví dụ minh họa đã được chọn sẵn nên bạn thấy ngay số liệu thực. Sau đó chọn Tạo ước lượng."
+      },
+      "rough": {
+        "title": "Phạm vi sơ bộ",
+        "body": "Bắt đầu tại đây với cái nhìn nhanh về quy mô của bản phát hành."
+      },
+      "team": {
+        "title": "Cửa sổ và nhóm",
+        "body": "Đặt cửa sổ kiểm thử và nhóm. Kết quả bên dưới cập nhật ngay khi bạn nhập."
+      },
+      "summary": {
+        "title": "Sơ bộ và chi tiết cạnh nhau",
+        "body": "Các thẻ này so sánh ước lượng sơ bộ và chi tiết, và hiển thị khoảng FTE."
+      },
+      "gap": {
+        "title": "Điểm khác nhau",
+        "body": "Bảng chênh lệch cho thấy yếu tố nào giải thích sự khác biệt giữa sơ bộ và chi tiết."
+      },
+      "autosave": {
+        "title": "Tự động lưu và khóa chỉnh sửa",
+        "body": "Thay đổi của bạn tự động được lưu khi bạn giữ khóa chỉnh sửa. Trạng thái này cho biết khi nào đã lưu."
+      },
+      "save": {
+        "title": "Lưu một phiên bản",
+        "body": "Chọn Lưu phiên bản rồi xác nhận. Phiên bản đã lưu không thể thay đổi sau đó."
+      },
+      "done": {
+        "title": "Phiên bản 1 đã được lưu",
+        "body": "Bước tiếp theo là gửi duyệt. Phần hướng dẫn giải thích cách duyệt hoạt động."
+      }
+    },
+    "firstEstimateAdmin": {
+      "users": {
+        "title": "Người dùng",
+        "body": "Quản trị viên quản lý ai được dùng SIT Sizing tại đây."
+      },
+      "audit": {
+        "title": "Nhật ký kiểm toán",
+        "body": "Mọi thay đổi về ước lượng, dự án và con người đều được ghi lại tại đây."
+      },
+      "profiles": {
+        "title": "Hồ sơ toàn cục",
+        "body": "Hồ sơ giả định toàn cục được công bố tại đây cho mọi dự án sử dụng."
+      }
+    },
+    "readingTour": {
+      "project": {
+        "title": "Mở một dự án",
+        "body": "Các dự án của bạn nằm ở đây. Chọn một dự án để xem các bản ước lượng."
+      },
+      "estimate": {
+        "title": "Mở một bản ước lượng",
+        "body": "Chọn một bản ước lượng để xem kết quả."
+      },
+      "summary": {
+        "title": "Sơ bộ và chi tiết cạnh nhau",
+        "body": "Các thẻ này so sánh ước lượng sơ bộ và chi tiết, và hiển thị khoảng FTE."
+      },
+      "gap": {
+        "title": "Điểm khác nhau",
+        "body": "Bảng chênh lệch cho thấy yếu tố nào giải thích sự khác biệt giữa sơ bộ và chi tiết."
+      },
+      "export": {
+        "title": "Xuất",
+        "body": "Bạn có thể tải phiên bản này về dưới dạng bảng tính."
+      },
+      "done": {
+        "title": "Bạn có thể xem mọi thứ tại đây",
+        "body": "Để chỉnh sửa bản ước lượng, hãy nhờ QE Lead trong dự án gán vai trò Estimator cho bạn."
+      }
+    },
+    "noProject": {
+      "card": {
+        "title": "Hãy nhờ QE Lead thêm bạn vào một dự án",
+        "body": "Bạn chưa thuộc dự án nào. Hãy nhờ QE Lead thêm bạn bằng địa chỉ e-mail của bạn, {email}. Hướng dẫn sẽ bắt đầu lại ở lần đăng nhập đầu tiên sau đó."
+      }
+    }
   }
 }

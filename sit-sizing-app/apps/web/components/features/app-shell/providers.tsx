@@ -2,10 +2,12 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
+import { TourProvider } from '@/components/features/tours/tour-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ApiClientError } from '@/lib/http';
+import { TOURS } from '@/lib/tours/registry';
 
-/** Client-side providers for every page: server state (TanStack Query) and tooltips. */
+/** Client-side providers for every page: server state (TanStack Query), tooltips and guided tours. */
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
     () =>
@@ -24,7 +26,9 @@ export function Providers({ children }: { children: ReactNode }) {
   );
   return (
     <QueryClientProvider client={client}>
-      <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
+      <TooltipProvider delayDuration={300}>
+        <TourProvider registry={TOURS}>{children}</TourProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

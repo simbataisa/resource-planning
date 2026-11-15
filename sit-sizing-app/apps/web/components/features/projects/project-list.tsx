@@ -36,7 +36,7 @@ export function ProjectList() {
         {items.length === 0 ? (
           <EmptyState title={t('projects.emptyTitle')} description={t('projects.emptyBody')} />
         ) : (
-          <div className="overflow-x-auto rounded-lg border bg-card">
+          <div data-tour="project-list" className="overflow-x-auto rounded-lg border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>

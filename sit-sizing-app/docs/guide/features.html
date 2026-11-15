@@ -747,6 +747,7 @@
         <a href="#intro">How it fits together</a>
         <a href="#signin">Sign-in and roles</a>
         <a href="#projects">Projects and members</a>
+        <a href="#tours">Guided tours</a>
         <div class="group">Estimating</div>
         <a href="#engine">The calculation engine</a>
         <a href="#modes">Rough and detailed modes</a>
@@ -1018,6 +1019,73 @@
                 </div>
                 <div class="chip s ok" data-cap="Saved and recorded in the audit log.">
                   Saved · audit event <code>project.members.replace</code>
+                </div>
+              </div>
+              <p class="caption" data-caption></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Guided tours -->
+        <section class="feature" id="tours">
+          <div class="eyebrow">Basics</div>
+          <h2>Guided tours</h2>
+          <p class="summary">
+            A first-time walk through the real screens, and short tours when a new feature ships.
+          </p>
+          <div class="cols">
+            <div class="card">
+              <h3>What happens</h3>
+              <ol class="how">
+                <li>
+                  On first sign-in, an Estimator or QE Lead is guided from the project list to
+                  creating and saving a first estimate. Admins get extra steps for Users, Audit log
+                  and Profiles.
+                </li>
+                <li>
+                  A Viewer gets a short reading tour. Someone in no project yet sees a card saying
+                  who to ask for access.
+                </li>
+                <li>
+                  Skip or finish a tour and it is remembered on your account, so it does not return
+                  on another browser or device.
+                </li>
+                <li>
+                  When a feature ships later, people who already used the app see a short tour of
+                  just that feature.
+                </li>
+                <li>
+                  The <b>?</b> menu in the top bar replays any tour, and the Guide page has a
+                  <b>Take the tour</b> button.
+                </li>
+              </ol>
+            </div>
+            <div class="card" data-seq>
+              <div class="stage-head">
+                <h3>First estimate</h3>
+                <button class="replay" data-replay>↻ Replay</button>
+              </div>
+              <div class="vflow">
+                <div class="chip s" data-cap="A welcome card appears on the project list.">
+                  Welcome card on <b>Projects</b>
+                </div>
+                <div
+                  class="chip s"
+                  data-cap="The tour points at New estimate and waits for the click."
+                >
+                  Points at <b>New estimate</b>
+                </div>
+                <div class="chip s" data-cap="Tabs, summary cards and the gap table are explained.">
+                  Explains tabs, summary and gap table
+                </div>
+                <div
+                  class="chip s hot"
+                  data-cap="The tour waits until you save a version yourself."
+                >
+                  Waits for <b>Save version</b>
+                </div>
+                <div class="chip s ok" data-cap="Remembered on your account.">
+                  Done · not shown again
                 </div>
               </div>
               <p class="caption" data-caption></p>

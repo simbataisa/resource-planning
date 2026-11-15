@@ -132,7 +132,10 @@ export function ExportPanel({
   }
 
   return (
-    <section className="grid gap-4 rounded-lg border bg-card p-5 shadow-card">
+    <section
+      data-tour="export-panel"
+      className="grid gap-4 rounded-lg border bg-card p-5 shadow-card"
+    >
       <header className="grid gap-1.5">
         <Eyebrow>{t('eyebrow')}</Eyebrow>
         <h2 className="text-[1.6rem] font-light">{t('title')}</h2>

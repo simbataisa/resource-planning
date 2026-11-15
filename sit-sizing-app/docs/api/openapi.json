@@ -4565,6 +4565,9 @@
                   "id": "clx0synthuser0001",
                   "displayName": "Synthetic Estimator",
                   "email": "estimator@example.invalid",
+                  "tours": {},
+                  "createdAt": "2026-11-01T09:00:00.000Z",
+                  "lastLoginAt": "2026-11-17T08:00:00.000Z",
                   "globalRole": "USER",
                   "locale": "en",
                   "memberships": []
@@ -4617,13 +4620,13 @@
         "tags": [
           "Session"
         ],
-        "summary": "Save the current user's language",
-        "description": "The language the app opens in when the browser has no language choice yet. Minimum role: USER.",
+        "summary": "Save the current user's language and guided-tour state",
+        "description": "Either field may be sent alone. `locale` is the language the app opens in when the browser has no language choice yet. `tours` merges guided-tour outcomes by key (a null value removes a key; at most 100 keys are kept). Minimum role: USER.",
         "x-required-role": "USER",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "The signed-in user with the saved language",
+            "description": "The signed-in user with the saved language and guided-tour state",
             "content": {
               "application/json": {
                 "schema": {
@@ -4633,6 +4636,14 @@
                   "id": "clx0synthuser0001",
                   "displayName": "Synthetic Estimator",
                   "email": "estimator@example.invalid",
+                  "tours": {
+                    "first-estimate@1": {
+                      "status": "completed",
+                      "at": "2026-11-17T09:00:00.000Z"
+                    }
+                  },
+                  "createdAt": "2026-11-01T09:00:00.000Z",
+                  "lastLoginAt": "2026-11-17T08:00:00.000Z",
                   "globalRole": "USER",
                   "locale": "vi",
                   "memberships": []
@@ -4697,7 +4708,12 @@
                 "$ref": "#/components/schemas/MeUpdate"
               },
               "example": {
-                "locale": "vi"
+                "locale": "vi",
+                "tours": {
+                  "first-estimate@1": {
+                    "status": "completed"
+                  }
+                }
               }
             }
           }
@@ -8683,6 +8699,26 @@
               ],
               "additionalProperties": false
             }
+          },
+          "tours": {
+            "$ref": "#/components/schemas/TourState"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "lastLoginAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -8691,7 +8727,10 @@
           "email",
           "globalRole",
           "locale",
-          "memberships"
+          "memberships",
+          "tours",
+          "createdAt",
+          "lastLoginAt"
         ],
         "additionalProperties": false
       },
@@ -8747,11 +8786,11 @@
               "en",
               "vi"
             ]
+          },
+          "tours": {
+            "$ref": "#/components/schemas/TourUpdate"
           }
         },
-        "required": [
-          "locale"
-        ],
         "example": {
           "locale": "vi"
         }
@@ -13850,6 +13889,80 @@
         },
         "example": {
           "note": "Synthetic: scope agreed with the delivery lead"
+        }
+      },
+      "TourKey": {
+        "type": "string",
+        "maxLength": 64,
+        "pattern": "^[a-z0-9-]+@\\d{1,3}$",
+        "example": "first-estimate@1"
+      },
+      "TourState": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "#/components/schemas/TourKey"
+        },
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "$ref": "#/components/schemas/TourStatus"
+            },
+            "at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "status",
+            "at"
+          ],
+          "additionalProperties": false
+        },
+        "example": {
+          "first-estimate@1": {
+            "status": "completed",
+            "at": "2026-01-01T00:00:00.000Z"
+          }
+        }
+      },
+      "TourStatus": {
+        "type": "string",
+        "enum": [
+          "completed",
+          "skipped",
+          "dismissed"
+        ]
+      },
+      "TourUpdate": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "#/components/schemas/TourKey"
+        },
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "$ref": "#/components/schemas/TourStatus"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxProperties": 100,
+        "example": {
+          "first-estimate@1": {
+            "status": "completed"
+          }
         }
       },
       "UserPage": {

@@ -11,17 +11,20 @@ export function SidebarNavLink({
   label,
   icon: Icon,
   active,
+  tour,
 }: {
   href: string;
   label: string;
   icon: LucideIcon;
   active: boolean;
+  /** Guided-tour target name, rendered as `data-tour`. */
+  tour?: string;
 }) {
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={active} tooltip={label}>
-        <Link href={href} onClick={() => setOpenMobile(false)}>
+        <Link href={href} data-tour={tour} onClick={() => setOpenMobile(false)}>
           <Icon aria-hidden="true" />
           <span>{label}</span>
         </Link>

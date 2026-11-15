@@ -50,6 +50,11 @@ const LOCALE_LINK = [
   },
 ];
 
+/** Only the tours feature renders guided tours (ADR-0017). */
+const JOYRIDE = [
+  { name: 'react-joyride', message: 'Only components/features/tours renders tours. (ADR-0017)' },
+];
+
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -89,7 +94,7 @@ export default defineConfig([
   {
     files: ['apps/web/components/**/*.{ts,tsx}', 'apps/web/app/**/*.{ts,tsx}'],
     ignores: ['apps/web/**/*.test.tsx'],
-    rules: restrict([], LOCALE_LINK),
+    rules: restrict([], [...LOCALE_LINK, ...JOYRIDE]),
   },
   // ---- Pure packages -------------------------------------------------------
   {
@@ -139,7 +144,7 @@ export default defineConfig([
           message: 'Layer 2 (ui) cannot import layers 3–4.',
         },
       ],
-      LOCALE_LINK,
+      [...LOCALE_LINK, ...JOYRIDE],
     ),
   },
   {
@@ -152,11 +157,17 @@ export default defineConfig([
           message: 'Layer 3 (patterns) is domain-free; it cannot import features.',
         },
       ],
-      LOCALE_LINK,
+      [...LOCALE_LINK, ...JOYRIDE],
     ),
   },
   {
     files: ['apps/web/components/features/**/*.{ts,tsx}'],
+    ignores: ['apps/web/components/features/tours/**'],
+    rules: restrict(UI_FORBIDDEN, [...LOCALE_LINK, ...JOYRIDE]),
+  },
+  {
+    // The one place allowed to import react-joyride (ADR-0017).
+    files: ['apps/web/components/features/tours/**/*.{ts,tsx}'],
     rules: restrict(UI_FORBIDDEN, LOCALE_LINK),
   },
   // ---- Scripts and config files may log ------------------------------------
