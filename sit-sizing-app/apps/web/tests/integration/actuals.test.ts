@@ -43,6 +43,7 @@ beforeAll(async () => {
     method: 'POST',
     params: { estimateId },
     body: {},
+    lockToken: est.json.lockToken,
   });
 });
 

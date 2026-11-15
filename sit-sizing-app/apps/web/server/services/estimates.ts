@@ -13,6 +13,7 @@ import { clock } from '../clock';
 import { db, type DbOrTx } from '../db';
 import { estimateDto, lockDto, versionSummaryDto } from '../dto';
 import { lockExpiry } from '../domain/lock';
+import { newLockToken } from '../domain/lock-token';
 import { applicable } from '../domain/profiles';
 import { HttpError } from '../http/route';
 import { recordAudit } from '../repositories/audit';
@@ -81,7 +82,7 @@ export async function resolveProfile(
   return p;
 }
 
-/** Creates the estimate with draft version 1, locked to its creator. */
+/** Creates the estimate with draft version 1, locked to its creator (with a lock token). */
 export async function createEstimate(
   user: CurrentUser,
   projectId: string,
@@ -96,6 +97,7 @@ export async function createEstimate(
     const inputs = input.template === 'blank' ? blankInputs() : structuredClone(EXAMPLE_INPUTS);
     const snap = versionSnapshot(inputs, assumptions);
     const now = clock.now();
+    const token = newLockToken();
     const e = await tx.estimate.create({
       data: {
         projectId,
@@ -119,6 +121,7 @@ export async function createEstimate(
             createdById: user.id,
             lockedById: user.id,
             lockExpiresAt: lockExpiry(now),
+            lockTokenHash: token.hash,
           },
         },
       },
@@ -137,6 +140,6 @@ export async function createEstimate(
       },
       requestId: meta.requestId,
     });
-    return estimateDto(e);
+    return { ...estimateDto(e), lockToken: token.token };
   });
 }

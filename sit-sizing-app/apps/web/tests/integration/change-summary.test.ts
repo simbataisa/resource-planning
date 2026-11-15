@@ -94,10 +94,15 @@ async function call(
   method: string,
   params: Record<string, string>,
   body: unknown,
+  lockToken?: string,
 ) {
   const request = new Request('http://localhost:3000/api/v1/x', {
     method,
-    headers: { 'content-type': 'application/json', ...(await headersFor(who)) },
+    headers: {
+      'content-type': 'application/json',
+      ...(await headersFor(who)),
+      ...(lockToken ? { 'x-lock-token': lockToken } : {}),
+    },
     body: JSON.stringify(body),
   });
   const res = await handler(request, { params: Promise.resolve(params) });
@@ -124,7 +129,12 @@ async function newEstimate(who: Who, name: string, summary?: string) {
   );
   expect(res.status, JSON.stringify(res.json)).toBe(201);
   const v = await db().estimateVersion.findFirstOrThrow({ where: { estimateId: res.json.id } });
-  return { id: res.json.id as string, versionId: v.id, rowVersion: v.rowVersion };
+  return {
+    id: res.json.id as string,
+    versionId: v.id,
+    rowVersion: v.rowVersion,
+    lockToken: res.json.lockToken as string,
+  };
 }
 
 describe('change summary and channel in the audit trail', () => {
@@ -139,6 +149,7 @@ describe('change summary and channel in the audit trail', () => {
         rowVersion: e.rowVersion,
         note: 'Synthetic autosave note',
       },
+      e.lockToken,
     );
     expect(res.status).toBe(200);
     expect(await audit('estimate.draft.update', e.versionId)).toHaveLength(0);
@@ -158,6 +169,7 @@ describe('change summary and channel in the audit trail', () => {
         assumptions: before.assumptions,
         summary: 'Synthetic: note and assumptions',
       },
+      e.lockToken,
     );
     expect(res.status, JSON.stringify(res.json)).toBe(200);
     const [event] = await audit('estimate.draft.update', e.versionId);
@@ -196,6 +208,7 @@ describe('change summary and channel in the audit trail', () => {
         note: 'Synthetic note',
         summary: 'Synthetic: web edit',
       },
+      web.lockToken,
     );
     expect(res.status).toBe(200);
     const [edit] = await audit('estimate.draft.update', web.versionId);
@@ -212,6 +225,7 @@ describe('change summary and channel in the audit trail', () => {
       {
         summary: 'S: save',
       },
+      e.lockToken,
     );
     expect(saveRes.status, JSON.stringify(saveRes.json)).toBe(201);
     const subRes = await call(
@@ -259,6 +273,7 @@ describe('change summary and channel in the audit trail', () => {
         rowVersion: d.json.rowVersion,
         summary: 'S: profile',
       },
+      d.json.lockToken,
     );
     expect(ap.status, JSON.stringify(ap.json)).toBe(200);
     const [applied] = await audit('estimate.draft.profile.apply', d.json.id);
@@ -275,6 +290,7 @@ describe('change summary and channel in the audit trail', () => {
       {
         summary: 'Synthetic: ready for review',
       },
+      e.lockToken,
     );
     expect(res.status).toBe(201);
     expect(res.json.note).toBe('Synthetic: ready for review');
@@ -289,6 +305,7 @@ describe('change summary and channel in the audit trail', () => {
         note: 'Synthetic explicit note',
         summary: 'Synthetic: summary',
       },
+      f.lockToken,
     );
     expect(res2.json.note).toBe('Synthetic explicit note');
   });
@@ -309,6 +326,7 @@ describe('change summary and channel in the audit trail', () => {
         note: 'Synthetic-distinctive-note-text',
         summary: 'Synthetic: change inputs',
       },
+      e.lockToken,
     );
     expect(res.status, JSON.stringify(res.json)).toBe(200);
     const events = await db().auditEvent.findMany({ where: { entityId: e.versionId } });

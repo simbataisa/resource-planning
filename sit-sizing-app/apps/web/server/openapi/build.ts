@@ -19,7 +19,7 @@ const STATUS_TEXT: Record<number, string> = {
   401: 'Not signed in',
   403: 'Role does not allow this (FORBIDDEN), or a valid bearer token for someone who has not signed in to SIT Sizing in the browser yet (NOT_PROVISIONED)',
   404: 'Not found (or not visible to you)',
-  409: 'Conflict: stale rowVersion, lock held by someone else, or duplicate',
+  409: 'Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate',
   422: 'Request understood but cannot be applied',
   429: 'Too many requests for this user; see Retry-After',
   500: 'Unexpected error',
@@ -79,6 +79,7 @@ function parameters(op: Operation, components: Record<string, Json>): Json[] {
   for (const [where, obj] of [
     ['path', op.params],
     ['query', op.query],
+    ['header', op.headers],
   ] as const) {
     if (!obj) continue;
     for (const [name, field] of Object.entries(obj.shape) as [string, z.ZodType][]) {

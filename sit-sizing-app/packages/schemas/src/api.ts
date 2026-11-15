@@ -200,6 +200,17 @@ export const ReviewEntry = z
   .meta({ id: 'ReviewEntry' });
 export type ReviewEntry = z.infer<typeof ReviewEntry>;
 
+/**
+ * Draft lock token: returned once, only to the call that took (or took over) the lock.
+ * Send it back as the X-Lock-Token header to renew, autosave, apply a profile, save or release.
+ */
+export const LockToken = z.string().min(1).max(200).meta({
+  id: 'LockToken',
+  description:
+    'Proof that a request comes from the tab or assistant session that took the edit lock. Returned only by the call that took the lock; send it as X-Lock-Token.',
+  example: 'c3ludGhldGljLWxvY2stdG9rZW4tZXhhbXBsZS0wMDAwMDAw',
+});
+
 export const Version = VersionSummary.extend({
   inputs: EstimateInputs,
   assumptions: Assumptions,
@@ -208,6 +219,8 @@ export const Version = VersionSummary.extend({
   schemaVersion: z.number().int(),
   rowVersion: z.number().int(),
   lock: EditLock.nullable(),
+  /** Only in the response to the call that took the lock (lock, create draft). */
+  lockToken: LockToken.optional(),
   /** Review notes on submit, approve and return, oldest first. */
   reviews: z.array(ReviewEntry),
 }).meta({ id: 'Version' });
@@ -227,6 +240,12 @@ export const Estimate = z
   })
   .meta({ id: 'Estimate' });
 export type Estimate = z.infer<typeof Estimate>;
+
+/** Response to creating an estimate: draft 1 is locked to the caller, with its token. */
+export const EstimateCreated = Estimate.extend({ lockToken: LockToken }).meta({
+  id: 'EstimateCreated',
+});
+export type EstimateCreated = z.infer<typeof EstimateCreated>;
 
 export const EstimateDetail = Estimate.extend({
   versions: z.array(VersionSummary),
@@ -282,7 +301,10 @@ export const DraftPatch = z
 
 export const LockRequest = z
   .object({
-    /** QE Lead only: take the lock from someone else before it expires. */
+    /**
+     * Take the lock before it expires: from someone else (QE Lead only), or from another tab
+     * or assistant session of mine (any role; that session loses it).
+     */
     takeover: z.boolean().default(false),
   })
   .meta({ id: 'LockRequest' });

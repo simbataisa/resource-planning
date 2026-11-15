@@ -262,7 +262,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -500,7 +500,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -631,7 +631,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -869,7 +869,7 @@
           "Estimates"
         ],
         "summary": "Create an estimate",
-        "description": "Creates draft version 1 from the example or a blank scope, locked to the creator. Minimum role: ESTIMATOR.",
+        "description": "Creates draft version 1 from the example or a blank scope, locked to the creator. The response carries `lockToken` for that lock (returned only here); send it as `X-Lock-Token`. Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -887,11 +887,11 @@
         ],
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "Created, with the lock token",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Estimate"
+                  "$ref": "#/components/schemas/EstimateCreated"
                 }
               }
             }
@@ -937,7 +937,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -1198,7 +1198,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -1248,7 +1248,7 @@
           "Versions"
         ],
         "summary": "Start a new draft",
-        "description": "Copies a saved version (default: the latest) and recomputes it with the current engine. Minimum role: ESTIMATOR.",
+        "description": "Copies a saved version (default: the latest) and recomputes it with the current engine. The response carries `lockToken` for the new lock (returned only here). Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -1316,7 +1316,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -1377,7 +1377,7 @@
           "Versions"
         ],
         "summary": "Autosave the draft",
-        "description": "Lock holder only. The server recomputes the result. Send the rowVersion you last saw; a stale one returns 409. A `summary` (1-300 characters) records one `estimate.draft.update` audit event naming the areas changed; without it an autosave is not audited. Minimum role: ESTIMATOR.",
+        "description": "Lock holder only. Send the lock token as `X-Lock-Token`; a missing or wrong token on a lock you hold returns 409 with reason `LOCKED_ELSEWHERE` and nothing is written. The server recomputes the result. Send the rowVersion you last saw; a stale one returns 409. A `summary` (1-300 characters) records one `estimate.draft.update` audit event naming the areas changed; without it an autosave is not audited. Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -1390,6 +1390,14 @@
               "maxLength": 40,
               "description": "Opaque identifier (cuid)",
               "example": "clx0synthetic0001"
+            }
+          },
+          {
+            "name": "X-Lock-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LockToken"
             }
           }
         ],
@@ -1445,7 +1453,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -1510,7 +1518,7 @@
           "Versions"
         ],
         "summary": "Take, renew or take over the edit lock",
-        "description": "The lock lasts 15 minutes and is renewed by calling this again or by an autosave. `takeover: true` is for QE Leads. Minimum role: ESTIMATOR.",
+        "description": "The lock lasts 15 minutes and is renewed by calling this again with `X-Lock-Token` or by an autosave. Taking a free or expired lock, or taking one over, returns a new `lockToken` (only in this response). Your own lock without its token (open in another tab or in the assistant) returns 409 with reason `LOCKED_ELSEWHERE`, unless you send `takeover: true`, which any role may do for their own lock (the other session loses it). Taking over someone else's lock is for QE Leads. Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -1524,11 +1532,19 @@
               "description": "Opaque identifier (cuid)",
               "example": "clx0synthetic0001"
             }
+          },
+          {
+            "name": "X-Lock-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LockToken"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "The draft with the lock",
+            "description": "The draft with the lock; `lockToken` when the lock was taken or taken over",
             "content": {
               "application/json": {
                 "schema": {
@@ -1578,7 +1594,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -1639,7 +1655,7 @@
           "Versions"
         ],
         "summary": "Release the edit lock",
-        "description": "Minimum role: ESTIMATOR.",
+        "description": "Lock holder only. Send the lock token as `X-Lock-Token`; a missing or wrong token on a lock you hold returns 409 with reason `LOCKED_ELSEWHERE` and nothing is written. A refused release leaves the lock in place. Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -1652,6 +1668,14 @@
               "maxLength": 40,
               "description": "Opaque identifier (cuid)",
               "example": "clx0synthetic0001"
+            }
+          },
+          {
+            "name": "X-Lock-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LockToken"
             }
           }
         ],
@@ -1700,7 +1724,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -1750,7 +1774,7 @@
           "Versions"
         ],
         "summary": "Save the draft as a version",
-        "description": "Lock holder only. The saved version is immutable. A `summary` becomes the version note when no `note` is given. Minimum role: ESTIMATOR.",
+        "description": "Lock holder only. Send the lock token as `X-Lock-Token`; a missing or wrong token on a lock you hold returns 409 with reason `LOCKED_ELSEWHERE` and nothing is written. The saved version is immutable. A `summary` becomes the version note when no `note` is given. Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -1763,6 +1787,14 @@
               "maxLength": 40,
               "description": "Opaque identifier (cuid)",
               "example": "clx0synthetic0001"
+            }
+          },
+          {
+            "name": "X-Lock-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LockToken"
             }
           }
         ],
@@ -1818,7 +1850,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -1959,7 +1991,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -2101,7 +2133,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -2242,7 +2274,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -2665,7 +2697,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -2817,7 +2849,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -3168,7 +3200,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -3417,7 +3449,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -3563,7 +3595,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -3681,7 +3713,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -3731,7 +3763,7 @@
           "Versions"
         ],
         "summary": "Apply a published profile to the draft's assumptions",
-        "description": "Lock holder only. Replaces every assumption with the profile's values and recomputes; inputs are kept. Minimum role: ESTIMATOR.",
+        "description": "Lock holder only. Send the lock token as `X-Lock-Token`; a missing or wrong token on a lock you hold returns 409 with reason `LOCKED_ELSEWHERE` and nothing is written. Replaces every assumption with the profile's values and recomputes; inputs are kept. Minimum role: ESTIMATOR.",
         "x-required-role": "ESTIMATOR",
         "parameters": [
           {
@@ -3744,6 +3776,14 @@
               "maxLength": 40,
               "description": "Opaque identifier (cuid)",
               "example": "clx0synthetic0001"
+            }
+          },
+          {
+            "name": "X-Lock-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LockToken"
             }
           }
         ],
@@ -3799,7 +3839,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -4476,7 +4516,7 @@
             }
           },
           "409": {
-            "description": "Conflict: stale rowVersion, lock held by someone else, or duplicate",
+            "description": "Conflict: stale rowVersion, lock held by someone else or open in another tab or the assistant (LOCKED_ELSEWHERE), or duplicate",
             "content": {
               "application/json": {
                 "schema": {
@@ -8813,6 +8853,97 @@
           "template": "example"
         }
       },
+      "EstimateCreated": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "Opaque identifier (cuid)",
+            "example": "clx0synthetic0001"
+          },
+          "projectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "Opaque identifier (cuid)",
+            "example": "clx0synthetic0001"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "createdBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "Opaque identifier (cuid)",
+                "example": "clx0synthetic0001"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+              }
+            },
+            "required": [
+              "id",
+              "displayName",
+              "email"
+            ],
+            "additionalProperties": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hasDraft": {
+            "type": "boolean"
+          },
+          "lockToken": {
+            "$ref": "#/components/schemas/LockToken"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "name",
+          "description",
+          "archived",
+          "createdBy",
+          "createdAt",
+          "latest",
+          "hasDraft",
+          "lockToken"
+        ],
+        "additionalProperties": false
+      },
       "EstimateDetail": {
         "type": "object",
         "properties": {
@@ -8947,6 +9078,13 @@
             "type": "boolean"
           }
         }
+      },
+      "LockToken": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200,
+        "description": "Proof that a request comes from the tab or assistant session that took the edit lock. Returned only by the call that took the lock; send it as X-Lock-Token.",
+        "example": "c3ludGhldGljLWxvY2stdG9rZW4tZXhhbXBsZS0wMDAwMDAw"
       },
       "Me": {
         "type": "object",
@@ -19173,6 +19311,9 @@
                 "type": "null"
               }
             ]
+          },
+          "lockToken": {
+            "$ref": "#/components/schemas/LockToken"
           },
           "reviews": {
             "type": "array",

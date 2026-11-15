@@ -14,6 +14,8 @@ import { call, seeded } from './helpers';
 let projectId: string;
 let estimateId: string;
 let rowVersion: number;
+/** The lock token from the call that took the lock (draft lock token). */
+let lockToken: string;
 
 beforeAll(async () => {
   projectId = (await seeded()).demo.id;
@@ -36,6 +38,7 @@ describe('draft workflow', () => {
     expect(res.json.hasDraft).toBe(true);
     expect(res.json.latest.status).toBe('DRAFT');
     estimateId = res.json.id;
+    lockToken = res.json.lockToken;
     const v = await db().estimateVersion.findFirstOrThrow({ where: { estimateId } });
     expect(v.lockedById).not.toBeNull();
     rowVersion = v.rowVersion;
@@ -50,6 +53,7 @@ describe('draft workflow', () => {
       method: 'PATCH',
       params: p(),
       body: { rowVersion, inputs },
+      lockToken,
     });
     expect(res.status, JSON.stringify(res.json)).toBe(200);
     expect(res.json.rowVersion).toBe(rowVersion + 1);
@@ -65,6 +69,7 @@ describe('draft workflow', () => {
       method: 'PATCH',
       params: p(),
       body: { rowVersion: rowVersion - 1, note: 'x' },
+      lockToken,
     });
     expect(res.status).toBe(409);
     expect(reason(res.json)).toBe('STALE');
@@ -138,6 +143,7 @@ describe('draft workflow', () => {
     expect(res.status).toBe(200);
     expect(res.json.lock.mine).toBe(true);
     rowVersion = res.json.rowVersion;
+    lockToken = res.json.lockToken;
   });
 
   it('saves the draft as an immutable version and audits it', async () => {
@@ -147,6 +153,7 @@ describe('draft workflow', () => {
       method: 'POST',
       params: p(),
       body: { note: 'Synthetic · v1' },
+      lockToken,
     });
     expect(res.status, JSON.stringify(res.json)).toBe(201);
     expect(res.json.status).toBe('SAVED');
@@ -175,6 +182,7 @@ describe('draft workflow', () => {
     expect(res.status).toBe(201);
     expect(res.json.number).toBe(2);
     expect(res.json.status).toBe('DRAFT');
+    lockToken = res.json.lockToken;
     const again = await call(draft.POST, {
       who: 'dev-estimator',
       method: 'POST',
@@ -189,7 +197,8 @@ describe('draft workflow', () => {
       (await call(lock.DELETE, { who: 'dev-lead', method: 'DELETE', params: p() })).status,
     ).toBe(409);
     expect(
-      (await call(lock.DELETE, { who: 'dev-estimator', method: 'DELETE', params: p() })).status,
+      (await call(lock.DELETE, { who: 'dev-estimator', method: 'DELETE', params: p(), lockToken }))
+        .status,
     ).toBe(204);
   });
 });

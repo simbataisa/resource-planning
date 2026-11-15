@@ -16,7 +16,8 @@ import { clock } from '../clock';
 import { db, type DbOrTx } from '../db';
 import { versionDto } from '../dto';
 import { readStored } from '../stored';
-import { decideLock, holdsLock, lockExpiry } from '../domain/lock';
+import { decideLock, holdsLock, lockExpiry, lockUse } from '../domain/lock';
+import { hashLockToken, newLockToken } from '../domain/lock-token';
 import { HttpError } from '../http/route';
 import { recordAudit } from '../repositories/audit';
 import { VERSION_FULL_INCLUDE } from '../repositories/includes';
@@ -26,6 +27,13 @@ import { changeDetail } from './change-meta';
 const conflict = (message: string, reason: string, extra: Record<string, unknown> = {}) =>
   new HttpError(409, 'CONFLICT', message, [{ reason, ...extra }]);
 
+/** The draft lock is mine but held by another tab or assistant session (another token). */
+export const lockedElsewhere = () =>
+  conflict('This draft is open in another tab or in the assistant.', 'LOCKED_ELSEWHERE');
+
+const presentedHash = (lockToken: string | undefined) =>
+  lockToken ? hashLockToken(lockToken) : null;
+
 function draftOf(tx: DbOrTx, estimateId: string) {
   return tx.estimateVersion.findFirst({
     where: { estimateId, status: 'DRAFT' },
@@ -33,12 +41,26 @@ function draftOf(tx: DbOrTx, estimateId: string) {
   });
 }
 
-export async function requireOwnLockedDraft(tx: DbOrTx, user: CurrentUser, estimateId: string) {
+/**
+ * The draft, if the caller holds its lock and presents the lock token (X-Lock-Token).
+ * Not the holder → LOCK_REQUIRED; the holder with no or another token → LOCKED_ELSEWHERE.
+ */
+export async function requireOwnLockedDraft(
+  tx: DbOrTx,
+  user: CurrentUser,
+  estimateId: string,
+  lockToken: string | undefined,
+) {
   const draft = await draftOf(tx, estimateId);
   if (!draft) throw conflict('There is no draft. Create one first.', 'NO_DRAFT');
-  if (
-    !holdsLock({ holderId: draft.lockedById, expiresAt: draft.lockExpiresAt }, user.id, clock.now())
-  ) {
+  const use = lockUse(
+    { holderId: draft.lockedById, expiresAt: draft.lockExpiresAt, tokenHash: draft.lockTokenHash },
+    user.id,
+    clock.now(),
+    presentedHash(lockToken),
+  );
+  if (!use.ok) {
+    if (use.reason === 'LOCKED_ELSEWHERE') throw lockedElsewhere();
     throw conflict('Take the edit lock before changing the draft.', 'LOCK_REQUIRED');
   }
   return draft;
@@ -73,7 +95,7 @@ export async function getVersion(
   return versionDto(v, user.id, clock.now());
 }
 
-/** Copies a saved version (default: the latest) into a new draft, locked to the caller. */
+/** Copies a saved version (default: the latest) into a new draft, locked to the caller (with a token). */
 export async function createDraft(
   user: CurrentUser,
   estimateId: string,
@@ -96,6 +118,7 @@ export async function createDraft(
       select: { number: true },
     });
     const now = clock.now();
+    const token = newLockToken();
     const v = await tx.estimateVersion.create({
       data: {
         estimateId,
@@ -110,6 +133,7 @@ export async function createDraft(
         createdById: user.id,
         lockedById: user.id,
         lockExpiresAt: lockExpiry(now),
+        lockTokenHash: token.hash,
       },
       include: VERSION_FULL_INCLUDE,
     });
@@ -126,16 +150,21 @@ export async function createDraft(
       },
       requestId: meta.requestId,
     });
-    return versionDto(v, user.id, now);
+    return { ...versionDto(v, user.id, now), lockToken: token.token };
   });
 }
 
-/** Take or renew the draft lock; a QE Lead may take it over (A-06). */
+/**
+ * Take or renew the draft lock; a QE Lead may take it over (A-06). Taking a free or expired
+ * lock, or taking one over, issues a new token (returned once); renewal needs the current one.
+ * A holder without it may take over their own lock on purpose (`takeover: true`, any role).
+ */
 export async function lockDraft(
   user: CurrentUser,
   estimateId: string,
   input: z.output<typeof LockRequest>,
   meta: RequestMeta,
+  lockToken?: string,
 ) {
   return db().$transaction(async (tx) => {
     const est = await estimateFor(tx, user, estimateId, 'draft.lock');
@@ -143,30 +172,42 @@ export async function lockDraft(
     if (!draft) throw conflict('There is no draft. Create one first.', 'NO_DRAFT');
     const now = clock.now();
     const d = decideLock(
-      { holderId: draft.lockedById, expiresAt: draft.lockExpiresAt },
+      {
+        holderId: draft.lockedById,
+        expiresAt: draft.lockExpiresAt,
+        tokenHash: draft.lockTokenHash,
+      },
       user.id,
       now,
       {
         takeover: input.takeover,
         canTakeover: can(user, 'draft.lock.takeover', est.projectId),
+        tokenHash: presentedHash(lockToken),
       },
     );
     if (!d.ok) {
       if (d.reason === 'TAKEOVER_NOT_ALLOWED')
         throw new HttpError(403, 'FORBIDDEN', 'Only a QE Lead can take over the edit lock.');
+      if (d.reason === 'LOCKED_ELSEWHERE') throw lockedElsewhere();
       throw conflict('Someone else is editing this draft.', 'HELD_BY_OTHER', {
         holder: draft.lockedBy?.displayName ?? null,
       });
     }
-    // Conditional update: two people racing for a free lock cannot both win.
+    const token = d.newToken ? newLockToken() : null;
+    // Conditional update: two callers racing for a free lock (or two tabs) cannot both win.
     const updated = await tx.estimateVersion.updateMany({
       where: {
         id: draft.id,
         rowVersion: draft.rowVersion,
         lockedById: draft.lockedById,
         lockExpiresAt: draft.lockExpiresAt,
+        lockTokenHash: draft.lockTokenHash,
       },
-      data: { lockedById: user.id, lockExpiresAt: d.expiresAt },
+      data: {
+        lockedById: user.id,
+        lockExpiresAt: d.expiresAt,
+        ...(token ? { lockTokenHash: token.hash } : {}),
+      },
     });
     if (updated.count === 0) throw conflict('The draft changed; try again.', 'RACE');
     if (d.takeover) {
@@ -176,7 +217,7 @@ export async function lockDraft(
         entity: 'EstimateVersion',
         entityId: draft.id,
         projectId: est.projectId,
-        detail: { previousHolderId: draft.lockedById },
+        detail: { previousHolderId: draft.lockedById, ...(d.own ? { own: true } : {}) },
         requestId: meta.requestId,
       });
     }
@@ -184,24 +225,34 @@ export async function lockDraft(
       where: { id: draft.id },
       include: VERSION_FULL_INCLUDE,
     });
-    return versionDto(v, user.id, now);
+    return { ...versionDto(v, user.id, now), ...(token ? { lockToken: token.token } : {}) };
   });
 }
 
-/** Release the lock. Only the holder can release; others get 409. */
-export async function unlockDraft(user: CurrentUser, estimateId: string) {
+/**
+ * Release the lock. Only the holder, with the lock token, can release; others get 409 and
+ * the lock (and its hash) stay in place.
+ */
+export async function unlockDraft(user: CurrentUser, estimateId: string, lockToken?: string) {
   await estimateFor(db(), user, estimateId, 'draft.lock');
   const draft = await draftOf(db(), estimateId);
   if (!draft) throw conflict('There is no draft.', 'NO_DRAFT');
-  if (
-    !holdsLock({ holderId: draft.lockedById, expiresAt: draft.lockExpiresAt }, user.id, clock.now())
-  ) {
+  const state = {
+    holderId: draft.lockedById,
+    expiresAt: draft.lockExpiresAt,
+    tokenHash: draft.lockTokenHash,
+  };
+  if (!holdsLock(state, user.id, clock.now())) {
     throw conflict('You do not hold the edit lock.', 'NOT_HOLDER');
   }
-  await db().estimateVersion.updateMany({
-    where: { id: draft.id, lockedById: user.id },
-    data: { lockedById: null, lockExpiresAt: null },
+  const hash = presentedHash(lockToken);
+  if (!lockUse(state, user.id, clock.now(), hash).ok) throw lockedElsewhere();
+  // Conditional on the token: a takeover between the check and here keeps its lock.
+  const released = await db().estimateVersion.updateMany({
+    where: { id: draft.id, lockedById: user.id, lockTokenHash: hash },
+    data: { lockedById: null, lockExpiresAt: null, lockTokenHash: null },
   });
+  if (released.count === 0) throw lockedElsewhere();
 }
 
 /**
@@ -216,10 +267,11 @@ export async function patchDraft(
   estimateId: string,
   input: z.output<typeof DraftPatch>,
   meta: RequestMeta,
+  lockToken?: string,
 ) {
   return db().$transaction(async (tx) => {
     const est = await estimateFor(tx, user, estimateId, 'draft.edit');
-    const draft = await requireOwnLockedDraft(tx, user, estimateId);
+    const draft = await requireOwnLockedDraft(tx, user, estimateId, lockToken);
     if (draft.rowVersion !== input.rowVersion) {
       throw conflict('The draft changed since you loaded it.', 'STALE', {
         rowVersion: draft.rowVersion,
@@ -230,7 +282,12 @@ export async function patchDraft(
     const assumptions = input.assumptions ?? stored!.assumptions;
     const now = clock.now();
     const updated = await tx.estimateVersion.updateMany({
-      where: { id: draft.id, rowVersion: input.rowVersion, status: 'DRAFT' },
+      where: {
+        id: draft.id,
+        rowVersion: input.rowVersion,
+        status: 'DRAFT',
+        lockTokenHash: draft.lockTokenHash,
+      },
       data: {
         ...snapshotData(inputs, assumptions),
         ...(input.note !== undefined ? { note: input.note } : {}),
@@ -272,13 +329,19 @@ export async function saveVersion(
   estimateId: string,
   input: z.output<typeof VersionSave>,
   meta: RequestMeta,
+  lockToken?: string,
 ) {
   return db().$transaction(async (tx) => {
     const est = await estimateFor(tx, user, estimateId, 'version.save');
-    const draft = await requireOwnLockedDraft(tx, user, estimateId);
+    const draft = await requireOwnLockedDraft(tx, user, estimateId, lockToken);
     const now = clock.now();
     const updated = await tx.estimateVersion.updateMany({
-      where: { id: draft.id, rowVersion: draft.rowVersion, status: 'DRAFT' },
+      where: {
+        id: draft.id,
+        rowVersion: draft.rowVersion,
+        status: 'DRAFT',
+        lockTokenHash: draft.lockTokenHash,
+      },
       data: {
         // Recompute at freeze time so the stored result matches the current engine.
         ...(() => {
@@ -291,6 +354,7 @@ export async function saveVersion(
         rowVersion: { increment: 1 },
         lockedById: null,
         lockExpiresAt: null,
+        lockTokenHash: null,
       },
     });
     if (updated.count === 0) throw conflict('The draft changed since you loaded it.', 'STALE');

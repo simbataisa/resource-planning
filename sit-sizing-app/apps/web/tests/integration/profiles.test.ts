@@ -131,6 +131,7 @@ describe('assumption profiles', () => {
         method: 'POST',
         params: { estimateId },
         body: { profileId: id, rowVersion },
+        lockToken: est.json.lockToken,
       });
     expect((await apply('dev-viewer', draft.rowVersion)).status).toBe(403);
     expect((await apply('dev-lead', draft.rowVersion)).status).toBe(409); // no lock

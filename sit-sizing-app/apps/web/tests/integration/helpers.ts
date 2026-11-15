@@ -14,10 +14,13 @@ export async function call(
     path?: string;
     body?: unknown;
     params?: Record<string, string>;
+    /** Sent as X-Lock-Token (the draft lock token from the call that took the lock). */
+    lockToken?: string;
   },
 ) {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (opts.who) headers[DEV_USER_HEADER] = opts.who;
+  if (opts.lockToken !== undefined) headers['x-lock-token'] = opts.lockToken;
   const request = new Request(`http://localhost:3000/api/v1${opts.path ?? '/'}`, {
     method: opts.method ?? 'GET',
     headers,
