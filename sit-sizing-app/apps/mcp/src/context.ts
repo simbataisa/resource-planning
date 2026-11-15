@@ -12,7 +12,10 @@ export type Locale = 'en' | 'vi';
 /** What every tool handler gets: one per MCP request, built from that request's token. */
 export interface ToolContext {
   api: ApiClient;
-  /** The user's locale from `GET /me`, read once per request; `'en'` on failure, except a 401, which rejects. */
+  /**
+   * The user's locale from `GET /me`, read once per request; `'en'` on failure, except a
+   * 401, which rejects. Only for choosing a language: `defineTool` awaits `me()` first.
+   */
   locale: () => Promise<Locale>;
   /** `GET /me`, fetched once per request and shared by `locale` and the `whoami` tool. */
   me: () => Promise<Me>;
@@ -80,9 +83,10 @@ export function defineTool<I extends z.ZodObject | undefined, O extends z.ZodObj
           }),
         );
       }
-      // Every tool call reaches the API, so its token checks (refused `azp`, revoked
-      // session, deactivated user) apply even to a tool that answers locally.
-      await ctx.locale();
+      // Every tool call is authorised by the API, so its token checks (refused `azp`,
+      // revoked session, deactivated or unprovisioned user, its rate limit) apply even to
+      // a tool that answers locally: any refusal of `GET /me` stops the call here.
+      await ctx.me();
       const result = (await handler(args)) as Record<string, unknown>;
       return {
         content: [{ type: 'text', text: JSON.stringify(result) }],

@@ -5,8 +5,9 @@ import type { McpEnv } from './env';
  * Access-token check for the MCP endpoint (ADR-0016, design spec 6.2). It mirrors the
  * API's check in `apps/web/server/auth/bearer.ts`; the two apps share no code. The API
  * checks the token again on every call, including the `azp` deny-list, which is not
- * repeated here: every tool call makes at least one API call (`GET /me`, see `defineTool`),
- * so the API enforces it on every tool call. The token is never logged or stored.
+ * repeated here: every tool call first awaits `GET /me` (see `defineTool`), and any refusal
+ * there (401 as an auth challenge; 403, 429 or 5xx as a tool error) stops the call, so the
+ * API authorises every tool call. The token is never logged or stored.
  */
 
 /** Asymmetric algorithms only: no `none`, no HMAC (a public JWKS cannot verify those safely). */

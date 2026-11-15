@@ -91,11 +91,29 @@ describe('defineTool', () => {
     expect(JSON.stringify(calls)).toContain('"status":"auth_challenge"');
   });
 
-  it('still runs the tool when GET /me fails for another reason', async () => {
-    const { client } = await setup({
-      '/me': new ApiCallError({ status: 403, code: 'NOT_PROVISIONED', message: 'no' }),
-    });
+  // The API authorises every tool call: a refusal of GET /me stops even a local-only tool.
+  it.each([
+    [
+      403,
+      new ApiCallError({ status: 403, code: 'NOT_PROVISIONED', message: 'no' }),
+      /^NOT_PROVISIONED: no/,
+    ],
+    [
+      429,
+      new ApiCallError({ status: 429, code: 'RATE_LIMITED', message: 'slow', retryAfter: 7 }),
+      /^RATE_LIMITED: slow Retry after 7 seconds\./,
+    ],
+    [
+      503,
+      new ApiCallError({ status: 503, code: 'UNAVAILABLE', message: 'down' }),
+      /^UNAVAILABLE: down/,
+    ],
+  ])('returns a %i on GET /me as a tool error without running the tool', async (_s, err, re) => {
+    const { client, calls } = await setup({ '/me': err });
     const r = await client.callTool({ name: 'double', arguments: { n: 4 } });
-    expect(r.structuredContent).toEqual({ doubled: 8 });
+    expect(r.isError).toBe(true);
+    expect(r.structuredContent).toBeUndefined();
+    expect((r.content as Array<{ text: string }>)[0]?.text).toMatch(re);
+    expect(JSON.stringify(calls)).toContain('"status":"error"');
   });
 });
