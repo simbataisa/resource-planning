@@ -98,6 +98,23 @@ describe('AuditPage (H-01)', () => {
     await expectNoAxeViolations(container);
   });
 
+  it('shows a long summary in full and keeps the other detail compact', async () => {
+    const summary = `Synthetic change summary ${'with more words '.repeat(18)}end.`;
+    expect(summary.length).toBeGreaterThan(280);
+    hooks.useMe.mockReturnValue(me('USER'));
+    hooks.useAudit.mockReturnValue(
+      infinite([{ ...event, detail: { summary, number: 3, extra: 'x'.repeat(300) } }]),
+    );
+    const { container } = renderWithIntl(<AuditPage />);
+    const row = screen.getByRole('row', { name: /estimate\.version\.approve/ });
+    expect(within(row).getByText(summary)).toBeTruthy();
+    expect(within(row).getByText('Summary:')).toBeTruthy();
+    const rest = within(row).getByText(/"number":3/);
+    expect(rest.textContent).not.toContain('summary');
+    expect(rest.textContent!.length).toBeLessThanOrEqual(160);
+    await expectNoAxeViolations(container);
+  });
+
   it('lets an Admin see everything, and explains the page to others', () => {
     hooks.useMe.mockReturnValue(me('ADMIN'));
     hooks.useAudit.mockReturnValue(infinite([]));

@@ -1954,6 +1954,7 @@
     "emptyTitle": "No events",
     "emptyBody": "Nothing matches these filters.",
     "more": "Show older events",
+    "summary": "Summary",
     "cols": {
       "when": "When",
       "who": "Who",

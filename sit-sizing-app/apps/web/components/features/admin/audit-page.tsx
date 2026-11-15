@@ -127,9 +127,14 @@ function AuditTable({ q }: { q: Record<string, string | undefined> }) {
   const audit = useAudit(q);
   const state = useQueryState(audit);
   const items = audit.data?.pages.flatMap((p) => p.items) ?? [];
+  /** The rest of the detail as compact JSON; a text `summary` is shown in full apart. */
   const detail = (d: Record<string, unknown>) => {
-    const s = JSON.stringify(d);
-    return s === '{}' ? '' : s.length > 160 ? `${s.slice(0, 157)}…` : s;
+    const { summary, ...rest } = d;
+    const s = JSON.stringify(typeof summary === 'string' ? rest : d);
+    return {
+      summary: typeof summary === 'string' ? summary : undefined,
+      rest: s === '{}' ? '' : s.length > 160 ? `${s.slice(0, 157)}…` : s,
+    };
   };
   return (
     <QueryState {...state} skeletonRows={6}>
@@ -149,19 +154,27 @@ function AuditTable({ q }: { q: Record<string, string | undefined> }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell className="whitespace-nowrap">
-                      {formatDateTime(e.at, locale)}
-                    </TableCell>
-                    <TableCell>{e.actor.displayName}</TableCell>
-                    <TableCell className="font-mono text-xs">{e.action}</TableCell>
-                    <TableCell>{e.project ? e.project.key : '—'}</TableCell>
-                    <TableCell className="max-w-md font-mono text-xs break-all text-muted-foreground">
-                      {detail(e.detail)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {items.map((e) => {
+                  const d = detail(e.detail);
+                  return (
+                    <TableRow key={e.id}>
+                      <TableCell className="whitespace-nowrap">
+                        {formatDateTime(e.at, locale)}
+                      </TableCell>
+                      <TableCell>{e.actor.displayName}</TableCell>
+                      <TableCell className="font-mono text-xs">{e.action}</TableCell>
+                      <TableCell>{e.project ? e.project.key : '—'}</TableCell>
+                      <TableCell className="max-w-md text-xs text-muted-foreground">
+                        {d.summary !== undefined ? (
+                          <p className="break-words whitespace-pre-wrap text-foreground">
+                            <span className="font-medium">{t('summary')}:</span> {d.summary}
+                          </p>
+                        ) : null}
+                        {d.rest ? <p className="font-mono break-all">{d.rest}</p> : null}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
