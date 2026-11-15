@@ -55,9 +55,17 @@ describe('OpenAPI contract (AGENTS.md rule 15)', () => {
         if (op['x-required-role'] !== 'none') {
           expect(op.responses['401'], `${method} ${path}`).toBeDefined();
           expect(op.security.length, `${method} ${path}`).toBeGreaterThan(0);
+          // Bearer tokens from MCP clients (ADR-0016), and 403 NOT_PROVISIONED for them.
+          expect(op.security, `${method} ${path}`).toContainEqual({ bearerAuth: [] });
+          expect(op.responses['403'], `${method} ${path}`).toBeDefined();
         }
       }
     }
+    expect(doc.components.securitySchemes.bearerAuth).toMatchObject({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+    });
     expect(JSON.stringify(doc)).not.toContain('#/$defs/');
   });
 

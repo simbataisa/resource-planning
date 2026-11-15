@@ -24,6 +24,8 @@
 3. Web app ↔ Keycloak (OIDC back channel: token exchange, JWKS)
 4. Web app ↔ PostgreSQL `app` database
 5. Pipeline ↔ Nexus ↔ runtime environments
+6. MCP client on a laptop ↔ MCP server ↔ web app API (`Authorization: Bearer` Keycloak access token; ADR-0016)
+7. Anyone on the network ↔ Keycloak anonymous client registration endpoint (ADR-0016)
 
 ## STRIDE
 
@@ -49,11 +51,19 @@
 
 | T-18 | **Open redirect / login CSRF** in the sign-in flow | 1, 2 | `state`, `nonce`, PKCE; redirect URI from `APP_BASE_URL`; `next` limited to same-site paths | **1.3 ✓** |
 | T-19 | **Forced sign-out** through a link to `/api/auth/signout` | 1 | Accepted risk (nuisance only); a GET keeps sign-out working under `form-action 'self'` | 1.3 (accepted) |
+| T-20 | **Spoofing**: forged or altered bearer token on `/api/v1` | 6 | `server/auth/bearer.ts`: signature against the realm JWKS, asymmetric algorithms only (no `none`, no HMAC), issuer = `OIDC_ISSUER`, expiry with 30 s tolerance, `sub` and `azp` required; accepted only with `AUTH_MODE=oidc`. A request with a bearer header ignores cookies and `x-dev-user`. Any failure is 401 with `WWW-Authenticate: Bearer error="invalid_token"`; the token is never logged | MCP task 1 |
+| T-21 | **Spoofing**: token stolen from a laptop MCP client and replayed | 6 | Access tokens live at most 10 minutes; no offline tokens (T-24); refresh tokens rotate and end with the Keycloak session; roles still come from app memberships, so a stolen token has exactly the user's rights. Residual: a token is usable until it expires | MCP task 1 (accepted residual) |
+| T-22 | **Spoofing**: audience confusion (a token issued for another client or API accepted here) | 6 | `aud` must contain `OIDC_API_AUDIENCE` (`sit-sizing-api`), added only by the realm's `sit-sizing-api` client scope; `sit-sizing-web` tokens do not carry it | MCP task 1 |
+| T-23 | **Spoofing**: bearer token used after sign-out or session end | 6 | A token whose `sid` is in `RevokedSession` is refused, as on the cookie path. Residual: `RevokedSession` is filled by back-channel logout to `sit-sizing-web`; a Keycloak session that never included the web client sends no logout to the app, so its last access token stays valid for up to 10 minutes (its refresh token stops at once) | MCP task 1 (accepted residual) |
+| T-24 | **Elevation of privilege**: long-lived offline token outliving the session limits | 2, 7 | Not offered: the `offline_access` scope is not advertised or assigned to any client, no user or default role has the `offline_access` role, and anonymous registration refuses it (realm-baseline and identity tests) | MCP task 1 |
+| T-25 | **Elevation / DoS**: abuse of anonymous client registration | 7 | Realm policies: registered redirect URIs only `127.0.0.1`/`localhost`, scopes limited to `openid profile email` plus the realm defaults and the audience scope (no `service_account`, no `offline_access`), consent required, full scope disabled, protocol mapper allow-list, at most 200 clients. A registered client is public and can only start a user's own sign-in. Residual: the 200-client limit can be exhausted, blocking new Codex sign-ins; stale self-registered clients need a documented clean-up (open item) | MCP task 1 (accepted residual) |
+| T-26 | **Spoofing**: valid token for someone with no app user creates an account | 6 | The bearer path never creates users; it answers 403 `NOT_PROVISIONED` (sign in once in the browser). Inactive users get the same answer | MCP task 1 |
 
 ## Open items
 
 - ~~Back-channel logout~~ **Done in 1.7:** Keycloak posts a signed logout token to `/api/auth/backchannel-logout`; the session id is recorded in `RevokedSession` and refused on the next request (T-01).
 
+- Clean-up of stale self-registered MCP clients before the 200-client limit is reached (T-25, ADR-0016): runbook entry still to write.
 - Session lifetime and MFA scope: confirm with information security (Q2).
 - Rate-limit thresholds: derive from the non-functional targets (Q10).
 - Penetration test of the IdP configuration before the pilot: scope in `docs/security/pentest-scope.md`, configuration review in `docs/security/idp-review.md` (release gates, `docs/release-checklist.md`).

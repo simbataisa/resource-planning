@@ -140,6 +140,8 @@ export interface AuthedContext<P, U> extends RouteContext<P> {
 /**
  * route() + authentication: 401 when nobody is signed in. Authorisation happens in
  * the service layer with lib/rbac.ts, because it needs the resource's project.
+ * A refused bearer token also gets `WWW-Authenticate: Bearer error="invalid_token"`
+ * (RFC 6750), so a client knows to get a new token (ADR-0016).
  */
 export function authedRoute<U, P = Record<string, never>>(
   getUser: (request: Request) => Promise<U | null>,
@@ -147,7 +149,16 @@ export function authedRoute<U, P = Record<string, never>>(
 ) {
   return route<P>(async (request, ctx) => {
     const user = await getUser(request);
-    if (!user) throw new HttpError(401, 'UNAUTHENTICATED', 'Sign in to continue.');
+    if (!user) {
+      const bearer = /^bearer\b/i.test(request.headers.get('authorization')?.trim() ?? '');
+      throw new HttpError(
+        401,
+        'UNAUTHENTICATED',
+        'Sign in to continue.',
+        undefined,
+        bearer ? { 'www-authenticate': 'Bearer error="invalid_token"' } : undefined,
+      );
+    }
     return handler(request, { ...ctx, user });
   });
 }

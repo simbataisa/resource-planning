@@ -5,6 +5,8 @@ export const ApiErrorCode = z.enum([
   'VALIDATION_FAILED',
   'UNAUTHENTICATED',
   'FORBIDDEN',
+  /** Valid bearer token, but no active app user yet: sign in once in the browser (ADR-0016). */
+  'NOT_PROVISIONED',
   'NOT_FOUND',
   'CONFLICT',
   'RATE_LIMITED',
