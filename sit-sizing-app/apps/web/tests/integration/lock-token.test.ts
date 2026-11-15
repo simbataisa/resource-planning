@@ -234,6 +234,49 @@ describe('draft lock token', () => {
     expect((await lockCall(estimateId, won)).status).toBe(200);
   });
 
+  it('after a QE Lead takes over, the previous holder\'s token is refused', async () => {
+    const { estimateId, token } = await newEstimate('lead takeover');
+    const taken = await call(lock.POST, {
+      who: 'dev-lead',
+      method: 'POST',
+      params: { estimateId },
+      body: { takeover: true },
+    });
+    expect(taken.status, JSON.stringify(taken.json)).toBe(200);
+    const leadToken = taken.json.lockToken as string;
+    expect(leadToken).toBeTruthy();
+    expect(leadToken).not.toBe(token);
+    expect((await draftRow(estimateId)).lockTokenHash).toBe(hashLockToken(leadToken));
+
+    const patched = await call(draft.PATCH, {
+      who: 'dev-estimator',
+      method: 'PATCH',
+      params: { estimateId },
+      body: { rowVersion: taken.json.rowVersion, note: 'Synthetic · previous holder' },
+      lockToken: token,
+    });
+    expect(patched.status).toBe(409);
+    const renewed = await lockCall(estimateId, token);
+    expect(renewed.status).toBe(409);
+    const released = await call(lock.DELETE, {
+      who: 'dev-estimator',
+      method: 'DELETE',
+      params: { estimateId },
+      lockToken: token,
+    });
+    expect(released.status).toBe(409);
+    const row = await draftRow(estimateId);
+    expect(row.note).not.toBe('Synthetic · previous holder');
+    expect(row.lockTokenHash).toBe(hashLockToken(leadToken));
+  });
+
+  it('an over-long X-Lock-Token header is 400 VALIDATION_FAILED', async () => {
+    const { estimateId } = await newEstimate('long header');
+    const res = await lockCall(estimateId, 'a'.repeat(201));
+    expect(res.status).toBe(400);
+    expect(res.json.error.code).toBe('VALIDATION_FAILED');
+  });
+
   it('createDraft returns a token; reads never do', async () => {
     const { estimateId, token } = await newEstimate('reads');
     const save = await call(versions.POST, {
