@@ -307,18 +307,18 @@ The `mcp` service lets AI assistants (Claude Code, Codex) read and edit estimate
 
 Validated at start-up by `apps/mcp/src/env.ts`; a bad value stops the server with the variable's name (never its value). All are in `.env.example`.
 
-| Variable                    | Compose value                            | Meaning                                                                                       |
-| --------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `APP_ENV`                   | from `.env` (required)                   | `local`, `dev`, `sit` or `prod`. Outside `local`: `MCP_PUBLIC_URL` must be https, no dev user |
-| `LOG_LEVEL`                 | from `.env`, default `info`              | `debug`/`trace` are refused in `prod`                                                         |
-| `SIT_API_BASE_URL`          | `http://web:3000`                        | Origin of the web app; the server calls `<origin>/api/v1`                                     |
-| `OIDC_ISSUER`               | `http://localhost:18080/realms/qe-tools` | Must equal the token's `iss` (the browser-facing Keycloak URL)                                |
-| `OIDC_INTERNAL_URL`         | `http://keycloak:8080`                   | Where the server fetches the realm's signing keys                                             |
-| `OIDC_API_AUDIENCE`         | `sit-sizing-api`                         | Audience every token must carry                                                               |
-| `MCP_PUBLIC_URL`            | `http://localhost:3100`                  | This server's public origin; the protected resource is this plus `/mcp`. https outside local  |
-| `MCP_PORT`                  | `3100` (host port from `.env`)           | Listening port                                                                                |
-| `MCP_RATE_LIMIT_PER_MINUTE` | `60`                                     | Tool calls per user per minute and instance; keep below the API's `RATE_LIMIT_PER_MINUTE`     |
-| `MCP_DEV_USER`              | `dev-estimator` in the dev overlay only  | Seeded user to act as, without Keycloak. Local only                                           |
+| Variable                    | Compose value                            | Meaning                                                                                                                                                                                                                           |
+| --------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `APP_ENV`                   | from `.env` (required)                   | `local`, `dev`, `sit` or `prod`. Outside `local`: `MCP_PUBLIC_URL` must be https, no dev user                                                                                                                                     |
+| `LOG_LEVEL`                 | from `.env`, default `info`              | `debug`/`trace` are refused in `prod`                                                                                                                                                                                             |
+| `SIT_API_BASE_URL`          | `http://web:3000`                        | Origin of the web app; the server calls `<origin>/api/v1`                                                                                                                                                                         |
+| `OIDC_ISSUER`               | `http://localhost:18080/realms/qe-tools` | Must equal the token's `iss` (the browser-facing Keycloak URL)                                                                                                                                                                    |
+| `OIDC_INTERNAL_URL`         | `http://keycloak:8080`                   | Where the server fetches the realm's signing keys                                                                                                                                                                                 |
+| `OIDC_API_AUDIENCE`         | `sit-sizing-api`                         | Audience every token must carry                                                                                                                                                                                                   |
+| `MCP_PUBLIC_URL`            | `http://localhost:3100`                  | This server's public origin; the protected resource is this plus `/mcp`. https outside local                                                                                                                                      |
+| `MCP_PORT`                  | `3100` (host port from `.env`)           | Listening port                                                                                                                                                                                                                    |
+| `MCP_RATE_LIMIT_PER_MINUTE` | `60`                                     | Tool calls per user per minute and instance. One tool call can make several API calls (`GET /me`, reads, lock, write, unlock) and the API's `RATE_LIMIT_PER_MINUTE` is shared with the user's browser, so keep this well below it |
+| `MCP_DEV_USER`              | `dev-estimator` in the dev overlay only  | Seeded user to act as, without Keycloak. Local only                                                                                                                                                                               |
 
 Outside local the URL must be reachable over HTTPS from QE laptops, and so must Keycloak (sign-in runs in the user's browser). Network exposure is the platform team's decision (threat model).
 
