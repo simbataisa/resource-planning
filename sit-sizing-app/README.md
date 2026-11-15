@@ -6,7 +6,7 @@ The solution design is `../SIT_Sizing_Model_Solution_Design.md`. AI agents must 
 
 **Status: releases 1, 2 and 3 are complete** (design 14). Each release ends with a Playwright suite for its exit criteria (`pnpm test:e2e`). Decisions made along the way are in [docs/adr](docs/adr) (ADR-0001 to ADR-0014).
 
-**New here?** Open the illustrated guide [docs/guide/run-and-deploy.html](docs/guide/run-and-deploy.html) in a browser. It walks through every step below with diagrams.
+**New here?** Open the illustrated guide [docs/guide/run-and-deploy.html](docs/guide/run-and-deploy.html) in a browser. It walks through every step below with diagrams. For what each feature does and how it works, open [docs/guide/features.html](docs/guide/features.html).
 
 ## Prerequisites
 
