@@ -2,7 +2,7 @@
 # SIT Sizing images (design 12.1). Build from the repository root, for example:
 #   docker build -f docker/Dockerfile --target runner .
 # Stages: deps → dev | workspace → tools (migrate, seed, worker) | build → runner (web)
-#         | mcp-build → mcp (MCP server).
+#         | mcp-build → mcp (MCP server). runner and mcp start from runtime (no npm).
 #
 # REGISTRY_PREFIX  internal registry prefix, e.g. "nexus.example.internal/docker-proxy/" (trailing slash). Empty = Docker Hub.
 # NPM_REGISTRY     npm proxy URL (Nexus). Used by pnpm and corepack.
@@ -84,13 +84,21 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
       --config.inject-workspace-packages=true --store-dir /pnpm/store /out \
  && rm -rf /out/tests /out/scripts /out/vitest.config.ts /out/vitest.e2e.config.ts
 
+# ---------------------------------------------------------------------------
+# Common runtime base for the web and MCP images. The runtime images only run node
+# (and tsx), never npm, so the npm bundled with the Node image is removed: its own
+# dependencies (undici, brace-expansion, ...) otherwise fail the image scan with CVEs
+# that are not in the app, and a package manager in a runtime image is attack surface.
+FROM ${REGISTRY_PREFIX}${NODE_IMAGE} AS runtime
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+COPY --from=base /usr/local/share/sit-certs/bundle.pem /usr/local/share/sit-certs/bundle.pem
+
 # Runtime: non-root, files owned by root (read-only for the server). Run with a read-only
 # root filesystem and a tmpfs on /tmp, where tsx keeps its compile cache (see compose.yaml).
-FROM ${REGISTRY_PREFIX}${NODE_IMAGE} AS mcp
+FROM runtime AS mcp
 ARG APP_VERSION="0.0.0-dev"
 LABEL org.opencontainers.image.title="sit-sizing-mcp" \
       org.opencontainers.image.version="${APP_VERSION}"
-COPY --from=base /usr/local/share/sit-certs/bundle.pem /usr/local/share/sit-certs/bundle.pem
 ENV NODE_ENV=production \
     NODE_EXTRA_CA_CERTS=/usr/local/share/sit-certs/bundle.pem \
     MCP_PORT=3100 \
@@ -106,11 +114,10 @@ CMD ["node_modules/.bin/tsx", "src/main.ts"]
 # ---------------------------------------------------------------------------
 # Runtime: slim base, non-root user, files owned by root (read-only for the app),
 # Next.js standalone output. Run with a read-only root filesystem (see compose.yaml).
-FROM ${REGISTRY_PREFIX}${NODE_IMAGE} AS runner
+FROM runtime AS runner
 ARG APP_VERSION="0.0.0-dev"
 LABEL org.opencontainers.image.title="sit-sizing-web" \
       org.opencontainers.image.version="${APP_VERSION}"
-COPY --from=base /usr/local/share/sit-certs/bundle.pem /usr/local/share/sit-certs/bundle.pem
 ENV NODE_ENV=production \
     NODE_EXTRA_CA_CERTS=/usr/local/share/sit-certs/bundle.pem \
     NEXT_TELEMETRY_DISABLED=1 \
