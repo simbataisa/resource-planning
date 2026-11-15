@@ -291,17 +291,17 @@ The `mcp` service lets AI assistants (Claude Code, Codex) read and edit estimate
 
 ### Start, stop, logs, health
 
-| What          | How                                                                                                                                                                                                                                             |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Start         | `pnpm dev:up` (dev sign-in, see below) or `pnpm stack:up` (production-like image, Keycloak sign-in). Both wait for `mcp` to be healthy. MCP endpoint: http://localhost:3100/mcp                                                                 |
-| Stop          | `pnpm dev:down` / `pnpm stack:down`, or only this service: `docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml stop mcp`                                                                                          |
-| Logs          | `docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml logs -f mcp`. One line per request (method, path, status, duration) and per tool call (tool name, status, duration); never tool arguments or tokens           |
-| Liveness      | `curl -s localhost:3100/health` → `{"status":"ok"}` (the compose healthcheck)                                                                                                                                                                   |
-| Readiness     | `curl -s localhost:3100/ready` → `{"status":"ready"}` when the API's `/api/v1/ready` answers 200, otherwise 503 `not_ready`                                                                                                                     |
-| Scripted flow | `pnpm --filter @sit/mcp test:e2e` against `pnpm dev:up`, or `pnpm --filter @sit/mcp test:e2e:stack`: builds the images and runs the flow in an isolated stack (project `sit-mcp-flow-local`, ports 23300/23310, fresh secrets), then removes it |
-| Hardening     | Non-root user, read-only root filesystem with a tmpfs on `/tmp` (tsx compile cache), all capabilities dropped, `no-new-privileges`                                                                                                              |
+| What          | How                                                                                                                                                                                                                                                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Start         | `pnpm dev:up` (dev sign-in, see below) or `pnpm stack:up` (production-like image, Keycloak sign-in). Both wait for `mcp` to be healthy. MCP endpoint: http://localhost:3100/mcp                                                                                                                                                |
+| Stop          | `pnpm dev:down` / `pnpm stack:down`, or only this service: `docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml stop mcp`                                                                                                                                                                         |
+| Logs          | `docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml logs -f mcp`. One line per request (method, path, status, duration) and per tool call (tool name, status, duration); never tool arguments or tokens                                                                                          |
+| Liveness      | `curl -s localhost:3100/health` → `{"status":"ok"}` (the compose healthcheck)                                                                                                                                                                                                                                                  |
+| Readiness     | `curl -s localhost:3100/ready` → `{"status":"ready"}` when the API's `/api/v1/ready` answers 200, otherwise 503 `not_ready`                                                                                                                                                                                                    |
+| Scripted flow | `pnpm --filter @sit/mcp test:e2e` against `pnpm dev:up`, or `pnpm --filter @sit/mcp test:e2e:stack`: builds the images and runs the flow in an isolated stack (project `sit-mcp-flow-local`, ports 23300/23310, fresh secrets), then removes it. Both create estimates and versions in the stack they target (synthetic names) |
+| Hardening     | Non-root user, read-only root filesystem with a tmpfs on `/tmp` (tsx compile cache), all capabilities dropped, `no-new-privileges`                                                                                                                                                                                             |
 
-**Dev sign-in.** `compose.dev.yaml` sets `APP_ENV=local` and `MCP_DEV_USER=dev-estimator`: the server then sends the API's `x-dev-user` header instead of a token, so tools work without signing in. It needs the API in dev mode (`AUTH_MODE=dev`, the default in the generated `.env`). The server refuses to start with `MCP_DEV_USER` unless `APP_ENV=local`, and `compose.yaml` never sets it. For real Keycloak sign-in locally, use `pnpm stack:up` with `AUTH_MODE=oidc` in `.env` (the API accepts bearer tokens only in OIDC mode).
+**Dev sign-in.** `compose.dev.yaml` sets `APP_ENV=local` and `MCP_DEV_USER=dev-estimator`: the server then sends the API's `x-dev-user` header instead of a token, so tools work without signing in. It needs the API in dev mode (`AUTH_MODE=dev`, the default in the generated `.env`). The server refuses to start with `MCP_DEV_USER` unless `APP_ENV=local`, and `compose.yaml` never sets it. The dev service restarts on source changes with `tsx watch`, but file events from a macOS bind mount do not always reach the container: if a change does not show, run `docker compose --env-file .env -f docker/compose.yaml -f docker/compose.dev.yaml restart mcp`. For real Keycloak sign-in locally, use `pnpm stack:up` with `AUTH_MODE=oidc` in `.env` (the API accepts bearer tokens only in OIDC mode).
 
 ### Environment
 
@@ -351,17 +351,19 @@ A refused or expired token is not a tool error: the server answers with an OAuth
 
 Codex registers a new public client in the `qe-tools` realm on every sign-in, and the realm's anonymous registration policy allows at most **200 clients** ("Max Clients Limit"). When the limit is reached, new Codex sign-ins fail (registration refused with 403); Claude Code is unaffected. An admin checks monthly, and whenever a Codex sign-in fails that way:
 
-1. Sign in to the admin CLI (inside the Keycloak container locally; the internal admin endpoint elsewhere):
+Every command below runs in a shell inside the Keycloak container, which has `bash`, `grep`, `cut` and `wc` (no `jq`, no `curl`). Locally: `docker compose --env-file .env -f docker/compose.yaml exec keycloak bash`; elsewhere, the same image on the internal admin network. Checked against `keycloak/keycloak:26.8.0`.
+
+1. Sign in to the admin CLI (it asks for the `admin` password; locally `KEYCLOAK_ADMIN_PASSWORD` in `.env`):
    ```bash
-   kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin
+   K=/opt/keycloak/bin/kcadm.sh
+   $K config credentials --server http://localhost:8080 --realm master --user admin
    ```
-2. List the self-registered clients. They have a generated UUID as `clientId` and only loopback redirect URIs; the clients defined in the realm export (`sit-sizing-web`, `sit-sizing-mcp` and Keycloak's built-in ones) have readable names and are never deleted:
+2. List the self-registered clients (internal id, then `clientId`). They have a generated UUID as `clientId` and only loopback redirect URIs; the clients defined in the realm export (`sit-sizing-web`, `sit-sizing-mcp` and Keycloak's built-in ones) have readable names, never match, and are never deleted:
    ```bash
-   kcadm.sh get clients -r qe-tools --fields id,clientId,name,redirectUris \
-     | jq -r '.[] | select(.clientId | test("^[0-9a-f-]{36}$")) | [.id, .clientId, (.name // "")] | @tsv'
-   kcadm.sh get clients -r qe-tools | jq 'length'     # total, against the limit of 200
+   $K get clients -r qe-tools --fields id,clientId --format csv --noquotes | grep -E ',[0-9a-f-]{36}$'
+   $K get clients -r qe-tools --fields id --format csv --noquotes | wc -l   # total, against the limit of 200
    ```
-3. A client is stale when it has no active sessions (`kcadm.sh get clients/<id>/session-count -r qe-tools` → `{"count":0}`) and no recent `CODE_TO_TOKEN` or `REFRESH_TOKEN` event in the realm's events (Admin console → Events, filter by client).
-4. Delete each stale client: `kcadm.sh delete clients/<id> -r qe-tools`. Its user only has to sign in again; Codex then registers a new client.
+3. A client is stale when it has no active sessions (`$K get clients/<id>/session-count -r qe-tools` → `"count" : 0`) and no recent `CODE_TO_TOKEN` or `REFRESH_TOKEN` event in the realm's events (Admin console → Events, filter by client).
+4. Delete each stale client by its internal id (first column): `$K delete clients/<id> -r qe-tools`. Its user only has to sign in again; Codex then registers a new client.
 
 Record each clean-up (date, environment, clients deleted, by whom) in the release log.

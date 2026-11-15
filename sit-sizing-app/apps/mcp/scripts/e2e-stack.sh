@@ -9,6 +9,8 @@
 #
 #   pnpm --filter @sit/mcp test:e2e:stack
 #   NO_BUILD=1 ...   reuse the sit-sizing-{web,tools,mcp}:local images already built
+# Building retags the shared images sit-sizing-{web,tools,mcp}:local (as `pnpm test:e2e`
+# does for web and tools); running containers keep the image they started with.
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 
@@ -66,7 +68,9 @@ fi
 # Synthetic seed: users dev-estimator and dev-lead, project DEMO.
 "${COMPOSE[@]}" run --rm --no-deps seed
 
-curl -fsS "http://127.0.0.1:${MCP_PORT}/health" | grep -q '"status":"ok"'
+# Captured first: `curl | grep -q` can fail under pipefail when grep exits early (SIGPIPE).
+health="$(curl -fsS "http://127.0.0.1:${MCP_PORT}/health")"
+[[ "$health" == *'"status":"ok"'* ]] || { echo "MCP /health: $health" >&2; exit 1; }
 # /ready is expected to be 503 here: the API's readiness includes Keycloak, not started.
 echo "MCP /ready: $(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${MCP_PORT}/ready") (503 expected without Keycloak)"
 
