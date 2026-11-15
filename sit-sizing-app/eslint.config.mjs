@@ -133,6 +133,20 @@ export default defineConfig([
       { group: ['@sit/engine', '@sit/engine/*'], message: 'Schemas do not depend on the engine.' },
     ]),
   },
+  // ---- MCP server (ADR-0016): talks to the API over HTTP only --------------
+  {
+    files: ['apps/mcp/src/**/*.ts'],
+    rules: restrict([
+      {
+        group: ['@sit/db', '@sit/db/*', '@prisma/*'],
+        message: 'apps/mcp has no database access; call the API. (design spec 6.1)',
+      },
+      {
+        group: ['@sit/web', '@sit/web/*', '@/*', '**/apps/web/**', '**/web/server/**'],
+        message: 'apps/mcp never imports the web app or its server code. (design spec 6.1)',
+      },
+    ]),
+  },
   // ---- Component layers (design 8: ui → patterns → features) ---------------
   {
     files: ['apps/web/components/ui/**/*.{ts,tsx}'],
