@@ -11,6 +11,8 @@ Everything in them is invented: no people, customers, account numbers or ID numb
 
 ## How to run a test
 
+The full walkthrough, including installing and connecting the assistant, is in the [assistant quickstart](../guide/assistant-quickstart.md#5-test-it-with-the-sample-brd-and-fsd). In short:
+
 1. Start a chat with the assistant (Claude Code, Codex or another MCP client signed in to SIT Sizing).
 2. Paste or attach one document and ask, for example: "Estimate SIT for this BRD in project Demo" or "Do a detailed estimate from this FSD".
 3. Compare what it proposes with the tables below. The tolerances allow for reasonable judgement; a value outside them is worth a look.
