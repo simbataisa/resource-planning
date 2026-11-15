@@ -3,6 +3,7 @@ import {
   Assumptions,
   ChangeSummary,
   Estimate,
+  EstimateCreated,
   EstimateDetail,
   EstimateInputs,
   Id,
@@ -10,7 +11,7 @@ import {
 } from '@sit/schemas';
 import { z } from 'zod';
 import { defineTool, type ToolContext } from '../context';
-import { ApiCallError } from '../errors';
+import { ApiCallError, hasReason } from '../errors';
 import { applyChanges, PathError } from '../merge';
 
 /** Not read-only, not destructive (no tool deletes anything), not idempotent (design 6.5). */
@@ -39,23 +40,37 @@ function refusal(code: string, message: string): ApiCallError {
   return new ApiCallError({ status: 409, code, message });
 }
 
+function unlockFailed(ctx: ToolContext, code: string): false {
+  ctx.log.warn({ event: 'draft_unlock_failed', code }, 'could not release the draft edit lock');
+  return false;
+}
+
 /**
- * Releases the draft lock. A failure is logged with its error code only (no arguments,
- * no tokens) and reported as `false`; it never throws, so it cannot mask another error.
+ * Releases the draft lock with the token of the call that took it (`X-Lock-Token`), so it
+ * can only end the lock this session took. A failure is logged with its error code only
+ * (no arguments, no tokens) and reported as `false`; it never throws, so it cannot mask
+ * another error. Without a token there is nothing this session can release (`NO_LOCK_TOKEN`).
  * `noChallenge`: a 401 here must not turn a write that already happened into an auth
  * challenge, which a client would answer by replaying the (non-idempotent) call.
  */
-async function releaseLock(ctx: ToolContext, estimateId: string): Promise<boolean> {
+async function releaseLock(
+  ctx: ToolContext,
+  estimateId: string,
+  lockToken: string | undefined,
+): Promise<boolean> {
+  if (!lockToken) return unlockFailed(ctx, 'NO_LOCK_TOKEN');
   try {
-    await ctx.api.del(`/estimates/${seg(estimateId)}/draft/lock`, { noChallenge: true });
+    await ctx.api.del(`/estimates/${seg(estimateId)}/draft/lock`, { noChallenge: true, lockToken });
     return true;
   } catch (err) {
-    ctx.log.warn(
-      { event: 'draft_unlock_failed', code: err instanceof ApiCallError ? err.code : 'UNKNOWN' },
-      'could not release the draft edit lock',
-    );
-    return false;
+    return unlockFailed(ctx, err instanceof ApiCallError ? err.code : 'UNKNOWN');
   }
+}
+
+/** Drops the lock token from an API answer: it is never part of a tool's output. */
+function withoutToken<T extends { lockToken?: string }>(value: T): Omit<T, 'lockToken'> {
+  const { lockToken: _token, ...rest } = value;
+  return rest;
 }
 
 export interface DraftLockOptions {
@@ -87,21 +102,20 @@ async function unlockedDraft(ctx: ToolContext, base: string) {
  *    open) ⇒ `EDITOR_OPEN`; by someone else ⇒ `LOCKED`. No lock call then.
  * 2. With `beforeLock`: runs it (the validation read), then reads the lock state again,
  *    so the last check sits right before the lock call.
- * 3. Takes the lock with `takeover: false` (never a takeover), and passes the draft the
- *    lock call returned (its `rowVersion` is the one to send) to `fn`.
- * 4. Releases the lock afterwards, also when `fn` throws. No retry on any error.
+ * 3. Takes the lock with `takeover: false` (never a takeover) and no token, and passes the
+ *    draft the lock call returned (its `rowVersion` is the one to send) to `fn`, with the
+ *    `lockToken` that call returned, which `fn` sends as `X-Lock-Token` on its write.
+ * 4. Releases the lock afterwards with that token, also when `fn` throws. No retry.
  * A lock it did not take (a failed lock call, or a refusal) is never released.
  *
- * Residual race: locks belong to a user, not a session, and the API renews a lock its
- * holder asks for again. If the same user opens the editor between the last check and the
- * lock call, the lock call renews the editor's lock and the release in step 4 ends it. The
- * window is one request wide; closing it needs a server-side lock owner (session token) on
- * the lock API — a follow-up, not something this client can do.
+ * If the editor takes the lock between the last check and the lock call, the API refuses
+ * the lock call (the tool has no token for the editor's lock: `LOCKED_ELSEWHERE`, or `RACE`
+ * when both race for a free lock); the tool answers `EDITOR_OPEN` with no write or release.
  */
 export async function withDraftLock<T>(
   ctx: ToolContext,
   estimateId: string,
-  fn: (draft: Version) => Promise<T>,
+  fn: (draft: Omit<Version, 'lockToken'>, lockToken: string | undefined) => Promise<T>,
   opts: DraftLockOptions = {},
 ): Promise<T> {
   const base = `/estimates/${seg(estimateId)}`;
@@ -111,14 +125,26 @@ export async function withDraftLock<T>(
     await unlockedDraft(ctx, base);
   }
 
-  const locked = await ctx.api.post(`${base}/draft/lock`, { takeover: false }, Version);
+  let locked: Version;
+  try {
+    locked = await ctx.api.post(`${base}/draft/lock`, { takeover: false }, Version);
+  } catch (err) {
+    if (err instanceof ApiCallError && hasReason(err, 'RACE')) {
+      throw refusal(
+        'EDITOR_OPEN',
+        'close the draft in the editor first, or another session took it',
+      );
+    }
+    throw err; // LOCKED_ELSEWHERE becomes EDITOR_OPEN in toToolResult.
+  }
+  const lockToken = locked.lockToken;
   let succeeded = false;
   try {
-    const result = await fn(locked);
+    const result = await fn(withoutToken(locked), lockToken);
     succeeded = true;
     return result;
   } finally {
-    if (!(succeeded && opts.consumesLock)) await releaseLock(ctx, estimateId);
+    if (!(succeeded && opts.consumesLock)) await releaseLock(ctx, estimateId, lockToken);
   }
 }
 
@@ -166,12 +192,12 @@ export function registerWriteTools(server: McpServer, ctx: ToolContext): void {
           ...(profileId !== undefined ? { profileId } : {}),
           summary,
         },
-        Estimate,
+        EstimateCreated,
       );
-      // The new draft comes back locked to the caller; give the lock back so the editor and
-      // later write tools can take it.
-      await releaseLock(ctx, estimate.id);
-      return estimate;
+      // The new draft comes back locked to the caller, with its token; give the lock back
+      // so the editor and later write tools can take it.
+      await releaseLock(ctx, estimate.id, estimate.lockToken);
+      return withoutToken(estimate);
     },
   );
 
@@ -197,8 +223,11 @@ export function registerWriteTools(server: McpServer, ctx: ToolContext): void {
         { ...(fromVersion !== undefined ? { fromVersion } : {}), summary },
         Version,
       );
-      // Like create_estimate: the new draft is locked to the caller; release that lock.
-      return (await releaseLock(ctx, estimateId)) ? { ...draft, lock: null } : draft;
+      // Like create_estimate: the new draft is locked to the caller; release that lock with
+      // the token this POST returned (none ⇒ nothing to release; the answer keeps the lock).
+      const released = await releaseLock(ctx, estimateId, draft.lockToken);
+      const out = withoutToken(draft);
+      return released ? { ...out, lock: null } : out;
     },
   );
 
@@ -232,7 +261,7 @@ export function registerWriteTools(server: McpServer, ctx: ToolContext): void {
       return withDraftLock(
         ctx,
         estimateId,
-        async (draft) => {
+        async (draft, lockToken) => {
           // Re-apply on the draft read under the lock, so nothing changed in between is lost.
           const doc = build(draft);
           return ctx.api.patch(
@@ -245,6 +274,7 @@ export function registerWriteTools(server: McpServer, ctx: ToolContext): void {
               summary,
             },
             Version,
+            { lockToken },
           );
         },
         {
@@ -271,11 +301,12 @@ export function registerWriteTools(server: McpServer, ctx: ToolContext): void {
       annotations: WRITE,
     },
     ({ estimateId, profileId, summary }) =>
-      withDraftLock(ctx, estimateId, (draft) =>
+      withDraftLock(ctx, estimateId, (draft, lockToken) =>
         ctx.api.post(
           `/estimates/${seg(estimateId)}/draft/profile`,
           { profileId, rowVersion: draft.rowVersion, summary },
           Version,
+          { lockToken },
         ),
       ),
   );
@@ -297,12 +328,13 @@ export function registerWriteTools(server: McpServer, ctx: ToolContext): void {
       withDraftLock(
         ctx,
         estimateId,
-        (draft) =>
+        (draft, lockToken) =>
           ctx.api.post(
             `/estimates/${seg(estimateId)}/versions`,
             // Like the API, keep the draft's own note; the assistant note only fills a gap.
             { note: note ?? (draft.note ? draft.note : `${NOTE_PREFIX}${summary}`), summary },
             Version,
+            { lockToken },
           ),
         { consumesLock: true },
       ),

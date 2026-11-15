@@ -26,6 +26,7 @@ beforeAll(async () => {
     method: 'POST',
     params: { estimateId },
     body: {},
+    lockToken: est.json.lockToken,
   });
   // Pretend v1 was saved by an older engine: same inputs, a stored result that differs.
   const v1 = await db().estimateVersion.findFirstOrThrow({ where: { estimateId, number: 1 } });

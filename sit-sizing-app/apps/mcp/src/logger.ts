@@ -17,11 +17,14 @@ const REDACT_PATHS = [
   'authorization',
   '*.token',
   '*.accessToken',
+  '*.lockToken',
   '*.authorization',
   'headers.authorization',
   'headers.cookie',
   '*.headers.authorization',
   '*.headers.cookie',
+  'headers["x-lock-token"]',
+  '*.headers["x-lock-token"]',
 ];
 
 export function createLogger(level: string, destination?: DestinationStream): Logger {

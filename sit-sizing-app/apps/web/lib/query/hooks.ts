@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ActualsCreate,
@@ -15,6 +16,7 @@ import type {
 import type { z } from 'zod';
 import { api } from '../api';
 import { ApiClientError } from '../http';
+import { forgetLockToken, lockTokenFor, rememberLockToken } from '../lock-tokens';
 import { writeLocal } from '../tours/storage';
 import { qk } from './keys';
 
@@ -104,25 +106,82 @@ export function useCreateEstimate(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: z.input<typeof EstimateCreate>) => api.estimates.create(projectId, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', projectId] }),
+    onSuccess: (e) => {
+      // Draft 1 is locked to this tab; the editor renews with this token.
+      rememberLockToken(e.id, e.lockToken);
+      return qc.invalidateQueries({ queryKey: ['estimates', projectId] });
+    },
   });
 }
+
+/** A call that uses the draft lock carries this tab's lock token (draft lock token design). */
+type WithLockToken = { lockToken?: string };
 
 /** Autosave. A 409 (stale or lost lock) is not retried; the editor shows recovery options (U-09). */
 export function usePatchDraft(estimateId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: z.input<typeof DraftPatch>) => api.estimates.patchDraft(estimateId, body),
+    mutationFn: ({ lockToken, ...body }: z.input<typeof DraftPatch> & WithLockToken) =>
+      api.estimates.patchDraft(estimateId, body, lockToken),
     retry: (count, err) => !(err instanceof ApiClientError && err.status < 500) && count < 2,
     onSuccess: (v) => qc.setQueryData(qk.version(estimateId, v.number), v),
   });
 }
 
-/** Take or renew the draft edit lock (also the heartbeat); `true` takes it over (QE Lead). */
+/**
+ * Take or renew the draft edit lock (also the heartbeat). `takeover` takes it from someone else
+ * (QE Lead) or from another tab of mine. A newly taken lock comes back with `lockToken`.
+ */
 export function useLockDraft(estimateId: string) {
   return useMutation({
-    mutationFn: (takeover: boolean = false) => api.estimates.lock(estimateId, { takeover }),
+    mutationFn: ({ takeover = false, lockToken }: { takeover?: boolean } & WithLockToken) =>
+      api.estimates.lock(estimateId, { takeover }, lockToken),
   });
+}
+
+/**
+ * While mounted, releases this tab's draft lock when the page is hidden (refresh, close,
+ * navigate away), so the same tab renews on reload. Sends nothing without a token, or while
+ * `busy()` says an autosave is pending or in flight (releasing would get that save refused).
+ */
+export function useReleaseLockOnPageHide(estimateId: string, busy?: () => boolean) {
+  const busyRef = useRef(busy);
+  useEffect(() => {
+    busyRef.current = busy;
+  });
+  useEffect(() => {
+    const onHide = () => {
+      if (busyRef.current?.()) return;
+      const token = lockTokenFor(estimateId);
+      if (token) api.estimates.releaseOnPageHide(estimateId, token);
+    };
+    window.addEventListener('pagehide', onHide);
+    return () => window.removeEventListener('pagehide', onHide);
+  }, [estimateId]);
+}
+
+/**
+ * Releases this tab's draft lock when the editor unmounts (in-app navigation away), with the
+ * same rules as {@link useReleaseLockOnPageHide}: never without a token, and not while `keep`
+ * says so (a save pending or in flight, or a renewal under way). The release waits one task so
+ * the development double mount (Strict Mode) does not free the lock.
+ */
+export function useReleaseLockOnUnmount(estimateId: string, keep?: () => boolean) {
+  const keepRef = useRef(keep);
+  useEffect(() => {
+    keepRef.current = keep;
+  });
+  const pending = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    clearTimeout(pending.current);
+    return () => {
+      pending.current = setTimeout(() => {
+        if (keepRef.current?.()) return;
+        const token = lockTokenFor(estimateId);
+        if (token) api.estimates.releaseOnPageHide(estimateId, token);
+      }, 0);
+    };
+  }, [estimateId]);
 }
 
 /** Starts a new draft from the latest version; the editor then loads it. */
@@ -132,6 +191,8 @@ export function useCreateDraft(estimateId: string) {
     mutationFn: (fromVersion?: number) =>
       api.estimates.createDraft(estimateId, fromVersion ? { fromVersion } : {}),
     onSuccess: async (v) => {
+      // The new draft is locked to this tab; the editor renews with this token.
+      rememberLockToken(estimateId, v.lockToken);
       qc.setQueryData(qk.version(estimateId, v.number), v);
       await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
     },
@@ -141,8 +202,11 @@ export function useCreateDraft(estimateId: string) {
 export function useSaveVersion(estimateId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (note?: string) => api.estimates.saveVersion(estimateId, note ? { note } : {}),
+    mutationFn: ({ note, lockToken }: { note?: string } & WithLockToken = {}) =>
+      api.estimates.saveVersion(estimateId, note ? { note } : {}, lockToken),
     onSuccess: async (v) => {
+      // Saving freezes the draft and clears its lock, so the token has no further use.
+      forgetLockToken(estimateId);
       qc.setQueryData(qk.version(estimateId, v.number), v);
       await qc.invalidateQueries({ queryKey: qk.estimate(estimateId) });
     },
@@ -196,8 +260,11 @@ export function useUpdateProfile(id: string) {
 export function useApplyProfile(estimateId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { profileId: string; rowVersion: number }) =>
-      api.estimates.applyProfile(estimateId, body),
+    mutationFn: ({
+      lockToken,
+      ...body
+    }: { profileId: string; rowVersion: number } & WithLockToken) =>
+      api.estimates.applyProfile(estimateId, body, lockToken),
     onSuccess: (v) => qc.setQueryData(qk.version(estimateId, v.number), v),
   });
 }

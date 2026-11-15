@@ -1,6 +1,6 @@
 import { ProfileApply } from '@sit/schemas';
 import { api, ok } from '@/server/http/authed';
-import { EstimateParams } from '@/server/http/params';
+import { EstimateParams, lockTokenOf } from '@/server/http/params';
 import { readJson } from '@/server/http/parse';
 import { applyProfile } from '@/server/services/profiles';
 
@@ -14,6 +14,7 @@ export const POST = api<{ estimateId: string }>(async (request, { user, params, 
       EstimateParams.parse(params).estimateId,
       await readJson(request, ProfileApply),
       { requestId },
+      lockTokenOf(request),
     ),
   ),
 );

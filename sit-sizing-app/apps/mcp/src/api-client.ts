@@ -11,8 +11,8 @@ export type Query = Record<string, string | number | boolean | undefined>;
 
 export interface ApiClient {
   get<T>(path: string, schema: ZodType<T>, query?: Query): Promise<T>;
-  post<T>(path: string, body: unknown, schema: ZodType<T>): Promise<T>;
-  patch<T>(path: string, body: unknown, schema: ZodType<T>): Promise<T>;
+  post<T>(path: string, body: unknown, schema: ZodType<T>, opts?: CallOptions): Promise<T>;
+  patch<T>(path: string, body: unknown, schema: ZodType<T>, opts?: CallOptions): Promise<T>;
   del(path: string, opts?: CallOptions): Promise<void>;
 }
 
@@ -22,6 +22,11 @@ export interface CallOptions {
    * call `onUnauthorized`, so it cannot turn a completed write into an auth challenge.
    */
   noChallenge?: boolean;
+  /**
+   * The draft lock token from the call that took the lock, sent as `X-Lock-Token` on the
+   * calls that use the lock. Never logged.
+   */
+  lockToken?: string;
 }
 
 export interface ApiClientOptions {
@@ -82,6 +87,7 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
     if (opts.token) headers.authorization = `Bearer ${opts.token}`;
     else if (opts.devUser) headers['x-dev-user'] = opts.devUser;
     if (body !== undefined) headers['content-type'] = 'application/json';
+    if (callOpts.lockToken) headers['x-lock-token'] = callOpts.lockToken;
     const res = await doFetch(url, {
       method,
       headers,
@@ -125,8 +131,10 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
 
   return {
     get: async (path, schema, query) => parse(await send('GET', path, undefined, query), schema),
-    post: async (path, body, schema) => parse(await send('POST', path, body), schema),
-    patch: async (path, body, schema) => parse(await send('PATCH', path, body), schema),
+    post: async (path, body, schema, callOpts) =>
+      parse(await send('POST', path, body, undefined, callOpts), schema),
+    patch: async (path, body, schema, callOpts) =>
+      parse(await send('PATCH', path, body, undefined, callOpts), schema),
     del: async (path, callOpts) => {
       await send('DELETE', path, undefined, undefined, callOpts);
     },

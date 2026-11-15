@@ -21,7 +21,12 @@ export type EditorAction =
   | { type: 'editInputs'; recipe: (draft: EstimateInputs) => void }
   | { type: 'editAssumptions'; recipe: (draft: Assumptions) => void }
   | { type: 'replace'; inputs: EstimateInputs; assumptions: Assumptions }
-  | { type: 'saved'; rowVersion: number; revision: number };
+  | { type: 'saved'; rowVersion: number; revision: number }
+  /**
+   * This tab took the lock back ("Open here instead") and the draft did not change elsewhere:
+   * keep the values on screen (autosave sends any unsaved ones).
+   */
+  | { type: 'relocked'; rowVersion: number };
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
@@ -58,6 +63,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         rowVersion: action.rowVersion,
         dirty: state.revision !== action.revision,
       };
+    case 'relocked':
+      // Never marks values dirty: a changed draft is not relocked (see the editor's recovery).
+      return { ...state, rowVersion: action.rowVersion };
   }
 }
 

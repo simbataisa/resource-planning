@@ -2,6 +2,7 @@ import {
   DraftCreate,
   DraftPatch,
   EstimateCreate,
+  EstimateCreated,
   EstimateDetail,
   Estimate,
   Health,
@@ -47,6 +48,7 @@ import {
   UserParams,
   ActualsParams,
   EstimateParams,
+  LockTokenHeaders,
   NotificationParams,
   ProfileParams,
   ProjectParams,
@@ -67,6 +69,8 @@ export interface Operation {
   minRole: MinRole;
   params?: z.ZodObject;
   query?: z.ZodObject;
+  /** Request header parameters (e.g. X-Lock-Token). */
+  headers?: z.ZodObject;
   body?: z.ZodType;
   bodyExample?: unknown;
   success: {
@@ -96,6 +100,9 @@ const EX_ME_EXTRA = {
   createdAt: '2026-11-01T09:00:00.000Z',
   lastLoginAt: '2026-11-17T08:00:00.000Z',
 };
+const LOCK_TOKEN_NOTE =
+  'Send the lock token as `X-Lock-Token`; a missing or wrong token on a lock you hold returns 409 with reason `LOCKED_ELSEWHERE` and nothing is written.';
+
 const EX_PROJECT = {
   id: 'clx0synthproj0001',
   key: 'DEMO',
@@ -213,7 +220,7 @@ export const OPERATIONS: Operation[] = [
     minRole: 'ESTIMATOR',
     summary: 'Create an estimate',
     description:
-      'Creates draft version 1 from the example or a blank scope, locked to the creator.',
+      'Creates draft version 1 from the example or a blank scope, locked to the creator. The response carries `lockToken` for that lock (returned only here); send it as `X-Lock-Token`.',
     params: ProjectParams,
     body: EstimateCreate,
     bodyExample: {
@@ -221,7 +228,7 @@ export const OPERATIONS: Operation[] = [
       template: 'example',
       summary: 'Synthetic: new estimate for the onboarding release',
     },
-    success: { status: 201, description: 'Created', schema: Estimate },
+    success: { status: 201, description: 'Created, with the lock token', schema: EstimateCreated },
     errors: [...WRITE, 422],
   },
   {
@@ -254,7 +261,7 @@ export const OPERATIONS: Operation[] = [
     minRole: 'ESTIMATOR',
     summary: 'Start a new draft',
     description:
-      'Copies a saved version (default: the latest) and recomputes it with the current engine.',
+      'Copies a saved version (default: the latest) and recomputes it with the current engine. The response carries `lockToken` for the new lock (returned only here).',
     params: EstimateParams,
     body: DraftCreate,
     bodyExample: { summary: 'Synthetic: start a draft from the latest version' },
@@ -268,9 +275,9 @@ export const OPERATIONS: Operation[] = [
     tag: 'Versions',
     minRole: 'ESTIMATOR',
     summary: 'Autosave the draft',
-    description:
-      'Lock holder only. The server recomputes the result. Send the rowVersion you last saw; a stale one returns 409. A `summary` (1-300 characters) records one `estimate.draft.update` audit event naming the areas changed; without it an autosave is not audited.',
+    description: `Lock holder only. ${LOCK_TOKEN_NOTE} The server recomputes the result. Send the rowVersion you last saw; a stale one returns 409. A \`summary\` (1-300 characters) records one \`estimate.draft.update\` audit event naming the areas changed; without it an autosave is not audited.`,
     params: EstimateParams,
+    headers: LockTokenHeaders,
     body: DraftPatch,
     bodyExample: {
       rowVersion: 3,
@@ -288,11 +295,16 @@ export const OPERATIONS: Operation[] = [
     minRole: 'ESTIMATOR',
     summary: 'Take, renew or take over the edit lock',
     description:
-      'The lock lasts 15 minutes and is renewed by calling this again or by an autosave. `takeover: true` is for QE Leads.',
+      "The lock lasts 15 minutes and is renewed by calling this again with `X-Lock-Token` or by an autosave. Taking a free or expired lock, or taking one over, returns a new `lockToken` (only in this response). Your own lock without its token (open in another tab or in the assistant) returns 409 with reason `LOCKED_ELSEWHERE`, unless you send `takeover: true`, which any role may do for their own lock (the other session loses it). Taking over someone else's lock is for QE Leads.",
     params: EstimateParams,
+    headers: LockTokenHeaders,
     body: LockRequest,
     bodyExample: { takeover: false },
-    success: { status: 200, description: 'The draft with the lock', schema: Version },
+    success: {
+      status: 200,
+      description: 'The draft with the lock; `lockToken` when the lock was taken or taken over',
+      schema: Version,
+    },
     errors: WRITE,
   },
   {
@@ -302,7 +314,9 @@ export const OPERATIONS: Operation[] = [
     tag: 'Versions',
     minRole: 'ESTIMATOR',
     summary: 'Release the edit lock',
+    description: `Lock holder only. ${LOCK_TOKEN_NOTE} A refused release leaves the lock in place.`,
     params: EstimateParams,
+    headers: LockTokenHeaders,
     success: { status: 204, description: 'Released' },
     errors: WRITE,
   },
@@ -313,9 +327,9 @@ export const OPERATIONS: Operation[] = [
     tag: 'Versions',
     minRole: 'ESTIMATOR',
     summary: 'Save the draft as a version',
-    description:
-      'Lock holder only. The saved version is immutable. A `summary` becomes the version note when no `note` is given.',
+    description: `Lock holder only. ${LOCK_TOKEN_NOTE} The saved version is immutable. A \`summary\` becomes the version note when no \`note\` is given.`,
     params: EstimateParams,
+    headers: LockTokenHeaders,
     body: VersionSave,
     bodyExample: { summary: 'Synthetic · ready for review' },
     success: { status: 201, description: 'The saved version', schema: Version },
@@ -536,9 +550,9 @@ export const OPERATIONS: Operation[] = [
     tag: 'Versions',
     minRole: 'ESTIMATOR',
     summary: "Apply a published profile to the draft's assumptions",
-    description:
-      "Lock holder only. Replaces every assumption with the profile's values and recomputes; inputs are kept.",
+    description: `Lock holder only. ${LOCK_TOKEN_NOTE} Replaces every assumption with the profile's values and recomputes; inputs are kept.`,
     params: EstimateParams,
+    headers: LockTokenHeaders,
     body: ProfileApply,
     bodyExample: {
       profileId: 'cm0profile0000000000000',

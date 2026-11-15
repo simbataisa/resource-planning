@@ -15,7 +15,9 @@ import {
 import { NativeSelect } from '@/components/ui/native-select';
 import { Field } from '@/components/patterns/field';
 import { Link } from '@/i18n/navigation';
+import { lockTokenFor } from '@/lib/lock-tokens';
 import { useApplyProfile, useProfiles } from '@/lib/query/hooks';
+import { lockConflict } from './draft-toolbar';
 import { useEditor } from './store';
 
 /**
@@ -26,10 +28,13 @@ export function ApplyProfile({
   estimateId,
   projectId,
   profileId,
+  onLost,
 }: {
   estimateId: string;
   projectId: string;
   profileId: string | null;
+  /** Applying was refused because the draft is open elsewhere: switch to recovery. */
+  onLost?: () => void;
 }) {
   const t = useTranslations('profiles.apply');
   const tc = useTranslations('common');
@@ -43,6 +48,8 @@ export function ApplyProfile({
   );
   const [choice, setChoice] = useState('');
   const [confirm, setConfirm] = useState(false);
+  // Refused as open in another tab or the assistant (LOCKED_ELSEWHERE or RACE).
+  const [elsewhere, setElsewhere] = useState(false);
   const picked = published.find((p) => p.id === choice);
 
   return (
@@ -85,7 +92,11 @@ export function ApplyProfile({
           </Button>
         </div>
       ) : null}
-      {apply.isError ? (
+      {elsewhere ? (
+        <Alert variant="destructive">
+          <AlertDescription>{t('lockedElsewhere')}</AlertDescription>
+        </Alert>
+      ) : apply.isError ? (
         <Alert variant="destructive">
           <AlertDescription>{apply.error.message}</AlertDescription>
         </Alert>
@@ -103,9 +114,14 @@ export function ApplyProfile({
               </Button>
               <Button
                 disabled={apply.isPending}
-                onClick={() =>
+                onClick={() => {
+                  setElsewhere(false);
                   apply.mutate(
-                    { profileId: picked.id, rowVersion: state.rowVersion },
+                    {
+                      profileId: picked.id,
+                      rowVersion: state.rowVersion,
+                      lockToken: lockTokenFor(estimateId),
+                    },
                     {
                       onSuccess: (v) => {
                         dispatch({
@@ -116,10 +132,15 @@ export function ApplyProfile({
                         });
                         setChoice('');
                       },
+                      onError: (e) => {
+                        if (lockConflict(e) !== 'elsewhere') return;
+                        setElsewhere(true);
+                        onLost?.();
+                      },
                       onSettled: () => setConfirm(false),
                     },
-                  )
-                }
+                  );
+                }}
               >
                 {t('apply')}
               </Button>

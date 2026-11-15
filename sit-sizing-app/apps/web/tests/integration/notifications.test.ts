@@ -56,6 +56,7 @@ describe('outbox', () => {
       method: 'POST',
       params: { estimateId },
       body: {},
+      lockToken: est.json.lockToken,
     });
     expect((await act(submit.POST, 'dev-estimator', 1, { note: 'Please review' })).status).toBe(
       200,
@@ -162,6 +163,7 @@ describe('worker delivery and retries', () => {
         method: 'POST',
         params: { estimateId },
         body: {},
+        lockToken: r.json.lockToken,
       });
       await act(submit.POST, 'dev-estimator', 1);
       const smtp = `smtp://${mailpit.getHost()}:${mailpit.getMappedPort(1025)}`;

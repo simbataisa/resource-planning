@@ -1,6 +1,6 @@
 import { DraftCreate, DraftPatch } from '@sit/schemas';
 import { api, ok } from '@/server/http/authed';
-import { EstimateParams } from '@/server/http/params';
+import { EstimateParams, lockTokenOf } from '@/server/http/params';
 import { readJson } from '@/server/http/parse';
 import { createDraft, patchDraft } from '@/server/services/versions';
 
@@ -27,6 +27,7 @@ export const PATCH = api<{ estimateId: string }>(async (request, { user, params,
       EstimateParams.parse(params).estimateId,
       await readJson(request, DraftPatch),
       { requestId },
+      lockTokenOf(request),
     ),
   ),
 );

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { Check, CircleAlert, Loader2, Save } from 'lucide-react';
+import type { Version } from '@sit/schemas';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,8 +18,14 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Field } from '@/components/patterns/field';
 import { ApiClientError } from '@/lib/http';
-import { useLockDraft, usePatchDraft, useSaveVersion } from '@/lib/query/hooks';
-import { useEditor } from './store';
+import { lockTokenFor, rememberLockToken } from '@/lib/lock-tokens';
+import {
+  useLockDraft,
+  usePatchDraft,
+  useReleaseLockOnPageHide,
+  useSaveVersion,
+} from '@/lib/query/hooks';
+import { useEditor, type EditorAction, type EditorState } from './store';
 import { useTourEvent } from '../tours/use-tour-event';
 
 /** Autosave debounce (design 8.3). */
@@ -28,30 +35,87 @@ export const HEARTBEAT_MS = 5 * 60_000;
 
 type SaveState = 'saved' | 'unsaved' | 'saving' | 'failed';
 
+/** Why the lock was lost: open in another tab or the assistant, or any other conflict. */
+export type LostReason = 'elsewhere' | 'conflict';
+
+/**
+ * Classifies a 409: `LOCKED_ELSEWHERE` (another tab or the assistant has my lock) and `RACE`
+ * (another session won a free lock) both mean "open elsewhere"; other 409s are conflicts.
+ */
+export function lockConflict(e: unknown): LostReason | null {
+  if (!(e instanceof ApiClientError) || e.status !== 409) return null;
+  return e.reason === 'LOCKED_ELSEWHERE' || e.reason === 'RACE' ? 'elsewhere' : 'conflict';
+}
+
+/**
+ * What this tab does once it holds the lock again ("Open here instead", or the renewal after a
+ * back/forward cache restore): carry on with the values on screen (the draft did not change),
+ * restart from the server's copy (nothing unsaved), or show recovery (the draft changed and there
+ * are unsaved values; never save them over newer work).
+ */
+export type Reclaim = 'continue' | 'reload' | 'lost';
+
+/** Decides the {@link Reclaim} outcome from the draft the lock call returned. */
+export function reclaimWith(
+  state: Pick<EditorState, 'rowVersion' | 'dirty'>,
+  dispatch: (action: EditorAction) => void,
+): (v: Version) => Reclaim {
+  return (v) => {
+    if (v.rowVersion === state.rowVersion) {
+      dispatch({ type: 'relocked', rowVersion: v.rowVersion });
+      return 'continue';
+    }
+    return state.dirty ? 'lost' : 'reload';
+  };
+}
+
 /**
  * Keeps the open draft in sync with the server while the user holds the edit lock (U-09):
  * debounced autosave with `rowVersion`, a lock heartbeat, the save status and "Save version".
- * A 409 means the lock or the draft was lost: `onLost` switches the editor to recovery.
+ * Every call sends this tab's lock token (memory only). A 409 means the lock or the draft was
+ * lost: `onLost` switches the editor to recovery.
  */
 export function DraftToolbar({
   estimateId,
   versionNumber,
   onLost,
+  onResume,
+  busyRef,
 }: {
   estimateId: string;
   versionNumber: number;
-  onLost: () => void;
+  onLost: (reason: LostReason) => void;
+  /** The page came back from the back/forward cache: renew the lock before editing resumes. */
+  onResume: (reclaim: (v: Version) => Reclaim) => void;
+  /** Receives "is a save pending or in flight?", so the editor keeps the lock on unmount. */
+  busyRef?: MutableRefObject<() => boolean>;
 }) {
   const { state, dispatch, editable } = useEditor();
   const patch = usePatchDraft(estimateId);
   const lock = useLockDraft(estimateId);
-  const [failed, setFailed] = useState(false);
-  const onLostRef = useRef(onLost);
+  const latest = useRef({ state, busy: false, onLost, onResume });
   useEffect(() => {
-    onLostRef.current = onLost;
+    latest.current = { state, busy: state.dirty || patch.isPending, onLost, onResume };
+    if (busyRef) busyRef.current = () => latest.current.busy;
   });
+  // Refreshing or closing this tab frees the lock, so a reload renews instead of "open elsewhere".
+  // Not while an autosave is pending or in flight: that save would be refused.
+  useReleaseLockOnPageHide(estimateId, () => latest.current.busy);
+  // Back/forward cache restore: the lock may have been released on page hide, or lapsed.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) latest.current.onResume(reclaimWith(latest.current.state, dispatch));
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, [dispatch]);
+  const [failed, setFailed] = useState(false);
 
-  const isConflict = (e: unknown) => e instanceof ApiClientError && e.status === 409;
+  const lost = (e: unknown) => {
+    const reason = lockConflict(e);
+    if (reason) latest.current.onLost(reason);
+    return reason !== null;
+  };
 
   async function flush(): Promise<boolean> {
     if (!state.dirty) return true;
@@ -61,13 +125,13 @@ export function DraftToolbar({
         rowVersion: state.rowVersion,
         inputs: state.inputs,
         assumptions: state.assumptions,
+        lockToken: lockTokenFor(estimateId),
       });
       dispatch({ type: 'saved', rowVersion: v.rowVersion, revision });
       setFailed(false);
       return true;
     } catch (e) {
-      if (isConflict(e)) onLostRef.current();
-      else setFailed(true);
+      if (!lost(e)) setFailed(true);
       return false;
     }
   }
@@ -84,7 +148,14 @@ export function DraftToolbar({
   useEffect(() => {
     if (!editable) return;
     const h = setInterval(() => {
-      lock.mutate(false, { onError: (e) => isConflict(e) && onLostRef.current() });
+      lock.mutate(
+        { takeover: false, lockToken: lockTokenFor(estimateId) },
+        {
+          // A lapsed lock taken again comes back with a new token.
+          onSuccess: (v) => rememberLockToken(estimateId, v.lockToken),
+          onError: (e) => void lost(e),
+        },
+      );
     }, HEARTBEAT_MS);
     return () => clearInterval(h);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the mutation object is stable enough
@@ -101,7 +172,12 @@ export function DraftToolbar({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <SaveStatus status={status} />
-      <SaveVersionDialog estimateId={estimateId} number={versionNumber} flush={flush} />
+      <SaveVersionDialog
+        estimateId={estimateId}
+        number={versionNumber}
+        flush={flush}
+        onLost={(reason) => latest.current.onLost(reason)}
+      />
     </div>
   );
 }
@@ -128,10 +204,13 @@ function SaveVersionDialog({
   estimateId,
   number,
   flush,
+  onLost,
 }: {
   estimateId: string;
   number: number;
   flush: () => Promise<boolean>;
+  /** Saving was refused because the draft is open elsewhere: switch to recovery. */
+  onLost: (reason: LostReason) => void;
 }) {
   const t = useTranslations();
   const save = useSaveVersion(estimateId);
@@ -148,10 +227,21 @@ function SaveVersionDialog({
     const ok = await flush();
     if (ok) {
       try {
-        await save.mutateAsync(note.trim() || undefined);
+        await save.mutateAsync({
+          note: note.trim() || undefined,
+          lockToken: lockTokenFor(estimateId),
+        });
         tourEvent('version-saved');
         setOpen(false);
-      } catch {
+      } catch (e) {
+        if (lockConflict(e) === 'elsewhere') {
+          // Open in another tab or the assistant: recovery keeps the values and offers the
+          // download, rather than a generic error inside a dialog that can no longer save.
+          setOpen(false);
+          setBusy(false);
+          onLost('elsewhere');
+          return;
+        }
         setError(true);
       }
     } else {

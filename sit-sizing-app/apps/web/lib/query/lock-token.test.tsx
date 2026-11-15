@@ -1,0 +1,118 @@
+// @vitest-environment jsdom
+import { StrictMode, type ReactNode } from 'react';
+import { act, renderHook } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { forgetLockToken, lockTokenFor, rememberLockToken } from '../lock-tokens';
+import {
+  useCreateDraft,
+  useCreateEstimate,
+  useReleaseLockOnPageHide,
+  useReleaseLockOnUnmount,
+  useSaveVersion,
+} from './hooks';
+
+const api = vi.hoisted(() => ({
+  estimates: {
+    create: vi.fn(async () => ({ id: 'e1', lockToken: 'tok-new' })),
+    createDraft: vi.fn(async () => ({ number: 2, lockToken: 'tok-draft' })),
+    saveVersion: vi.fn(async () => ({ number: 2 })),
+    releaseOnPageHide: vi.fn(),
+  },
+}));
+vi.mock('../api', () => ({ api }));
+
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
+);
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  forgetLockToken('e1');
+});
+
+describe('Lock token hand-over in this tab', () => {
+  it('keeps the token from creating an estimate for the editor', async () => {
+    const { result } = renderHook(() => useCreateEstimate('p1'), { wrapper });
+    await act(() => result.current.mutateAsync({ name: 'Synthetic' }));
+    expect(lockTokenFor('e1')).toBe('tok-new');
+  });
+
+  it('keeps the token from starting a draft, and forgets it once the version is saved', async () => {
+    const draft = renderHook(() => useCreateDraft('e1'), { wrapper });
+    await act(() => draft.result.current.mutateAsync(undefined));
+    expect(lockTokenFor('e1')).toBe('tok-draft');
+    const save = renderHook(() => useSaveVersion('e1'), { wrapper });
+    await act(() => save.result.current.mutateAsync({ lockToken: 'tok-draft' }));
+    expect(api.estimates.saveVersion).toHaveBeenCalledWith('e1', {}, 'tok-draft');
+    expect(lockTokenFor('e1')).toBeUndefined();
+  });
+});
+
+describe('Release on page hide', () => {
+  it('releases the lock with this tab token when the page is hidden', () => {
+    rememberLockToken('e1', 'tok-1');
+    const { unmount } = renderHook(() => useReleaseLockOnPageHide('e1'), { wrapper });
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).toHaveBeenCalledWith('e1', 'tok-1');
+    unmount();
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips the release while an autosave is pending or in flight', () => {
+    rememberLockToken('e1', 'tok-1');
+    let busy = true;
+    renderHook(() => useReleaseLockOnPageHide('e1', () => busy), { wrapper });
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+    busy = false;
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).toHaveBeenCalledWith('e1', 'tok-1');
+  });
+
+  it('sends nothing when this tab holds no token', () => {
+    renderHook(() => useReleaseLockOnPageHide('e1'), { wrapper });
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+  });
+});
+
+describe('Release when the editor unmounts', () => {
+  const flush = () => act(() => new Promise((r) => setTimeout(r, 0)));
+
+  it('releases with this tab token once the editor goes away (in-app navigation)', async () => {
+    rememberLockToken('e1', 'tok-1');
+    const { unmount } = renderHook(() => useReleaseLockOnUnmount('e1'), { wrapper });
+    await flush();
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+    unmount();
+    await flush();
+    expect(api.estimates.releaseOnPageHide).toHaveBeenCalledWith('e1', 'tok-1');
+  });
+
+  it('skips the release while a save is pending or in flight', async () => {
+    rememberLockToken('e1', 'tok-1');
+    const { unmount } = renderHook(() => useReleaseLockOnUnmount('e1', () => true), { wrapper });
+    unmount();
+    await flush();
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing when this tab holds no token', async () => {
+    const { unmount } = renderHook(() => useReleaseLockOnUnmount('e1'), { wrapper });
+    unmount();
+    await flush();
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+  });
+
+  it('does not release on the development double mount (Strict Mode)', async () => {
+    rememberLockToken('e1', 'tok-1');
+    const strict = ({ children }: { children: ReactNode }) => (
+      <StrictMode>{wrapper({ children })}</StrictMode>
+    );
+    renderHook(() => useReleaseLockOnUnmount('e1'), { wrapper: strict });
+    await flush();
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
+  });
+});

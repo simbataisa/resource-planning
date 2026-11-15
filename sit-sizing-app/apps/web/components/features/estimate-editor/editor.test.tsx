@@ -5,7 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS } from '@sit/engine';
 import type { Assumptions, EstimateInputs, Version } from '@sit/schemas';
 import { ApiClientError } from '@/lib/http';
+import { forgetLockToken, rememberLockToken } from '@/lib/lock-tokens';
+import viMessages from '@/messages/vi.json';
 import { renderWithIntl } from '@/tests/support/intl';
+import { HEARTBEAT_MS } from './draft-toolbar';
 import { EstimateEditor } from './estimate-editor';
 
 vi.mock(
@@ -25,6 +28,8 @@ const hooks = vi.hoisted(() => ({
   useReviewVersion: vi.fn(),
   useProfiles: vi.fn(),
   useApplyProfile: vi.fn(),
+  useReleaseLockOnPageHide: vi.fn(),
+  useReleaseLockOnUnmount: vi.fn(),
 }));
 vi.mock('@/lib/query/hooks', () => hooks);
 
@@ -89,12 +94,17 @@ function me(role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD') {
   });
 }
 
+type LockVars = { takeover: boolean; lockToken?: string };
 let lock: { mutate: ReturnType<typeof vi.fn> };
 let patch: { mutateAsync: ReturnType<typeof vi.fn>; isPending: boolean };
 let save: { mutateAsync: ReturnType<typeof vi.fn> };
 let createDraft: { mutate: ReturnType<typeof vi.fn>; isPending: boolean };
 
-function setup(v: Version, role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' = 'ESTIMATOR') {
+function setup(
+  v: Version,
+  role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' = 'ESTIMATOR',
+  locale: 'en' | 'vi' = 'en',
+) {
   hooks.useEstimate.mockReturnValue(ok(estimate(v)));
   hooks.useVersion.mockReturnValue(ok(v));
   hooks.useMe.mockReturnValue(me(role));
@@ -103,14 +113,16 @@ function setup(v: Version, role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD' = 'ESTIMATOR
     <QueryClientProvider client={client}>
       <EstimateEditor estimateId="e1" />
     </QueryClientProvider>,
+    { locale },
   );
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  forgetLockToken('e1');
   hooks.useProject.mockReturnValue(ok({ id: 'p1', name: 'Synthetic · Demo' }));
   lock = {
-    mutate: vi.fn((_takeover: boolean, o: { onSuccess: (v: Version) => void }) =>
+    mutate: vi.fn((_vars: LockVars, o: { onSuccess: (v: Version) => void }) =>
       o.onSuccess(version({ lock: { holder: user, expiresAt: LATER, mine: true } })),
     ),
   };
@@ -156,7 +168,7 @@ describe('EstimateEditor sessions (U-09)', () => {
   it('takes the lock, autosaves after a pause and reports the save state', async () => {
     vi.useFakeTimers();
     setup(version());
-    expect(lock.mutate).toHaveBeenCalledWith(false, expect.anything());
+    expect(lock.mutate).toHaveBeenCalledWith({ takeover: false }, expect.anything());
     expect(screen.getByRole('status', { name: '' })).toHaveTextContent('All changes saved');
 
     fireEvent.change(qtyOf(0), { target: { value: '2' } });
@@ -217,11 +229,11 @@ describe('EstimateEditor sessions (U-09)', () => {
     expect(screen.getByText(/Synthetic Lead is editing this draft/)).toBeInTheDocument();
     expect(lock.mutate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Take over editing' }));
-    expect(lock.mutate).toHaveBeenCalledWith(true, expect.anything());
+    expect(lock.mutate).toHaveBeenCalledWith({ takeover: true }, expect.anything());
   });
 
   it('treats a lock refused by the server as held by someone else', () => {
-    lock.mutate.mockImplementation((_t: boolean, o: { onError: (e: unknown) => void }) =>
+    lock.mutate.mockImplementation((_t: LockVars, o: { onError: (e: unknown) => void }) =>
       o.onError(new ApiClientError(409, null, 'held')),
     );
     setup(version({ lock: { holder: other, expiresAt: NOW, mine: false } }));
@@ -242,7 +254,7 @@ describe('EstimateEditor sessions (U-09)', () => {
       fireEvent.click(within(dialog).getByRole('button', { name: 'Save version' }));
     });
     expect(patch.mutateAsync).toHaveBeenCalled();
-    expect(save.mutateAsync).toHaveBeenCalledWith('Synthetic note');
+    expect(save.mutateAsync).toHaveBeenCalledWith({ note: 'Synthetic note' });
   });
 
   it('reports a failed save version', async () => {
@@ -254,6 +266,565 @@ describe('EstimateEditor sessions (U-09)', () => {
       fireEvent.click(within(dialog).getByRole('button', { name: 'Save version' }));
     });
     expect(within(dialog).getByRole('alert')).toHaveTextContent('The version was not saved');
+  });
+});
+
+const conflict = (reason: string) =>
+  new ApiClientError(
+    409,
+    {
+      error: {
+        code: 'CONFLICT',
+        message: 'This draft is open in another tab or in the assistant.',
+        details: [{ reason }],
+        requestId: 'r1',
+      },
+    },
+    'conflict',
+  );
+const mineLock = { holder: user, expiresAt: LATER, mine: true };
+
+function pageShow(persisted: boolean) {
+  const e = new Event('pageshow') as Event & { persisted: boolean };
+  Object.defineProperty(e, 'persisted', { value: persisted });
+  window.dispatchEvent(e);
+}
+
+describe('Draft lock token (per tab)', () => {
+  it('keeps the token from the lock and sends it with autosave, heartbeat and save version', async () => {
+    vi.useFakeTimers();
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    lock.mutate.mockImplementation((vars: LockVars, o: { onSuccess: (v: Version) => void }) =>
+      // A renewal returns no token; the tab keeps the one it got first.
+      o.onSuccess(version({ lock: mineLock, ...(vars.lockToken ? {} : { lockToken: 'tok-1' }) })),
+    );
+    setup(version());
+    expect(lock.mutate).toHaveBeenCalledWith({ takeover: false }, expect.anything());
+
+    fireEvent.change(qtyOf(0), { target: { value: '2' } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(patch.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ lockToken: 'tok-1' }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(HEARTBEAT_MS * 2);
+    });
+    expect(lock.mutate).toHaveBeenCalledTimes(3);
+    expect(lock.mutate.mock.calls[1]![0]).toEqual({ takeover: false, lockToken: 'tok-1' });
+    expect(lock.mutate.mock.calls[2]![0]).toEqual({ takeover: false, lockToken: 'tok-1' });
+
+    vi.useRealTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'Save version' }));
+    const dialog = screen.getByRole('dialog', { name: 'Save version 2' });
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save version' }));
+    });
+    expect(save.mutateAsync).toHaveBeenCalledWith({ lockToken: 'tok-1' });
+    // Memory only: never written to localStorage or sessionStorage.
+    expect(setItem.mock.calls.flat().join(' ')).not.toContain('tok-1');
+    setItem.mockRestore();
+  });
+
+  it('renews with the token a new estimate or new draft handed over in this tab', () => {
+    rememberLockToken('e1', 'tok-0');
+    setup(version());
+    expect(lock.mutate).toHaveBeenCalledWith(
+      { takeover: false, lockToken: 'tok-0' },
+      expect.anything(),
+    );
+  });
+
+  it('sends the token when applying a profile', () => {
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) =>
+      o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' })),
+    );
+    const apply = { mutate: vi.fn(), isPending: false, isError: false };
+    hooks.useApplyProfile.mockReturnValue(apply);
+    hooks.useProfiles.mockReturnValue(
+      ok({
+        items: [
+          {
+            id: 'pr1',
+            name: 'Synthetic profile',
+            status: 'PUBLISHED',
+            scope: 'GLOBAL',
+            projectId: null,
+          },
+        ],
+      }),
+    );
+    setup(version());
+    const tab = screen.getByRole('tab', { name: /Assumptions/ });
+    fireEvent.mouseDown(tab);
+    fireEvent.click(tab);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Apply a published profile' }), {
+      target: { value: 'pr1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply profile' }));
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Apply profile' }),
+    );
+    expect(apply.mutate).toHaveBeenCalledWith(
+      { profileId: 'pr1', rowVersion: 3, lockToken: 'tok-1' },
+      expect.anything(),
+    );
+  });
+
+  /** First lock gives tok-1 at rowVersion 3; "Open here instead" gives tok-2 at `after`. */
+  function lockThenTakeover(after: number, takeoverError?: unknown) {
+    lock.mutate.mockImplementation(
+      (vars: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        if (vars.takeover && takeoverError) return o.onError(takeoverError);
+        o.onSuccess(
+          version({
+            lock: mineLock,
+            lockToken: vars.takeover ? 'tok-2' : 'tok-1',
+            rowVersion: vars.takeover ? after : 3,
+          }),
+        );
+      },
+    );
+  }
+
+  async function loseLockWhileEditing(qty: string) {
+    vi.useFakeTimers();
+    patch.mutateAsync.mockRejectedValueOnce(conflict('LOCKED_ELSEWHERE'));
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: qty } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(patch.mutateAsync).toHaveBeenCalledTimes(1);
+  }
+
+  it('shows recovery when autosave finds the draft open elsewhere, and opens it here with the unsaved values when nothing changed', async () => {
+    lockThenTakeover(3);
+    await loseLockWhileEditing('3');
+    expect(
+      screen.getByText(/This draft is open in another tab or in the assistant/),
+    ).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    expect(qtyOf(0).value).toBe('3');
+    expect(
+      screen.getByRole('button', { name: 'Download my unsaved values (JSON)' }),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(lock.mutate).toHaveBeenLastCalledWith(
+      { takeover: true, lockToken: 'tok-1' },
+      expect.anything(),
+    );
+    expect(qtyOf(0)).not.toBeDisabled();
+    expect(qtyOf(0).value).toBe('3');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(patch.mutateAsync).toHaveBeenCalledTimes(2);
+    const last = patch.mutateAsync.mock.calls[1]![0] as {
+      rowVersion: number;
+      lockToken: string;
+      inputs: EstimateInputs;
+    };
+    expect(last.lockToken).toBe('tok-2');
+    expect(last.rowVersion).toBe(3);
+    expect(last.inputs.features[0]!.qty).toBe(3);
+  });
+
+  it('never saves over newer work: after the other tab saved, "Open here instead" leads to recovery', async () => {
+    // Tab A took over and saved (rowVersion 3 → 5); this tab (B) takes the lock back.
+    lockThenTakeover(5);
+    await loseLockWhileEditing('3');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(screen.getByText('Your last changes were not saved')).toBeInTheDocument();
+    expect(screen.getByText(/the draft changed since you opened it/)).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    expect(qtyOf(0).value).toBe('3');
+    expect(
+      screen.getByRole('button', { name: 'Download my unsaved values (JSON)' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload the latest draft' })).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(HEARTBEAT_MS);
+    });
+    expect(patch.mutateAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('an idle tab that takes the lock back after the draft changed loads it and saves nothing', async () => {
+    vi.useFakeTimers();
+    let n = 0;
+    lock.mutate.mockImplementation(
+      (vars: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        n += 1;
+        if (vars.takeover)
+          o.onSuccess(version({ lock: mineLock, lockToken: 'tok-2', rowVersion: 5 }));
+        else if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+        else o.onError(conflict('LOCKED_ELSEWHERE'));
+      },
+    );
+    setup(version());
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(HEARTBEAT_MS + 100);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(qtyOf(0)).not.toBeDisabled();
+    expect(screen.queryByText('Your last changes were not saved')).toBeNull();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(patch.mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['still open elsewhere', conflict('LOCKED_ELSEWHERE')],
+    ['a network failure', new ApiClientError(0, null, 'Network Error')],
+  ])(
+    'keeps the unsaved values and says so when "Open here instead" fails (%s)',
+    async (_name, error) => {
+      lockThenTakeover(3, error);
+      await loseLockWhileEditing('8');
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+      });
+      expect(screen.getByText(/The draft could not be opened here/)).toBeInTheDocument();
+      expect(screen.queryByText(/Someone else took over editing/)).toBeNull();
+      expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Download my unsaved values (JSON)' }),
+      ).toBeInTheDocument();
+      expect(qtyOf(0).value).toBe('8');
+      expect(qtyOf(0)).toBeDisabled();
+    },
+  );
+
+  it('releases the lock on page hide while this tab edits, but not while a save is pending', async () => {
+    vi.useFakeTimers();
+    let resolveSave: (v: Version) => void = () => {};
+    patch.mutateAsync.mockImplementation(() => new Promise<Version>((r) => (resolveSave = r)));
+    setup(version());
+    const busy = () => {
+      const calls = hooks.useReleaseLockOnPageHide.mock.calls;
+      const last = calls[calls.length - 1] as [string, () => boolean];
+      expect(last[0]).toBe('e1');
+      return last[1]();
+    };
+    expect(busy()).toBe(false);
+    fireEvent.change(qtyOf(0), { target: { value: '4' } });
+    expect(busy()).toBe(true); // autosave pending
+    patch.isPending = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(patch.mutateAsync).toHaveBeenCalledTimes(1);
+    expect(busy()).toBe(true); // in flight
+    patch.isPending = false;
+    await act(async () => {
+      resolveSave(version({ rowVersion: 4 }));
+    });
+    expect(busy()).toBe(false);
+  });
+
+  it('renews the lock with the kept token when the page comes back from the back/forward cache', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      o.onSuccess(version({ lock: mineLock, lockToken: n === 1 ? 'tok-1' : 'tok-2' }));
+    });
+    setup(version());
+    pageShow(false);
+    expect(lock.mutate).toHaveBeenCalledTimes(1);
+    await act(async () => pageShow(true));
+    expect(lock.mutate).toHaveBeenCalledTimes(2);
+    expect(lock.mutate).toHaveBeenLastCalledWith(
+      { takeover: false, lockToken: 'tok-1' },
+      expect.anything(),
+    );
+    expect(qtyOf(0)).not.toBeDisabled();
+    expect(screen.queryByText('Your last changes were not saved')).toBeNull();
+  });
+
+  it('keeps editing read-only until the renewal after a back/forward restore answers', async () => {
+    let held: ((v: Version) => void) | undefined;
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+      else held = o.onSuccess;
+    });
+    setup(version());
+    await act(async () => pageShow(true));
+    expect(qtyOf(0)).toBeDisabled();
+    await act(async () => held!(version({ lock: mineLock, lockToken: 'tok-2' })));
+    expect(qtyOf(0)).not.toBeDisabled();
+  });
+
+  it('after a back/forward restore, shows recovery when the draft is open elsewhere', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation(
+      (_v: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        n += 1;
+        if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+        else o.onError(conflict('LOCKED_ELSEWHERE'));
+      },
+    );
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: '7' } });
+    await act(async () => pageShow(true));
+    expect(
+      screen.getByText(/This draft is open in another tab or in the assistant/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/The draft could not be opened here/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    expect(qtyOf(0).value).toBe('7');
+  });
+
+  it('after a back/forward restore, never keeps unsaved values over a draft that changed', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      o.onSuccess(version({ lock: mineLock, lockToken: `tok-${n}`, rowVersion: n === 1 ? 3 : 6 }));
+    });
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: '9' } });
+    await act(async () => pageShow(true));
+    expect(screen.getByText('Your last changes were not saved')).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    expect(qtyOf(0).value).toBe('9');
+    expect(patch.mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('clears the "could not be opened here" note once the lock state moves on', async () => {
+    vi.useFakeTimers();
+    let takeovers = 0;
+    lock.mutate.mockImplementation(
+      (vars: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        if (!vars.takeover) return o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+        takeovers += 1;
+        if (takeovers === 1) return o.onError(conflict('LOCKED_ELSEWHERE'));
+        o.onSuccess(version({ lock: mineLock, lockToken: 'tok-2' }));
+      },
+    );
+    patch.mutateAsync.mockRejectedValue(conflict('LOCKED_ELSEWHERE'));
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: '2' } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(screen.getByText(/The draft could not be opened here/)).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(qtyOf(0)).not.toBeDisabled();
+    // The next autosave finds it open elsewhere again: a fresh notice, not the old failure.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+    expect(screen.queryByText(/The draft could not be opened here/)).toBeNull();
+  });
+
+  it('shows recovery with unsaved values when the heartbeat finds the lock taken by another tab', async () => {
+    vi.useFakeTimers();
+    let first = true;
+    lock.mutate.mockImplementation(
+      (_v: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        if (first) {
+          first = false;
+          o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+        } else o.onError(conflict('LOCKED_ELSEWHERE'));
+      },
+    );
+    setup(version());
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(HEARTBEAT_MS - 500);
+    });
+    fireEvent.change(qtyOf(0), { target: { value: '6' } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(600);
+    });
+    expect(patch.mutateAsync).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    expect(qtyOf(0).value).toBe('6');
+  });
+
+  it('offers "Open here instead" when the draft is already open elsewhere or a race was lost', () => {
+    let calls = 0;
+    lock.mutate.mockImplementation(
+      (vars: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        calls += 1;
+        if (vars.takeover) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-3' }));
+        else o.onError(conflict(calls === 1 ? 'RACE' : 'LOCKED_ELSEWHERE'));
+      },
+    );
+    setup(version({ lock: mineLock }));
+    expect(
+      screen.getByText('This draft is open in another tab or in the assistant.'),
+    ).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    expect(lock.mutate).toHaveBeenLastCalledWith({ takeover: true }, expect.anything());
+    expect(qtyOf(0)).not.toBeDisabled();
+  });
+});
+
+describe('Lock token review fixes', () => {
+  it.each(['LOCKED_ELSEWHERE', 'RACE'])(
+    'switches to recovery with the values kept when saving a version is refused (%s)',
+    async (why) => {
+      save.mutateAsync.mockRejectedValue(conflict(why));
+      setup(version());
+      fireEvent.change(qtyOf(0), { target: { value: '6' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Save version' }));
+      const dialog = screen.getByRole('dialog', { name: 'Save version 2' });
+      await act(async () => {
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Save version' }));
+      });
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.getByText('Your last changes were not saved')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Download my unsaved values (JSON)' }),
+      ).toBeInTheDocument();
+      expect(qtyOf(0)).toBeDisabled();
+      expect(qtyOf(0).value).toBe('6');
+    },
+  );
+
+  function profiles() {
+    hooks.useProfiles.mockReturnValue(
+      ok({
+        items: [
+          {
+            id: 'pr1',
+            name: 'Synthetic profile',
+            status: 'PUBLISHED',
+            scope: 'GLOBAL',
+            projectId: null,
+          },
+        ],
+      }),
+    );
+  }
+
+  it.each(['LOCKED_ELSEWHERE', 'RACE'])(
+    'a refused profile apply (%s) shows Vietnamese text, not the server message, and recovery',
+    async (why) => {
+      const apply: {
+        mutate: ReturnType<typeof vi.fn>;
+        isPending: boolean;
+        isError: boolean;
+        error: unknown;
+      } = { mutate: vi.fn(), isPending: false, isError: false, error: null };
+      apply.mutate.mockImplementation(
+        (_v: unknown, o: { onError?: (e: unknown) => void; onSettled?: () => void }) => {
+          const e = conflict(why);
+          apply.isError = true;
+          apply.error = e;
+          o.onError?.(e);
+          o.onSettled?.();
+        },
+      );
+      hooks.useApplyProfile.mockReturnValue(apply);
+      profiles();
+      setup(version(), 'ESTIMATOR', 'vi');
+      const tab = screen.getAllByRole('tab')[4]!;
+      fireEvent.mouseDown(tab);
+      fireEvent.click(tab);
+      fireEvent.change(screen.getByRole('combobox', { name: viMessages.profiles.apply.choose }), {
+        target: { value: 'pr1' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: viMessages.profiles.apply.apply }));
+      await act(async () => {
+        fireEvent.click(
+          within(screen.getByRole('dialog')).getByRole('button', {
+            name: viMessages.profiles.apply.apply,
+          }),
+        );
+      });
+      expect(screen.getByText(viMessages.profiles.apply.lockedElsewhere)).toBeInTheDocument();
+      expect(
+        screen.queryByText('This draft is open in another tab or in the assistant.'),
+      ).toBeNull();
+      expect(screen.getByText(viMessages.draft.openElsewhereLost)).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: viMessages.draft.downloadUnsaved }),
+      ).toBeInTheDocument();
+    },
+  );
+
+  /** The latest "keep the lock" check the editor handed to the unmount release. */
+  const keepOnUnmount = () => {
+    const calls = hooks.useReleaseLockOnUnmount.mock.calls;
+    const last = calls[calls.length - 1] as [string, () => boolean];
+    expect(last[0]).toBe('e1');
+    return last[1]();
+  };
+
+  it('releases the lock when the editor unmounts, but not while a save is pending or in flight', async () => {
+    vi.useFakeTimers();
+    let resolveSave: (v: Version) => void = () => {};
+    patch.mutateAsync.mockImplementation(() => new Promise<Version>((r) => (resolveSave = r)));
+    setup(version());
+    expect(keepOnUnmount()).toBe(false);
+    fireEvent.change(qtyOf(0), { target: { value: '4' } });
+    expect(keepOnUnmount()).toBe(true); // autosave pending
+    patch.isPending = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(keepOnUnmount()).toBe(true); // in flight
+    patch.isPending = false;
+    await act(async () => {
+      resolveSave(version({ rowVersion: 4 }));
+    });
+    expect(keepOnUnmount()).toBe(false);
+  });
+
+  it('releases the lock on unmount in lost state, even with unsaved values', async () => {
+    vi.useFakeTimers();
+    patch.mutateAsync.mockRejectedValue(conflict('VERSION_CONFLICT'));
+    setup(version());
+    fireEvent.change(qtyOf(0), { target: { value: '5' } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    expect(screen.getByText('Your last changes were not saved')).toBeInTheDocument();
+    expect(keepOnUnmount()).toBe(false);
+  });
+
+  it('keeps the lock on unmount while it is being renewed after a back/forward restore', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+    });
+    setup(version());
+    await act(async () => pageShow(true));
+    expect(keepOnUnmount()).toBe(true);
+  });
+
+  it('says politely that the lock is being renewed after a back/forward restore', async () => {
+    let n = 0;
+    lock.mutate.mockImplementation((_v: LockVars, o: { onSuccess: (v: Version) => void }) => {
+      n += 1;
+      if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+    });
+    setup(version(), 'ESTIMATOR', 'vi');
+    await act(async () => pageShow(true));
+    expect(
+      screen.getAllByRole('status').some((s) => s.textContent === viMessages.draft.resuming),
+    ).toBe(true);
   });
 });
 

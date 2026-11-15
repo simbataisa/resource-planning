@@ -171,6 +171,9 @@ model EstimateVersion {
   /// Draft edit lock (drafts only)
   lockedById         String?
   lockExpiresAt      DateTime?
+  /// SHA-256 (hex) of the lock token; the token itself is never stored. Cleared with the lock
+  /// (trigger "EstimateVersion_lock_token_needs_lock" sets it to null whenever lockedById is null).
+  lockTokenHash      String?
   createdById        String
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @default(now()) @updatedAt

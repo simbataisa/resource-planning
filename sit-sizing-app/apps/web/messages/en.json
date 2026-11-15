@@ -1070,6 +1070,11 @@
     "lockLostBody": "Someone else took over editing or the draft changed since you opened it. Your unsaved values are kept on this page: download them to keep a copy, then reload the latest draft.",
     "downloadUnsaved": "Download my unsaved values (JSON)",
     "reload": "Reload the latest draft",
+    "openElsewhere": "This draft is open in another tab or in the assistant.",
+    "openElsewhereLost": "This draft is open in another tab or in the assistant. Your unsaved values are kept on this page: open it here to carry on with them, or download a copy first.",
+    "openHere": "Open here instead",
+    "openHereFailed": "The draft could not be opened here. Your unsaved values are still on this page: try again, or download them.",
+    "resuming": "Renewing your edit lock…",
     "saveVersion": "Save version",
     "saveVersionTitle": "Save version {n}",
     "saveVersionBody": "Saving freezes this draft as version {n}. It cannot change afterwards; you can start a new draft from it at any time.",
@@ -1747,7 +1752,8 @@
       "apply": "Apply profile",
       "waitForSave": "Wait for autosave to finish.",
       "confirmTitle": "Replace all assumptions?",
-      "confirmBody": "Every assumption in this draft will be replaced by the values of {name}. Your scope stays the same. Changes you made to assumptions are lost."
+      "confirmBody": "Every assumption in this draft will be replaced by the values of {name}. Your scope stays the same. Changes you made to assumptions are lost.",
+      "lockedElsewhere": "The profile was not applied: this draft is open in another tab or in the assistant."
     },
     "valuesTitle": "Assumption values"
   },

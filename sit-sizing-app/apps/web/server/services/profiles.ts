@@ -247,10 +247,11 @@ export async function applyProfile(
   estimateId: string,
   input: z.output<typeof ProfileApply>,
   meta: RequestMeta,
+  lockToken?: string,
 ) {
   return db().$transaction(async (tx) => {
     const est = await estimateFor(tx, user, estimateId, 'draft.edit');
-    const draft = await requireOwnLockedDraft(tx, user, estimateId);
+    const draft = await requireOwnLockedDraft(tx, user, estimateId, lockToken);
     if (draft.rowVersion !== input.rowVersion)
       throw new HttpError(409, 'CONFLICT', 'The draft changed since you loaded it.', [
         { reason: 'STALE', rowVersion: draft.rowVersion },
@@ -266,7 +267,12 @@ export async function applyProfile(
     const assumptions = Assumptions.parse(p.values);
     const now = clock.now();
     const updated = await tx.estimateVersion.updateMany({
-      where: { id: draft.id, rowVersion: input.rowVersion, status: 'DRAFT' },
+      where: {
+        id: draft.id,
+        rowVersion: input.rowVersion,
+        status: 'DRAFT',
+        lockTokenHash: draft.lockTokenHash,
+      },
       data: {
         ...snapshotData(readStored(draft).inputs, assumptions),
         profileId: p.id,

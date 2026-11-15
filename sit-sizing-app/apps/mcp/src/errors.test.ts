@@ -19,6 +19,29 @@ describe('toToolResult', () => {
     expect(text(r)).toContain('[{"id":"e1"}]');
   });
 
+  it('maps a 409 LOCKED_ELSEWHERE (draft open in the editor) to EDITOR_OPEN', () => {
+    const r = toToolResult(
+      new ApiCallError({
+        status: 409,
+        code: 'CONFLICT',
+        message: 'This draft is open in another tab or in the assistant.',
+        details: [{ reason: 'LOCKED_ELSEWHERE' }],
+      }),
+    );
+    expect(r.isError).toBe(true);
+    expect(text(r)).toBe('EDITOR_OPEN: close the draft in the editor first');
+    // Other conflicts keep their code.
+    const stale = toToolResult(
+      new ApiCallError({
+        status: 409,
+        code: 'CONFLICT',
+        message: 'x',
+        details: [{ reason: 'STALE' }],
+      }),
+    );
+    expect(text(stale)).toMatch(/^CONFLICT: x/);
+  });
+
   it('turns a 401 into an auth challenge, not a tool error', () => {
     expect(() =>
       toToolResult(new ApiCallError({ status: 401, code: 'UNAUTHENTICATED', message: 'Sign in' })),

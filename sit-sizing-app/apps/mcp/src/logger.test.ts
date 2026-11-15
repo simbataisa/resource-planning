@@ -27,4 +27,22 @@ describe('createLogger', () => {
     expect(lines[0]).not.toContain('synthetic-token');
     expect(lines[0]).not.toContain('Bearer x');
   });
+
+  it('redacts the draft lock token in bodies and the X-Lock-Token header', () => {
+    const lines: string[] = [];
+    const sink = new Writable({
+      write(chunk: Buffer, _enc, cb) {
+        lines.push(chunk.toString());
+        cb();
+      },
+    });
+    const log = createLogger('info', sink);
+    log.info({
+      res: { lockToken: 'synthetic-lock-a' },
+      headers: { 'x-lock-token': 'synthetic-lock-b' },
+      req: { headers: { 'x-lock-token': 'synthetic-lock-c' } },
+    });
+    expect(lines[0]).not.toContain('synthetic-lock-');
+    expect(lines[0]).toContain('[redacted]');
+  });
 });

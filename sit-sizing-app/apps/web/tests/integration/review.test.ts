@@ -43,6 +43,7 @@ describe('approval workflow', () => {
       method: 'POST',
       params: { estimateId },
       body: { note: 'Synthetic · v1' },
+      lockToken: res.json.lockToken,
     });
     expect(saved.status, JSON.stringify(saved.json)).toBe(201);
   });
@@ -104,16 +105,13 @@ describe('approval workflow', () => {
   });
 
   it('supersedes the previous approval when a newer version is approved', async () => {
-    expect(
-      (
-        await call(draft.POST, {
-          who: 'dev-estimator',
-          method: 'POST',
-          params: { estimateId },
-          body: {},
-        })
-      ).status,
-    ).toBe(201);
+    const started = await call(draft.POST, {
+      who: 'dev-estimator',
+      method: 'POST',
+      params: { estimateId },
+      body: {},
+    });
+    expect(started.status).toBe(201);
     expect(
       (
         await call(versions.POST, {
@@ -121,6 +119,7 @@ describe('approval workflow', () => {
           method: 'POST',
           params: { estimateId },
           body: { note: 'Synthetic · v2' },
+          lockToken: started.json.lockToken,
         })
       ).status,
     ).toBe(201);

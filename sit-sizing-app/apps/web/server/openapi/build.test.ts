@@ -82,4 +82,31 @@ describe('OpenAPI contract (AGENTS.md rule 15)', () => {
     ].map((m) => m[1]!);
     for (const r of refs) expect(doc.components.schemas[r], r).toBeDefined();
   });
+
+  it('documents the draft lock token header and response field (draft lock token)', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const doc = buildOpenApi() as Record<string, any>;
+    const header = { name: 'X-Lock-Token', in: 'header', required: false };
+    for (const [path, method] of [
+      ['/estimates/{estimateId}/draft', 'patch'],
+      ['/estimates/{estimateId}/draft/lock', 'post'],
+      ['/estimates/{estimateId}/draft/lock', 'delete'],
+      ['/estimates/{estimateId}/draft/profile', 'post'],
+      ['/estimates/{estimateId}/versions', 'post'],
+    ] as const) {
+      expect(doc.paths[path][method].parameters, `${method} ${path}`).toContainEqual(
+        expect.objectContaining(header),
+      );
+    }
+    expect(
+      doc.paths['/estimates/{estimateId}/versions/{number}'].get.parameters,
+    ).not.toContainEqual(expect.objectContaining({ name: 'X-Lock-Token' }));
+    expect(doc.components.schemas.Version.properties.lockToken).toBeDefined();
+    expect(doc.components.schemas.Version.required).not.toContain('lockToken');
+    expect(
+      doc.paths['/projects/{projectId}/estimates'].post.responses['201'].content['application/json']
+        .schema,
+    ).toEqual({ $ref: '#/components/schemas/EstimateCreated' });
+    expect(doc.components.schemas.EstimateCreated.required).toContain('lockToken');
+  });
 });
