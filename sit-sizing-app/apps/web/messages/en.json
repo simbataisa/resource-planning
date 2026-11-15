@@ -1073,6 +1073,7 @@
     "openElsewhere": "This draft is open in another tab or in the assistant.",
     "openElsewhereLost": "This draft is open in another tab or in the assistant. Your unsaved values are kept on this page: open it here to carry on with them, or download a copy first.",
     "openHere": "Open here instead",
+    "openHereFailed": "The draft could not be opened here. Your unsaved values are still on this page: try again, or download them.",
     "saveVersion": "Save version",
     "saveVersionTitle": "Save version {n}",
     "saveVersionBody": "Saving freezes this draft as version {n}. It cannot change afterwards; you can start a new draft from it at any time.",

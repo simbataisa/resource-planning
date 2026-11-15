@@ -1073,6 +1073,7 @@
     "openElsewhere": "Bản nháp này đang mở ở một thẻ khác hoặc trong trợ lý.",
     "openElsewhereLost": "Bản nháp này đang mở ở một thẻ khác hoặc trong trợ lý. Các giá trị chưa lưu của bạn vẫn còn trên trang này: hãy mở tại đây để tiếp tục với chúng, hoặc tải xuống một bản trước.",
     "openHere": "Mở tại đây",
+    "openHereFailed": "Không thể mở bản nháp tại đây. Các giá trị chưa lưu của bạn vẫn còn trên trang này: hãy thử lại hoặc tải chúng xuống.",
     "saveVersion": "Lưu phiên bản",
     "saveVersionTitle": "Lưu phiên bản {n}",
     "saveVersionBody": "Khi lưu, bản nháp này được cố định thành phiên bản {n} và không thể thay đổi nữa; bạn có thể mở bản nháp mới từ phiên bản đó bất cứ lúc nào.",

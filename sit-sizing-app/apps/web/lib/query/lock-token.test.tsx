@@ -4,13 +4,20 @@ import { act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetLockToken, lockTokenFor } from '../lock-tokens';
-import { useCreateDraft, useCreateEstimate, useSaveVersion } from './hooks';
+import { rememberLockToken } from '../lock-tokens';
+import {
+  useCreateDraft,
+  useCreateEstimate,
+  useReleaseLockOnPageHide,
+  useSaveVersion,
+} from './hooks';
 
 const api = vi.hoisted(() => ({
   estimates: {
     create: vi.fn(async () => ({ id: 'e1', lockToken: 'tok-new' })),
     createDraft: vi.fn(async () => ({ number: 2, lockToken: 'tok-draft' })),
     saveVersion: vi.fn(async () => ({ number: 2 })),
+    releaseOnPageHide: vi.fn(),
   },
 }));
 vi.mock('../api', () => ({ api }));
@@ -19,7 +26,10 @@ const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
 );
 
-beforeEach(() => forgetLockToken('e1'));
+beforeEach(() => {
+  vi.clearAllMocks();
+  forgetLockToken('e1');
+});
 
 describe('Lock token hand-over in this tab', () => {
   it('keeps the token from creating an estimate for the editor', async () => {
@@ -36,5 +46,23 @@ describe('Lock token hand-over in this tab', () => {
     await act(() => save.result.current.mutateAsync({ lockToken: 'tok-draft' }));
     expect(api.estimates.saveVersion).toHaveBeenCalledWith('e1', {}, 'tok-draft');
     expect(lockTokenFor('e1')).toBeUndefined();
+  });
+});
+
+describe('Release on page hide', () => {
+  it('releases the lock with this tab token when the page is hidden', () => {
+    rememberLockToken('e1', 'tok-1');
+    const { unmount } = renderHook(() => useReleaseLockOnPageHide('e1'), { wrapper });
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).toHaveBeenCalledWith('e1', 'tok-1');
+    unmount();
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends nothing when this tab holds no token', () => {
+    renderHook(() => useReleaseLockOnPageHide('e1'), { wrapper });
+    window.dispatchEvent(new Event('pagehide'));
+    expect(api.estimates.releaseOnPageHide).not.toHaveBeenCalled();
   });
 });

@@ -27,6 +27,7 @@ const hooks = vi.hoisted(() => ({
   useReviewVersion: vi.fn(),
   useProfiles: vi.fn(),
   useApplyProfile: vi.fn(),
+  useReleaseLockOnPageHide: vi.fn(),
 }));
 vi.mock('@/lib/query/hooks', () => hooks);
 
@@ -357,23 +358,36 @@ describe('Draft lock token (per tab)', () => {
     );
   });
 
-  it('shows recovery when autosave finds the draft open elsewhere, then opens it here with the unsaved values', async () => {
-    vi.useFakeTimers();
-    lock.mutate.mockImplementation((vars: LockVars, o: { onSuccess: (v: Version) => void }) =>
-      o.onSuccess(
-        version({
-          lock: mineLock,
-          lockToken: vars.takeover ? 'tok-2' : 'tok-1',
-          rowVersion: vars.takeover ? 7 : 3,
-        }),
-      ),
+  /** First lock gives tok-1 at rowVersion 3; "Open here instead" gives tok-2 at `after`. */
+  function lockThenTakeover(after: number, takeoverError?: unknown) {
+    lock.mutate.mockImplementation(
+      (vars: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        if (vars.takeover && takeoverError) return o.onError(takeoverError);
+        o.onSuccess(
+          version({
+            lock: mineLock,
+            lockToken: vars.takeover ? 'tok-2' : 'tok-1',
+            rowVersion: vars.takeover ? after : 3,
+          }),
+        );
+      },
     );
+  }
+
+  async function loseLockWhileEditing(qty: string) {
+    vi.useFakeTimers();
     patch.mutateAsync.mockRejectedValueOnce(conflict('LOCKED_ELSEWHERE'));
     setup(version());
-    fireEvent.change(qtyOf(0), { target: { value: '3' } });
+    fireEvent.change(qtyOf(0), { target: { value: qty } });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1600);
     });
+    expect(patch.mutateAsync).toHaveBeenCalledTimes(1);
+  }
+
+  it('shows recovery when autosave finds the draft open elsewhere, and opens it here with the unsaved values when nothing changed', async () => {
+    lockThenTakeover(3);
+    await loseLockWhileEditing('3');
     expect(
       screen.getByText(/This draft is open in another tab or in the assistant/),
     ).toBeInTheDocument();
@@ -395,14 +409,90 @@ describe('Draft lock token (per tab)', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1600);
     });
-    const last = patch.mutateAsync.mock.calls.at(-1)![0] as {
+    expect(patch.mutateAsync).toHaveBeenCalledTimes(2);
+    const last = patch.mutateAsync.mock.calls[1]![0] as {
       rowVersion: number;
       lockToken: string;
       inputs: EstimateInputs;
     };
     expect(last.lockToken).toBe('tok-2');
-    expect(last.rowVersion).toBe(7);
+    expect(last.rowVersion).toBe(3);
     expect(last.inputs.features[0]!.qty).toBe(3);
+  });
+
+  it('never saves over newer work: after the other tab saved, "Open here instead" leads to recovery', async () => {
+    // Tab A took over and saved (rowVersion 3 → 5); this tab (B) takes the lock back.
+    lockThenTakeover(5);
+    await loseLockWhileEditing('3');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(screen.getByText('Your last changes were not saved')).toBeInTheDocument();
+    expect(screen.getByText(/the draft changed since you opened it/)).toBeInTheDocument();
+    expect(qtyOf(0)).toBeDisabled();
+    expect(qtyOf(0).value).toBe('3');
+    expect(
+      screen.getByRole('button', { name: 'Download my unsaved values (JSON)' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload the latest draft' })).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(HEARTBEAT_MS);
+    });
+    expect(patch.mutateAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('an idle tab that takes the lock back after the draft changed loads it and saves nothing', async () => {
+    vi.useFakeTimers();
+    let n = 0;
+    lock.mutate.mockImplementation(
+      (vars: LockVars, o: { onSuccess: (v: Version) => void; onError: (e: unknown) => void }) => {
+        n += 1;
+        if (vars.takeover)
+          o.onSuccess(version({ lock: mineLock, lockToken: 'tok-2', rowVersion: 5 }));
+        else if (n === 1) o.onSuccess(version({ lock: mineLock, lockToken: 'tok-1' }));
+        else o.onError(conflict('LOCKED_ELSEWHERE'));
+      },
+    );
+    setup(version());
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(HEARTBEAT_MS + 100);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+    });
+    expect(qtyOf(0)).not.toBeDisabled();
+    expect(screen.queryByText('Your last changes were not saved')).toBeNull();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(patch.mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['still open elsewhere', conflict('LOCKED_ELSEWHERE')],
+    ['a network failure', new ApiClientError(0, null, 'Network Error')],
+  ])(
+    'keeps the unsaved values and says so when "Open here instead" fails (%s)',
+    async (_name, error) => {
+      lockThenTakeover(3, error);
+      await loseLockWhileEditing('8');
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Open here instead' }));
+      });
+      expect(screen.getByText(/The draft could not be opened here/)).toBeInTheDocument();
+      expect(screen.queryByText(/Someone else took over editing/)).toBeNull();
+      expect(screen.getByRole('button', { name: 'Open here instead' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Download my unsaved values (JSON)' }),
+      ).toBeInTheDocument();
+      expect(qtyOf(0).value).toBe('8');
+      expect(qtyOf(0)).toBeDisabled();
+    },
+  );
+
+  it('releases the lock on page hide while this tab edits', () => {
+    setup(version());
+    expect(hooks.useReleaseLockOnPageHide).toHaveBeenCalledWith('e1');
   });
 
   it('shows recovery with unsaved values when the heartbeat finds the lock taken by another tab', async () => {

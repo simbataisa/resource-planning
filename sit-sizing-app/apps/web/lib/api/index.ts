@@ -97,6 +97,18 @@ export function createApi(http: AxiosInstance = defaultHttp) {
           headers: lockHeader(lockToken),
         });
       },
+      /**
+       * Releases the lock as the page goes away (pagehide). Axios cannot outlive the page, so
+       * this is a `fetch` with `keepalive`; the answer is not read.
+       */
+      releaseOnPageHide: (estimateId: string, lockToken: string) => {
+        void fetch(`${http.defaults.baseURL ?? '/api/v1'}/estimates/${estimateId}/draft/lock`, {
+          method: 'DELETE',
+          keepalive: true,
+          credentials: 'same-origin',
+          headers: { 'X-Lock-Token': lockToken },
+        }).catch(() => undefined);
+      },
       saveVersion: (estimateId: string, body: In<typeof VersionSave> = {}, lockToken?: string) =>
         sendParsed(
           http,

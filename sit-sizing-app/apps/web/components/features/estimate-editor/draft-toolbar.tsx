@@ -18,7 +18,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Field } from '@/components/patterns/field';
 import { ApiClientError } from '@/lib/http';
 import { lockTokenFor, rememberLockToken } from '@/lib/lock-tokens';
-import { useLockDraft, usePatchDraft, useSaveVersion } from '@/lib/query/hooks';
+import {
+  useLockDraft,
+  usePatchDraft,
+  useReleaseLockOnPageHide,
+  useSaveVersion,
+} from '@/lib/query/hooks';
 import { useEditor } from './store';
 import { useTourEvent } from '../tours/use-tour-event';
 
@@ -59,6 +64,8 @@ export function DraftToolbar({
   const { state, dispatch, editable } = useEditor();
   const patch = usePatchDraft(estimateId);
   const lock = useLockDraft(estimateId);
+  // Refreshing or closing this tab frees the lock, so a reload renews instead of "open elsewhere".
+  useReleaseLockOnPageHide(estimateId);
   const [failed, setFailed] = useState(false);
   const onLostRef = useRef(onLost);
   useEffect(() => {

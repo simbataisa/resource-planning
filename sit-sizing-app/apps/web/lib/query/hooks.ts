@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ActualsCreate,
@@ -15,7 +16,7 @@ import type {
 import type { z } from 'zod';
 import { api } from '../api';
 import { ApiClientError } from '../http';
-import { forgetLockToken, rememberLockToken } from '../lock-tokens';
+import { forgetLockToken, lockTokenFor, rememberLockToken } from '../lock-tokens';
 import { writeLocal } from '../tours/storage';
 import { qk } from './keys';
 
@@ -136,6 +137,21 @@ export function useLockDraft(estimateId: string) {
     mutationFn: ({ takeover = false, lockToken }: { takeover?: boolean } & WithLockToken) =>
       api.estimates.lock(estimateId, { takeover }, lockToken),
   });
+}
+
+/**
+ * While mounted, releases this tab's draft lock when the page is hidden (refresh, close,
+ * navigate away), so the same tab renews on reload. Sends nothing without a token.
+ */
+export function useReleaseLockOnPageHide(estimateId: string) {
+  useEffect(() => {
+    const onHide = () => {
+      const token = lockTokenFor(estimateId);
+      if (token) api.estimates.releaseOnPageHide(estimateId, token);
+    };
+    window.addEventListener('pagehide', onHide);
+    return () => window.removeEventListener('pagehide', onHide);
+  }, [estimateId]);
 }
 
 /** Starts a new draft from the latest version; the editor then loads it. */

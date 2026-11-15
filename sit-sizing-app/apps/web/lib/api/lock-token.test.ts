@@ -1,5 +1,5 @@
 import { AxiosHeaders, type AxiosAdapter } from 'axios';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS } from '@sit/engine';
 import { createHttp } from '../http';
 import { createApi } from '.';
@@ -85,5 +85,18 @@ describe('Draft lock token header (X-Lock-Token)', () => {
     });
     const created = await api.estimates.create('p1', { name: 'Synthetic' });
     expect(created.lockToken).toBe('tok-9');
+  });
+
+  it('releases with a keepalive fetch carrying the token when the page is hidden', () => {
+    const fetch = vi.fn(async () => new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetch);
+    createApi(createHttp()).estimates.releaseOnPageHide('e1', 'tok-1');
+    expect(fetch).toHaveBeenCalledWith('/api/v1/estimates/e1/draft/lock', {
+      method: 'DELETE',
+      keepalive: true,
+      credentials: 'same-origin',
+      headers: { 'X-Lock-Token': 'tok-1' },
+    });
+    vi.unstubAllGlobals();
   });
 });

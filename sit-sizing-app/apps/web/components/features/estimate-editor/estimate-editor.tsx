@@ -73,9 +73,16 @@ function VersionLoader({ estimate, number }: { estimate: EstimateDetail; number:
  *   with "Open here instead".
  * - 'lost': a save hit a 409; the user's unsaved values stay on the page for download.
  * - 'lostElsewhere': a save or heartbeat found the draft open elsewhere; unsaved values stay on
- *   the page and "Open here instead" carries on with them.
+ *   the page and "Open here instead" carries on with them, unless the draft changed meanwhile.
  */
 type LockState = 'none' | 'mine' | 'other' | 'elsewhere' | 'lost' | 'lostElsewhere';
+
+/**
+ * What "Open here instead" does once this tab holds the lock again: carry on with the values on
+ * screen (the draft did not change), restart from the server's copy (nothing unsaved), or show
+ * recovery (the draft changed and there are unsaved values; never save them over newer work).
+ */
+export type Reclaim = 'continue' | 'reload' | 'lost';
 
 function DraftSession({ estimate, version }: { estimate: EstimateDetail; version: Version }) {
   const me = useMe();
@@ -87,30 +94,42 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
   const qc = useQueryClient();
   const [lockState, setLockState] = useState<LockState>('none');
   const [session, setSession] = useState(0);
+  const [reclaimFailed, setReclaimFailed] = useState(false);
   const asked = useRef(false);
 
   /**
-   * Takes, renews or takes over the lock with this tab's token (memory only). With `keep`, the
-   * values on screen stay (recovery's "Open here instead"); otherwise editing restarts from the
-   * server's copy.
+   * Takes, renews or takes over the lock with this tab's token (memory only). With `reclaim`
+   * (recovery's "Open here instead"), it decides whether the values on screen can stay;
+   * otherwise editing restarts from the server's copy.
    */
-  const acquire = (takeover: boolean, keep?: (v: Version) => void) => {
+  const acquire = (takeover: boolean, reclaim?: (v: Version) => Reclaim) => {
     lock.mutate(
       { takeover, lockToken: lockTokenFor(estimate.id) },
       {
         onSuccess: (v) => {
           rememberLockToken(estimate.id, v.lockToken);
           qc.setQueryData(qk.version(estimate.id, v.number), v);
-          if (keep) keep(v);
+          setReclaimFailed(false);
+          const next = reclaim ? reclaim(v) : 'reload';
+          if (next === 'lost') {
+            // This tab holds the lock, but its unsaved values are older than the draft: offer
+            // the download, then "Reload the latest draft" (renews with the new token).
+            setLockState('lost');
+            return;
+          }
           // Start editing from the server's copy: after a takeover or an expired lock it may be
           // newer than what this page loaded. Inputs were read-only until now, so nothing is lost.
-          else setSession((n) => n + 1);
+          if (next === 'reload') setSession((n) => n + 1);
           setLockState('mine');
         },
         onError: (e) => {
           const reason = lockConflict(e);
-          if (keep) setLockState('lost');
-          else setLockState(reason === 'elsewhere' ? 'elsewhere' : reason ? 'other' : 'none');
+          if (reclaim) {
+            // Still open elsewhere, or no answer: stay in recovery with the values and say so.
+            // Someone else holding it now is the generic lost case.
+            if (reason === 'conflict') setLockState('lost');
+            else setReclaimFailed(true);
+          } else setLockState(reason === 'elsewhere' ? 'elsewhere' : reason ? 'other' : 'none');
           void qc.invalidateQueries({ queryKey: qk.version(estimate.id, version.number) });
         },
       },
@@ -161,7 +180,8 @@ function DraftSession({ estimate, version }: { estimate: EstimateDetail; version
               canCreateDraft={principal ? can(principal, 'draft.create', pid) : false}
               canTakeover={principal ? can(principal, 'draft.lock.takeover', pid) : false}
               onTakeover={() => acquire(true)}
-              onOpenHere={(keep) => acquire(true, keep)}
+              onOpenHere={(reclaim) => acquire(true, reclaim)}
+              reclaimFailed={reclaimFailed}
               onReload={() => void reload()}
             />
             <EngineNotice
@@ -194,6 +214,7 @@ function SessionNotice({
   canTakeover,
   onTakeover,
   onOpenHere,
+  reclaimFailed,
   onReload,
 }: {
   estimate: EstimateDetail;
@@ -204,7 +225,9 @@ function SessionNotice({
   canTakeover: boolean;
   onTakeover: () => void;
   /** Takes this user's lock back from another tab or the assistant, keeping the values shown. */
-  onOpenHere: (keep?: (v: Version) => void) => void;
+  onOpenHere: (reclaim?: (v: Version) => Reclaim) => void;
+  /** The last "Open here instead" failed (still open elsewhere, or no answer). */
+  reclaimFailed: boolean;
   onReload: () => void;
 }) {
   const t = useTranslations();
@@ -290,11 +313,18 @@ function SessionNotice({
         <AlertTitle>{t('draft.lockLostTitle')}</AlertTitle>
         <AlertDescription>
           <p>{t('draft.openElsewhereLost')}</p>
+          {reclaimFailed ? <p className="mt-2 font-medium">{t('draft.openHereFailed')}</p> : null}
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
               size="sm"
               onClick={() =>
-                onOpenHere((v) => dispatch({ type: 'relocked', rowVersion: v.rowVersion }))
+                onOpenHere((v) => {
+                  if (v.rowVersion === state.rowVersion) {
+                    dispatch({ type: 'relocked', rowVersion: v.rowVersion });
+                    return 'continue';
+                  }
+                  return state.dirty ? 'lost' : 'reload';
+                })
               }
             >
               {t('draft.openHere')}
