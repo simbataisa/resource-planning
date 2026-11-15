@@ -64,6 +64,8 @@ describe('OpenAPI contract (AGENTS.md rule 15)', () => {
           // Bearer tokens from MCP clients (ADR-0016), and 403 NOT_PROVISIONED for them.
           expect(op.security, `${method} ${path}`).toContainEqual({ bearerAuth: [] });
           expect(op.responses['403'], `${method} ${path}`).toBeDefined();
+          // 503 NOT_READY when Keycloak's signing keys cannot be fetched (not a 401 loop).
+          expect(op.responses['503'], `${method} ${path}`).toBeDefined();
         }
       }
     }

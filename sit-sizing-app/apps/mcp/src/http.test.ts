@@ -42,7 +42,9 @@ afterEach(async () => {
 
 type ApiRoute = (url: string, init: RequestInit) => Response;
 
-async function start(opts: { env?: Record<string, string>; api?: ApiRoute } = {}) {
+async function start(
+  opts: { env?: Record<string, string>; api?: ApiRoute; keys?: typeof keys } = {},
+) {
   const { log, calls } = fakeLogger();
   const apiFetch = vi.fn<typeof fetch>(async (input, init) => {
     const url = String(input);
@@ -56,7 +58,7 @@ async function start(opts: { env?: Record<string, string>; api?: ApiRoute } = {}
     log,
     limiter: createRateLimiter({ limit: 60 }),
     fetch: apiFetch,
-    keys,
+    keys: opts.keys ?? keys,
   });
   await new Promise<void>((resolve) => server!.listen(0, '127.0.0.1', resolve));
   const { port } = server.address() as AddressInfo;
@@ -93,6 +95,20 @@ describe('HTTP transport', () => {
     expect(bad.status).toBe(401);
     expect(bad.headers.get('www-authenticate')).toBe(`Bearer error="invalid_token", ${META}`);
     expect(apiFetch).not.toHaveBeenCalled();
+  });
+
+  it('answers 503 without a challenge when the key set is unreachable; a bad token is still 401', async () => {
+    const down = () => Promise.reject(new TypeError('fetch failed'));
+    const { base, apiFetch, calls } = await start({ keys: down });
+    const res = await rpc(base, callWhoami, { authorization: `Bearer ${goodToken}` });
+    expect(res.status).toBe(503);
+    expect(res.headers.get('www-authenticate')).toBeNull();
+    expect(res.headers.get('content-type')).toContain('application/json');
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('NOT_READY');
+    const bad = await rpc(base, callWhoami, { authorization: 'Bearer not.a.token' });
+    expect(bad.status).toBe(401);
+    expect(apiFetch).not.toHaveBeenCalled();
+    expect(JSON.stringify(calls)).not.toContain(goodToken);
   });
 
   it('serves /.well-known/oauth-protected-resource, /health and /ready', async () => {

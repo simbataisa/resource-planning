@@ -39,6 +39,24 @@ interface WarnLog {
   warn(obj: object, msg?: string): void;
 }
 
+/**
+ * The realm's key set could not be fetched or read, so the token could not be checked
+ * either way. The HTTP layer answers 503, not a 401 challenge: signing in again cannot
+ * help, and a challenge would send the client round a sign-in loop.
+ */
+export class KeySetUnavailable extends Error {
+  constructor() {
+    super('Token signing keys are unavailable');
+    this.name = 'KeySetUnavailable';
+  }
+}
+
+/**
+ * jose error codes for a key set that could not be fetched (timeout, non-200 answer, not
+ * JSON) or read; a fetch that fails outright throws a plain error without a code.
+ */
+const KEY_SET_CODES = new Set(['ERR_JWKS_TIMEOUT', 'ERR_JWKS_INVALID', 'ERR_JOSE_GENERIC']);
+
 let remote: { url: string; keys: JWTVerifyGetKey } | undefined;
 
 /** Realm signing keys, fetched from the internal IdP origin when set, and cached by jose. */
@@ -54,8 +72,9 @@ function realmKeys(env: McpEnv): JWTVerifyGetKey {
 
 /**
  * Verifies a Keycloak access token: signature, issuer, audience `OIDC_API_AUDIENCE`,
- * expiry, `typ` Bearer when present, and `sub` and `sid` present. Returns the subject or
- * null on any failure.
+ * expiry, `typ` Bearer when present, and `sub` and `sid` present. Returns the subject, or
+ * null when the token is refused. Throws `KeySetUnavailable` when the key set cannot be
+ * fetched, since the token was then not judged at all.
  */
 export async function verifyAccessToken(
   token: string,
@@ -83,11 +102,12 @@ export async function verifyAccessToken(
     // A refused token is routine and stays silent: the error can quote token content.
     // Only an unreachable or broken key set is logged, by error code alone.
     const code = (err as { code?: unknown } | null)?.code;
-    if (code === 'ERR_JWKS_TIMEOUT' || code === 'ERR_JWKS_INVALID' || !code) {
+    if (typeof code === 'string' ? KEY_SET_CODES.has(code) : true) {
       opts.log?.warn(
         { code: typeof code === 'string' ? code : 'JWKS_FETCH_FAILED' },
         'bearer key set unavailable',
       );
+      throw new KeySetUnavailable();
     }
     return null;
   }

@@ -39,6 +39,28 @@ export const REFUSED_CLIENTS: ReadonlySet<string> = new Set([
 /** Allowed clock difference between Keycloak and this app. */
 const CLOCK_TOLERANCE_SECONDS = 30;
 
+/**
+ * The realm's key set could not be fetched or read, so the token was not judged either
+ * way. The caller answers 503 NOT_READY, not 401: signing in again cannot help, and a
+ * challenge would send the client round a sign-in loop.
+ */
+export class KeySetUnavailable extends Error {
+  constructor() {
+    super('Token signing keys are unavailable');
+    this.name = 'KeySetUnavailable';
+  }
+}
+
+/**
+ * jose error codes for a key set that could not be fetched (timeout, non-200 answer, not
+ * JSON) or read; a fetch that fails outright throws a plain error without a code.
+ */
+const KEY_SET_CODES: ReadonlySet<string> = new Set([
+  'ERR_JWKS_TIMEOUT',
+  'ERR_JWKS_INVALID',
+  'ERR_JOSE_GENERIC',
+]);
+
 export interface VerifiedToken {
   sub: string;
   sid: string;
@@ -73,7 +95,8 @@ export function bearerEnabled(): boolean {
  * Verifies a Keycloak access token. Returns the identity claims, or null on any failure
  * (bad signature, wrong issuer or audience, expired, malformed, missing `sub`, `azp` or
  * `sid`, or minted by a refused client). Without `sid` the revocation check could not run,
- * so such a token is refused (fail closed).
+ * so such a token is refused (fail closed). Throws `KeySetUnavailable` when the realm's
+ * key set cannot be fetched.
  */
 export async function verifyAccessToken(
   token: string,
@@ -102,11 +125,12 @@ export async function verifyAccessToken(
     // A refused token is routine and stays silent: the error can quote token content.
     // Only an unreachable or broken key set is logged, by error code alone.
     const code = (err as { code?: unknown } | null)?.code;
-    if (code === 'ERR_JWKS_TIMEOUT' || code === 'ERR_JWKS_INVALID' || !code) {
+    if (typeof code === 'string' ? KEY_SET_CODES.has(code) : true) {
       logger.warn(
         { code: typeof code === 'string' ? code : 'JWKS_FETCH_FAILED' },
         'bearer key set unavailable',
       );
+      throw new KeySetUnavailable();
     }
     return null;
   }

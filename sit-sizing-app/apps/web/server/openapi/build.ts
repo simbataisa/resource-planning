@@ -23,7 +23,7 @@ const STATUS_TEXT: Record<number, string> = {
   422: 'Request understood but cannot be applied',
   429: 'Too many requests for this user; see Retry-After',
   500: 'Unexpected error',
-  503: 'A dependency is not reachable',
+  503: 'A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After',
 };
 
 /** Moves $defs into components and rewrites their $refs. */
@@ -114,8 +114,9 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
     }
     responses[String(op.success.status)] = success;
     // Every signed-in operation is rate limited per user (threat model T-11), and a bearer
-    // caller with no app user yet gets 403 NOT_PROVISIONED (ADR-0016).
-    const signedIn = op.minRole !== 'none' ? [403, 429] : [];
+    // caller with no app user yet gets 403 NOT_PROVISIONED, or 503 NOT_READY when the
+    // token cannot be checked because Keycloak's signing keys are unreachable (ADR-0016).
+    const signedIn = op.minRole !== 'none' ? [403, 429, 503] : [];
     for (const status of [...new Set([...op.errors, ...signedIn, 500])].sort((a, b) => a - b)) {
       responses[String(status)] = {
         description: STATUS_TEXT[status] ?? 'Error',
@@ -214,7 +215,7 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
           scheme: 'bearer',
           bearerFormat: 'JWT',
           description:
-            'Keycloak access token for the SIT Sizing API (audience sit-sizing-api), sent by the MCP server for its signed-in user (ADR-0016). Same permissions as the browser session. A valid token for someone with no active app user gets 403 NOT_PROVISIONED: sign in once in the browser first.',
+            'Keycloak access token for the SIT Sizing API (audience sit-sizing-api), sent by the MCP server for its signed-in user (ADR-0016). Same permissions as the browser session. A valid token for someone with no active app user gets 403 NOT_PROVISIONED: sign in once in the browser first. When Keycloak signing keys cannot be fetched the answer is 503 NOT_READY (no WWW-Authenticate): retry later rather than signing in again.',
         },
         devUser: {
           type: 'apiKey',

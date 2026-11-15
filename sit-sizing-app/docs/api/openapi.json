@@ -188,6 +188,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -283,6 +293,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -412,6 +432,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -521,6 +551,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -662,6 +702,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -849,6 +899,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -975,6 +1035,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1091,6 +1161,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -1226,6 +1306,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1337,6 +1427,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -1466,6 +1566,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -1606,6 +1716,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1728,6 +1848,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1839,6 +1969,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -1980,6 +2120,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -2129,6 +2279,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2263,6 +2423,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -2449,6 +2619,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2560,6 +2740,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -2686,6 +2876,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -2845,6 +3045,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2973,6 +3183,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3093,6 +3313,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3199,6 +3429,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -3329,6 +3569,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3448,6 +3698,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -3591,6 +3851,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3702,6 +3972,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -3830,6 +4110,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -3969,6 +4259,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4080,6 +4380,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -4268,6 +4578,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4379,6 +4699,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -4504,6 +4834,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4585,6 +4925,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -4700,6 +5050,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4768,6 +5128,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -4854,6 +5224,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -4960,6 +5340,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5055,6 +5445,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5123,6 +5523,16 @@
           },
           "500": {
             "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -5212,7 +5622,7 @@
             }
           },
           "503": {
-            "description": "A dependency is not reachable",
+            "description": "A dependency is not reachable (NOT_READY), including Keycloak signing keys for a bearer token; see Retry-After",
             "content": {
               "application/json": {
                 "schema": {
@@ -19621,7 +20031,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "Keycloak access token for the SIT Sizing API (audience sit-sizing-api), sent by the MCP server for its signed-in user (ADR-0016). Same permissions as the browser session. A valid token for someone with no active app user gets 403 NOT_PROVISIONED: sign in once in the browser first."
+        "description": "Keycloak access token for the SIT Sizing API (audience sit-sizing-api), sent by the MCP server for its signed-in user (ADR-0016). Same permissions as the browser session. A valid token for someone with no active app user gets 403 NOT_PROVISIONED: sign in once in the browser first. When Keycloak signing keys cannot be fetched the answer is 503 NOT_READY (no WWW-Authenticate): retry later rather than signing in again."
       },
       "devUser": {
         "type": "apiKey",

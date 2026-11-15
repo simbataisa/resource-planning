@@ -1,8 +1,19 @@
-import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWK } from 'jose';
+import {
+  createLocalJWKSet,
+  createRemoteJWKSet,
+  customFetch,
+  exportJWK,
+  generateKeyPair,
+  SignJWT,
+  type JWK,
+} from 'jose';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 const ISSUER = 'http://localhost:8080/realms/qe-tools';
 const AUDIENCE = 'sit-sizing-api';
+
+const warn = vi.hoisted(() => vi.fn());
+vi.mock('../logger', () => ({ logger: { warn } }));
 
 vi.mock('../env', () => ({
   getEnv: () => ({
@@ -12,7 +23,7 @@ vi.mock('../env', () => ({
   }),
 }));
 
-const { verifyAccessToken } = await import('./bearer');
+const { KeySetUnavailable, verifyAccessToken } = await import('./bearer');
 const { bearerToken } = await import('./bearer-header');
 
 type Keys = Awaited<ReturnType<typeof generateKeyPair>>;
@@ -141,6 +152,35 @@ describe('verifyAccessToken (ADR-0016)', () => {
     expect(
       await verifyAccessToken(await token({ azp: 'sit-sizing-mcp' }), { keys, now: NOW }),
     ).not.toBeNull();
+  });
+});
+
+describe('verifyAccessToken when the key set is unavailable', () => {
+  /** A remote key set whose fetch fails as given. */
+  const remote = (f: () => Promise<Response>) =>
+    createRemoteJWKSet(new URL('http://keycloak.invalid/certs'), { [customFetch]: f });
+
+  it('throws KeySetUnavailable and logs only an error code', async () => {
+    const t = await token();
+    const cases: Array<[() => Promise<Response>, string]> = [
+      [() => Promise.reject(new TypeError('fetch failed')), 'JWKS_FETCH_FAILED'],
+      [async () => new Response('down', { status: 503 }), 'ERR_JOSE_GENERIC'],
+      [async () => Response.json({ nope: true }), 'ERR_JWKS_INVALID'],
+    ];
+    for (const [f, code] of cases) {
+      warn.mockClear();
+      await expect(verifyAccessToken(t, { keys: remote(f), now: NOW })).rejects.toThrow(
+        KeySetUnavailable,
+      );
+      expect(warn).toHaveBeenCalledWith({ code }, 'bearer key set unavailable');
+      expect(JSON.stringify(warn.mock.calls)).not.toContain(t);
+    }
+  });
+
+  it('still refuses a malformed token or one with an unknown key id (null)', async () => {
+    const down = () => Promise.reject(new TypeError('fetch failed'));
+    expect(await verifyAccessToken('not-a-jwt', { keys: down, now: NOW })).toBeNull();
+    expect(await verifyAccessToken(await token({}, { kid: 'k9' }), { keys, now: NOW })).toBeNull();
   });
 });
 
