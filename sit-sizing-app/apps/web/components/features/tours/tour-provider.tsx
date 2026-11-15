@@ -277,14 +277,17 @@ export function TourProvider({
       const p = progressRef.current;
       const def = p && registry.find((x) => x.id === p.id);
       const s = def?.steps[p!.stepIndex];
-      if (!p || p.paused || !s || typeof s.advance !== 'object' || s.advance.event !== event) {
-        return;
-      }
+      // Accepted while paused too (e.g. the step's target went missing): the step that waits for
+      // this event is the paused one, so the user did what it asked and the tour goes on.
+      if (!p || !s || typeof s.advance !== 'object' || s.advance.event !== event) return;
       if (event === 'version-saved') {
         // Spec 6.5 "Finishing": record completed first, then show the Done card.
         record(p.id, 'completed');
       }
-      goTo(p.stepIndex + 1, event === 'version-saved' ? { recorded: true } : {});
+      goTo(p.stepIndex + 1, {
+        paused: false,
+        ...(event === 'version-saved' ? { recorded: true } : {}),
+      });
     },
     [goTo, record, registry],
   );
@@ -319,7 +322,7 @@ export function TourProvider({
   const recorded = !!progress?.recorded;
   const steps = useMemo<Step[]>(
     () =>
-      (tour?.steps ?? []).map((s) => ({
+      (tour?.steps ?? []).map((s, i) => ({
         target: s.target === 'center' ? 'body' : s.target,
         placement: s.target === 'center' ? 'center' : (s.placement ?? 'bottom'),
         title: t(`${s.messageKey}.title`, s.values && me ? s.values(me) : undefined),
@@ -330,24 +333,41 @@ export function TourProvider({
         // Event steps are worked in a modal dialog (create, save version), which sits below the
         // tour layer: an overlay there would cover and block the dialog's own buttons.
         hideOverlay: typeof s.advance === 'object',
+        // Esc in the open dialog closes the dialog only; Esc on the card itself still dismisses
+        // the tour (handled by the tooltip), since Joyride listens for Esc on the whole body.
+        dismissKeyAction: typeof s.advance === 'object' ? false : 'close',
         data: {
           advance: typeof s.advance === 'object' ? 'event' : s.advance,
           recorded,
           target: s.target === 'center' ? null : s.target,
+          // Back to a step on another page would leave the tour with nothing to show.
+          canGoBack: i > 0 && !!tour?.steps[i - 1]?.route.test(pathname),
         } satisfies TourStepData,
       })),
-    [tour, t, recorded, me],
+    [tour, t, recorded, me, pathname],
   );
   const options = useMemo(() => joyrideOptions(reducedMotion), [reducedMotion]);
-  // Joyride renders into this element, a direct child of <body>. A modal dialog hides everything
-  // else from assistive technology when it opens (Radix `hideOthers`), but keeps `[aria-live]`
-  // elements; `aria-live="off"` keeps the tour step readable without announcing it twice.
+  // Joyride renders into this element. A modal dialog hides everything else from assistive
+  // technology when it opens (Radix `hideOthers` sets aria-hidden on the rest of the page), but it
+  // leaves `[aria-live]` elements and their ancestors alone, so this host carries `aria-live`;
+  // "off" keeps the tour step readable without announcing all of it on every change.
   const [portal, setPortal] = useState<HTMLDivElement | null>(null);
+  // Event steps are worked inside a modal dialog while focus stays there, so screen readers would
+  // not hear the step: its title and body go to a polite live region, announced once per step.
+  const current = run ? steps[progress!.stepIndex] : undefined;
+  const announce =
+    current && step && typeof step.advance === 'object'
+      ? `${String(current.title)}. ${String(current.content)}`
+      : '';
 
   return (
     <TourContext.Provider value={{ active: tour, paused: !!progress?.paused, start, resume, emit }}>
       {children}
-      <div ref={setPortal} data-tour-portal="" aria-live="off" />
+      <div ref={setPortal} data-tour-portal="" aria-live="off">
+        <div className="sr-only" aria-live="polite">
+          {announce}
+        </div>
+      </div>
       {run && tour && portal && (
         <Joyride
           portalElement={portal}

@@ -14,6 +14,7 @@ import { useTourEvent } from './use-tour-event';
 import { TourMenu, TakeTourButton } from './tour-menu';
 import { TOURS } from '@/lib/tours/registry';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const nav = vi.hoisted(() => ({ pathname: '/projects', push: vi.fn() }));
 vi.mock('@/i18n/navigation', () => ({
@@ -127,7 +128,10 @@ function Harness({
   return (
     <NextIntlClientProvider locale={locale} messages={messages(locale)} timeZone="UTC">
       <QueryClientProvider client={client}>
-        <TourProvider registry={registry}>{children}</TourProvider>
+        {/* As in app-shell/providers.tsx: TourMenu relies on the app's TooltipProvider. */}
+        <TooltipProvider delayDuration={300}>
+          <TourProvider registry={registry}>{children}</TourProvider>
+        </TooltipProvider>
       </QueryClientProvider>
     </NextIntlClientProvider>
   );
@@ -294,6 +298,92 @@ describe('TourProvider', () => {
     expect(local()['demo@1'].status).toBe('skipped');
     expect(screen.getByRole('dialog', { name: 'Save version 1' })).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('Esc inside an open modal dialog on an event step leaves the tour open', async () => {
+    const user = userEvent.setup();
+    startAt('demo@1', 3);
+    const onOpenChange = vi.fn();
+    render(
+      <Harness client={makeClient()} registry={[DEMO]}>
+        <Page />
+        <Dialog open onOpenChange={onOpenChange}>
+          <DialogContent closeLabel="Close">
+            <DialogTitle>Save version 1</DialogTitle>
+            <button type="button">Confirm save</button>
+          </DialogContent>
+        </Dialog>
+      </Harness>,
+    );
+    await screen.findByRole('dialog', { name: 'Save a version' });
+    screen.getByRole('button', { name: 'Confirm save' }).focus();
+    await user.keyboard('{Escape}');
+    // The modal handles its own Esc; the tour step stays and nothing is recorded.
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByRole('dialog', { name: 'Save a version' })).toBeInTheDocument();
+    expect(api.updateMe).not.toHaveBeenCalled();
+    expect(local()['demo@1']).toBeUndefined();
+  });
+
+  it('Esc on the card itself still dismisses an event step', async () => {
+    const user = userEvent.setup();
+    startAt('demo@1', 3);
+    const { client } = setup([DEMO]);
+    const d = await screen.findByRole('dialog', { name: 'Save a version' });
+    await waitFor(() => expect(d).toContainElement(document.activeElement as HTMLElement));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(meIn(client).tours['demo@1']?.status).toBe('dismissed');
+  });
+
+  it('hides Back when the previous step is on another page', async () => {
+    const cross = tour('cross@1', [
+      step('one', { route: /^\/projects\/[^/]+$/, advance: 'navigate' }),
+      step('two', { target: '[data-tour="list"]' }),
+      step('done'),
+    ]);
+    const user = userEvent.setup();
+    startAt('cross@1', 1);
+    setup([cross]);
+    const d = await screen.findByRole('dialog', { name: 'The list' });
+    expect(within(d).queryByRole('button', { name: 'Back' })).toBeNull();
+    // Same page: Back is there.
+    await user.click(within(d).getByRole('button', { name: 'Next' }));
+    const d2 = await screen.findByRole('dialog', { name: 'All done' });
+    expect(within(d2).getByRole('button', { name: 'Back' })).toBeInTheDocument();
+  });
+
+  it('accepts the awaited event while paused: records completed and shows the Done card', async () => {
+    window.sessionStorage.setItem(
+      'sit-tour-progress',
+      JSON.stringify({ id: 'demo@1', stepIndex: 3, paused: true, path: '/projects' }),
+    );
+    const { client } = setup([DEMO]);
+    await waitFor(() => expect(probe.tours!.paused).toBe(true));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    act(() => probe.emit!('estimate-created'));
+    expect(probe.tours!.paused).toBe(true);
+    act(() => probe.emit!('version-saved'));
+    expect(meIn(client).tours['demo@1']?.status).toBe('completed');
+    const d = await screen.findByRole('dialog', { name: 'All done' });
+    expect(within(d).queryByRole('button', { name: 'Skip tour' })).toBeNull();
+    expect(probe.tours!.paused).toBe(false);
+  });
+
+  it('announces an event step in a polite live region, and nothing on other steps', async () => {
+    const user = userEvent.setup();
+    startAt('demo@1', 2);
+    setup([DEMO]);
+    await screen.findByRole('dialog', { name: 'New estimate' });
+    const live = () => document.querySelector('[data-tour-portal] [aria-live="polite"].sr-only');
+    expect(live()).not.toBeNull();
+    expect(live()!.textContent).toBe('');
+    expect(document.querySelector('[data-tour-portal]')).toHaveAttribute('aria-live', 'off');
+    await user.click(screen.getByRole('button', { name: 'New estimate' }));
+    await screen.findByRole('dialog', { name: 'Save a version' });
+    expect(live()!.textContent).toContain('Save a version');
+    expect(live()!.textContent).toContain('Save a version body');
   });
 
   it('Skip records skipped at once in the cache, the browser copy and PATCH /me', async () => {

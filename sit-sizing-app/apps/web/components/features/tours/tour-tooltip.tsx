@@ -14,14 +14,18 @@ export interface TourStepData {
   recorded: boolean;
   /** Selector of the step's element, or null for a centred card. */
   target: string | null;
+  /** The previous step is on this page, so Back can show it. */
+  canGoBack: boolean;
 }
 
 const TABBABLE = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
 /**
  * The tour step card (guided-tours spec 6.7): TCB-DS surface and buttons, next-intl strings,
- * `role="dialog"` labelled by the step title. Focus moves here when the step opens; Joyride's
- * focus trap keeps Tab inside and gives focus back to the page when the step closes.
+ * `role="dialog"` labelled by the step title. Focus moves here when the step opens. On `next`
+ * steps Joyride's focus trap keeps Tab inside; on steps that wait for the page the trap is off
+ * and Tab past the last button goes to the step's target. Joyride gives focus back to the page
+ * when the step closes.
  */
 export function TourTooltip({
   index,
@@ -36,11 +40,22 @@ export function TourTooltip({
   const t = useTranslations('tours.controls');
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
-  const data = (step.data ?? { advance: 'next', recorded: false, target: null }) as TourStepData;
+  const data = (step.data ?? {
+    advance: 'next',
+    recorded: false,
+    target: null,
+    canGoBack: false,
+  }) as TourStepData;
 
   // On steps that wait for the page, Tab past the last button goes to the target, so keyboard
   // users can do what the step asks (the tooltip is portalled at the end of the document).
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Event steps turn off Joyride's body-wide Esc (it would also fire inside the open dialog),
+    // so Esc on the card itself dismisses the tour here.
+    if (e.key === 'Escape' && data.advance === 'event') {
+      closeProps.onClick(e as unknown as Parameters<typeof closeProps.onClick>[0]);
+      return;
+    }
     if (e.key !== 'Tab' || e.shiftKey || data.advance === 'next' || !data.target) return;
     const items = ref.current ? [...ref.current.querySelectorAll<HTMLElement>(TABBABLE)] : [];
     const last = items.at(-1);
@@ -97,7 +112,7 @@ export function TourTooltip({
           </Button>
         )}
         <span className="flex-1" />
-        {index > 0 && !data.recorded && (
+        {data.canGoBack && !data.recorded && (
           <Button variant="outline" size="sm" data-action="back" onClick={backProps.onClick}>
             {t('back')}
           </Button>
