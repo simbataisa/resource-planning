@@ -14,7 +14,10 @@ import { ASSUMPTION_META } from '../../web/lib/assumption-meta.ts';
 export const GENERATED_DIR = new URL('../src/generated/', import.meta.url);
 const MESSAGES_DIR = new URL('../../web/messages/', import.meta.url);
 
-/** Message groups the tools read; `editor.rough` holds the rough-scope field labels. */
+/**
+ * Message groups the tools read; `editor.rough` holds the rough-scope field labels and
+ * `results.sens.items` the sensitivity (tornado) row labels.
+ */
 const GROUPS = ['catalogue', 'detailTab', 'evidenceTab', 'teamTab', 'assumptionsTab'] as const;
 
 export interface AssumptionRowMeta {
@@ -34,6 +37,8 @@ function messages(locale: 'en' | 'vi'): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const g of GROUPS) out[g] = all[g];
   out.editor = { rough: all.editor?.rough };
+  const sens = all.results?.sens as Record<string, unknown> | undefined;
+  out.results = { sens: { items: sens?.items } };
   return out;
 }
 

@@ -28,6 +28,7 @@ import {
   describeInputs,
   INPUT_GROUPS,
   InputField,
+  sensitivityLabel,
 } from '../glossary';
 import { applyChanges, PathError } from '../merge';
 import { VersionRef, versionNumber } from './read';
@@ -45,6 +46,7 @@ const LocaleArg = z
 const Headline = ModeSummary.omit({ groups: true });
 const SensitivityRow = z.object({
   key: z.string().describe('Sensitivity item (same keys as the editor tornado chart).'),
+  label: z.string().nullable().describe('The editor label of the item; null when it has none.'),
   lo: z.number(),
   hi: z.number(),
   span: z.number(),
@@ -107,6 +109,7 @@ const PreviewArgs = z.object({
     .max(200)
     .optional()
     .describe('Values to replace before computing. Each path must already exist.'),
+  locale: LocaleArg,
 });
 
 /** Understand tools (design spec 6.3–6.4): explain fields and preview numbers; nothing is saved. */
@@ -196,7 +199,7 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       outputSchema: PreviewResult,
       annotations: READ_ONLY,
     },
-    async ({ inputs, assumptions, base, changes }) => {
+    async ({ inputs, assumptions, base, changes, locale }) => {
       if (inputs && base) throw invalidInput('base', 'Give either full inputs or base, not both.');
       if (!inputs && !base) {
         throw invalidInput('inputs', 'Give full inputs, or base with changes.');
@@ -219,7 +222,7 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       }
       // Validate the whole object before the engine sees it (Review Focus 5).
       const doc = PreviewDoc.parse(applyChanges(start, changes ?? []));
-      return preview(doc.inputs, doc.assumptions);
+      return preview(doc.inputs, doc.assumptions, await localeOf(locale));
     },
   );
 }
@@ -240,7 +243,16 @@ async function profileCalibration(
   }
 }
 
-function preview(inputs: EstimateInputs, assumptions: Assumptions): z.infer<typeof PreviewResult> {
+function preview(
+  inputs: EstimateInputs,
+  assumptions: Assumptions,
+  locale: Locale,
+): z.infer<typeof PreviewResult> {
+  const rows = (mode: 'rough' | 'detailed') =>
+    sensitivity(mode, inputs, assumptions, SWING).rows.map((r) => ({
+      ...r,
+      label: sensitivityLabel(locale, r.key),
+    }));
   const both = computeBoth(inputs, assumptions);
   const stored = toStoredResult(both);
   const { groups: roughGroups, ...rough } = stored.rough;
@@ -259,8 +271,8 @@ function preview(inputs: EstimateInputs, assumptions: Assumptions): z.infer<type
     topGap: topGap(both),
     sensitivity: {
       swing: SWING,
-      rough: sensitivity('rough', inputs, assumptions, SWING).rows,
-      detailed: sensitivity('detailed', inputs, assumptions, SWING).rows,
+      rough: rows('rough'),
+      detailed: rows('detailed'),
     },
     uncalibrated: uncalibratedCount(assumptions, DEFAULT_ASSUMPTIONS),
   };

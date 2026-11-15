@@ -259,6 +259,7 @@ describe('understand tools', () => {
     expect(sens.detailed.length).toBeGreaterThan(0);
     expect(sens.rough[0]).toEqual({
       key: expect.any(String),
+      label: expect.any(String),
       lo: expect.any(Number),
       hi: expect.any(Number),
       span: expect.any(Number),
@@ -305,6 +306,20 @@ describe('understand tools', () => {
         }
       }
     }
+  });
+
+  it('preview labels each sensitivity row in the requested locale', async () => {
+    const { call } = await connect();
+    type Rows = { sensitivity: { rough: Array<{ key: string; label: string | null }> } };
+    const en = (await call('preview_estimate', { inputs: EXAMPLE_INPUTS, locale: 'en' }))
+      .structuredContent as Rows;
+    const vi1 = (await call('preview_estimate', { inputs: EXAMPLE_INPUTS }))
+      .structuredContent as Rows;
+    const api = en.sensitivity.rough.find((r) => r.key === 'casesApi');
+    expect(api?.label).toBe('Cases per API endpoint');
+    const viApi = vi1.sensitivity.rough.find((r) => r.key === 'casesApi');
+    expect(viApi?.label).toBeTruthy();
+    expect(viApi?.label).not.toBe('Cases per API endpoint');
   });
 
   it('preview with base + changes fetches the version once and writes nothing', async () => {
