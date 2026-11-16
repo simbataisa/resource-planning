@@ -986,6 +986,26 @@ describe('Export and import (X-01)', () => {
     expect(createObjectURL).toHaveBeenCalled();
   });
 
+  it('refuses a profile file when the estimate has its own sizes (ADR-0021)', async () => {
+    const custom = structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions;
+    for (const t of ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'] as const)
+      (custom[t] as Record<string, unknown>).XS2 = structuredClone(
+        (custom[t] as Record<string, unknown>).S,
+      );
+    custom.sizes = [...custom.sizes, 'XS2'];
+    setup(version({ assumptions: custom }));
+    const input = document.querySelector('input[type=file]') as HTMLInputElement;
+    const file = new File([JSON.stringify({ assumptions: DEFAULT_ASSUMPTIONS })], 'p.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    await act(async () => {
+      fireEvent.change(input);
+    });
+    expect(screen.getByText(/This estimate has its own feature sizes/)).toBeInTheDocument();
+    expect(screen.queryByText('Unsaved changes')).toBeNull();
+  });
+
   it('imports a profile file, and explains files it cannot use', async () => {
     setup(version());
     const input = document.querySelector('input[type=file]') as HTMLInputElement;

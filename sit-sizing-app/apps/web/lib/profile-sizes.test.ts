@@ -83,3 +83,19 @@ describe('moveSize (ADR-0021)', () => {
     expect(ok(moveSize(D(), {}, 'XXXL', 1)).values.sizes).toEqual(D().sizes);
   });
 });
+
+describe('built-in names (ADR-0021)', () => {
+  it('re-adding a removed built-in size restores its engine defaults, so it stays uncalibrated', () => {
+    const removed = ok(removeSize(D(), {}, 'XXL')).values;
+    const { values } = ok(addSize(removed, {}, 'XXL', 'M'));
+    for (const t of TABLES)
+      expect((values[t] as Record<string, unknown>).XXL).toEqual(
+        (D()[t] as Record<string, unknown>).XXL,
+      );
+  });
+
+  it('refuses to rename a size to a built-in name', () => {
+    const removed = ok(removeSize(D(), {}, 'XXL')).values;
+    expect(renameSize(removed, {}, 'XL', 'XXL')).toEqual({ error: 'BUILT_IN_NAME' });
+  });
+});

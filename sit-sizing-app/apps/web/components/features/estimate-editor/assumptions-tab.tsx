@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   DEFAULT_ASSUMPTIONS,
+  isBuiltInSize,
   isDefaultRow,
   isUncalibratedRow,
   uncalibratedCount,
@@ -72,7 +73,12 @@ export function AssumptionsTab({
                   const isDefault = uncal(r.path);
                   // A custom size has no engine default to compare with or reset to.
                   const hasDefault = getPath(DEFAULTS, r.path) !== undefined;
-                  const sameAsDefault = hasDefault && isDefaultRow(A, DEFAULTS, r.path);
+                  // The scenarios row also holds custom sizes: judge and reset its built-in
+                  // sizes only, so its keys keep matching the size list (ADR-0021).
+                  const scenarios = r.path === 'ptRoughScen';
+                  const sameAsDefault = scenarios
+                    ? isUncalibratedRow(A, DEFAULTS, r.path)
+                    : hasDefault && isDefaultRow(A, DEFAULTS, r.path);
                   const name = label(r.label);
                   return (
                     <TableRow
@@ -110,9 +116,14 @@ export function AssumptionsTab({
                             aria-label={t('resetLabel', { label: name })}
                             disabled={!editable}
                             onClick={() =>
-                              editAssumptions((d) =>
-                                setPath(d, r.path, structuredClone(getPath(DEFAULTS, r.path))),
-                              )
+                              editAssumptions((d) => {
+                                if (scenarios) {
+                                  for (const s of d.sizes)
+                                    if (isBuiltInSize(s))
+                                      d.ptRoughScen[s] = DEFAULTS.ptRoughScen[s]!;
+                                } else
+                                  setPath(d, r.path, structuredClone(getPath(DEFAULTS, r.path)));
+                              })
                             }
                           >
                             {t('reset')}

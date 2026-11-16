@@ -1130,7 +1130,8 @@
       },
       "hint": "Tạo từ trạng thái đã lưu gần nhất của phiên bản này, cùng số liệu với màn hình.",
       "waiting": "Đang chờ tự động lưu trước khi tải xuống."
-    }
+    },
+    "ownSizes": "Ước lượng này có kích cỡ tính năng riêng nên tệp không thể thay thế các giả định của nó. Hãy áp dụng một hồ sơ đã phát hành."
   },
   "content": {
     "guide": {
@@ -1773,7 +1774,8 @@
         "BAD_NAME": "Dùng 1 đến 6 chữ cái, chữ số, + hoặc -.",
         "NAME_TAKEN": "Kích cỡ này đã có.",
         "LAST_SIZE": "Hồ sơ phải giữ ít nhất một kích cỡ.",
-        "TOO_MANY": "Hồ sơ có tối đa 20 kích cỡ."
+        "TOO_MANY": "Hồ sơ có tối đa 20 kích cỡ.",
+        "BUILT_IN_NAME": "Đây là tên kích cỡ có sẵn. Kích cỡ có sẵn giữ giá trị mặc định: hãy thêm kích cỡ đó thay vì đổi tên một kích cỡ khác."
       }
     }
   },

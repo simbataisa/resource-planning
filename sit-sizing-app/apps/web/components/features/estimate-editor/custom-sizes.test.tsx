@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS } from '@sit/engine';
 import type { Assumptions, EstimateInputs } from '@sit/schemas';
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithIntl } from '@/tests/support/intl';
 import { AssumptionsTab } from './assumptions-tab';
 import { RoughScopeTab } from './rough-scope-tab';
-import { EditorProvider } from './store';
+import { EditorProvider, useEditor } from './store';
 
 vi.mock(
   '@/i18n/navigation',
@@ -56,5 +56,39 @@ describe('custom sizes on the estimate screens (ADR-0021)', () => {
     expect(screen.getAllByText('Size XS2').length).toBe(3);
     expect(screen.queryByText('Size XXL')).toBeNull();
     expect(screen.getAllByText('160 uncalibrated').length).toBeGreaterThan(0);
+  });
+});
+
+/** Shows the keys of the performance-scenario table, to check what a reset leaves. */
+function ScenarioKeys() {
+  const { state } = useEditor();
+  return (
+    <output aria-label="scenario keys">
+      {Object.keys(state.assumptions.ptRoughScen).sort().join(',')}
+    </output>
+  );
+}
+
+describe('reset with custom sizes (ADR-0021)', () => {
+  const ROW = 'Scenarios per performance-critical feature, rough mode';
+
+  it('offers no reset on the scenarios row while its built-in sizes are at the default', () => {
+    render(<AssumptionsTab />);
+    expect(screen.queryByRole('button', { name: `Reset ${ROW} to the default` })).toBeNull();
+  });
+
+  it('resets only the built-in sizes and keeps the custom ones', () => {
+    const a = withXS2();
+    (a.ptRoughScen as Record<string, number>).M = 9;
+    render(
+      <>
+        <AssumptionsTab />
+        <ScenarioKeys />
+      </>,
+      a,
+    );
+    fireEvent.click(screen.getByRole('button', { name: `Reset ${ROW} to the default` }));
+    expect(screen.getByLabelText('scenario keys').textContent).toBe([...a.sizes].sort().join(','));
+    expect(screen.queryByRole('button', { name: `Reset ${ROW} to the default` })).toBeNull();
   });
 });

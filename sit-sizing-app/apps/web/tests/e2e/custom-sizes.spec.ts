@@ -36,7 +36,8 @@ test('a QE Lead adds a size to a profile and an Estimator gets it', async ({ pag
       await sizes.getByLabel('Size name').fill('XS2');
       await sizes.getByLabel('Copy from').selectOption('XS');
       await sizes.getByRole('button', { name: 'Add size' }).click();
-      await expect(sizes.getByText('XS2', { exact: true })).toBeVisible();
+      // The new size is in the list (it is also offered in "Copy from").
+      await expect(sizes.getByRole('listitem').getByText('XS2', { exact: true })).toBeVisible();
     });
     await expectNoAxeViolations(lead);
   });

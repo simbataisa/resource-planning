@@ -1130,7 +1130,8 @@
       },
       "hint": "Built from the last saved state of this version, with the same numbers as the screen.",
       "waiting": "Waiting for autosave before you can download."
-    }
+    },
+    "ownSizes": "This estimate has its own feature sizes, so a file cannot replace its assumptions. Apply a published profile instead."
   },
   "content": {
     "guide": {
@@ -1773,7 +1774,8 @@
         "BAD_NAME": "Use 1 to 6 letters, digits, + or -.",
         "NAME_TAKEN": "That size already exists.",
         "LAST_SIZE": "A profile keeps at least one size.",
-        "TOO_MANY": "A profile has at most 20 sizes."
+        "TOO_MANY": "A profile has at most 20 sizes.",
+        "BUILT_IN_NAME": "That is a built-in size name. A built-in size keeps its default values: add it instead of renaming another size."
       }
     }
   },
