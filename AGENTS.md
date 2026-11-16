@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **TCB** (3343 symbols, 8874 relationships, 234 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **resource-planning** (4429 symbols, 11257 relationships, 287 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 
@@ -25,10 +25,10 @@ This project is indexed by GitNexus as **TCB** (3343 symbols, 8874 relationships
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/TCB/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/TCB/clusters` | All functional areas |
-| `gitnexus://repo/TCB/processes` | All execution flows |
-| `gitnexus://repo/TCB/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/resource-planning/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/resource-planning/clusters` | All functional areas |
+| `gitnexus://repo/resource-planning/processes` | All execution flows |
+| `gitnexus://repo/resource-planning/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 
