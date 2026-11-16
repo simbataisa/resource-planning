@@ -14,7 +14,8 @@ export function readStored(v: {
   assumptions: unknown;
 }) {
   try {
-    return upgradeStored(v.schemaVersion, v);
+    // Only the payload: a Prisma row also holds Decimal columns, which structuredClone refuses.
+    return upgradeStored(v.schemaVersion, { inputs: v.inputs, assumptions: v.assumptions });
   } catch (err) {
     if (!(err instanceof StoredPayloadError)) throw err;
     if (err.code === 'NEWER_THAN_APP')
