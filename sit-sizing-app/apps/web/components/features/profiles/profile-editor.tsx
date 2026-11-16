@@ -149,9 +149,9 @@ function ProfileBody({ profile, manage }: { profile: ProfileDetail; manage: bool
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       ) : null}
-      {/* Two columns from lg up: a sticky panel with the key facts, the values beside it. */}
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(16rem,1fr)_2fr]">
-        <aside className="grid gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto">
+      {/* Two columns from xl up: a sticky panel with the key facts, the values beside it. */}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(16rem,1fr)_2fr]">
+        <aside className="grid gap-4 xl:sticky xl:top-4 xl:max-h-[calc(100dvh-2rem)] xl:overflow-y-auto">
           <StatusCard>
             <div>
               <Badge variant={PROFILE_TONE[profile.status]}>{t(`status.${profile.status}`)}</Badge>

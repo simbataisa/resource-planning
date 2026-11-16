@@ -437,8 +437,10 @@ describe('two-column profile page: review fixes', () => {
     hooks.useProfile.mockReturnValue(ok(profile()));
     const { container } = renderWithIntl(<ProfileEditor profileId="pr1" />);
     const aside = container.querySelector('aside')!;
-    expect(aside.className).toContain('lg:max-h-[calc(100dvh-2rem)]');
-    expect(aside.className).toContain('lg:overflow-y-auto');
+    expect(aside.className).toContain('xl:max-h-[calc(100dvh-2rem)]');
+    expect(aside.className).toContain('xl:overflow-y-auto');
+    // Two columns only from xl: below it the values need the full width for a row.
+    expect(aside.parentElement!.className).toContain('xl:grid-cols-[minmax(16rem,1fr)_2fr]');
   });
 
   it('announces unsaved changes', () => {
