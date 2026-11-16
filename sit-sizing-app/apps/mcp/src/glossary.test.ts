@@ -145,6 +145,10 @@ describe('describeInputs', () => {
       min: 0,
       explanation: expect.stringContaining('Simple: Read or basic CRUD'),
     });
+    // ADR-0019: mapped columns and DQ rules are counted by complexity.
+    for (const p of ['detail.data.columns', 'detail.data.dq'])
+      expect(en.find((f) => f.path === p)).toMatchObject({ type: 'band3', min: 0 });
+    expect(en.find((f) => f.path === 'detail.data.scd')).toMatchObject({ type: 'count' });
   });
 
   it('filters by group', () => {

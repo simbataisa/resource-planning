@@ -285,7 +285,9 @@ const FIELDS: FieldDef[] = [
   ...(['feed', 'pipe', 'table', 'report'] as const).map((d) =>
     band3(`detail.data.${d}`, `catalogue.dataDrivers.${d}`, rubric(`detailTab.guide.extra.${d}`)),
   ),
-  ...(['columns', 'dq', 'scd', 'secured', 'accessRoles'] as const).map((d) =>
+  // Counted by complexity since ADR-0019.
+  ...(['columns', 'dq'] as const).map((d) => band3(`detail.data.${d}`, `detailTab.data.${d}`)),
+  ...(['scd', 'secured', 'accessRoles'] as const).map((d) =>
     count(`detail.data.${d}`, 'detail', `detailTab.data.${d}`),
   ),
   ...(['intent', 'ocr'] as const).map((d) =>
