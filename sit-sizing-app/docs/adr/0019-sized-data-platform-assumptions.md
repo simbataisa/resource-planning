@@ -50,7 +50,9 @@ Option A.
 4. **Versions.**
    - `ENGINE_VERSION` becomes 1.1.0.
    - `INPUTS_SCHEMA_VERSION` becomes 2.
-   - `UPGRADES[1]` turns each old single assumption `v` into `[v, v, v]`, and `columns` and `dq` from `n` into `[n, 0, 0]`. A version saved with engine 1.0.0 therefore recomputes to exactly its stored result. It still shows the "Computed with engine 1.0" flag (ADR-0013).
+   - `UPGRADES[1]` turns each old single assumption `v` into `[v, v, v]`, and `columns` and `dq` from `n` into `[n, 0, 0]`. A version saved with engine 1.0.0 keeps its stored result (never recomputed silently) and shows the "Computed with engine 1.0" flag (ADR-0013). Recomputing it (a new draft from it) gives its old numbers in detailed mode, up to floating-point order. Two known differences:
+     - Rough mode with Medium or Complex data features differs, because their column and DQ proxies now land in the feature's own bucket. This is the intended formula change. Per-band rounding can also move a calibrated, fractional count by ±1 case.
+     - The three upgraded rows, `[v, v, v]`, no longer equal the new defaults, so an upgraded version counts them as calibrated (142 → 139 uncalibrated). The profile migration avoids this for profiles; versions are not rewritten (ADR-0013).
 5. **Profiles.**
    - A Prisma data migration rewrites `AssumptionProfile.values` in place:
      - A value still equal to the old default becomes the new default triple, and stays uncalibrated.

@@ -25,7 +25,7 @@ Status: **Review** = for the tech lead and QE practice lead to decide, ideally w
 | 13  | 2026-11-12 | Evidence       | JaCoCo coverage is informational only; only the mutation score changes the estimate.                                                                                                                                          | None                                                              | Keep                             |
 
 | 14 | 2026-11-16 | Rules | Adding one Simple business rule can lower the rule group by one case (seen with random seed 7: 336 → 335), from rounding the critical/standard split per band. Found while changing random inputs for ADR-0019; the property test keeps its original seeds. | ±1 case | Review |
-| 15 | 2026-11-16 | Data | Engine 1.1.0 (ADR-0019): data-test design and execution minutes and preparation hours are sized Simple/Medium/Complex; mapped columns and DQ rules are counted by complexity. Per-size sums differ from the old `sum3 × rate` only by floating-point order (~1e-15). | Rises for Medium/Complex data tests; Simple unchanged | Keep |
+| 15 | 2026-11-16 | Data | Engine 1.1.0 (ADR-0019): data-test design and execution minutes and preparation hours are sized Simple/Medium/Complex; mapped columns and DQ rules are counted by complexity. Per-size sums differ from the old `sum3 × rate` only by floating-point order (~1e-15). A recomputed v1 version can differ in rough mode: Medium/Complex data features now put columns and DQ rules in their own bucket, and per-band rounding can move a fractional count by ±1. | Rises for Medium/Complex data tests; Simple unchanged | Keep |
 
 ## Port notes
 
