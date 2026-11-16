@@ -6,18 +6,18 @@ test('the worked example gives the prototype numbers, autosaves, exports and sav
 }) => {
   await createExampleEstimate(page, 'smoke');
   const cards = page.getByRole('region', { name: 'Summary' });
-  // The prototype's worked example (golden-example.json): 20.46 and 21.53 FTE.
-  await expect(cards).toContainText('20.5');
-  await expect(cards).toContainText('21.5');
+  // The prototype's worked example (golden-example.json, engine 1.1.0): 20.83 and 21.69 FTE.
+  await expect(cards).toContainText('20.8');
+  await expect(cards).toContainText('21.7');
   await expect(cards).toContainText('3,511 cases');
   await expect(cards).toContainText('4,047 cases');
   await expectNoAxeViolations(page);
 
   await page.getByRole('spinbutton', { name: 'Quantity' }).first().fill('2');
   await expect(page.getByText('All changes saved')).toBeVisible();
-  await expect(cards).toContainText('24.4');
+  await expect(cards).toContainText('24.7');
   await page.reload();
-  await expect(cards).toContainText('24.4');
+  await expect(cards).toContainText('24.7');
 
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export profile' }).click();

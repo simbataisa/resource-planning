@@ -11,8 +11,8 @@ describe('versionSnapshot', () => {
       structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions,
     );
     expect(s.engineVersion).toBe(ENGINE_VERSION);
-    expect(s.roughFte).toBe(20.46);
-    expect(s.detailedFte).toBe(21.53);
+    expect(s.roughFte).toBe(20.83);
+    expect(s.detailedFte).toBe(21.69);
     expect(s.totalCasesDetailed).toBe(4047);
     expect(s.uncalibrated).toBe(142);
     expect(s.result.detailed.cases).toBe(4047);

@@ -40,8 +40,8 @@ function emptyDetail(d) {
     pipe: Z(),
     table: Z(),
     report: Z(),
-    columns: 0,
-    dq: 0,
+    columns: Z(),
+    dq: Z(),
     scd: 0,
     secured: 0,
     accessRoles: 0,
@@ -196,12 +196,41 @@ export const GOLDEN_CASES = [
         pipe: [1, 2, 2],
         table: [4, 3, 2],
         report: [0, 2, 1],
-        columns: 260,
-        dq: 40,
+        columns: [260, 0, 0],
+        dq: [40, 0, 0],
         scd: 2,
         secured: 4,
         accessRoles: 3,
       };
+      noChannels(S);
+    },
+  },
+  {
+    name: 'data-sized',
+    description:
+      'Data platform with mapped columns and DQ rules at every complexity and calibrated sizes (ADR-0019)',
+    edit: (A, S) => {
+      S.features = [
+        { name: 'Synthetic · Risk mart', type: 'data', size: 'M', cx: 1, qty: 1 },
+        { name: 'Synthetic · Ledger feed', type: 'data', size: 'L', cx: 2, qty: 1 },
+      ];
+      const data = S.detail.data;
+      emptyDetail(S.detail);
+      S.detail.data = {
+        ...data,
+        feed: [1, 2, 1],
+        pipe: [1, 1, 2],
+        table: [3, 3, 2],
+        report: [1, 1, 0],
+        columns: [80, 120, 60],
+        dq: [10, 20, 10],
+        scd: 1,
+        secured: 2,
+        accessRoles: 3,
+      };
+      A.dataDesign = [8, 15, 30];
+      A.dataExec = [4, 8, 15];
+      A.dataPrepHours = [1.5, 3, 6];
       noChannels(S);
     },
   },

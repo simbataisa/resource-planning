@@ -122,8 +122,8 @@ test('a published profile is applied to a new estimate', async ({ page, browser 
 test('the Excel export matches the on-screen numbers', async ({ page }) => {
   await createExampleEstimate(page, 'export');
   const cards = page.getByRole('region', { name: 'Summary' });
-  // The worked example (golden-example.json): 20.5 and 21.5 FTE, 3,511 and 4,047 cases.
-  await expect(cards).toContainText('21.5');
+  // The worked example (golden-example.json, engine 1.1.0): 20.8 and 21.7 FTE, 3,511 and 4,047 cases.
+  await expect(cards).toContainText('21.7');
   await expect(cards).toContainText('4,047 cases');
 
   const download = page.waitForEvent('download');
@@ -138,8 +138,8 @@ test('the Excel export matches the on-screen numbers', async ({ page }) => {
     rows.set(String(r.getCell(1).value), [r.getCell(2).value, r.getCell(3).value]);
   });
   const [roughFte, detailedFte] = rows.get('FTE') as number[];
-  expect(roughFte!.toFixed(1)).toBe('20.5');
-  expect(detailedFte!.toFixed(1)).toBe('21.5');
+  expect(roughFte!.toFixed(1)).toBe('20.8');
+  expect(detailedFte!.toFixed(1)).toBe('21.7');
   expect(rows.get('Test cases')).toEqual([3511, 4047]);
 
   const gap = wb.getWorksheet('Gap by group')!;

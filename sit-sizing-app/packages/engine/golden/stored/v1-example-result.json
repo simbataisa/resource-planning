@@ -1,0 +1,298 @@
+{
+  "description": "The worked example's expected result as engine 1.0.0 computed it (from golden/example.json before ADR-0019). Upgraded v1 payloads must still recompute to this. Never edit.",
+  "engineVersion": "1.0.0",
+  "expected": {
+    "rough": {
+      "cases": 3511,
+      "hours": 3499.4,
+      "fte": 20.4643,
+      "lo": 12.2786,
+      "hi": 28.6501,
+      "smeLabelHours": 21.17,
+      "groups": {
+        "api": {
+          "cases": 176,
+          "hours": 391.96
+        },
+        "screen": {
+          "cases": 150,
+          "hours": 330.34
+        },
+        "integration": {
+          "cases": 68,
+          "hours": 154.88
+        },
+        "rule": {
+          "cases": 141,
+          "hours": 329.18
+        },
+        "workflow": {
+          "cases": 33,
+          "hours": 71.29
+        },
+        "batch": {
+          "cases": 33,
+          "hours": 69.4
+        },
+        "event": {
+          "cases": 40,
+          "hours": 89.77
+        },
+        "journey": {
+          "cases": 37,
+          "hours": 80.77
+        },
+        "fieldFE": {
+          "cases": 584,
+          "hours": 70.41
+        },
+        "fieldBE": {
+          "cases": 26,
+          "hours": 2.42
+        },
+        "mapping": {
+          "cases": 280,
+          "hours": 26.08
+        },
+        "role": {
+          "cases": 118,
+          "hours": 130.93
+        },
+        "sod": {
+          "cases": 4,
+          "hours": 4.44
+        },
+        "channel": {
+          "cases": 30,
+          "hours": 66.07
+        },
+        "mobile": {
+          "cases": 494,
+          "hours": 937.23
+        },
+        "a11y": {
+          "cases": 78,
+          "hours": 86.55
+        },
+        "dataSource": {
+          "cases": 8,
+          "hours": 4.82
+        },
+        "dataPipeline": {
+          "cases": 18,
+          "hours": 10.85
+        },
+        "dataModel": {
+          "cases": 26,
+          "hours": 15.67
+        },
+        "dataMapping": {
+          "cases": 90,
+          "hours": 54.25
+        },
+        "dataQuality": {
+          "cases": 20,
+          "hours": 12.06
+        },
+        "dataReport": {
+          "cases": 12,
+          "hours": 20.88
+        },
+        "dataAccess": {
+          "cases": 15,
+          "hours": 9.04
+        },
+        "dataPrep": {
+          "cases": 0,
+          "hours": 13.8
+        },
+        "aiIntent": {
+          "cases": 560,
+          "hours": 27.91
+        },
+        "aiRag": {
+          "cases": 90,
+          "hours": 7.93
+        },
+        "aiOcr": {
+          "cases": 100,
+          "hours": 6.9
+        },
+        "aiGuard": {
+          "cases": 240,
+          "hours": 11.96
+        },
+        "aiTool": {
+          "cases": 24,
+          "hours": 41.76
+        },
+        "aiHitl": {
+          "cases": 8,
+          "hours": 13.92
+        },
+        "aiEval": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptDesign": {
+          "cases": 8,
+          "hours": 156.4
+        },
+        "ptEnv": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptRun": {
+          "cases": 0,
+          "hours": 194.35
+        }
+      }
+    },
+    "detailed": {
+      "cases": 4047,
+      "hours": 3680.82,
+      "fte": 21.5253,
+      "lo": 18.2965,
+      "hi": 24.754,
+      "smeLabelHours": 18.5,
+      "groups": {
+        "api": {
+          "cases": 196,
+          "hours": 384.15
+        },
+        "screen": {
+          "cases": 169,
+          "hours": 302
+        },
+        "integration": {
+          "cases": 110,
+          "hours": 247.22
+        },
+        "rule": {
+          "cases": 190,
+          "hours": 403.86
+        },
+        "workflow": {
+          "cases": 33,
+          "hours": 64.96
+        },
+        "batch": {
+          "cases": 33,
+          "hours": 63.07
+        },
+        "event": {
+          "cases": 35,
+          "hours": 60.49
+        },
+        "journey": {
+          "cases": 50,
+          "hours": 103.89
+        },
+        "fieldFE": {
+          "cases": 852,
+          "hours": 102.72
+        },
+        "fieldBE": {
+          "cases": 30,
+          "hours": 2.79
+        },
+        "mapping": {
+          "cases": 302,
+          "hours": 28.13
+        },
+        "role": {
+          "cases": 159,
+          "hours": 145.94
+        },
+        "sod": {
+          "cases": 4,
+          "hours": 3.67
+        },
+        "channel": {
+          "cases": 34,
+          "hours": 60.84
+        },
+        "mobile": {
+          "cases": 565,
+          "hours": 961.66
+        },
+        "a11y": {
+          "cases": 96,
+          "hours": 88.12
+        },
+        "dataSource": {
+          "cases": 7,
+          "hours": 4.22
+        },
+        "dataPipeline": {
+          "cases": 25,
+          "hours": 15.07
+        },
+        "dataModel": {
+          "cases": 28,
+          "hours": 16.88
+        },
+        "dataMapping": {
+          "cases": 105,
+          "hours": 63.29
+        },
+        "dataQuality": {
+          "cases": 24,
+          "hours": 14.47
+        },
+        "dataReport": {
+          "cases": 18,
+          "hours": 35.43
+        },
+        "dataAccess": {
+          "cases": 12,
+          "hours": 7.23
+        },
+        "dataPrep": {
+          "cases": 0,
+          "hours": 13.8
+        },
+        "aiIntent": {
+          "cases": 600,
+          "hours": 29.9
+        },
+        "aiRag": {
+          "cases": 90,
+          "hours": 7.93
+        },
+        "aiOcr": {
+          "cases": 0,
+          "hours": 0
+        },
+        "aiGuard": {
+          "cases": 240,
+          "hours": 11.96
+        },
+        "aiTool": {
+          "cases": 24,
+          "hours": 37.16
+        },
+        "aiHitl": {
+          "cases": 8,
+          "hours": 12.39
+        },
+        "aiEval": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptDesign": {
+          "cases": 8,
+          "hours": 138
+        },
+        "ptEnv": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptRun": {
+          "cases": 0,
+          "hours": 194.35
+        }
+      }
+    }
+  }
+}

@@ -33,8 +33,18 @@ describe('counts', () => {
     ];
     const c = counts('rough', A, s);
     expect(c.data.feed).toEqual([0, A.dproxies.S.feed * 2, 0]);
-    expect(c.data.columns).toBe(A.dproxies.S.columns * 2);
+    expect(c.data.columns).toEqual([0, A.dproxies.S.columns * 2, 0]);
+    expect(c.data.dq).toEqual([0, A.dproxies.S.dq * 2, 0]);
+    expect(c.data.scd).toBe(A.dproxies.S.scd * 2);
     expect(c.data.accessRoles).toBe(s.roughRoles);
+  });
+
+  it("puts a Complex data feature's columns and DQ rules in the Complex bucket (ADR-0019)", () => {
+    const s = S();
+    s.features = [{ name: 'd', type: 'data', size: 'M', cx: 2, qty: 1 }];
+    const c = counts('rough', A, s);
+    expect(c.data.columns).toEqual([0, 0, A.dproxies.M.columns]);
+    expect(c.data.dq).toEqual([0, 0, A.dproxies.M.dq]);
   });
 
   it('reads detailed counts as entered and clamps minimums', () => {

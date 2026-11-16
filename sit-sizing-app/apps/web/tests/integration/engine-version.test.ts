@@ -5,6 +5,7 @@ import * as draft from '@/app/api/v1/estimates/[estimateId]/draft/route';
 import * as one from '@/app/api/v1/estimates/[estimateId]/versions/[number]/route';
 import * as versions from '@/app/api/v1/estimates/[estimateId]/versions/route';
 import * as estimates from '@/app/api/v1/projects/[projectId]/estimates/route';
+import type { Prisma } from '@sit/db';
 import { db } from '@/server/db';
 import { call, seeded } from './helpers';
 
@@ -78,6 +79,31 @@ describe('engine version (E-08)', () => {
     expect(res.status).toBe(409);
     expect(res.json.error.details[0].reason).toBe('NEWER_SCHEMA');
     await db().estimateVersion.update({ where: { id: v1.id }, data: { schemaVersion: 1 } });
+    // A version 1 row runs the ADR-0019 upgrade step on read: the full Prisma row (with
+    // Decimal columns) must not reach structuredClone.
     expect((await getVersion(1)).status).toBe(200);
+  });
+
+  it('reads a version 1 payload with single data values as sizes (ADR-0019)', async () => {
+    const v1 = await db().estimateVersion.findFirstOrThrow({ where: { estimateId, number: 1 } });
+    const assumptions = structuredClone(v1.assumptions) as Record<string, unknown>;
+    const inputs = structuredClone(v1.inputs) as { detail: { data: Record<string, unknown> } };
+    Object.assign(assumptions, { dataDesign: 12, dataExec: 6, dataPrepHours: 2.5 });
+    Object.assign(inputs.detail.data, { columns: 140, dq: 24 });
+    await db().estimateVersion.update({
+      where: { id: v1.id },
+      data: {
+        schemaVersion: 1,
+        assumptions: assumptions as Prisma.InputJsonValue,
+        inputs: inputs as unknown as Prisma.InputJsonValue,
+      },
+    });
+    const res = await getVersion(1);
+    expect(res.status, JSON.stringify(res.json)).toBe(200);
+    expect(res.json.assumptions.dataDesign).toEqual([12, 12, 12]);
+    expect(res.json.assumptions.dataPrepHours).toEqual([2.5, 2.5, 2.5]);
+    expect(res.json.inputs.detail.data.columns).toEqual([140, 0, 0]);
+    expect(res.json.inputs.detail.data.dq).toEqual([24, 0, 0]);
+    expect(res.json.result.detailed.fte).toBe(99); // the stored result is never recomputed
   });
 });

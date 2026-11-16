@@ -1,4 +1,4 @@
-import type { Assumptions, EstimateInputs, Feature } from '@sit/schemas';
+import type { Assumptions, EstimateInputs, Feature, StoredPayload } from '@sit/schemas';
 import { SIZES } from './catalogue.ts';
 import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS } from './defaults.ts';
 import { clone } from './util.ts';
@@ -55,6 +55,30 @@ function normaliseFeature(f: Record<string, unknown>): Feature {
   };
 }
 
+const isObj = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object';
+
+/**
+ * Same rule as `expandLegacyDataShapes` in `@sit/schemas` (ADR-0019), kept here because the
+ * engine imports only types from schemas at run time (the parity tool runs it in plain Node).
+ * A test checks that both give the same result.
+ */
+export function expandLegacyPrototype(p: StoredPayload): StoredPayload {
+  const a = p.assumptions;
+  if (isObj(a))
+    for (const k of ['dataDesign', 'dataExec', 'dataPrepHours'] as const) {
+      const v = a[k];
+      if (typeof v === 'number') a[k] = [v, v, v];
+    }
+  const detail = isObj(p.inputs) ? p.inputs.detail : undefined;
+  const data = isObj(detail) ? detail.data : undefined;
+  if (isObj(data))
+    for (const k of ['columns', 'dq'] as const) {
+      const n = data[k];
+      if (typeof n === 'number') data[k] = [n, 0, 0];
+    }
+  return p;
+}
+
 /**
  * Reads a profile exported from the HTML prototype ({assumptions, scope?, profile?})
  * with the prototype's own tolerance rules (loadProfile). Validate the result with
@@ -66,9 +90,15 @@ export function fromPrototypeProfile(obj: unknown): {
   profile: string;
 } {
   if (!obj || typeof obj !== 'object') throw new PrototypeImportError('NOT_A_PROFILE');
-  const o = obj as Record<string, unknown>;
-  const asm = o.assumptions ?? o.A;
-  if (!asm) throw new PrototypeImportError('NO_ASSUMPTIONS');
+  const o0 = obj as Record<string, unknown>;
+  if (!(o0.assumptions ?? o0.A)) throw new PrototypeImportError('NO_ASSUMPTIONS');
+  // Files saved before ADR-0019 hold single values; expand them so mergeShape keeps them.
+  const legacy = expandLegacyPrototype({
+    assumptions: clone(o0.assumptions ?? o0.A),
+    inputs: clone(o0.scope ?? null),
+  });
+  const o: Record<string, unknown> = { ...o0, scope: legacy.inputs ?? undefined };
+  const asm = legacy.assumptions;
   const assumptions = mergeShape(clone(DEFAULT_ASSUMPTIONS) as Assumptions, asm);
   let inputs: EstimateInputs | null = null;
   if (o.scope) {

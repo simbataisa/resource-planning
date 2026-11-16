@@ -878,7 +878,9 @@ describe('Editing the scope', () => {
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Text' }), { target: { value: '9' } });
     expect(screen.getByText(/Input fields \(total\) is now locked/)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Critical business rules'), { target: { value: '4' } });
-    fireEvent.change(screen.getByLabelText('Data quality rules'), { target: { value: '30' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Data quality rules Complex' }), {
+      target: { value: '30' },
+    });
     fireEvent.change(screen.getByLabelText('Guardrail categories'), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText('Data-heavy scenarios (production-size data)'), {
       target: { value: '1' },

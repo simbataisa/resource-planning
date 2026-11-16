@@ -85,14 +85,14 @@ describe('engine properties', () => {
           k,
         ).toBeGreaterThanOrEqual(base);
       }
-      for (const k of ['feed', 'pipe', 'table', 'report'] as const)
+      for (const k of ['feed', 'pipe', 'table', 'report', 'columns', 'dq'] as const)
         expect(
           bump((s) => {
             s.detail.data[k][1] += 1;
           }),
           k,
         ).toBeGreaterThanOrEqual(base);
-      for (const k of ['columns', 'dq', 'scd', 'secured', 'accessRoles'] as const)
+      for (const k of ['scd', 'secured', 'accessRoles'] as const)
         expect(
           bump((s) => {
             s.detail.data[k] += 1;

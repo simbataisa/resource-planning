@@ -112,8 +112,11 @@ function drivers(src: ExportSource, t: Translate): Table {
   const triple = (label: string, r: readonly number[], d: readonly number[]) =>
     rows.push([label, ...r, ...d]);
   for (const k of DRIVERS) triple(t(`catalogue.drivers.${k}`), R.counts[k], D.counts[k]);
-  for (const k of ['feed', 'pipe', 'table', 'report'] as const)
-    triple(t(`catalogue.dataDrivers.${k}`), R.counts.data[k], D.counts.data[k]);
+  for (const k of ['feed', 'pipe', 'table', 'columns', 'dq', 'report'] as const) {
+    const label =
+      k === 'columns' || k === 'dq' ? t(`detailTab.data.${k}`) : t(`catalogue.dataDrivers.${k}`);
+    triple(label, R.counts.data[k], D.counts.data[k]);
+  }
   for (const k of ['intent', 'ocr'] as const)
     triple(t(`catalogue.aiDrivers.${k}`), R.counts.ai[k], D.counts.ai[k]);
   return {

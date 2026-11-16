@@ -348,10 +348,22 @@
     ],
     "dAccessSampling": 0.5,
     "dataSample": 0.1,
-    "dataDesign": 10,
-    "dataExec": 5,
+    "dataDesign": [
+      10,
+      15,
+      25
+    ],
+    "dataExec": [
+      5,
+      8,
+      12
+    ],
     "dataCycles": 3,
-    "dataPrepHours": 2,
+    "dataPrepHours": [
+      2,
+      3,
+      5
+    ],
     "dataDaysPerCycle": 2,
     "aiUtt": [
       20,
@@ -520,8 +532,16 @@
           0,
           0
         ],
-        "columns": 0,
-        "dq": 0,
+        "columns": [
+          0,
+          0,
+          0
+        ],
+        "dq": [
+          0,
+          0,
+          0
+        ],
         "scd": 0,
         "secured": 0,
         "accessRoles": 0

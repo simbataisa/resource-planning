@@ -201,8 +201,8 @@ export const SENSITIVITY_ITEMS: readonly { key: string; roughOnly?: true; apply:
   {
     key: 'dataMinutes',
     apply: (A, k) => {
-      A.dataDesign *= k;
-      A.dataExec *= k;
+      A.dataDesign = scale(A.dataDesign, k);
+      A.dataExec = scale(A.dataExec, k);
     },
   },
   {

@@ -93,7 +93,7 @@ export function DetailScopeTab() {
           text: t('summary.data', {
             f: formatInt(sum3(c.data.feed)),
             t: formatInt(sum3(c.data.table)),
-            c: formatInt(c.data.columns),
+            c: formatInt(sum3(c.data.columns)),
           }),
         }
       : { text: t('notInScope'), empty: true },
@@ -406,15 +406,15 @@ function DataSection() {
       <CountTable
         normalize={atLeast0Int}
         disabled={!editable}
-        rows={(['feed', 'pipe', 'table', 'report'] as const).map((k) => ({
+        rows={(['feed', 'pipe', 'table', 'columns', 'dq', 'report'] as const).map((k) => ({
           key: k,
-          label: tc(k),
+          label: k === 'columns' || k === 'dq' ? t(k) : tc(k),
           values: d.data[k],
           onChange: (b, v) => edit((s) => void (s.data[k][b] = v)),
         }))}
       />
       <FieldGrid>
-        {(['columns', 'dq', 'scd', 'secured', 'accessRoles'] as const).map((k) => (
+        {(['scd', 'secured', 'accessRoles'] as const).map((k) => (
           <NumberField
             key={k}
             label={t(k)}

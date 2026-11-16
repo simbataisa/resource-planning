@@ -348,10 +348,22 @@
     ],
     "dAccessSampling": 0.5,
     "dataSample": 0.1,
-    "dataDesign": 10,
-    "dataExec": 5,
+    "dataDesign": [
+      10,
+      15,
+      25
+    ],
+    "dataExec": [
+      5,
+      8,
+      12
+    ],
     "dataCycles": 3,
-    "dataPrepHours": 2,
+    "dataPrepHours": [
+      2,
+      3,
+      5
+    ],
     "dataDaysPerCycle": 2,
     "aiUtt": [
       20,
@@ -560,8 +572,16 @@
           1,
           1
         ],
-        "columns": 140,
-        "dq": 24,
+        "columns": [
+          140,
+          0,
+          0
+        ],
+        "dq": [
+          24,
+          0,
+          0
+        ],
         "scd": 1,
         "secured": 3,
         "accessRoles": 4
@@ -666,10 +686,10 @@
   "expected": {
     "rough": {
       "cases": 2347,
-      "hours": 2644.86,
-      "fte": 15.467,
-      "lo": 9.2802,
-      "hi": 21.6538,
+      "hours": 2673.76,
+      "fte": 15.636,
+      "lo": 9.3816,
+      "hi": 21.8904,
       "smeLabelHours": 21.17,
       "groups": {
         "api": {
@@ -738,23 +758,23 @@
         },
         "dataSource": {
           "cases": 2,
-          "hours": 1.14
+          "hours": 1.79
         },
         "dataPipeline": {
           "cases": 18,
-          "hours": 10.28
+          "hours": 16.1
         },
         "dataModel": {
           "cases": 26,
-          "hours": 14.85
+          "hours": 23.26
         },
         "dataMapping": {
           "cases": 18,
-          "hours": 10.28
+          "hours": 16.1
         },
         "dataQuality": {
           "cases": 4,
-          "hours": 2.28
+          "hours": 3.58
         },
         "dataReport": {
           "cases": 12,
@@ -766,7 +786,7 @@
         },
         "dataPrep": {
           "cases": 0,
-          "hours": 13.8
+          "hours": 20.7
         },
         "aiIntent": {
           "cases": 560,
@@ -812,10 +832,10 @@
     },
     "detailed": {
       "cases": 2539,
-      "hours": 2737.42,
-      "fte": 16.0083,
-      "lo": 13.6071,
-      "hi": 18.4096,
+      "hours": 2763.53,
+      "fte": 16.161,
+      "lo": 13.7368,
+      "hi": 18.5851,
       "smeLabelHours": 18.5,
       "groups": {
         "api": {
@@ -884,15 +904,15 @@
         },
         "dataSource": {
           "cases": 2,
-          "hours": 1.14
+          "hours": 1.47
         },
         "dataPipeline": {
           "cases": 25,
-          "hours": 14.28
+          "hours": 25.53
         },
         "dataModel": {
           "cases": 28,
-          "hours": 15.99
+          "hours": 27.07
         },
         "dataMapping": {
           "cases": 21,
@@ -912,7 +932,7 @@
         },
         "dataPrep": {
           "cases": 0,
-          "hours": 13.8
+          "hours": 17.25
         },
         "aiIntent": {
           "cases": 600,

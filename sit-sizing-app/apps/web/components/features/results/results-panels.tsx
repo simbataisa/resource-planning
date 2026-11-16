@@ -398,8 +398,8 @@ function WorkedExample() {
           f: fmt(sum3(c.data.feed)),
           p: fmt(sum3(c.data.pipe)),
           t: fmt(sum3(c.data.table)),
-          c: fmt(c.data.columns),
-          q: fmt(c.data.dq),
+          c: fmt(sum3(c.data.columns)),
+          q: fmt(sum3(c.data.dq)),
           l: A.dataCycles,
           h: fmt(grpH('data')),
         })
