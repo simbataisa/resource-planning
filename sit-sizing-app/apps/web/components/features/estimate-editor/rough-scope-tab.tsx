@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl';
 import { Plus, X } from 'lucide-react';
 import type { Assumptions } from '@sit/schemas';
 import type { Feature } from '@sit/schemas';
-import { SIZES } from '@sit/engine';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -99,7 +98,8 @@ export function RoughScopeTab() {
                       edit(i, (x) => void (x.size = e.target.value as Feature['size']))
                     }
                   >
-                    {SIZES.map((s) => (
+                    {/* The estimate's own sizes, from its profile (ADR-0021). */}
+                    {assumptions.sizes.map((s) => (
                       <option key={s} value={s}>
                         {s}
                       </option>
@@ -219,6 +219,8 @@ function Expansion({ feature: f, assumptions: A }: { feature: Feature; assumptio
   let text = '';
   if (type === 'data') {
     const p = A.dproxies[f.size];
+    // A size the assumptions lack (ADR-0021) has nothing to expand into.
+    if (!p) return null;
     text = t('expandData', {
       a: p.feed * q,
       b: p.pipe * q,
@@ -229,6 +231,8 @@ function Expansion({ feature: f, assumptions: A }: { feature: Feature; assumptio
     });
   } else if (type === 'ai') {
     const p = A.aproxies[f.size];
+    // A size the assumptions lack (ADR-0021) has nothing to expand into.
+    if (!p) return null;
     // Guardrails are not multiplied by quantity in the prototype (engine finding 3).
     text = t('expandAi', {
       a: p.intent * q,
@@ -240,6 +244,8 @@ function Expansion({ feature: f, assumptions: A }: { feature: Feature; assumptio
     });
   } else {
     const p = A.proxies[f.size];
+    // A size the assumptions lack (ADR-0021) has nothing to expand into.
+    if (!p) return null;
     text = t('expandApp', {
       a: p.screen * q,
       b: p.field * q,

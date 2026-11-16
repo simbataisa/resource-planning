@@ -2,7 +2,13 @@
 
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { DEFAULT_ASSUMPTIONS, isDefaultRow } from '@sit/engine';
+import {
+  DEFAULT_ASSUMPTIONS,
+  isBuiltInSize,
+  isDefaultRow,
+  isUncalibratedRow,
+  uncalibratedCount,
+} from '@sit/engine';
 import type { Assumptions } from '@sit/schemas';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +17,7 @@ import { CollapsibleSection } from '@/components/patterns/collapsible-section';
 import { NumberInput } from '@/components/patterns/number-input';
 import { getPath, setPath } from '@/lib/path';
 import { cn } from '@/lib/utils';
-import { ASSUMPTION_META, type MetaLabel, type MetaRow } from '@/lib/assumption-meta';
+import { assumptionMeta, type MetaLabel, type MetaRow } from '@/lib/assumption-meta';
 import { useEditor } from './store';
 
 const DEFAULTS = DEFAULT_ASSUMPTIONS as Assumptions;
@@ -25,14 +31,23 @@ const DEFAULTS = DEFAULT_ASSUMPTIONS as Assumptions;
 export function AssumptionsTab({
   header,
   calibrationCell,
+  notes,
 }: {
   header?: ReactNode;
-  calibrationCell?: (path: string, name: string, isDefault: boolean) => ReactNode;
+  /**
+   * The calibration cell of a row. `sameAsDefault` is false for a row with no engine default
+   * (a custom size, ADR-0021), so it can always take a source.
+   */
+  calibrationCell?: (path: string, name: string, sameAsDefault: boolean) => ReactNode;
+  /** Notes that calibrate custom-size rows; defaults to the copied `sizeNotes`. */
+  notes?: Readonly<Record<string, unknown>>;
 } = {}) {
   const t = useTranslations('assumptionsTab');
   const tr = useTranslations();
-  const { state, uncalibrated, editAssumptions, editable } = useEditor();
+  const { state, editAssumptions, editable } = useEditor();
   const A = state.assumptions;
+  const uncal = (path: string) => isUncalibratedRow(A, DEFAULTS, path, notes ?? A.sizeNotes);
+  const uncalibrated = uncalibratedCount(A, DEFAULTS, notes ?? A.sizeNotes);
   const label = (l: MetaLabel) => tr(l.key, l.values);
 
   return (
@@ -42,20 +57,28 @@ export function AssumptionsTab({
         <Badge variant="unc">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
       </div>
       {header}
-      {ASSUMPTION_META.map((g) => (
+      {assumptionMeta(A.sizes).map((g) => (
         <CollapsibleSection
           key={g.group}
           id={`asm-${g.group}`}
           title={t(`groups.${g.group}`)}
           summary={tr('editor.tabs.uncalibrated', {
-            n: g.rows.filter((r) => isDefaultRow(A, DEFAULTS, r.path)).length,
+            n: g.rows.filter((r) => uncal(r.path)).length,
           })}
         >
           <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableBody>
                 {g.rows.map((r) => {
-                  const isDefault = isDefaultRow(A, DEFAULTS, r.path);
+                  const isDefault = uncal(r.path);
+                  // A custom size has no engine default to compare with or reset to.
+                  const hasDefault = getPath(DEFAULTS, r.path) !== undefined;
+                  // The scenarios row also holds custom sizes: judge and reset its built-in
+                  // sizes only, so its keys keep matching the size list (ADR-0021).
+                  const scenarios = r.path === 'ptRoughScen';
+                  const sameAsDefault = scenarios
+                    ? isUncalibratedRow(A, DEFAULTS, r.path)
+                    : hasDefault && isDefaultRow(A, DEFAULTS, r.path);
                   const name = label(r.label);
                   return (
                     <TableRow
@@ -81,11 +104,11 @@ export function AssumptionsTab({
                       </TableCell>
                       {calibrationCell ? (
                         <TableCell className="w-64 align-top">
-                          {calibrationCell(r.path, name, isDefault)}
+                          {calibrationCell(r.path, name, sameAsDefault)}
                         </TableCell>
                       ) : null}
                       <TableCell className="w-24 align-top">
-                        {!isDefault ? (
+                        {hasDefault && !sameAsDefault ? (
                           <Button
                             variant="link"
                             size="sm"
@@ -93,9 +116,14 @@ export function AssumptionsTab({
                             aria-label={t('resetLabel', { label: name })}
                             disabled={!editable}
                             onClick={() =>
-                              editAssumptions((d) =>
-                                setPath(d, r.path, structuredClone(getPath(DEFAULTS, r.path))),
-                              )
+                              editAssumptions((d) => {
+                                if (scenarios) {
+                                  for (const s of d.sizes)
+                                    if (isBuiltInSize(s))
+                                      d.ptRoughScen[s] = DEFAULTS.ptRoughScen[s]!;
+                                } else
+                                  setPath(d, r.path, structuredClone(getPath(DEFAULTS, r.path)));
+                              })
                             }
                           >
                             {t('reset')}

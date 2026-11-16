@@ -46,7 +46,7 @@ describe('assumption profiles', () => {
   it('lets a QE Lead create a project profile, and refuses the wrong roles', async () => {
     const res = await create('dev-lead', { name: NAME, scope: 'PROJECT', projectId });
     expect(res.status, JSON.stringify(res.json)).toBe(201);
-    expect(res.json).toMatchObject({ status: 'DRAFT', scope: 'PROJECT', uncalibrated: 142 });
+    expect(res.json).toMatchObject({ status: 'DRAFT', scope: 'PROJECT', uncalibrated: 160 });
     profileId = res.json.id;
     expect(
       (await create('dev-estimator', { name: `${NAME} x`, scope: 'PROJECT', projectId })).status,
@@ -88,7 +88,7 @@ describe('assumption profiles', () => {
       calibration: { 'cases.api': { source: 'Synthetic · SIT cycle', measuredAt: '2026-10-01' } },
     });
     expect(res.status, JSON.stringify(res.json)).toBe(200);
-    expect(res.json.uncalibrated).toBe(141);
+    expect(res.json.uncalibrated).toBe(159);
     expect(res.json.calibration['cases.api'].source).toBe('Synthetic · SIT cycle');
     expect((await patch('dev-viewer', { name: 'x' })).status).toBe(403);
   });
@@ -117,7 +117,7 @@ describe('assumption profiles', () => {
     expect(res.status, JSON.stringify(res.json)).toBe(201);
     const v = await db().estimateVersion.findFirstOrThrow({ where: { estimateId: res.json.id } });
     expect(v.profileId).toBe(profileId);
-    expect(v.uncalibrated).toBe(141);
+    expect(v.uncalibrated).toBe(159);
   });
 
   it('applies a published profile to an open draft (lock holder, current rowVersion)', async () => {
@@ -142,7 +142,7 @@ describe('assumption profiles', () => {
     expect(res.status, JSON.stringify(res.json)).toBe(200);
     expect(res.json.profileId).toBe(profileId);
     expect(res.json.rowVersion).toBe(draft.rowVersion + 1);
-    expect(res.json.uncalibrated).toBe(141);
+    expect(res.json.uncalibrated).toBe(159);
     expect(
       await db().auditEvent.count({
         where: { action: 'estimate.draft.profile.apply', entityId: draft.id },

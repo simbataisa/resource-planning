@@ -10,7 +10,11 @@ export function rng(seed) {
   };
 }
 
-export function randomCase(P, seed) {
+/**
+ * `sizes`: the T-shirt sizes features are drawn from. The default keeps the four original sizes
+ * so seeded property-test cases stay the same; the parity check passes all ten (ADR-0020).
+ */
+export function randomCase(P, seed, sizes = ['S', 'M', 'L', 'XL']) {
   const r = rng(seed);
   const int = (lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
   const pick = (xs) => xs[int(0, xs.length - 1)];
@@ -26,6 +30,8 @@ export function randomCase(P, seed) {
     // random sequence, and every seeded case, stays as it was.
     const sized = new Set(['dataDesign', 'dataExec', 'dataPrepHours']);
     for (const k of Object.keys(A)) {
+      // The size list and its notes are not numbers (ADR-0021): skip them without drawing.
+      if (k === 'sizes' || k === 'sizeNotes') continue;
       if (sized.has(k)) {
         if (chance(0.15)) {
           const f = 0.5 + r();
@@ -41,7 +47,7 @@ export function randomCase(P, seed) {
   S.features = Array.from({ length: int(0, 8) }, (_, i) => {
     const f = {
       name: `Synthetic ${i}`,
-      size: pick(['S', 'M', 'L', 'XL']),
+      size: pick(sizes),
       cx: int(0, 2),
       qty: int(0, 3),
     };

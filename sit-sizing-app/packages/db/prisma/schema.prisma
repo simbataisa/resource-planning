@@ -83,14 +83,14 @@ model User {
   /// Guided-tour state: { "<tour>@<n>": { status, at } }, at most 100 keys
   tours       Json       @default("{}")
 
-  memberships       ProjectMember[]    @relation("MemberUser")
-  membersAdded      ProjectMember[]    @relation("MemberAddedBy")
+  memberships       ProjectMember[]     @relation("MemberUser")
+  membersAdded      ProjectMember[]     @relation("MemberAddedBy")
   projectsCreated   Project[]
   estimatesCreated  Estimate[]
-  versionsCreated   EstimateVersion[]  @relation("VersionCreatedBy")
-  versionsApproved  EstimateVersion[]  @relation("VersionApprovedBy")
-  versionsSubmitted EstimateVersion[]  @relation("VersionSubmittedBy")
-  versionsLocked    EstimateVersion[]  @relation("VersionLockedBy")
+  versionsCreated   EstimateVersion[]   @relation("VersionCreatedBy")
+  versionsApproved  EstimateVersion[]   @relation("VersionApprovedBy")
+  versionsSubmitted EstimateVersion[]   @relation("VersionSubmittedBy")
+  versionsLocked    EstimateVersion[]   @relation("VersionLockedBy")
   profilesCreated   AssumptionProfile[]
   actualsRecorded   Actuals[]
   comments          ReviewComment[]
@@ -165,6 +165,8 @@ model EstimateVersion {
   detailedFte        Decimal       @db.Decimal(8, 2)
   totalCasesDetailed Int
   uncalibrated       Int
+  /// Assumption rows of this version: 130 fixed plus 3 per size (ADR-0021).
+  assumptionRows     Int           @default(160)
   note               String?       @db.VarChar(2000)
   /// Optimistic lock
   rowVersion         Int           @default(1)
@@ -203,7 +205,7 @@ model AssumptionProfile {
   projectId   String?
   name        String        @db.VarChar(120)
   status      ProfileStatus @default(DRAFT)
-  /// zod: Assumptions (the 142 calibratable values)
+  /// zod: Assumptions (the 160 calibratable values)
   values      Json
   /// Per path: source, measuredAt, note
   calibration Json          @default("{}")

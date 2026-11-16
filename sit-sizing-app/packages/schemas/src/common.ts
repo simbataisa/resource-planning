@@ -6,8 +6,17 @@ export const NonNeg = z.number().min(0);
 export const Band3 = z.tuple([NonNeg, NonNeg, NonNeg]);
 export type Band3 = z.infer<typeof Band3>;
 
-export const SIZES = ['S', 'M', 'L', 'XL'] as const;
-export const Size = z.enum(SIZES);
+/** The built-in rough-scope T-shirt sizes, smallest first (ADR-0020). */
+export const SIZES = ['XXS', 'XS', 'S', 'M-', 'M', 'M+', 'L', 'XL', 'XXL', 'XXXL'] as const;
+/**
+ * A size name (ADR-0021). Profiles can add their own sizes, so a size is any trimmed name of
+ * 1 to 6 letters, digits, `+` or `-`. No dot: names appear in assumption paths (`proxies.M+`).
+ */
+export const SizeName = z
+  .string()
+  .trim()
+  .regex(/^[A-Za-z0-9+-]{1,6}$/, 'Use 1 to 6 letters, digits, + or -.');
+export const Size = SizeName;
 export type Size = z.infer<typeof Size>;
 
 /** 0 = Simple, 1 = Medium, 2 = Complex. */

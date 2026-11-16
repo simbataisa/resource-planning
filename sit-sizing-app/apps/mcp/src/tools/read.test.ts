@@ -96,6 +96,7 @@ function profile(id: string, status: string) {
     name: `Profile ${id}`,
     status,
     uncalibrated: 0,
+    assumptionRows: 160,
     basedOnId: null,
     createdAt: AT,
     publishedAt: status === 'DRAFT' ? null : AT,

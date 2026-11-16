@@ -19,7 +19,8 @@ const row = (over: Partial<PortfolioRow>): PortfolioRow => ({
   cases: 4047,
   hours: 3680.8,
   roughFte: 20.46,
-  uncalibrated: 142,
+  uncalibrated: 160,
+  assumptionRows: 160,
   ...over,
 });
 
@@ -49,10 +50,10 @@ describe('portfolio roll-up (R-01: totals equal the sum of the versions)', () =>
       cases: 300,
       hours: 410,
       roughFte: 4,
-      uncalibrated: 142,
+      uncalibrated: 160,
     }),
   ];
-  const p = rollUp(rows, 'approved', 142);
+  const p = rollUp(rows, 'approved', 160);
 
   it('sums every row into the total', () => {
     expect(p.total).toEqual({
@@ -86,12 +87,22 @@ describe('portfolio roll-up (R-01: totals equal the sum of the versions)', () =>
   });
 
   it('handles an empty portfolio', () => {
-    expect(rollUp([], 'latest', 142)).toEqual({
+    expect(rollUp([], 'latest', 160)).toEqual({
       status: 'latest',
       projects: [],
-      total: totals([], 142),
-      assumptionRows: 142,
+      total: totals([]),
+      assumptionRows: 160,
     });
-    expect(totals([], 142)).toMatchObject({ estimates: 0, fte: 0, onDefaults: 0 });
+    expect(totals([])).toMatchObject({ estimates: 0, fte: 0, onDefaults: 0 });
+  });
+});
+
+describe('portfolio with custom sizes (ADR-0021)', () => {
+  it('judges each estimate on defaults against its own row total', () => {
+    const t = totals([
+      row({ uncalibrated: 163, assumptionRows: 163 }),
+      row({ estimateId: 'e2', uncalibrated: 160, assumptionRows: 163 }),
+    ]);
+    expect(t.onDefaults).toBe(1);
   });
 });

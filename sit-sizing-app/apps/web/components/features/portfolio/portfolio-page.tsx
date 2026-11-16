@@ -236,7 +236,7 @@ function PortfolioTable({ p }: { p: Portfolio }) {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{r.profileName ?? '—'}</TableCell>
                   <TableCell className={num}>
-                    {r.uncalibrated} / {p.assumptionRows}
+                    {r.uncalibrated} / {r.assumptionRows}
                   </TableCell>
                   <TableCell className={num}>{formatFte(r.fte)}</TableCell>
                   <TableCell className={num}>

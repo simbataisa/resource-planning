@@ -6,7 +6,8 @@
  * Only a DRAFT can be edited, so a published profile never changes under the estimates
  * that copied it. A default change goes into a new profile (design 6.6 rule 6).
  */
-import { ASSUMPTION_PATHS } from '@sit/engine';
+import { assumptionPaths, customSizePaths } from '@sit/engine';
+import { Assumptions } from '@sit/schemas';
 import type { Action } from '@/lib/rbac';
 
 type Scope = 'GLOBAL' | 'PROJECT';
@@ -53,11 +54,29 @@ export function decideProfile(
   return { ok: true, to: 'RETIRED' };
 }
 
-const KNOWN = new Set(ASSUMPTION_PATHS);
+/** Calibration keys that are not assumption rows of this profile (its sizes included, ADR-0021). */
+export function unknownCalibrationPaths(
+  calibration: Record<string, unknown>,
+  values: { readonly sizes: readonly string[] },
+): string[] {
+  const known = new Set(assumptionPaths(values));
+  return Object.keys(calibration).filter((k) => !known.has(k));
+}
 
-/** Calibration keys that are not one of the 142 assumption rows. */
-export function unknownCalibrationPaths(calibration: Record<string, unknown>): string[] {
-  return Object.keys(calibration).filter((k) => !KNOWN.has(k));
+/**
+ * The assumptions a profile hands to an estimate: its values, with the calibration notes of its
+ * custom-size rows copied into `sizeNotes`, so the estimate counts those rows as the profile
+ * does (ADR-0021). Notes on other rows stay with the profile.
+ */
+export function profileAssumptions(values: unknown, calibration: unknown): Assumptions {
+  const a = Assumptions.parse(values);
+  const notes = (calibration ?? {}) as Record<string, Assumptions['sizeNotes'][string]>;
+  a.sizeNotes = Object.fromEntries(
+    customSizePaths(a)
+      .filter((p) => notes[p] !== undefined)
+      .map((p) => [p, notes[p]!]),
+  );
+  return a;
 }
 
 /** A profile can be applied to an estimate when it is published and in scope for the project. */

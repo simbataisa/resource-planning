@@ -4,4 +4,8 @@ export interface PrototypeLike {
   SAMPLE_SCOPE: unknown;
 }
 export function rng(seed: number): () => number;
-export function randomCase(P: PrototypeLike, seed: number): { A: any; S: any };
+export function randomCase(
+  P: PrototypeLike,
+  seed: number,
+  sizes?: readonly string[],
+): { A: any; S: any };

@@ -104,7 +104,7 @@ export function ProfileList() {
                       <Badge variant={PROFILE_TONE[p.status]}>{t(`status.${p.status}`)}</Badge>
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
-                      {p.uncalibrated} / 142
+                      {p.uncalibrated} / {p.assumptionRows}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {p.publishedAt ? formatDateTime(p.publishedAt, locale) : '—'}

@@ -10,6 +10,7 @@ import {
   uncalibratedCount,
 } from '@sit/engine';
 import {
+  addSizeList,
   Assumptions,
   EstimateInputs,
   GroupKey,
@@ -29,6 +30,7 @@ import {
   describeInputs,
   INPUT_GROUPS,
   InputField,
+  isSizeRowPath,
   sensitivityLabel,
 } from '../glossary';
 import { applyChanges, PathError } from '../merge';
@@ -77,7 +79,7 @@ const PreviewResult = z.object({
     rough: z.array(SensitivityRow),
     detailed: z.array(SensitivityRow),
   }),
-  uncalibrated: z.number().int().describe('Assumption rows still at their default (of 142).'),
+  uncalibrated: z.number().int().describe('Assumption rows still at their default (of 160).'),
 });
 
 /** The whole object a preview validates before it runs the engine. */
@@ -141,10 +143,10 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
     {
       title: 'Describe assumptions',
       description:
-        'The 142 assumption rows: path, label, meaning and default. Given a version (estimateId and number) or a profile, also the current value, whether it is calibrated, and its source and measured date where known.',
+        'The 160 assumption rows: path, label, meaning and default. Given a version (estimateId and number) or a profile, also the current value, whether it is calibrated, and its source and measured date where known.',
       inputSchema: z.object({
         group: z.enum(ASSUMPTION_GROUPS).optional(),
-        paths: z.array(z.string().max(80)).max(142).optional(),
+        paths: z.array(z.string().max(80)).max(160).optional(),
         estimateId: Id.optional(),
         number: VersionRef.optional(),
         profileId: Id.optional(),
@@ -167,8 +169,9 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
         );
       }
       const lang = await localeOf(locale);
-      // Unknown paths are refused before any API call.
-      describeAssumptions({ locale: lang, paths });
+      // Unknown paths are refused before any API call. Size rows depend on the sizes of the
+      // version or profile (ADR-0021), so those are checked once its values are read.
+      describeAssumptions({ locale: lang, paths: paths?.filter((p) => !isSizeRowPath(p)) });
       let values: Assumptions | undefined;
       let calibration: ProfileDetail['calibration'] | undefined;
       if (estimateId && number !== undefined) {
@@ -185,7 +188,12 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       }
       return {
         rows: describeAssumptions({ locale: lang, group, paths, values, calibration }),
-        uncalibrated: uncalibratedCount(values ?? DEFAULT_ASSUMPTIONS, DEFAULT_ASSUMPTIONS),
+        // A profile counts its custom sizes with its own notes; a version with its copied ones.
+        uncalibrated: uncalibratedCount(
+          values ?? DEFAULT_ASSUMPTIONS,
+          DEFAULT_ASSUMPTIONS,
+          profileId ? calibration : undefined,
+        ),
       };
     },
   );
@@ -224,7 +232,11 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
         start = { inputs, assumptions: assumptions ?? DEFAULT_ASSUMPTIONS };
       }
       // Validate the whole object before the engine sees it (Review Focus 5).
-      const doc = PreviewDoc.parse(applyChanges(start, changes ?? []));
+      // Assumptions written before sizes were data (ADR-0021) have no size list: add it, as a
+      // stored payload is upgraded. A list that is there is left alone.
+      const doc = PreviewDoc.parse(
+        applyChanges(addSizeList(structuredClone(start)), changes ?? []),
+      );
       return preview(doc.inputs, doc.assumptions, await localeOf(locale));
     },
   );

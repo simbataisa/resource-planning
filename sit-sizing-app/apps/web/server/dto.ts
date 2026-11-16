@@ -1,4 +1,4 @@
-import { DEFAULT_ASSUMPTIONS, uncalibratedCount } from '@sit/engine';
+import { assumptionPaths, DEFAULT_ASSUMPTIONS, uncalibratedCount } from '@sit/engine';
 import type {
   Assumptions,
   EditLock,
@@ -193,7 +193,13 @@ export function profileDto(p: ProfileRow): Profile {
     projectId: p.projectId,
     name: p.name,
     status: p.status,
-    uncalibrated: uncalibratedCount(p.values as Assumptions, DEFAULT_ASSUMPTIONS),
+    // Custom-size rows count with the profile's own notes (ADR-0021).
+    uncalibrated: uncalibratedCount(
+      p.values as Assumptions,
+      DEFAULT_ASSUMPTIONS,
+      (p.calibration ?? {}) as Record<string, unknown>,
+    ),
+    assumptionRows: assumptionPaths(p.values as Assumptions).length,
     basedOnId: p.basedOnId,
     createdAt: iso(p.createdAt),
     publishedAt: p.publishedAt ? iso(p.publishedAt) : null,

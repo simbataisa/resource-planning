@@ -1,0 +1,1263 @@
+{
+  "name": "sizes-extended",
+  "description": "The six sizes added by ADR-0020, as application, data and AI features",
+  "assumptions": {
+    "cases": {
+      "api": [
+        4,
+        6,
+        10
+      ],
+      "screen": [
+        5,
+        8,
+        12
+      ],
+      "integration": [
+        6,
+        10,
+        16
+      ],
+      "rule": [
+        2,
+        4,
+        8
+      ],
+      "journey": [
+        3,
+        5,
+        8
+      ],
+      "batch": [
+        5,
+        8,
+        12
+      ],
+      "event": [
+        4,
+        6,
+        9
+      ]
+    },
+    "ftypes": {
+      "text": {
+        "cases": 15,
+        "mix": 30
+      },
+      "integer": {
+        "cases": 13,
+        "mix": 5
+      },
+      "decimal": {
+        "cases": 16,
+        "mix": 15
+      },
+      "percentage": {
+        "cases": 16,
+        "mix": 0
+      },
+      "currency": {
+        "cases": 18,
+        "mix": 0
+      },
+      "email": {
+        "cases": 15,
+        "mix": 2
+      },
+      "phone": {
+        "cases": 16,
+        "mix": 3
+      },
+      "date": {
+        "cases": 14,
+        "mix": 10
+      },
+      "datetime": {
+        "cases": 14,
+        "mix": 0
+      },
+      "boolean": {
+        "cases": 4,
+        "mix": 3
+      },
+      "enum": {
+        "cases": 3,
+        "mix": 15
+      },
+      "checkbox": {
+        "cases": 3,
+        "mix": 4
+      },
+      "radio": {
+        "cases": 3,
+        "mix": 3
+      },
+      "password": {
+        "cases": 17,
+        "mix": 0
+      },
+      "url": {
+        "cases": 14,
+        "mix": 0
+      },
+      "account": {
+        "cases": 16,
+        "mix": 4
+      },
+      "citizenId": {
+        "cases": 18,
+        "mix": 3
+      },
+      "taxCode": {
+        "cases": 16,
+        "mix": 3
+      },
+      "iban": {
+        "cases": 16,
+        "mix": 0
+      },
+      "file": {
+        "cases": 16,
+        "mix": 0
+      },
+      "image": {
+        "cases": 16,
+        "mix": 0
+      }
+    },
+    "sampleFE": 1,
+    "sampleBE": 1,
+    "partialShare": 0.5,
+    "valDesign": 2,
+    "valExecUI": 3,
+    "valExecAPI": 2,
+    "valCycles": 1,
+    "roleCasesPerPair": 2,
+    "roleSampling": 0.5,
+    "channelShares": {
+      "web2": 0.4,
+      "ios": 0.6,
+      "android": 0.6
+    },
+    "languageShare": 0.2,
+    "deviceCombos": 3,
+    "deviceExtra": 0.2,
+    "mobileCases": [
+      4,
+      6,
+      9
+    ],
+    "releaseCases": 6,
+    "mobileExec": 1.3,
+    "mobileDesignShare": 0.3,
+    "a11yCases": 2,
+    "mobileUnitGate": 70,
+    "mobileUplift": 0.2,
+    "envFactor": [
+      1,
+      1.1,
+      1.25,
+      1.4
+    ],
+    "mutationGate": 70,
+    "ruleUplift": 0.25,
+    "retestWeak": 0.3,
+    "transitions": [
+      3,
+      6,
+      10
+    ],
+    "invalidShare": 0.3,
+    "gatedShare": 0.5,
+    "sodCases": 2,
+    "roughApprovalShare": 0.5,
+    "criticalShare": 0.3,
+    "wiringCases": 1,
+    "variantShare": 0.4,
+    "variantSampling": 0.3,
+    "reqFields": [
+      5,
+      10,
+      20
+    ],
+    "respFields": [
+      8,
+      15,
+      30
+    ],
+    "dtoReuse": 0.3,
+    "eventFields": 12,
+    "apiOnlyCases": 4,
+    "mapPerField": 1,
+    "formatShare": 0.4,
+    "feUnitGate": 80,
+    "feLogicUplift": 0.2,
+    "feMutGate": 60,
+    "feMutUplift": 0.15,
+    "minutes": [
+      10,
+      20,
+      40
+    ],
+    "designFSD": 15,
+    "designNoFSD": 25,
+    "cycles": 2,
+    "regression": 0.3,
+    "retest": 0.2,
+    "overhead": 0.15,
+    "aiDesignCut": [
+      0,
+      0.2,
+      0.4
+    ],
+    "dproxies": {
+      "XXS": {
+        "feed": 0,
+        "pipe": 0,
+        "table": 1,
+        "report": 0,
+        "columns": 10,
+        "dq": 2,
+        "scd": 0,
+        "secured": 0
+      },
+      "XS": {
+        "feed": 1,
+        "pipe": 1,
+        "table": 2,
+        "report": 1,
+        "columns": 20,
+        "dq": 3,
+        "scd": 0,
+        "secured": 1
+      },
+      "S": {
+        "feed": 1,
+        "pipe": 1,
+        "table": 3,
+        "report": 1,
+        "columns": 40,
+        "dq": 6,
+        "scd": 0,
+        "secured": 1
+      },
+      "M-": {
+        "feed": 2,
+        "pipe": 2,
+        "table": 6,
+        "report": 2,
+        "columns": 80,
+        "dq": 13,
+        "scd": 1,
+        "secured": 2
+      },
+      "M": {
+        "feed": 2,
+        "pipe": 3,
+        "table": 8,
+        "report": 2,
+        "columns": 120,
+        "dq": 20,
+        "scd": 1,
+        "secured": 3
+      },
+      "M+": {
+        "feed": 3,
+        "pipe": 5,
+        "table": 12,
+        "report": 3,
+        "columns": 190,
+        "dq": 30,
+        "scd": 2,
+        "secured": 4
+      },
+      "L": {
+        "feed": 4,
+        "pipe": 6,
+        "table": 15,
+        "report": 4,
+        "columns": 260,
+        "dq": 40,
+        "scd": 3,
+        "secured": 5
+      },
+      "XL": {
+        "feed": 7,
+        "pipe": 10,
+        "table": 28,
+        "report": 8,
+        "columns": 480,
+        "dq": 80,
+        "scd": 5,
+        "secured": 8
+      },
+      "XXL": {
+        "feed": 13,
+        "pipe": 18,
+        "table": 50,
+        "report": 14,
+        "columns": 864,
+        "dq": 144,
+        "scd": 9,
+        "secured": 14
+      },
+      "XXXL": {
+        "feed": 23,
+        "pipe": 32,
+        "table": 91,
+        "report": 26,
+        "columns": 1555,
+        "dq": 259,
+        "scd": 16,
+        "secured": 26
+      }
+    },
+    "ptScript": [
+      4,
+      8,
+      16
+    ],
+    "ptNfrFixed": 16,
+    "ptNfrPer": 2,
+    "ptDataFixed": 8,
+    "ptDataPer": 4,
+    "ptEnvHours": 24,
+    "ptEnvApm": 8,
+    "ptMobileFixed": 8,
+    "ptRuns": {
+      "load": 3,
+      "stress": 2,
+      "soak": 1,
+      "spike": 1,
+      "failover": 1
+    },
+    "ptRunHours": {
+      "load": 4,
+      "stress": 4,
+      "soak": 12,
+      "spike": 2,
+      "failover": 4
+    },
+    "ptCycles": 3,
+    "ptCyclesCI": 2,
+    "ptAnalysis": 0.5,
+    "ptReport": 16,
+    "ptRoughScen": {
+      "XXS": 1,
+      "XS": 1,
+      "S": 1,
+      "M-": 2,
+      "M": 2,
+      "M+": 3,
+      "L": 3,
+      "XL": 5,
+      "XXL": 8,
+      "XXXL": 13
+    },
+    "ptEnvDays": 2,
+    "aproxies": {
+      "XXS": {
+        "intent": 1,
+        "ocr": 0,
+        "rag": 0,
+        "tools": 0,
+        "guard": 1,
+        "hitl": 0
+      },
+      "XS": {
+        "intent": 2,
+        "ocr": 0,
+        "rag": 1,
+        "tools": 1,
+        "guard": 2,
+        "hitl": 1
+      },
+      "S": {
+        "intent": 3,
+        "ocr": 0,
+        "rag": 1,
+        "tools": 1,
+        "guard": 4,
+        "hitl": 1
+      },
+      "M-": {
+        "intent": 6,
+        "ocr": 1,
+        "rag": 2,
+        "tools": 2,
+        "guard": 5,
+        "hitl": 2
+      },
+      "M": {
+        "intent": 8,
+        "ocr": 1,
+        "rag": 3,
+        "tools": 3,
+        "guard": 6,
+        "hitl": 2
+      },
+      "M+": {
+        "intent": 12,
+        "ocr": 2,
+        "rag": 4,
+        "tools": 4,
+        "guard": 6,
+        "hitl": 3
+      },
+      "L": {
+        "intent": 15,
+        "ocr": 2,
+        "rag": 5,
+        "tools": 5,
+        "guard": 6,
+        "hitl": 3
+      },
+      "XL": {
+        "intent": 25,
+        "ocr": 4,
+        "rag": 8,
+        "tools": 8,
+        "guard": 8,
+        "hitl": 4
+      },
+      "XXL": {
+        "intent": 45,
+        "ocr": 7,
+        "rag": 14,
+        "tools": 14,
+        "guard": 14,
+        "hitl": 7
+      },
+      "XXXL": {
+        "intent": 81,
+        "ocr": 13,
+        "rag": 26,
+        "tools": 26,
+        "guard": 26,
+        "hitl": 13
+      }
+    },
+    "dFeed": [
+      3,
+      4,
+      6
+    ],
+    "dPipe": [
+      4,
+      6,
+      9
+    ],
+    "dTable": [
+      2,
+      3,
+      4
+    ],
+    "dScd": 2,
+    "dCol": 1.5,
+    "dDq": 2,
+    "dReport": [
+      4,
+      6,
+      8
+    ],
+    "dAccessSampling": 0.5,
+    "dataSample": 0.1,
+    "dataDesign": [
+      10,
+      15,
+      25
+    ],
+    "dataExec": [
+      5,
+      8,
+      12
+    ],
+    "dataCycles": 3,
+    "dataPrepHours": [
+      2,
+      3,
+      5
+    ],
+    "dataDaysPerCycle": 2,
+    "aiUtt": [
+      20,
+      35,
+      50
+    ],
+    "aiRagQ": 15,
+    "aiOcrSamples": [
+      50,
+      100,
+      200
+    ],
+    "aiAdv": 40,
+    "aiToolCases": 8,
+    "aiHitlCases": 4,
+    "aiLabelUtt": 2,
+    "aiLabelRag": 6,
+    "aiLabelOcr": 4,
+    "aiLabelAdv": 2,
+    "aiReviewAuto": 0.2,
+    "aiReviewManual": 0.6,
+    "aiReviewMin": 2,
+    "aiAnalysisHours": 6,
+    "qeLabelShare": 0.5,
+    "hoursPerDay": 6,
+    "daysPerWeek": 5,
+    "capacity": [
+      0.7,
+      1,
+      1.2
+    ],
+    "band": {
+      "rough": 0.4,
+      "detailed": 0.15
+    },
+    "proxies": {
+      "XXS": {
+        "screen": 0,
+        "field": 2,
+        "api": 1,
+        "integration": 0,
+        "rule": 1,
+        "journey": 0,
+        "batch": 0,
+        "event": 0,
+        "workflow": 0,
+        "actions": 0
+      },
+      "XS": {
+        "screen": 1,
+        "field": 3,
+        "api": 1,
+        "integration": 0,
+        "rule": 1,
+        "journey": 1,
+        "batch": 0,
+        "event": 0,
+        "workflow": 0,
+        "actions": 1
+      },
+      "S": {
+        "screen": 1,
+        "field": 6,
+        "api": 2,
+        "integration": 0,
+        "rule": 2,
+        "journey": 1,
+        "batch": 0,
+        "event": 0,
+        "workflow": 0,
+        "actions": 1
+      },
+      "M-": {
+        "screen": 2,
+        "field": 11,
+        "api": 3,
+        "integration": 1,
+        "rule": 4,
+        "journey": 1,
+        "batch": 1,
+        "event": 1,
+        "workflow": 1,
+        "actions": 2
+      },
+      "M": {
+        "screen": 2,
+        "field": 15,
+        "api": 4,
+        "integration": 1,
+        "rule": 5,
+        "journey": 1,
+        "batch": 1,
+        "event": 1,
+        "workflow": 1,
+        "actions": 2
+      },
+      "M+": {
+        "screen": 3,
+        "field": 23,
+        "api": 6,
+        "integration": 2,
+        "rule": 8,
+        "journey": 2,
+        "batch": 1,
+        "event": 2,
+        "workflow": 1,
+        "actions": 3
+      },
+      "L": {
+        "screen": 4,
+        "field": 30,
+        "api": 8,
+        "integration": 2,
+        "rule": 10,
+        "journey": 2,
+        "batch": 1,
+        "event": 2,
+        "workflow": 1,
+        "actions": 3
+      },
+      "XL": {
+        "screen": 7,
+        "field": 55,
+        "api": 14,
+        "integration": 3,
+        "rule": 18,
+        "journey": 3,
+        "batch": 2,
+        "event": 4,
+        "workflow": 2,
+        "actions": 5
+      },
+      "XXL": {
+        "screen": 13,
+        "field": 99,
+        "api": 25,
+        "integration": 5,
+        "rule": 32,
+        "journey": 5,
+        "batch": 4,
+        "event": 7,
+        "workflow": 4,
+        "actions": 9
+      },
+      "XXXL": {
+        "screen": 23,
+        "field": 178,
+        "api": 45,
+        "integration": 10,
+        "rule": 58,
+        "journey": 10,
+        "batch": 6,
+        "event": 13,
+        "workflow": 6,
+        "actions": 16
+      }
+    }
+  },
+  "scope": {
+    "features": [
+      {
+        "name": "Synthetic · app XXS",
+        "type": "app",
+        "size": "XXS",
+        "cx": 0,
+        "qty": 1,
+        "pt": true
+      },
+      {
+        "name": "Synthetic · data XXS",
+        "type": "data",
+        "size": "XXS",
+        "cx": 0,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · ai XXS",
+        "type": "ai",
+        "size": "XXS",
+        "cx": 0,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · app XS",
+        "type": "app",
+        "size": "XS",
+        "cx": 1,
+        "qty": 1,
+        "pt": true
+      },
+      {
+        "name": "Synthetic · data XS",
+        "type": "data",
+        "size": "XS",
+        "cx": 1,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · ai XS",
+        "type": "ai",
+        "size": "XS",
+        "cx": 1,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · app M-",
+        "type": "app",
+        "size": "M-",
+        "cx": 2,
+        "qty": 1,
+        "pt": true
+      },
+      {
+        "name": "Synthetic · data M-",
+        "type": "data",
+        "size": "M-",
+        "cx": 2,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · ai M-",
+        "type": "ai",
+        "size": "M-",
+        "cx": 2,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · app M+",
+        "type": "app",
+        "size": "M+",
+        "cx": 0,
+        "qty": 1,
+        "pt": true
+      },
+      {
+        "name": "Synthetic · data M+",
+        "type": "data",
+        "size": "M+",
+        "cx": 0,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · ai M+",
+        "type": "ai",
+        "size": "M+",
+        "cx": 0,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · app XXL",
+        "type": "app",
+        "size": "XXL",
+        "cx": 1,
+        "qty": 1,
+        "pt": true
+      },
+      {
+        "name": "Synthetic · data XXL",
+        "type": "data",
+        "size": "XXL",
+        "cx": 1,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · ai XXL",
+        "type": "ai",
+        "size": "XXL",
+        "cx": 1,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · app XXXL",
+        "type": "app",
+        "size": "XXXL",
+        "cx": 2,
+        "qty": 1,
+        "pt": true
+      },
+      {
+        "name": "Synthetic · data XXXL",
+        "type": "data",
+        "size": "XXXL",
+        "cx": 2,
+        "qty": 1,
+        "pt": false
+      },
+      {
+        "name": "Synthetic · ai XXXL",
+        "type": "ai",
+        "size": "XXXL",
+        "cx": 2,
+        "qty": 1,
+        "pt": false
+      }
+    ],
+    "roughRoles": 5,
+    "roughLanguages": 2,
+    "roughVariants": 2,
+    "channels": {
+      "web2": false,
+      "ios": true,
+      "android": true
+    },
+    "a11y": true,
+    "detail": {
+      "api": [
+        8,
+        14,
+        8
+      ],
+      "screen": [
+        5,
+        8,
+        3
+      ],
+      "integration": [
+        1,
+        4,
+        4
+      ],
+      "rule": [
+        10,
+        18,
+        12
+      ],
+      "journey": [
+        2,
+        4,
+        3
+      ],
+      "batch": [
+        1,
+        2,
+        1
+      ],
+      "event": [
+        2,
+        3,
+        1
+      ],
+      "workflow": [
+        1,
+        2,
+        1
+      ],
+      "fields": 140,
+      "data": {
+        "feed": [
+          1,
+          1,
+          0
+        ],
+        "pipe": [
+          1,
+          2,
+          1
+        ],
+        "table": [
+          3,
+          4,
+          2
+        ],
+        "report": [
+          1,
+          1,
+          1
+        ],
+        "columns": [
+          140,
+          0,
+          0
+        ],
+        "dq": [
+          24,
+          0,
+          0
+        ],
+        "scd": 1,
+        "secured": 3,
+        "accessRoles": 4
+      },
+      "ai": {
+        "intent": [
+          3,
+          4,
+          2
+        ],
+        "ocr": [
+          0,
+          0,
+          0
+        ],
+        "rag": 3,
+        "tools": 3,
+        "guard": 6,
+        "hitl": 2
+      },
+      "pt": {
+        "scen": [
+          2,
+          4,
+          2
+        ],
+        "dataHeavy": 2
+      },
+      "reqFields": 0,
+      "respFields": 0,
+      "fieldTypes": {
+        "text": 0,
+        "integer": 0,
+        "decimal": 0,
+        "percentage": 0,
+        "currency": 0,
+        "email": 0,
+        "phone": 0,
+        "date": 0,
+        "datetime": 0,
+        "boolean": 0,
+        "enum": 0,
+        "checkbox": 0,
+        "radio": 0,
+        "password": 0,
+        "url": 0,
+        "account": 0,
+        "citizenId": 0,
+        "taxCode": 0,
+        "iban": 0,
+        "file": 0,
+        "image": 0
+      },
+      "roles": 6,
+      "actions": 14,
+      "approvals": 2,
+      "critical": 12,
+      "variants": 3,
+      "languages": 2
+    },
+    "team": {
+      "weeks": 6,
+      "mix": {
+        "junior": 30,
+        "mid": 50,
+        "senior": 20
+      },
+      "env": 1,
+      "automation": 0,
+      "ai": 0,
+      "aiIters": 4,
+      "aiSmes": 2
+    },
+    "evidence": {
+      "mutation": 62,
+      "valBE": 100,
+      "valFE": 80,
+      "mapCov": 70,
+      "jacoco": 82,
+      "feUnit": 75,
+      "feMut": 55,
+      "ruleCov": 60,
+      "iosUnit": 65,
+      "androidUnit": 72,
+      "dqCov": 50,
+      "contractCov": 40,
+      "goldenReuse": 0,
+      "evalCI": true,
+      "ptCI": false,
+      "ptReuse": 0,
+      "apm": true
+    },
+    "includeL4": true,
+    "ptTypes": {
+      "load": true,
+      "stress": true,
+      "soak": true,
+      "spike": true,
+      "failover": false
+    }
+  },
+  "expected": {
+    "rough": {
+      "cases": 31745,
+      "hours": 21297.55,
+      "fte": 124.5471,
+      "lo": 74.7283,
+      "hi": 174.3659,
+      "smeLabelHours": 416.33,
+      "groups": {
+        "api": {
+          "cases": 664,
+          "hours": 1742.85
+        },
+        "screen": {
+          "cases": 576,
+          "hours": 1500.22
+        },
+        "integration": {
+          "cases": 238,
+          "hours": 628.44
+        },
+        "rule": {
+          "cases": 587,
+          "hours": 1579.88
+        },
+        "workflow": {
+          "cases": 126,
+          "hours": 331.44
+        },
+        "batch": {
+          "cases": 121,
+          "hours": 313.29
+        },
+        "event": {
+          "cases": 176,
+          "hours": 460.05
+        },
+        "journey": {
+          "cases": 124,
+          "hours": 322.92
+        },
+        "fieldFE": {
+          "cases": 1923,
+          "hours": 231.83
+        },
+        "fieldBE": {
+          "cases": 81,
+          "hours": 7.55
+        },
+        "mapping": {
+          "cases": 1117,
+          "hours": 104.05
+        },
+        "role": {
+          "cases": 398,
+          "hours": 441.6
+        },
+        "sod": {
+          "cases": 12,
+          "hours": 13.31
+        },
+        "channel": {
+          "cases": 115,
+          "hours": 299.7
+        },
+        "mobile": {
+          "cases": 1835,
+          "hours": 4155.63
+        },
+        "a11y": {
+          "cases": 252,
+          "hours": 279.61
+        },
+        "dataSource": {
+          "cases": 215,
+          "hours": 278.24
+        },
+        "dataPipeline": {
+          "cases": 440,
+          "hours": 568.38
+        },
+        "dataModel": {
+          "cases": 626,
+          "hours": 784.83
+        },
+        "dataMapping": {
+          "cases": 2039,
+          "hours": 2514.31
+        },
+        "dataQuality": {
+          "cases": 451,
+          "hours": 556.96
+        },
+        "dataReport": {
+          "cases": 326,
+          "hours": 842.07
+        },
+        "dataAccess": {
+          "cases": 235,
+          "hours": 141.66
+        },
+        "dataPrep": {
+          "cases": 0,
+          "hours": 596.85
+        },
+        "aiIntent": {
+          "cases": 12510,
+          "hours": 623.42
+        },
+        "aiRag": {
+          "cases": 1410,
+          "hours": 124.31
+        },
+        "aiOcr": {
+          "cases": 3600,
+          "hours": 248.4
+        },
+        "aiGuard": {
+          "cases": 1040,
+          "hours": 51.83
+        },
+        "aiTool": {
+          "cases": 376,
+          "hours": 654.22
+        },
+        "aiHitl": {
+          "cases": 104,
+          "hours": 180.95
+        },
+        "aiEval": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptDesign": {
+          "cases": 28,
+          "hours": 469.2
+        },
+        "ptEnv": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptRun": {
+          "cases": 0,
+          "hours": 194.35
+        }
+      }
+    },
+    "detailed": {
+      "cases": 4047,
+      "hours": 3709.22,
+      "fte": 21.6913,
+      "lo": 18.4376,
+      "hi": 24.945,
+      "smeLabelHours": 18.5,
+      "groups": {
+        "api": {
+          "cases": 196,
+          "hours": 384.15
+        },
+        "screen": {
+          "cases": 169,
+          "hours": 302
+        },
+        "integration": {
+          "cases": 110,
+          "hours": 247.22
+        },
+        "rule": {
+          "cases": 190,
+          "hours": 403.86
+        },
+        "workflow": {
+          "cases": 33,
+          "hours": 64.96
+        },
+        "batch": {
+          "cases": 33,
+          "hours": 63.07
+        },
+        "event": {
+          "cases": 35,
+          "hours": 60.49
+        },
+        "journey": {
+          "cases": 50,
+          "hours": 103.89
+        },
+        "fieldFE": {
+          "cases": 852,
+          "hours": 102.72
+        },
+        "fieldBE": {
+          "cases": 30,
+          "hours": 2.79
+        },
+        "mapping": {
+          "cases": 302,
+          "hours": 28.13
+        },
+        "role": {
+          "cases": 159,
+          "hours": 145.94
+        },
+        "sod": {
+          "cases": 4,
+          "hours": 3.67
+        },
+        "channel": {
+          "cases": 34,
+          "hours": 60.84
+        },
+        "mobile": {
+          "cases": 565,
+          "hours": 961.66
+        },
+        "a11y": {
+          "cases": 96,
+          "hours": 88.12
+        },
+        "dataSource": {
+          "cases": 7,
+          "hours": 5.59
+        },
+        "dataPipeline": {
+          "cases": 25,
+          "hours": 26.95
+        },
+        "dataModel": {
+          "cases": 28,
+          "hours": 28.58
+        },
+        "dataMapping": {
+          "cases": 105,
+          "hours": 63.29
+        },
+        "dataQuality": {
+          "cases": 24,
+          "hours": 14.47
+        },
+        "dataReport": {
+          "cases": 18,
+          "hours": 35.43
+        },
+        "dataAccess": {
+          "cases": 12,
+          "hours": 7.23
+        },
+        "dataPrep": {
+          "cases": 0,
+          "hours": 17.25
+        },
+        "aiIntent": {
+          "cases": 600,
+          "hours": 29.9
+        },
+        "aiRag": {
+          "cases": 90,
+          "hours": 7.94
+        },
+        "aiOcr": {
+          "cases": 0,
+          "hours": 0
+        },
+        "aiGuard": {
+          "cases": 240,
+          "hours": 11.96
+        },
+        "aiTool": {
+          "cases": 24,
+          "hours": 37.16
+        },
+        "aiHitl": {
+          "cases": 8,
+          "hours": 12.39
+        },
+        "aiEval": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptDesign": {
+          "cases": 8,
+          "hours": 138
+        },
+        "ptEnv": {
+          "cases": 0,
+          "hours": 27.6
+        },
+        "ptRun": {
+          "cases": 0,
+          "hours": 194.35
+        }
+      }
+    }
+  }
+}

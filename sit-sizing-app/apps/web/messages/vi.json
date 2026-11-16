@@ -1130,7 +1130,8 @@
       },
       "hint": "Tạo từ trạng thái đã lưu gần nhất của phiên bản này, cùng số liệu với màn hình.",
       "waiting": "Đang chờ tự động lưu trước khi tải xuống."
-    }
+    },
+    "ownSizes": "Ước lượng này có kích cỡ tính năng riêng nên tệp không thể thay thế các giả định của nó. Hãy áp dụng một hồ sơ đã phát hành."
   },
   "content": {
     "guide": {
@@ -1695,7 +1696,7 @@
   },
   "profiles": {
     "title": "Hồ sơ giả định",
-    "description": "Các bộ có tên gồm 142 giả định. Phát hành hồ sơ để dùng trong ước tính; hồ sơ đã phát hành không bao giờ thay đổi.",
+    "description": "Các bộ có tên gồm 160 giả định. Phát hành hồ sơ để dùng trong ước tính; hồ sơ đã phát hành không bao giờ thay đổi.",
     "showFor": "Hiển thị",
     "globalOnly": "Hồ sơ toàn cục",
     "globalAnd": "Toàn cục và {project}",
@@ -1753,9 +1754,30 @@
       "waitForSave": "Chờ tự động lưu hoàn tất.",
       "confirmTitle": "Thay thế toàn bộ giả định?",
       "confirmBody": "Mọi giả định trong bản nháp này sẽ được thay bằng giá trị của {name}. Phạm vi giữ nguyên. Các thay đổi bạn đã làm với giả định sẽ mất.",
-      "lockedElsewhere": "Chưa áp dụng hồ sơ: bản nháp này đang mở ở một thẻ khác hoặc trong trợ lý."
+      "lockedElsewhere": "Chưa áp dụng hồ sơ: bản nháp này đang mở ở một thẻ khác hoặc trong trợ lý.",
+      "sizeMissing": "{count, plural, other {# tính năng dùng}} kích cỡ {size}, nhưng hồ sơ này không có kích cỡ đó. Hãy đổi kích cỡ của các tính năng này trước."
     },
-    "valuesTitle": "Giá trị giả định"
+    "valuesTitle": "Giá trị giả định",
+    "sizes": {
+      "title": "Kích cỡ tính năng",
+      "hint": "Phạm vi sơ bộ cho chọn các kích cỡ này, theo đúng thứ tự này. Kích cỡ mới bắt đầu là bản sao của kích cỡ bạn chọn.",
+      "name": "Tên kích cỡ",
+      "copyFrom": "Sao chép từ",
+      "add": "Thêm kích cỡ",
+      "rename": "Đổi tên {size}",
+      "renameTo": "Tên mới cho {size}",
+      "saveName": "Lưu tên",
+      "remove": "Xoá {size}",
+      "moveUp": "Chuyển {size} lên",
+      "moveDown": "Chuyển {size} xuống",
+      "errors": {
+        "BAD_NAME": "Dùng 1 đến 6 chữ cái, chữ số, + hoặc -.",
+        "NAME_TAKEN": "Kích cỡ này đã có.",
+        "LAST_SIZE": "Hồ sơ phải giữ ít nhất một kích cỡ.",
+        "TOO_MANY": "Hồ sơ có tối đa 20 kích cỡ.",
+        "BUILT_IN_NAME": "Đây là tên kích cỡ có sẵn. Kích cỡ có sẵn giữ giá trị mặc định: hãy thêm kích cỡ đó thay vì đổi tên một kích cỡ khác."
+      }
+    }
   },
   "export": {
     "disclaimer": "Khoảng ước lượng để lập kế hoạch, không phải cam kết. Xác nhận FTE và tiến độ với người chịu trách nhiệm triển khai.",

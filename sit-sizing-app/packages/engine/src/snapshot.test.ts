@@ -14,7 +14,7 @@ describe('versionSnapshot', () => {
     expect(s.roughFte).toBe(20.83);
     expect(s.detailedFte).toBe(21.69);
     expect(s.totalCasesDetailed).toBe(4047);
-    expect(s.uncalibrated).toBe(142);
+    expect(s.uncalibrated).toBe(160);
     expect(s.result.detailed.cases).toBe(4047);
   });
 });

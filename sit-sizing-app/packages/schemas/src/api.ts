@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { Assumptions } from './assumptions';
+import { Assumptions, CalibrationEntry } from './assumptions';
+
+export { CalibrationEntry };
 import { EstimateInputs } from './inputs';
 import { EstimateResult, GroupKey } from './result';
 
@@ -370,6 +372,8 @@ export const Profile = z
     name: z.string(),
     status: ProfileStatus,
     uncalibrated: z.number().int(),
+    /** Assumption rows of this profile: 130 fixed plus 3 per size (ADR-0021). */
+    assumptionRows: z.number().int(),
     /** The profile this one was cloned from. */
     basedOnId: Id.nullable(),
     createdAt: IsoDateTime,
@@ -378,11 +382,6 @@ export const Profile = z
   .meta({ id: 'Profile' });
 export type Profile = z.infer<typeof Profile>;
 
-export const CalibrationEntry = z.object({
-  source: z.string().max(200),
-  measuredAt: z.iso.date().optional(),
-  note: z.string().max(1000).optional(),
-});
 export const ProfileDetail = Profile.extend({
   values: Assumptions,
   calibration: z.record(z.string(), CalibrationEntry),
@@ -391,7 +390,7 @@ export type ProfileDetail = z.infer<typeof ProfileDetail>;
 
 export const ProfileListQuery = z.object({ projectId: Id.optional() });
 
-/** Calibration notes per assumption path (P-01). Keys are checked against the engine's 142 rows. */
+/** Calibration notes per assumption path (P-01). Keys are checked against the engine's 160 rows. */
 export const CalibrationMap = z.record(z.string().max(80), CalibrationEntry);
 
 export const ProfileCreate = z
@@ -604,6 +603,8 @@ export const PortfolioRow = z.object({
   hours: z.number(),
   roughFte: z.number(),
   uncalibrated: z.number().int(),
+  /** This version's assumption rows: 130 fixed plus 3 per size (ADR-0021). */
+  assumptionRows: z.number().int(),
 });
 export type PortfolioRow = z.infer<typeof PortfolioRow>;
 
@@ -633,7 +634,7 @@ export const Portfolio = z
       }),
     ),
     total: PortfolioTotals,
-    /** Assumption rows per estimate, for the calibration share. */
+    /** Assumption rows with the ten built-in sizes (160); each row carries its own total. */
     assumptionRows: z.number().int(),
   })
   .meta({ id: 'Portfolio' });

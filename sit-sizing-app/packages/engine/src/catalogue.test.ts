@@ -16,8 +16,8 @@ describe('catalogue', () => {
     expect(new Set(GROUPS.map((g) => g.family))).toEqual(new Set(['app', 'data', 'ai', 'pt']));
   });
 
-  it('has 142 assumption rows, each resolving to a default value', () => {
-    expect(ASSUMPTION_PATHS).toHaveLength(142);
+  it('has 160 assumption rows, each resolving to a default value (ADR-0020)', () => {
+    expect(ASSUMPTION_PATHS).toHaveLength(160);
     for (const p of ASSUMPTION_PATHS) {
       const v = p
         .split('.')

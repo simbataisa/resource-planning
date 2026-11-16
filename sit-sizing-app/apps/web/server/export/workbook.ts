@@ -7,15 +7,16 @@
  * results are the engine totals; tests check the two agree.
  */
 import {
-  ASSUMPTION_PATHS,
+  assumptionPaths,
   DEFAULT_ASSUMPTIONS,
   DRIVERS,
   GROUP_KEYS,
-  isDefaultRow,
+  isUncalibratedRow,
+  uncalibratedCount,
   type BothResults,
 } from '@sit/engine';
 import type { Assumptions, EstimateInputs } from '@sit/schemas';
-import { ASSUMPTION_META, type MetaLabel } from '@/lib/assumption-meta';
+import { assumptionMeta, type MetaLabel } from '@/lib/assumption-meta';
 import { getPath } from '@/lib/path';
 
 export type Format = 'text' | 'int' | 'fte' | 'hours' | 'pct' | 'num' | 'date';
@@ -66,7 +67,9 @@ export function buildTables(src: ExportSource, t: Translate): Table[] {
 
 function summary(src: ExportSource, t: Translate): Table {
   const { rough: R, detailed: D } = src.result;
-  const uncal = ASSUMPTION_PATHS.filter((p) => isDefaultRow(src.assumptions, DEFAULTS, p)).length;
+  // The estimate's own rows: 130 fixed plus 3 per size (ADR-0021).
+  const uncal = uncalibratedCount(src.assumptions, DEFAULTS);
+  const total = assumptionPaths(src.assumptions).length;
   const row = (label: string, ...v: Cell[]): Cell[] => [label, ...v];
   return {
     id: 'summary',
@@ -94,7 +97,7 @@ function summary(src: ExportSource, t: Translate): Table {
       row(t('export.summary.profile'), src.profileName ?? '—', null),
       row(t('export.summary.engine'), src.engineVersion, null),
       row(t('export.summary.exportedAt'), src.exportedAt.toISOString(), null),
-      row(t('export.summary.uncalibrated'), uncal, ASSUMPTION_PATHS.length),
+      row(t('export.summary.uncalibrated'), uncal, total),
       row(t('export.summary.fte'), R.fte, D.fte),
       row(t('export.summary.fteLow'), R.lo, D.lo),
       row(t('export.summary.fteHigh'), R.hi, D.hi),
@@ -191,7 +194,7 @@ function assumptions(src: ExportSource, t: Translate): Table {
   const label = (l: MetaLabel) => t(l.key, l.values);
   const keyLabel = (ref: string) => (ref.startsWith('=') ? ref.slice(1) : t(ref));
   const rows: Cell[][] = [];
-  for (const g of ASSUMPTION_META) {
+  for (const g of assumptionMeta(src.assumptions.sizes)) {
     for (const r of g.rows) {
       const v = getPath(src.assumptions, r.path);
       const d = getPath(DEFAULTS, r.path);
@@ -203,13 +206,14 @@ function assumptions(src: ExportSource, t: Translate): Table {
         const o = x as Record<string, number>;
         return r.keys.map(([k, ref]) => `${keyLabel(ref)} ${o[k]}`).join(' · ');
       };
-      const isDefault = isDefaultRow(src.assumptions, DEFAULTS, r.path);
+      const isDefault = isUncalibratedRow(src.assumptions, DEFAULTS, r.path);
       rows.push([
         t(`assumptionsTab.groups.${g.group}`),
         label(r.label),
         r.path,
         parts(v),
-        parts(d),
+        // A custom size has no engine default (ADR-0021).
+        d === undefined ? '—' : parts(d),
         isDefault ? t('assumptionsTab.uncalibrated') : t('assumptionsTab.teamValue'),
       ]);
     }

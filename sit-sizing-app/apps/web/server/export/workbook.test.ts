@@ -53,7 +53,7 @@ describe('export workbook model (X-02)', () => {
     expect(find('FTE, high').slice(1)).toEqual([R.hi, D.hi]);
     expect(find('Test cases').slice(1)).toEqual([R.cases, D.cases]);
     expect(find('Hours').slice(1)).toEqual([R.hours, D.hours]);
-    expect(find('Uncalibrated assumptions').slice(1)).toEqual([142, 142]);
+    expect(find('Uncalibrated assumptions').slice(1)).toEqual([160, 160]);
   });
 
   it('gap totals equal the engine totals, and the group rows add up to them', () => {
@@ -88,9 +88,9 @@ describe('export workbook model (X-02)', () => {
     expect(row[3]).toBe('Simple 2 · Medium 3 · Complex 5');
   });
 
-  it('lists all 142 assumptions with their calibration status', () => {
+  it('lists all 160 assumptions with their calibration status', () => {
     const a = byId(tables, 'assumptions');
-    expect(a.rows).toHaveLength(142);
+    expect(a.rows).toHaveLength(160);
     expect(a.rows.every((r) => r[5] === 'Uncalibrated')).toBe(true);
     const changed = structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions;
     changed.criticalShare = 0.35;
@@ -147,5 +147,33 @@ describe('CSV', () => {
     const last = toCsv(gap).trimEnd().split('\r\n').at(-1)!;
     const D = source().result.detailed;
     expect(last.split(',')[2]).toBe(String(D.cases));
+  });
+});
+
+describe('export with custom sizes (ADR-0021)', () => {
+  it("lists the estimate's own size rows and row total", () => {
+    const a = structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions;
+    for (const t of ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'] as const)
+      for (const k of Object.keys(a[t]))
+        if (k !== 'S' && k !== 'M') delete (a[t] as Record<string, unknown>)[k];
+    a.sizes = ['S', 'M'];
+    const tables = buildTables(source({ assumptions: a }), tr('en'));
+    const rows = byId(tables, 'assumptions').rows;
+    expect(rows).toHaveLength(136);
+    expect(rows.some((r) => r[2] === 'proxies.L')).toBe(false);
+    const uncal = byId(tables, 'summary').rows.find((r) => r[0] === 'Uncalibrated assumptions')!;
+    expect(uncal.slice(1)).toEqual([136, 136]);
+  });
+
+  it('marks a custom size uncalibrated until it has a note', () => {
+    const a = structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions;
+    for (const t of ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'] as const)
+      (a[t] as Record<string, unknown>).Z = structuredClone((a[t] as Record<string, unknown>).S);
+    a.sizes = [...a.sizes, 'Z'];
+    a.sizeNotes = { 'proxies.Z': { source: 'Synthetic pilot' } };
+    const rows = byId(buildTables(source({ assumptions: a }), tr('en')), 'assumptions').rows;
+    const status = (path: string) => rows.find((r) => r[2] === path)![5];
+    expect(status('proxies.Z')).toBe('Team value');
+    expect(status('dproxies.Z')).toBe('Uncalibrated');
   });
 });

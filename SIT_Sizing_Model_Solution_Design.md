@@ -6,8 +6,9 @@
 | **Changes in revision 3** | Identity provider is self-hosted Keycloak, not a custom build. Plan restructured into three releases. Added non-functional targets, pipeline, observability, backup, engine change policy, notifications, Excel export, portfolio view, governance. |
 | **Changes in revision 4** | API contract follows OpenAPI 3.2 (3.1 fallback, decided by a spike) and is documented with a self-hosted Scalar API Reference (section 9.4, ADR-0003). |
 | **Amendment 2026-11-16** | Engine 1.1.0 (ADR-0019): data-test design and execution minutes and preparation hours are sized Simple/Medium/Complex (defaults 10/15/25 min, 5/8/12 min, 2/3/5 h); mapped columns and DQ rules are counted by complexity; stored payloads are at schema version 2. Sections 6.2, 6.4 and 6.6 updated. |
+| **Amendment 2026-11-16 (2)** | Engine 1.2.0 (ADR-0020): rough-scope features have ten T-shirt sizes (XXS, XS, S, M-, M, M+, L, XL, XXL, XXXL); 160 assumption rows; stored payloads at schema version 3. |
 | **Audience** | Engineering, QE leads, and the AI coding agents that will build it |
-| **Prototype** | `SIT_Sizing_Model.html` (single-file tool, EN/VI, 34 driver groups, 142 assumptions) |
+| **Prototype** | `SIT_Sizing_Model.html` (single-file tool, EN/VI, 34 driver groups, 160 assumptions) |
 | **Reference files** | `sit-sizing-reference/` (prototype logic, translations, golden example) |
 
 ---
@@ -180,7 +181,7 @@ sit-sizing/
 | **Estimate** | One sizing exercise for a release or change, such as "Mobile onboarding R3". |
 | **Estimate version** | An immutable snapshot of inputs and results. Editing creates a new draft version. |
 | **Inputs** | `scope` (rough features, detailed drivers, channels, test types), `team`, `evidence`. Same shape as the prototype's `S` object. |
-| **Assumption profile** | A named set of the 142 assumption values (the prototype's `A` object), with calibration status per value. |
+| **Assumption profile** | A named set of the 160 assumption values (the prototype's `A` object), with calibration status per value. |
 | **Result** | The engine output for rough and detailed mode: per-group cases and hours, totals, FTE, range, calendar checks. |
 | **Actuals** | Measured cases, hours and rates after a SIT cycle, recorded against an approved version. |
 | **Audit event** | Who did what, when, to which record. |
@@ -288,7 +289,7 @@ erDiagram
     string projectId FK "nullable"
     string name
     enum status "DRAFT | PUBLISHED | RETIRED"
-    jsonb values "the 142 assumptions"
+    jsonb values "the 160 assumptions"
     jsonb calibration "per path: source, measuredAt, note"
     string basedOnId FK "nullable"
     string createdById FK

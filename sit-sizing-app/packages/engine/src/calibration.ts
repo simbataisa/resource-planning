@@ -1,5 +1,6 @@
 import type { Assumptions } from '@sit/schemas';
-import { ASSUMPTION_PATHS } from './catalogue.ts';
+import { assumptionPaths } from './catalogue.ts';
+import { isBuiltInSize } from './sizes.ts';
 
 function get(o: unknown, path: string): unknown {
   return path
@@ -30,7 +31,40 @@ export function isDefaultRow(
   return canonical(get(assumptions, path)) === canonical(get(defaults, path));
 }
 
-/** How many of the 142 assumption rows are still uncalibrated defaults. */
-export function uncalibratedCount(assumptions: Assumptions, defaults: Assumptions): number {
-  return ASSUMPTION_PATHS.filter((p) => isDefaultRow(assumptions, defaults, p)).length;
+const pick = (o: unknown, keys: string[]) =>
+  Object.fromEntries(keys.map((k) => [k, (o as Record<string, unknown> | undefined)?.[k]]));
+
+/**
+ * True while one assumption row is uncalibrated (ADR-0021):
+ * - a fixed row, or a row of a built-in size, while it equals the engine default;
+ * - a row of a custom size until `notes` (by default the copied `sizeNotes`) has an entry for it;
+ * - `ptRoughScen` is one row, judged by its built-in sizes only.
+ */
+export function isUncalibratedRow(
+  assumptions: Assumptions,
+  defaults: Assumptions,
+  path: string,
+  notes: Readonly<Record<string, unknown>> = assumptions.sizeNotes ?? {},
+): boolean {
+  if (path === 'ptRoughScen') {
+    const builtIn = Object.keys(assumptions.ptRoughScen).filter(isBuiltInSize);
+    return (
+      canonical(pick(assumptions.ptRoughScen, builtIn)) ===
+      canonical(pick(defaults.ptRoughScen, builtIn))
+    );
+  }
+  const size = /^(d|a)?proxies\./.test(path) ? path.slice(path.indexOf('.') + 1) : null;
+  if (size !== null && !isBuiltInSize(size)) return !(path in notes);
+  return isDefaultRow(assumptions, defaults, path);
+}
+
+/** How many of the estimate's rows (130 fixed plus 3 per size) are uncalibrated (ADR-0021). */
+export function uncalibratedCount(
+  assumptions: Assumptions,
+  defaults: Assumptions,
+  notes: Readonly<Record<string, unknown>> = assumptions.sizeNotes ?? {},
+): number {
+  return assumptionPaths(assumptions).filter((p) =>
+    isUncalibratedRow(assumptions, defaults, p, notes),
+  ).length;
 }

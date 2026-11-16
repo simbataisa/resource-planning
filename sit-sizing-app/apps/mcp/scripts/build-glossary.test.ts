@@ -22,7 +22,7 @@ describe('build-glossary', () => {
     }
   });
 
-  it('assumption-rows.json has exactly the 142 ASSUMPTION_PATHS, each with a label in EN and VI', () => {
+  it('assumption-rows.json has exactly the 160 ASSUMPTION_PATHS, each with a label in EN and VI', () => {
     const files = buildGlossary();
     const rows = JSON.parse(files['assumption-rows.json']!) as Array<{
       path: string;
@@ -31,7 +31,7 @@ describe('build-glossary', () => {
       unitKey?: string;
     }>;
     expect(rows.map((r) => r.path)).toEqual([...ASSUMPTION_PATHS]);
-    expect(rows).toHaveLength(142);
+    expect(rows).toHaveLength(160);
     for (const locale of ['en', 'vi']) {
       const messages = JSON.parse(files[`messages.${locale}.json`]!) as Tree;
       for (const r of rows) {

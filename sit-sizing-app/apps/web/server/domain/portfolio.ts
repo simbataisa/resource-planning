@@ -8,7 +8,7 @@
  */
 import type { Portfolio, PortfolioRow, PortfolioTotals } from '@sit/schemas';
 
-export function totals(rows: PortfolioRow[], assumptionRows: number): PortfolioTotals {
+export function totals(rows: PortfolioRow[]): PortfolioTotals {
   const sum = (f: (r: PortfolioRow) => number) => rows.reduce((s, r) => s + f(r), 0);
   return {
     estimates: rows.length,
@@ -18,7 +18,8 @@ export function totals(rows: PortfolioRow[], assumptionRows: number): PortfolioT
     cases: sum((r) => r.cases),
     hours: sum((r) => r.hours),
     roughFte: sum((r) => r.roughFte),
-    onDefaults: rows.filter((r) => r.uncalibrated >= assumptionRows).length,
+    // Each estimate against its own row total: sizes differ by profile (ADR-0021).
+    onDefaults: rows.filter((r) => r.uncalibrated >= r.assumptionRows).length,
   };
 }
 
@@ -43,12 +44,12 @@ export function rollUp(
         projectKey: first.projectKey,
         projectName: first.projectName,
         rows: sorted,
-        subtotal: totals(sorted, assumptionRows),
+        subtotal: totals(sorted),
       };
     })
     .sort(
       (a, b) =>
         a.projectName.localeCompare(b.projectName) || a.projectKey.localeCompare(b.projectKey),
     );
-  return { status, projects, total: totals(rows, assumptionRows), assumptionRows };
+  return { status, projects, total: totals(rows), assumptionRows };
 }

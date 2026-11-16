@@ -91,16 +91,20 @@ export type FieldTypeKey = (typeof FIELD_TYPES)[number];
 export const PT_TYPES = ['load', 'stress', 'soak', 'spike', 'failover'] as const;
 export type PtTypeKey = (typeof PT_TYPES)[number];
 
-export const SIZES = ['S', 'M', 'L', 'XL'] as const;
+export const SIZES = ['XXS', 'XS', 'S', 'M-', 'M', 'M+', 'L', 'XL', 'XXL', 'XXXL'] as const;
 export type SizeKey = (typeof SIZES)[number];
 
 export const MOBILE_CHANNELS = ['ios', 'android'] as const;
 
 /**
- * The 142 calibratable assumption rows, as dotted paths into Assumptions
+ * The 160 calibratable assumption rows, as dotted paths into Assumptions
  * (prototype META → ROWS). A row is "uncalibrated" while it equals the default.
  */
-export const ASSUMPTION_PATHS: readonly string[] = [
+/**
+ * The assumption rows that do not depend on the sizes: 130, `ptRoughScen` included as one row
+ * (ADR-0021). The size rows follow, three per size (see assumptionPaths).
+ */
+export const FIXED_ASSUMPTION_PATHS: readonly string[] = [
   'cases.api',
   'cases.screen',
   'cases.integration',
@@ -231,16 +235,18 @@ export const ASSUMPTION_PATHS: readonly string[] = [
   'capacity',
   'band.rough',
   'band.detailed',
-  'dproxies.S',
-  'dproxies.M',
-  'dproxies.L',
-  'dproxies.XL',
-  'aproxies.S',
-  'aproxies.M',
-  'aproxies.L',
-  'aproxies.XL',
-  'proxies.S',
-  'proxies.M',
-  'proxies.L',
-  'proxies.XL',
 ];
+
+/** Tables with one row per size, in the order their rows are listed. */
+export const SIZE_ROW_TABLES = ['dproxies', 'aproxies', 'proxies'] as const;
+
+/** Every assumption row for these sizes: the fixed rows, then three per size (ADR-0021). */
+export function assumptionPaths(a: { readonly sizes: readonly string[] }): string[] {
+  return [
+    ...FIXED_ASSUMPTION_PATHS,
+    ...SIZE_ROW_TABLES.flatMap((t) => a.sizes.map((s) => `${t}.${s}`)),
+  ];
+}
+
+/** The rows with the ten built-in sizes: 160. */
+export const ASSUMPTION_PATHS: readonly string[] = assumptionPaths({ sizes: SIZES });

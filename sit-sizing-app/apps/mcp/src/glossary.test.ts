@@ -1,5 +1,5 @@
 import { ASSUMPTION_PATHS, DEFAULT_ASSUMPTIONS } from '@sit/engine';
-import { EstimateInputs } from '@sit/schemas';
+import { type Assumptions, EstimateInputs } from '@sit/schemas';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
@@ -24,7 +24,7 @@ function leaves(schema: z.ZodType, prefix = ''): string[] {
 }
 
 describe('describeAssumptions', () => {
-  it('returns 142 rows with label and default; explanation is null when no help text exists', () => {
+  it('returns 160 rows with label and default; explanation is null when no help text exists', () => {
     const rows = describeAssumptions({ locale: 'en' });
     expect(rows.map((r) => r.path)).toEqual([...ASSUMPTION_PATHS]);
     const api = rows.find((r) => r.path === 'cases.api')!;
@@ -171,5 +171,47 @@ describe('sensitivityLabel', () => {
     expect(vi).toBeTruthy();
     expect(vi).not.toBe('Cases per API endpoint');
     expect(sensitivityLabel('en', 'noSuchItem')).toBeNull();
+  });
+});
+
+describe('describeAssumptions with custom sizes (ADR-0021)', () => {
+  const withXS2 = () => {
+    const a = structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions;
+    for (const t of ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'] as const)
+      (a[t] as Record<string, unknown>).XS2 = structuredClone((a[t] as Record<string, unknown>).S);
+    delete (a.proxies as Record<string, unknown>).XXL;
+    delete (a.dproxies as Record<string, unknown>).XXL;
+    delete (a.aproxies as Record<string, unknown>).XXL;
+    delete (a.ptRoughScen as Record<string, unknown>).XXL;
+    a.sizes = [...a.sizes.filter((s) => s !== 'XXL'), 'XS2'];
+    return a;
+  };
+
+  it('lists the rows of the given sizes', () => {
+    const rows = describeAssumptions({ locale: 'en', values: withXS2() });
+    const paths = rows.map((r) => r.path);
+    expect(rows).toHaveLength(160);
+    expect(paths).toContain('proxies.XS2');
+    expect(paths).not.toContain('proxies.XXL');
+    const xs2 = rows.find((r) => r.path === 'proxies.XS2')!;
+    expect(xs2.label).toContain('XS2');
+    expect(xs2.default).toBeUndefined();
+  });
+
+  it('counts a custom size calibrated only with a note', () => {
+    const rows = describeAssumptions({
+      locale: 'en',
+      values: withXS2(),
+      calibration: { 'proxies.XS2': { source: 'Synthetic pilot' } },
+    });
+    expect(rows.find((r) => r.path === 'proxies.XS2')!.calibrated).toBe(true);
+    expect(rows.find((r) => r.path === 'dproxies.XS2')!.calibrated).toBe(false);
+  });
+
+  it('accepts a custom-size path only with values that have it', () => {
+    expect(() => describeAssumptions({ locale: 'en', paths: ['proxies.XS2'] })).toThrow(PathError);
+    expect(
+      describeAssumptions({ locale: 'en', paths: ['proxies.XS2'], values: withXS2() }),
+    ).toHaveLength(1);
   });
 });

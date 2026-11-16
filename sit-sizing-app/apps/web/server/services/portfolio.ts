@@ -45,6 +45,7 @@ export async function portfolio(user: CurrentUser, q: z.output<typeof PortfolioQ
           engineVersion: true,
           result: true,
           uncalibrated: true,
+          assumptionRows: true,
           profile: { select: { name: true } },
         },
       },
@@ -73,6 +74,7 @@ export async function portfolio(user: CurrentUser, q: z.output<typeof PortfolioQ
         hours: r.detailed.hours,
         roughFte: r.rough.fte,
         uncalibrated: v.uncalibrated,
+        assumptionRows: v.assumptionRows,
       },
     ];
   });

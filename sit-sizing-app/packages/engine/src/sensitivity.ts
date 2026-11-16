@@ -1,5 +1,5 @@
 import type { Assumptions, EstimateInputs } from '@sit/schemas';
-import { FIELD_TYPES, PT_TYPES, SIZES } from './catalogue.ts';
+import { FIELD_TYPES, PT_TYPES } from './catalogue.ts';
 import { compute } from './compute.ts';
 import type { Mode } from './types.ts';
 import { clone, type Triple } from './util.ts';
@@ -274,8 +274,8 @@ export const SENSITIVITY_ITEMS: readonly { key: string; roughOnly?: true; apply:
     key: 'proxies',
     roughOnly: true,
     apply: (A, k) => {
-      for (const s of SIZES) {
-        const p = A.proxies[s];
+      for (const s of A.sizes) {
+        const p = A.proxies[s]!;
         for (const x of Object.keys(p) as (keyof typeof p)[]) p[x] *= k;
       }
     },

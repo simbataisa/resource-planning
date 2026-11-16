@@ -1,4 +1,4 @@
-import { versionSnapshot } from '@sit/engine';
+import { sameSizeSet, unknownFeatureSizes, versionSnapshot } from '@sit/engine';
 import type { Prisma } from '@sit/db';
 import {
   INPUTS_SCHEMA_VERSION,
@@ -78,6 +78,7 @@ export function snapshotData(inputs: EstimateInputs, assumptions: Assumptions) {
     detailedFte: snap.detailedFte,
     totalCasesDetailed: snap.totalCasesDetailed,
     uncalibrated: snap.uncalibrated,
+    assumptionRows: snap.assumptionRows,
   };
 }
 
@@ -255,6 +256,18 @@ export async function unlockDraft(user: CurrentUser, estimateId: string, lockTok
   if (released.count === 0) throw lockedElsewhere();
 }
 
+/** Refuses features whose size the estimate does not have (ADR-0021). */
+function checkFeatureSizes(inputs: EstimateInputs, assumptions: Assumptions) {
+  const missing = unknownFeatureSizes(inputs, assumptions);
+  if (missing.length)
+    throw new HttpError(
+      422,
+      'VALIDATION_FAILED',
+      "Every feature must use one of the estimate's sizes.",
+      missing.map((m) => ({ path: ['inputs', 'features'], reason: 'SIZE_NOT_IN_ESTIMATE', ...m })),
+    );
+}
+
 /**
  * Autosave (PATCH /draft): the server recomputes with the engine and never trusts client
  * totals (design 4.1). Optimistic locking on rowVersion; the save also renews the lock.
@@ -277,9 +290,18 @@ export async function patchDraft(
         rowVersion: draft.rowVersion,
       });
     }
-    const stored = input.inputs && input.assumptions ? null : readStored(draft);
-    const inputs = input.inputs ?? stored!.inputs;
-    const assumptions = input.assumptions ?? stored!.assumptions;
+    const stored = readStored(draft);
+    const inputs = input.inputs ?? stored.inputs;
+    const assumptions = input.assumptions ?? stored.assumptions;
+    // An estimate's sizes change only by applying a profile (ADR-0021).
+    if (input.assumptions && !sameSizeSet(stored.assumptions, input.assumptions))
+      throw new HttpError(
+        422,
+        'VALIDATION_FAILED',
+        'The sizes change only by applying a profile.',
+        [{ path: ['assumptions', 'sizes'] }],
+      );
+    checkFeatureSizes(inputs, assumptions);
     const now = clock.now();
     const updated = await tx.estimateVersion.updateMany({
       where: {
@@ -346,6 +368,7 @@ export async function saveVersion(
         // Recompute at freeze time so the stored result matches the current engine.
         ...(() => {
           const stored = readStored(draft);
+          checkFeatureSizes(stored.inputs, stored.assumptions);
           return snapshotData(stored.inputs, stored.assumptions);
         })(),
         status: 'SAVED',

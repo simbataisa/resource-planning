@@ -30,6 +30,7 @@ import { EditorProvider, useEditor } from '../estimate-editor/store';
 import { useQueryState } from '../shared/use-query-state';
 import { NewProfileDialog } from './new-profile-dialog';
 import { PROFILE_TONE } from './profile-list';
+import { SizeEditor } from './size-editor';
 
 type Calibration = ProfileDetail['calibration'];
 const DEFAULTS = DEFAULT_ASSUMPTIONS as Assumptions;
@@ -74,7 +75,7 @@ function ProfileBody({ profile, manage }: { profile: ProfileDetail; manage: bool
   const me = useMe();
   const projects = useProjects();
   const principal = me.data ? principalFromMe(me.data) : null;
-  const { state, editable } = useEditor();
+  const { state, editable, editAssumptions } = useEditor();
   const { assumptions, dirty } = state;
   const isDraft = profile.status === 'DRAFT';
   const { save, setStatus } = useUpdateProfile(profile.id);
@@ -180,7 +181,19 @@ function ProfileBody({ profile, manage }: { profile: ProfileDetail; manage: bool
       ) : null}
       <section className="grid gap-4 rounded-lg border bg-card p-5 shadow-card">
         <h2 className="text-[1.6rem] font-light">{t('valuesTitle')}</h2>
+        <SizeEditor
+          values={assumptions}
+          calibration={calibration}
+          editable={editable}
+          onChange={(next) => {
+            // Sizes move their notes with them (ADR-0021).
+            editAssumptions((d) => void Object.assign(d, next.values));
+            setCalibration(next.calibration as Calibration);
+            setCalDirty(true);
+          }}
+        />
         <AssumptionsTab
+          notes={calibration}
           // The source column only takes space when it can hold something.
           calibrationCell={
             editable || Object.keys(calibration).length

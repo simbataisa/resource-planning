@@ -1,4 +1,4 @@
-import { DEFAULT_ASSUMPTIONS } from '@sit/engine';
+import { DEFAULT_ASSUMPTIONS, unknownFeatureSizes } from '@sit/engine';
 import type { Prisma } from '@sit/db';
 import {
   Assumptions,
@@ -18,6 +18,7 @@ import {
   decideProfile,
   managePermission,
   unknownCalibrationPaths,
+  profileAssumptions,
 } from '../domain/profiles';
 import { profileDetailDto, profileDto, versionDto } from '../dto';
 import { HttpError } from '../http/route';
@@ -92,8 +93,8 @@ async function ensureNameFree(
   if (clash) throw conflict('A profile with that name already exists here.', 'NAME_TAKEN');
 }
 
-function checkCalibration(calibration: Record<string, unknown>) {
-  const bad = unknownCalibrationPaths(calibration);
+function checkCalibration(calibration: Record<string, unknown>, values: unknown) {
+  const bad = unknownCalibrationPaths(calibration, Assumptions.parse(values));
   if (bad.length)
     throw new HttpError(
       422,
@@ -160,7 +161,12 @@ export async function updateProfile(
     const p = await managedProfile(tx, user, id);
     const d = decideProfile('update', p);
     if (!d.ok) throw conflict(d.message, d.reason);
-    if (input.calibration) checkCalibration(input.calibration);
+    // Notes must refer to rows of the profile as it will be, sizes included (ADR-0021).
+    if (input.calibration || input.values)
+      checkCalibration(
+        (input.calibration ?? p.calibration) as Record<string, unknown>,
+        input.values ?? p.values,
+      );
     if (input.name && input.name !== p.name)
       await ensureNameFree(tx, p.scope, p.projectId, input.name, p.id);
     const updated = await tx.assumptionProfile.update({
@@ -264,7 +270,16 @@ export async function applyProfile(
         'That assumption profile cannot be used here.',
         [{ path: ['profileId'] }],
       );
-    const assumptions = Assumptions.parse(p.values);
+    const assumptions = profileAssumptions(p.values, p.calibration);
+    // Block, never remap: features on a size the profile lacks must be resized first (ADR-0021).
+    const missing = unknownFeatureSizes(readStored(draft).inputs, assumptions);
+    if (missing.length)
+      throw new HttpError(
+        409,
+        'CONFLICT',
+        'Some features use a size this profile does not have. Resize them first.',
+        missing.map((m) => ({ reason: 'SIZE_NOT_IN_PROFILE', ...m })),
+      );
     const now = clock.now();
     const updated = await tx.estimateVersion.updateMany({
       where: {

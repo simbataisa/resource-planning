@@ -1130,7 +1130,8 @@
       },
       "hint": "Built from the last saved state of this version, with the same numbers as the screen.",
       "waiting": "Waiting for autosave before you can download."
-    }
+    },
+    "ownSizes": "This estimate has its own feature sizes, so a file cannot replace its assumptions. Apply a published profile instead."
   },
   "content": {
     "guide": {
@@ -1695,7 +1696,7 @@
   },
   "profiles": {
     "title": "Assumption profiles",
-    "description": "Named sets of the 142 assumptions. Publish a profile to use it in estimates; published profiles never change.",
+    "description": "Named sets of the 160 assumptions. Publish a profile to use it in estimates; published profiles never change.",
     "showFor": "Show",
     "globalOnly": "Global profiles",
     "globalAnd": "Global and {project}",
@@ -1753,9 +1754,30 @@
       "waitForSave": "Wait for autosave to finish.",
       "confirmTitle": "Replace all assumptions?",
       "confirmBody": "Every assumption in this draft will be replaced by the values of {name}. Your scope stays the same. Changes you made to assumptions are lost.",
-      "lockedElsewhere": "The profile was not applied: this draft is open in another tab or in the assistant."
+      "lockedElsewhere": "The profile was not applied: this draft is open in another tab or in the assistant.",
+      "sizeMissing": "{count, plural, one {# feature uses} other {# features use}} {size}, which this profile doesn't have. Resize them first."
     },
-    "valuesTitle": "Assumption values"
+    "valuesTitle": "Assumption values",
+    "sizes": {
+      "title": "Feature sizes",
+      "hint": "Rough scope offers these sizes, in this order. A new size starts as a copy of the size you pick.",
+      "name": "Size name",
+      "copyFrom": "Copy from",
+      "add": "Add size",
+      "rename": "Rename {size}",
+      "renameTo": "New name for {size}",
+      "saveName": "Save name",
+      "remove": "Remove {size}",
+      "moveUp": "Move {size} up",
+      "moveDown": "Move {size} down",
+      "errors": {
+        "BAD_NAME": "Use 1 to 6 letters, digits, + or -.",
+        "NAME_TAKEN": "That size already exists.",
+        "LAST_SIZE": "A profile keeps at least one size.",
+        "TOO_MANY": "A profile has at most 20 sizes.",
+        "BUILT_IN_NAME": "That is a built-in size name. A built-in size keeps its default values: add it instead of renaming another size."
+      }
+    }
   },
   "export": {
     "disclaimer": "Planning range, not a commitment. Confirm FTE and timelines with the accountable delivery owner.",

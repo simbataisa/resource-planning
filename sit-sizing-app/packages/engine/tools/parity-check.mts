@@ -112,7 +112,11 @@ if (P.SENS.length !== SENSITIVITY_ITEMS.length)
   failures.push(`SENS length ${P.SENS.length} vs ${SENSITIVITY_ITEMS.length}`);
 
 for (let seed = 1; seed <= N && failures.length <= 20; seed++) {
-  const { A, S } = randomCase(P, seed);
+  // Odd seeds draw from all ten sizes (ADR-0020), even seeds from the original four.
+  const { A, S } = randomCase(P, seed, seed % 2 ? P.SIZES : undefined);
+  // The prototype has no size list; the engine reads it (ADR-0021). The prototype ignores it.
+  A.sizes = P.SIZES.filter((s: string) => s in A.proxies);
+  A.sizeNotes = {};
   checkMode(`seed${seed}`, 'rough', A, S);
   checkMode(`seed${seed}`, 'detailed', A, S);
   if (seed % 10 === 0) {
