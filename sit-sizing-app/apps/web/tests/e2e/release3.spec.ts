@@ -4,6 +4,7 @@ import {
   asLead,
   createExampleEstimate,
   expectNoAxeViolations,
+  openAssumptionGroup,
   saveVersion,
   submitAndApprove,
   versionRow,
@@ -51,8 +52,7 @@ test('actuals from one SIT cycle calibrate a published profile', async ({ page, 
     await dialog.getByLabel('Name').fill(profile);
     await dialog.getByRole('button', { name: 'Create profile' }).click();
     await expect(lead.getByRole('heading', { level: 1, name: profile })).toBeVisible();
-    // Assumption groups start collapsed: open the one that holds the retest rate.
-    await lead.locator('#asm-effort > summary').click();
+    await openAssumptionGroup(lead, 'effort');
     const retest = lead.getByRole('spinbutton', { name: 'Defect retest rate', exact: true });
     await retest.fill('25');
     await retest.press('Tab');
@@ -65,6 +65,7 @@ test('actuals from one SIT cycle calibrate a published profile', async ({ page, 
     await lead.getByRole('dialog').getByRole('button', { name: 'Publish' }).click();
     await expect(lead.getByText('Published', { exact: true })).toBeVisible();
     // The source stays with the value.
+    await openAssumptionGroup(lead, 'effort');
     await expect(
       lead.getByRole('textbox', { name: 'Calibration source for Defect retest rate', exact: true }),
     ).toHaveValue(cycle);

@@ -4,6 +4,7 @@ import {
   asLead,
   createExampleEstimate,
   expectNoAxeViolations,
+  openAssumptionGroup,
   saveVersion,
   versionRow,
 } from './helpers';
@@ -87,6 +88,7 @@ test('a published profile is applied to a new estimate', async ({ page, browser 
     await dialog.getByRole('button', { name: 'Create profile' }).click();
     await expect(lead.getByRole('heading', { level: 1, name: profile })).toBeVisible();
     // Calibrate one value, with its source, then publish.
+    await openAssumptionGroup(lead, 'rules');
     const share = lead.getByRole('spinbutton', { name: /^Critical-rule share, rough/ });
     await share.fill('35');
     await share.press('Tab');
