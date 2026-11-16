@@ -126,6 +126,8 @@ describe('patterns added in step 1.5', () => {
     const bars = list.querySelectorAll('li')[0]!.querySelectorAll('span[style]');
     expect(bars[1]!.className).toContain('bg-brand');
     expect(bars[1]!.className).not.toContain('bg-bad');
+    // …and the prototype's green (--good is the darker green for text).
+    expect(bars[0]!.className).toContain('bg-chart-good');
     await expectNoAxeViolations(container);
   });
 });

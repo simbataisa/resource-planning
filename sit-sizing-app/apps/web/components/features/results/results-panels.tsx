@@ -260,7 +260,7 @@ function SensitivityPanel() {
       />
       <p className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <i aria-hidden="true" className="size-2.5 rounded-sm bg-good" />
+          <i aria-hidden="true" className="size-2.5 rounded-sm bg-chart-good" />
           {t('fewer')}
         </span>
         <span className="flex items-center gap-1.5">

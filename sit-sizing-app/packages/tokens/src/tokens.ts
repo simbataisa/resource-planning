@@ -46,6 +46,7 @@ export const colorTokens = {
     'detailed-foreground': '#1B1564',
     good: '#18733C', // AA: prototype #1E8E4A
     'good-soft': '#E5F6EB',
+    'chart-good': '#1E8E4A', // prototype green, for bars (not text)
     warn: '#7A5F1E', // AA: prototype #9A7B2F
     'warn-soft': '#F6EEDC',
     bad: '#C8141C', // AA: prototype #ED1B24
@@ -89,6 +90,7 @@ export const colorTokens = {
     'detailed-foreground': '#9EA4FF',
     good: '#32C959',
     'good-soft': '#16301F',
+    'chart-good': '#32C959',
     warn: '#D6B973',
     'warn-soft': '#2E2717',
     bad: '#FF6B70',
@@ -177,5 +179,7 @@ export const nonTextPairs: readonly [part: ColorToken, background: ColorToken][]
   ['brand', 'card'],
   ['rough', 'card'],
   ['detailed', 'card'],
+  ['chart-good', 'muted'],
+  ['brand', 'muted'],
   ['sidebar-ring', 'sidebar'],
 ];
