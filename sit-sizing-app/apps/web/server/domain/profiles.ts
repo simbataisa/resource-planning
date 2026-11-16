@@ -55,7 +55,7 @@ export function decideProfile(
 
 const KNOWN = new Set(ASSUMPTION_PATHS);
 
-/** Calibration keys that are not one of the 142 assumption rows. */
+/** Calibration keys that are not one of the 160 assumption rows. */
 export function unknownCalibrationPaths(calibration: Record<string, unknown>): string[] {
   return Object.keys(calibration).filter((k) => !KNOWN.has(k));
 }

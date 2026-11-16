@@ -53,7 +53,7 @@ describe('export workbook model (X-02)', () => {
     expect(find('FTE, high').slice(1)).toEqual([R.hi, D.hi]);
     expect(find('Test cases').slice(1)).toEqual([R.cases, D.cases]);
     expect(find('Hours').slice(1)).toEqual([R.hours, D.hours]);
-    expect(find('Uncalibrated assumptions').slice(1)).toEqual([142, 142]);
+    expect(find('Uncalibrated assumptions').slice(1)).toEqual([160, 160]);
   });
 
   it('gap totals equal the engine totals, and the group rows add up to them', () => {
@@ -88,9 +88,9 @@ describe('export workbook model (X-02)', () => {
     expect(row[3]).toBe('Simple 2 · Medium 3 · Complex 5');
   });
 
-  it('lists all 142 assumptions with their calibration status', () => {
+  it('lists all 160 assumptions with their calibration status', () => {
     const a = byId(tables, 'assumptions');
-    expect(a.rows).toHaveLength(142);
+    expect(a.rows).toHaveLength(160);
     expect(a.rows.every((r) => r[5] === 'Uncalibrated')).toBe(true);
     const changed = structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions;
     changed.criticalShare = 0.35;

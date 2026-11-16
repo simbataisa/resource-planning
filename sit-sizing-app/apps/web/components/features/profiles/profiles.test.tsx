@@ -96,7 +96,7 @@ describe('ProfileList', () => {
     expect(screen.getByRole('link', { name: 'Default' }).getAttribute('href')).toBe(
       '/en/profiles/pr1',
     );
-    expect(screen.getByText('120 / 142')).toBeTruthy();
+    expect(screen.getByText('120 / 160')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'New profile' })).toBeTruthy();
     await expectNoAxeViolations(container);
   });

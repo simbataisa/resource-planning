@@ -37,7 +37,7 @@
     },
     {
       "name": "Assumption profiles",
-      "description": "Named sets of the 142 model assumptions, global or per project."
+      "description": "Named sets of the 160 model assumptions, global or per project."
     },
     {
       "name": "Session",
@@ -6229,10 +6229,16 @@
                     "size": {
                       "type": "string",
                       "enum": [
+                        "XXS",
+                        "XS",
                         "S",
+                        "M-",
                         "M",
+                        "M+",
                         "L",
-                        "XL"
+                        "XL",
+                        "XXL",
+                        "XXXL"
                       ]
                     },
                     "cx": {
@@ -7985,6 +7991,100 @@
               "dproxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -8032,7 +8132,101 @@
                       "secured"
                     ]
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "feed": {
@@ -8172,13 +8366,113 @@
                       "scd",
                       "secured"
                     ]
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ]
               },
               "ptScript": {
@@ -8312,11 +8606,27 @@
               "ptRoughScen": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "XS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
                   "S": {
                     "type": "number",
                     "minimum": 0
                   },
+                  "M-": {
+                    "type": "number",
+                    "minimum": 0
+                  },
                   "M": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "M+": {
                     "type": "number",
                     "minimum": 0
                   },
@@ -8327,13 +8637,27 @@
                   "XL": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "XXL": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "XXXL": {
+                    "type": "number",
+                    "minimum": 0
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ]
               },
               "ptEnvDays": {
@@ -8343,6 +8667,80 @@
               "aproxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -8380,7 +8778,81 @@
                       "hitl"
                     ]
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "intent": {
@@ -8490,13 +8962,93 @@
                       "guard",
                       "hitl"
                     ]
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ]
               },
               "dFeed": {
@@ -8807,6 +9359,120 @@
               "proxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -8864,7 +9530,121 @@
                       "actions"
                     ]
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "screen": {
@@ -9034,13 +9814,133 @@
                       "workflow",
                       "actions"
                     ]
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ]
               }
             },
@@ -11259,6 +12159,102 @@
               "dproxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -11307,7 +12303,103 @@
                     ],
                     "additionalProperties": false
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "feed": {
@@ -11450,13 +12542,115 @@
                       "secured"
                     ],
                     "additionalProperties": false
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ],
                 "additionalProperties": false
               },
@@ -11593,11 +12787,27 @@
               "ptRoughScen": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "XS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
                   "S": {
                     "type": "number",
                     "minimum": 0
                   },
+                  "M-": {
+                    "type": "number",
+                    "minimum": 0
+                  },
                   "M": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "M+": {
                     "type": "number",
                     "minimum": 0
                   },
@@ -11608,13 +12818,27 @@
                   "XL": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "XXL": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "XXXL": {
+                    "type": "number",
+                    "minimum": 0
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ],
                 "additionalProperties": false
               },
@@ -11625,6 +12849,82 @@
               "aproxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -11663,7 +12963,83 @@
                     ],
                     "additionalProperties": false
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "intent": {
@@ -11776,13 +13152,95 @@
                       "hitl"
                     ],
                     "additionalProperties": false
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ],
                 "additionalProperties": false
               },
@@ -12095,6 +13553,122 @@
               "proxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -12153,7 +13727,123 @@
                     ],
                     "additionalProperties": false
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "screen": {
@@ -12326,13 +14016,135 @@
                       "actions"
                     ],
                     "additionalProperties": false
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ],
                 "additionalProperties": false
               }
@@ -13386,6 +15198,100 @@
               "dproxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -13433,7 +15339,101 @@
                       "secured"
                     ]
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "feed": {
@@ -13573,13 +15573,113 @@
                       "scd",
                       "secured"
                     ]
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ]
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ]
               },
               "ptScript": {
@@ -13713,11 +15813,27 @@
               "ptRoughScen": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "XS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
                   "S": {
                     "type": "number",
                     "minimum": 0
                   },
+                  "M-": {
+                    "type": "number",
+                    "minimum": 0
+                  },
                   "M": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "M+": {
                     "type": "number",
                     "minimum": 0
                   },
@@ -13728,13 +15844,27 @@
                   "XL": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "XXL": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "XXXL": {
+                    "type": "number",
+                    "minimum": 0
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ]
               },
               "ptEnvDays": {
@@ -13744,6 +15874,80 @@
               "aproxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -13781,7 +15985,81 @@
                       "hitl"
                     ]
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "intent": {
@@ -13891,13 +16169,93 @@
                       "guard",
                       "hitl"
                     ]
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ]
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ]
               },
               "dFeed": {
@@ -14208,6 +16566,120 @@
               "proxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -14265,7 +16737,121 @@
                       "actions"
                     ]
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "screen": {
@@ -14435,13 +17021,133 @@
                       "workflow",
                       "actions"
                     ]
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ]
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ]
               }
             },
@@ -15395,10 +18101,16 @@
                     "size": {
                       "type": "string",
                       "enum": [
+                        "XXS",
+                        "XS",
                         "S",
+                        "M-",
                         "M",
+                        "M+",
                         "L",
-                        "XL"
+                        "XL",
+                        "XXL",
+                        "XXXL"
                       ]
                     },
                     "cx": {
@@ -17187,6 +19899,102 @@
               "dproxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -17235,7 +20043,103 @@
                     ],
                     "additionalProperties": false
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "feed": {
@@ -17378,13 +20282,115 @@
                       "secured"
                     ],
                     "additionalProperties": false
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "feed": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "pipe": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "table": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "report": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "columns": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "dq": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "scd": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "secured": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "feed",
+                      "pipe",
+                      "table",
+                      "report",
+                      "columns",
+                      "dq",
+                      "scd",
+                      "secured"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ],
                 "additionalProperties": false
               },
@@ -17521,11 +20527,27 @@
               "ptRoughScen": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "XS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
                   "S": {
                     "type": "number",
                     "minimum": 0
                   },
+                  "M-": {
+                    "type": "number",
+                    "minimum": 0
+                  },
                   "M": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "M+": {
                     "type": "number",
                     "minimum": 0
                   },
@@ -17536,13 +20558,27 @@
                   "XL": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "XXL": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "XXXL": {
+                    "type": "number",
+                    "minimum": 0
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ],
                 "additionalProperties": false
               },
@@ -17553,6 +20589,82 @@
               "aproxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -17591,7 +20703,83 @@
                     ],
                     "additionalProperties": false
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "intent": {
@@ -17704,13 +20892,95 @@
                       "hitl"
                     ],
                     "additionalProperties": false
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "intent": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "ocr": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rag": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "tools": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "guard": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hitl": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "intent",
+                      "ocr",
+                      "rag",
+                      "tools",
+                      "guard",
+                      "hitl"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ],
                 "additionalProperties": false
               },
@@ -18023,6 +21293,122 @@
               "proxies": {
                 "type": "object",
                 "properties": {
+                  "XXS": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XS": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
                   "S": {
                     "type": "object",
                     "properties": {
@@ -18081,7 +21467,123 @@
                     ],
                     "additionalProperties": false
                   },
+                  "M-": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
                   "M": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "M+": {
                     "type": "object",
                     "properties": {
                       "screen": {
@@ -18254,13 +21756,135 @@
                       "actions"
                     ],
                     "additionalProperties": false
+                  },
+                  "XXL": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "XXXL": {
+                    "type": "object",
+                    "properties": {
+                      "screen": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "field": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "api": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "integration": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "rule": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "journey": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "batch": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "event": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "workflow": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "actions": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "screen",
+                      "field",
+                      "api",
+                      "integration",
+                      "rule",
+                      "journey",
+                      "batch",
+                      "event",
+                      "workflow",
+                      "actions"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
+                  "XXS",
+                  "XS",
                   "S",
+                  "M-",
                   "M",
+                  "M+",
                   "L",
-                  "XL"
+                  "XL",
+                  "XXL",
+                  "XXXL"
                 ],
                 "additionalProperties": false
               }

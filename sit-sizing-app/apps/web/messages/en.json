@@ -1695,7 +1695,7 @@
   },
   "profiles": {
     "title": "Assumption profiles",
-    "description": "Named sets of the 142 assumptions. Publish a profile to use it in estimates; published profiles never change.",
+    "description": "Named sets of the 160 assumptions. Publish a profile to use it in estimates; published profiles never change.",
     "showFor": "Show",
     "globalOnly": "Global profiles",
     "globalAnd": "Global and {project}",

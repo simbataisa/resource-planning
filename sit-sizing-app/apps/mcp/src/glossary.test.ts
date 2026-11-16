@@ -24,7 +24,7 @@ function leaves(schema: z.ZodType, prefix = ''): string[] {
 }
 
 describe('describeAssumptions', () => {
-  it('returns 142 rows with label and default; explanation is null when no help text exists', () => {
+  it('returns 160 rows with label and default; explanation is null when no help text exists', () => {
     const rows = describeAssumptions({ locale: 'en' });
     expect(rows.map((r) => r.path)).toEqual([...ASSUMPTION_PATHS]);
     const api = rows.find((r) => r.path === 'cases.api')!;

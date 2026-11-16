@@ -1330,7 +1330,7 @@ versions.cmp.truncated,versions,Only the first 500 changes are listed.,Chỉ li�
 versions.cmp.empty,versions,(none),(không có),app,,
 versions.actuals,versions,Actuals,Số liệu thực tế,app,,
 profiles.title,profiles,Assumption profiles,Hồ sơ giả định,app,,
-profiles.description,profiles,Named sets of the 142 assumptions. Publish a profile to use it in estimates; published profiles never change.,Các bộ có tên gồm 142 giả định. Phát hành hồ sơ để dùng trong ước tính; hồ sơ đã phát hành không bao giờ thay đổi.,app,,
+profiles.description,profiles,Named sets of the 160 assumptions. Publish a profile to use it in estimates; published profiles never change.,Các bộ có tên gồm 160 giả định. Phát hành hồ sơ để dùng trong ước tính; hồ sơ đã phát hành không bao giờ thay đổi.,app,,
 profiles.showFor,profiles,Show,Hiển thị,app,,
 profiles.globalOnly,profiles,Global profiles,Hồ sơ toàn cục,app,,
 profiles.globalAnd,profiles,Global and {project},Toàn cục và {project},app,,

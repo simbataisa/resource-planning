@@ -72,7 +72,7 @@ test('actuals from one SIT cycle calibrate a published profile', async ({ page, 
     await lead.goto('/en/profiles');
     await lead.getByLabel('Show').selectOption({ label: 'Global and Synthetic · Retail lending' });
     await expect(
-      lead.getByRole('row', { name: new RegExp(`${profile} .* 141 / 142`) }),
+      lead.getByRole('row', { name: new RegExp(`${profile} .* 159 / 160`) }),
     ).toBeVisible();
   });
 });

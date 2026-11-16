@@ -77,7 +77,7 @@ const PreviewResult = z.object({
     rough: z.array(SensitivityRow),
     detailed: z.array(SensitivityRow),
   }),
-  uncalibrated: z.number().int().describe('Assumption rows still at their default (of 142).'),
+  uncalibrated: z.number().int().describe('Assumption rows still at their default (of 160).'),
 });
 
 /** The whole object a preview validates before it runs the engine. */
@@ -141,10 +141,10 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
     {
       title: 'Describe assumptions',
       description:
-        'The 142 assumption rows: path, label, meaning and default. Given a version (estimateId and number) or a profile, also the current value, whether it is calibrated, and its source and measured date where known.',
+        'The 160 assumption rows: path, label, meaning and default. Given a version (estimateId and number) or a profile, also the current value, whether it is calibrated, and its source and measured date where known.',
       inputSchema: z.object({
         group: z.enum(ASSUMPTION_GROUPS).optional(),
-        paths: z.array(z.string().max(80)).max(142).optional(),
+        paths: z.array(z.string().max(80)).max(160).optional(),
         estimateId: Id.optional(),
         number: VersionRef.optional(),
         profileId: Id.optional(),

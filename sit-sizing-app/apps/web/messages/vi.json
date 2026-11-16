@@ -1695,7 +1695,7 @@
   },
   "profiles": {
     "title": "Hồ sơ giả định",
-    "description": "Các bộ có tên gồm 142 giả định. Phát hành hồ sơ để dùng trong ước tính; hồ sơ đã phát hành không bao giờ thay đổi.",
+    "description": "Các bộ có tên gồm 160 giả định. Phát hành hồ sơ để dùng trong ước tính; hồ sơ đã phát hành không bao giờ thay đổi.",
     "showFor": "Hiển thị",
     "globalOnly": "Hồ sơ toàn cục",
     "globalAnd": "Toàn cục và {project}",

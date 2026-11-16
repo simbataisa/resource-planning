@@ -755,6 +755,22 @@
     "unitKey": "assumptionsTab.units.share"
   },
   {
+    "path": "dproxies.XXS",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXS"
+    }
+  },
+  {
+    "path": "dproxies.XS",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XS"
+    }
+  },
+  {
     "path": "dproxies.S",
     "group": "dproxies",
     "labelKey": "assumptionsTab.size",
@@ -763,11 +779,27 @@
     }
   },
   {
+    "path": "dproxies.M-",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M-"
+    }
+  },
+  {
     "path": "dproxies.M",
     "group": "dproxies",
     "labelKey": "assumptionsTab.size",
     "labelValues": {
       "s": "M"
+    }
+  },
+  {
+    "path": "dproxies.M+",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M+"
     }
   },
   {
@@ -787,6 +819,38 @@
     }
   },
   {
+    "path": "dproxies.XXL",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXL"
+    }
+  },
+  {
+    "path": "dproxies.XXXL",
+    "group": "dproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXXL"
+    }
+  },
+  {
+    "path": "aproxies.XXS",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXS"
+    }
+  },
+  {
+    "path": "aproxies.XS",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XS"
+    }
+  },
+  {
     "path": "aproxies.S",
     "group": "aproxies",
     "labelKey": "assumptionsTab.size",
@@ -795,11 +859,27 @@
     }
   },
   {
+    "path": "aproxies.M-",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M-"
+    }
+  },
+  {
     "path": "aproxies.M",
     "group": "aproxies",
     "labelKey": "assumptionsTab.size",
     "labelValues": {
       "s": "M"
+    }
+  },
+  {
+    "path": "aproxies.M+",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M+"
     }
   },
   {
@@ -819,6 +899,38 @@
     }
   },
   {
+    "path": "aproxies.XXL",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXL"
+    }
+  },
+  {
+    "path": "aproxies.XXXL",
+    "group": "aproxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXXL"
+    }
+  },
+  {
+    "path": "proxies.XXS",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXS"
+    }
+  },
+  {
+    "path": "proxies.XS",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XS"
+    }
+  },
+  {
     "path": "proxies.S",
     "group": "proxies",
     "labelKey": "assumptionsTab.size",
@@ -827,11 +939,27 @@
     }
   },
   {
+    "path": "proxies.M-",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M-"
+    }
+  },
+  {
     "path": "proxies.M",
     "group": "proxies",
     "labelKey": "assumptionsTab.size",
     "labelValues": {
       "s": "M"
+    }
+  },
+  {
+    "path": "proxies.M+",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "M+"
     }
   },
   {
@@ -848,6 +976,22 @@
     "labelKey": "assumptionsTab.size",
     "labelValues": {
       "s": "XL"
+    }
+  },
+  {
+    "path": "proxies.XXL",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXL"
+    }
+  },
+  {
+    "path": "proxies.XXXL",
+    "group": "proxies",
+    "labelKey": "assumptionsTab.size",
+    "labelValues": {
+      "s": "XXXL"
     }
   }
 ]

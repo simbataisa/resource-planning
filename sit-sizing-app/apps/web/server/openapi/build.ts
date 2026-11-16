@@ -191,7 +191,7 @@ export function buildOpenApi(version: string = OPENAPI_VERSION): JsonObject {
       },
       {
         name: 'Assumption profiles',
-        description: 'Named sets of the 142 model assumptions, global or per project.',
+        description: 'Named sets of the 160 model assumptions, global or per project.',
       },
       { name: 'Session', description: 'The signed-in user.' },
       {

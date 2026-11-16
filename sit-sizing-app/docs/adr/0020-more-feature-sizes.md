@@ -1,11 +1,11 @@
 # ADR-0020: Ten T-shirt sizes for rough-scope features
 
-|                           |                                                                                       |
-| ------------------------- | ------------------------------------------------------------------------------------- |
-| **Status**                | Accepted (sizes and defaults chosen by the requester on 2026-11-16); named review pending |
-| **Date**                  | 2026-11-16                                                                            |
+|                           |                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Status**                | Accepted (sizes and defaults chosen by the requester on 2026-11-16); named review pending         |
+| **Date**                  | 2026-11-16                                                                                        |
 | **Deciders**              | Product owner, QE lead (defaults); tech lead; named reviewer for `packages/engine` and migrations |
-| **Backlog / design refs** | Design 6.4, 6.6; ADR-0008 (profiles), ADR-0013 (upgrade on read), ADR-0019 (schema version 2) |
+| **Backlog / design refs** | Design 6.4, 6.6; ADR-0008 (profiles), ADR-0013 (upgrade on read), ADR-0019 (schema version 2)     |
 
 ## Context
 
@@ -30,7 +30,7 @@ Rough scope sizes each feature S, M, L or XL. Each size has default proxy counts
 
 - Rough estimates can now use smaller and larger features; existing estimates are unchanged.
 - API: the feature `size` enum and the proxy objects gain keys. Old clients sending S–XL keep working, but a response may contain the new sizes; `OPENAPI_BREAKING_APPROVED` is needed if the gate flags the enum change.
-- Rollback: an older release cannot parse profiles with the new keys (Zod objects are strict about required keys, not extra ones; check) — runbook 8.5 has the reverse SQL.
+- Rollback: an older release still reads migrated profiles, because Zod objects drop unknown keys, so the profile migration needs no reverse SQL. Versions saved at schema version 3 return 409 `NEWER_SCHEMA` there, as for ADR-0019.
 - Help texts: 18 new draft rows in `docs/i18n/assumption-help-draft.md`, marked "needs approval".
 
 ## Approval

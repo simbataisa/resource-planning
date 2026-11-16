@@ -178,4 +178,4 @@ Record what you found (assistant and version, document, pass or fail per checkli
 - **Check before you agree.** The assistant is fast, not infallible; you own the estimate.
 - **Close the editor** on a draft the assistant is working on.
 - **No real data in the chat.** Requirements with customer or personal data must be anonymised first.
-- **Explanations of the 142 assumptions** appear once the QE practice lead has approved them. Until then the assistant shows each assumption's label, default and calibration only.
+- **Explanations of the 160 assumptions** appear once the QE practice lead has approved them. Until then the assistant shows each assumption's label, default and calibration only.

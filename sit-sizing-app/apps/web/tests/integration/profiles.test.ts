@@ -46,7 +46,7 @@ describe('assumption profiles', () => {
   it('lets a QE Lead create a project profile, and refuses the wrong roles', async () => {
     const res = await create('dev-lead', { name: NAME, scope: 'PROJECT', projectId });
     expect(res.status, JSON.stringify(res.json)).toBe(201);
-    expect(res.json).toMatchObject({ status: 'DRAFT', scope: 'PROJECT', uncalibrated: 142 });
+    expect(res.json).toMatchObject({ status: 'DRAFT', scope: 'PROJECT', uncalibrated: 160 });
     profileId = res.json.id;
     expect(
       (await create('dev-estimator', { name: `${NAME} x`, scope: 'PROJECT', projectId })).status,

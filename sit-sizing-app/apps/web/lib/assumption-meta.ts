@@ -1,8 +1,10 @@
 /**
  * The Assumptions tab layout (prototype META): groups, rows and how each value is edited.
- * Generated from one transcription of the prototype; labels are message keys. 142 rows,
+ * Generated from one transcription of the prototype; labels are message keys. 160 rows,
  * the same paths as the engine's ASSUMPTION_PATHS (checked by assumption-meta.test.ts).
  */
+import { SIZES } from '@sit/engine';
+
 export interface MetaLabel {
   key: string;
   values?: Record<string, string>;
@@ -18,6 +20,49 @@ export interface MetaGroup {
 }
 
 /** Key labels starting with "=" are shown as is (sizes S, M, L, XL). */
+const DATA_PROXY_KEYS: [string, string][] = [
+  ['feed', 'assumptionsTab.keys.feed'],
+  ['pipe', 'assumptionsTab.keys.pipe'],
+  ['table', 'assumptionsTab.keys.table'],
+  ['report', 'assumptionsTab.keys.report'],
+  ['columns', 'assumptionsTab.keys.columns'],
+  ['dq', 'assumptionsTab.keys.dq'],
+  ['scd', 'assumptionsTab.keys.scd'],
+  ['secured', 'assumptionsTab.keys.secured'],
+];
+
+const AI_PROXY_KEYS: [string, string][] = [
+  ['intent', 'assumptionsTab.keys.intent'],
+  ['ocr', 'assumptionsTab.keys.ocr'],
+  ['rag', 'assumptionsTab.keys.rag'],
+  ['tools', 'assumptionsTab.keys.tools'],
+  ['guard', 'assumptionsTab.keys.guard'],
+  ['hitl', 'assumptionsTab.keys.hitl'],
+];
+
+const APP_PROXY_KEYS: [string, string][] = [
+  ['screen', 'assumptionsTab.proxyKeys.screen'],
+  ['field', 'assumptionsTab.proxyKeys.field'],
+  ['api', 'assumptionsTab.proxyKeys.api'],
+  ['integration', 'assumptionsTab.proxyKeys.integration'],
+  ['rule', 'assumptionsTab.proxyKeys.rule'],
+  ['journey', 'assumptionsTab.proxyKeys.journey'],
+  ['batch', 'assumptionsTab.proxyKeys.batch'],
+  ['event', 'assumptionsTab.proxyKeys.event'],
+  ['workflow', 'assumptionsTab.proxyKeys.workflow'],
+  ['actions', 'assumptionsTab.proxyKeys.actions'],
+];
+
+/** One row per T-shirt size, smallest first (ADR-0020: ten sizes). */
+function sizeRows(group: string, keys: [string, string][]): MetaRow[] {
+  return SIZES.map((z) => ({
+    path: `${group}.${z}`,
+    label: { key: 'assumptionsTab.size', values: { s: z } },
+    kind: 'keys' as const,
+    keys,
+  }));
+}
+
 export const ASSUMPTION_META: MetaGroup[] = [
   {
     group: 'cases',
@@ -1080,12 +1125,7 @@ export const ASSUMPTION_META: MetaGroup[] = [
           key: 'assumptionsTab.rows.ptRoughScen',
         },
         kind: 'keys',
-        keys: [
-          ['S', '=S'],
-          ['M', '=M'],
-          ['L', '=L'],
-          ['XL', '=XL'],
-        ],
+        keys: SIZES.map((z): [string, string] => [z, `=${z}`]),
       },
       {
         path: 'ptEnvDays',
@@ -1216,257 +1256,14 @@ export const ASSUMPTION_META: MetaGroup[] = [
   },
   {
     group: 'dproxies',
-    rows: [
-      {
-        path: 'dproxies.S',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'S',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['feed', 'assumptionsTab.keys.feed'],
-          ['pipe', 'assumptionsTab.keys.pipe'],
-          ['table', 'assumptionsTab.keys.table'],
-          ['report', 'assumptionsTab.keys.report'],
-          ['columns', 'assumptionsTab.keys.columns'],
-          ['dq', 'assumptionsTab.keys.dq'],
-          ['scd', 'assumptionsTab.keys.scd'],
-          ['secured', 'assumptionsTab.keys.secured'],
-        ],
-      },
-      {
-        path: 'dproxies.M',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'M',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['feed', 'assumptionsTab.keys.feed'],
-          ['pipe', 'assumptionsTab.keys.pipe'],
-          ['table', 'assumptionsTab.keys.table'],
-          ['report', 'assumptionsTab.keys.report'],
-          ['columns', 'assumptionsTab.keys.columns'],
-          ['dq', 'assumptionsTab.keys.dq'],
-          ['scd', 'assumptionsTab.keys.scd'],
-          ['secured', 'assumptionsTab.keys.secured'],
-        ],
-      },
-      {
-        path: 'dproxies.L',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'L',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['feed', 'assumptionsTab.keys.feed'],
-          ['pipe', 'assumptionsTab.keys.pipe'],
-          ['table', 'assumptionsTab.keys.table'],
-          ['report', 'assumptionsTab.keys.report'],
-          ['columns', 'assumptionsTab.keys.columns'],
-          ['dq', 'assumptionsTab.keys.dq'],
-          ['scd', 'assumptionsTab.keys.scd'],
-          ['secured', 'assumptionsTab.keys.secured'],
-        ],
-      },
-      {
-        path: 'dproxies.XL',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'XL',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['feed', 'assumptionsTab.keys.feed'],
-          ['pipe', 'assumptionsTab.keys.pipe'],
-          ['table', 'assumptionsTab.keys.table'],
-          ['report', 'assumptionsTab.keys.report'],
-          ['columns', 'assumptionsTab.keys.columns'],
-          ['dq', 'assumptionsTab.keys.dq'],
-          ['scd', 'assumptionsTab.keys.scd'],
-          ['secured', 'assumptionsTab.keys.secured'],
-        ],
-      },
-    ],
+    rows: sizeRows('dproxies', DATA_PROXY_KEYS),
   },
   {
     group: 'aproxies',
-    rows: [
-      {
-        path: 'aproxies.S',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'S',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['intent', 'assumptionsTab.keys.intent'],
-          ['ocr', 'assumptionsTab.keys.ocr'],
-          ['rag', 'assumptionsTab.keys.rag'],
-          ['tools', 'assumptionsTab.keys.tools'],
-          ['guard', 'assumptionsTab.keys.guard'],
-          ['hitl', 'assumptionsTab.keys.hitl'],
-        ],
-      },
-      {
-        path: 'aproxies.M',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'M',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['intent', 'assumptionsTab.keys.intent'],
-          ['ocr', 'assumptionsTab.keys.ocr'],
-          ['rag', 'assumptionsTab.keys.rag'],
-          ['tools', 'assumptionsTab.keys.tools'],
-          ['guard', 'assumptionsTab.keys.guard'],
-          ['hitl', 'assumptionsTab.keys.hitl'],
-        ],
-      },
-      {
-        path: 'aproxies.L',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'L',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['intent', 'assumptionsTab.keys.intent'],
-          ['ocr', 'assumptionsTab.keys.ocr'],
-          ['rag', 'assumptionsTab.keys.rag'],
-          ['tools', 'assumptionsTab.keys.tools'],
-          ['guard', 'assumptionsTab.keys.guard'],
-          ['hitl', 'assumptionsTab.keys.hitl'],
-        ],
-      },
-      {
-        path: 'aproxies.XL',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'XL',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['intent', 'assumptionsTab.keys.intent'],
-          ['ocr', 'assumptionsTab.keys.ocr'],
-          ['rag', 'assumptionsTab.keys.rag'],
-          ['tools', 'assumptionsTab.keys.tools'],
-          ['guard', 'assumptionsTab.keys.guard'],
-          ['hitl', 'assumptionsTab.keys.hitl'],
-        ],
-      },
-    ],
+    rows: sizeRows('aproxies', AI_PROXY_KEYS),
   },
   {
     group: 'proxies',
-    rows: [
-      {
-        path: 'proxies.S',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'S',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['screen', 'assumptionsTab.proxyKeys.screen'],
-          ['field', 'assumptionsTab.proxyKeys.field'],
-          ['api', 'assumptionsTab.proxyKeys.api'],
-          ['integration', 'assumptionsTab.proxyKeys.integration'],
-          ['rule', 'assumptionsTab.proxyKeys.rule'],
-          ['journey', 'assumptionsTab.proxyKeys.journey'],
-          ['batch', 'assumptionsTab.proxyKeys.batch'],
-          ['event', 'assumptionsTab.proxyKeys.event'],
-          ['workflow', 'assumptionsTab.proxyKeys.workflow'],
-          ['actions', 'assumptionsTab.proxyKeys.actions'],
-        ],
-      },
-      {
-        path: 'proxies.M',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'M',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['screen', 'assumptionsTab.proxyKeys.screen'],
-          ['field', 'assumptionsTab.proxyKeys.field'],
-          ['api', 'assumptionsTab.proxyKeys.api'],
-          ['integration', 'assumptionsTab.proxyKeys.integration'],
-          ['rule', 'assumptionsTab.proxyKeys.rule'],
-          ['journey', 'assumptionsTab.proxyKeys.journey'],
-          ['batch', 'assumptionsTab.proxyKeys.batch'],
-          ['event', 'assumptionsTab.proxyKeys.event'],
-          ['workflow', 'assumptionsTab.proxyKeys.workflow'],
-          ['actions', 'assumptionsTab.proxyKeys.actions'],
-        ],
-      },
-      {
-        path: 'proxies.L',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'L',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['screen', 'assumptionsTab.proxyKeys.screen'],
-          ['field', 'assumptionsTab.proxyKeys.field'],
-          ['api', 'assumptionsTab.proxyKeys.api'],
-          ['integration', 'assumptionsTab.proxyKeys.integration'],
-          ['rule', 'assumptionsTab.proxyKeys.rule'],
-          ['journey', 'assumptionsTab.proxyKeys.journey'],
-          ['batch', 'assumptionsTab.proxyKeys.batch'],
-          ['event', 'assumptionsTab.proxyKeys.event'],
-          ['workflow', 'assumptionsTab.proxyKeys.workflow'],
-          ['actions', 'assumptionsTab.proxyKeys.actions'],
-        ],
-      },
-      {
-        path: 'proxies.XL',
-        label: {
-          key: 'assumptionsTab.size',
-          values: {
-            s: 'XL',
-          },
-        },
-        kind: 'keys',
-        keys: [
-          ['screen', 'assumptionsTab.proxyKeys.screen'],
-          ['field', 'assumptionsTab.proxyKeys.field'],
-          ['api', 'assumptionsTab.proxyKeys.api'],
-          ['integration', 'assumptionsTab.proxyKeys.integration'],
-          ['rule', 'assumptionsTab.proxyKeys.rule'],
-          ['journey', 'assumptionsTab.proxyKeys.journey'],
-          ['batch', 'assumptionsTab.proxyKeys.batch'],
-          ['event', 'assumptionsTab.proxyKeys.event'],
-          ['workflow', 'assumptionsTab.proxyKeys.workflow'],
-          ['actions', 'assumptionsTab.proxyKeys.actions'],
-        ],
-      },
-    ],
+    rows: sizeRows('proxies', APP_PROXY_KEYS),
   },
 ];

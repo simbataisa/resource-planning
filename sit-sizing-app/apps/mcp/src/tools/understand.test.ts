@@ -143,8 +143,8 @@ describe('understand tools', () => {
       rows: unknown[];
       uncalibrated: number;
     };
-    expect(r.rows).toHaveLength(142);
-    expect(r.uncalibrated).toBe(142);
+    expect(r.rows).toHaveLength(160);
+    expect(r.uncalibrated).toBe(160);
     expect(get.mock.calls.map((c) => c[0])).toEqual(['/me']);
   });
 
@@ -159,7 +159,7 @@ describe('understand tools', () => {
       })
     ).structuredContent as { rows: Array<Record<string, unknown>>; uncalibrated: number };
     expect(v.rows).toEqual([expect.objectContaining({ value: 0.5, calibrated: true })]);
-    expect(v.uncalibrated).toBe(141);
+    expect(v.uncalibrated).toBe(159);
 
     const p = (await call('describe_assumptions', { profileId: PROFILE_ID, group: 'rules' }))
       .structuredContent as { rows: Array<Record<string, unknown>> };
@@ -273,7 +273,7 @@ describe('understand tools', () => {
     expect(out.rough).toEqual(rough);
     expect(out.detailed).toEqual(detailed);
     expect(out.engineVersion).toBe(ENGINE_VERSION);
-    expect(out.uncalibrated).toBe(142);
+    expect(out.uncalibrated).toBe(160);
     for (const g of out.groups) {
       expect(g.rough).toEqual(stored.rough.groups[g.group as keyof typeof stored.rough.groups]);
       expect(g.detailed).toEqual(
@@ -364,7 +364,7 @@ describe('understand tools', () => {
     const expected = toStoredResult(computeBoth(changed, DEFAULT_ASSUMPTIONS));
     const out = r.structuredContent as Out;
     expect(out.detailed.fte).toBe(expected.detailed.fte);
-    expect(out.uncalibrated).toBe(142);
+    expect(out.uncalibrated).toBe(160);
     expect(get.mock.calls.map((c) => c[0])).toEqual(['/me', `/estimates/${EST_ID}/versions/1`]);
     expect(api.post).not.toHaveBeenCalled();
     expect(api.patch).not.toHaveBeenCalled();

@@ -1,4 +1,4 @@
-import { DEFAULT_ASSUMPTIONS, FIELD_TYPES, isDefaultRow, PT_TYPES } from '@sit/engine';
+import { DEFAULT_ASSUMPTIONS, FIELD_TYPES, isDefaultRow, PT_TYPES, SIZES } from '@sit/engine';
 import type { Assumptions, CalibrationEntry } from '@sit/schemas';
 import { z } from 'zod';
 import type { Locale } from './context';
@@ -67,7 +67,7 @@ export const AssumptionRow = z.object({
 export type AssumptionRow = z.infer<typeof AssumptionRow>;
 
 /**
- * The 142 assumption rows with label, explanation and default; with `values`, also the
+ * The 160 assumption rows with label, explanation and default; with `values`, also the
  * current value and whether it is calibrated (differs from the default); with
  * `calibration`, the source and measured date. Throws `PathError` for an unknown path.
  */
@@ -256,7 +256,7 @@ const FIELDS: FieldDef[] = [
     group: 'features',
     labelKey: 'editor.rough.size',
     type: 'enum',
-    options: ['S', 'M', 'L', 'XL'].map((v) => [v, undefined]),
+    options: SIZES.map((v) => [v, undefined]),
   },
   {
     path: 'features.*.cx',
