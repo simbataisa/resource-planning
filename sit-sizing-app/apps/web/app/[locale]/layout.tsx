@@ -26,7 +26,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
   return (
     <html lang={locale}>
-      <body>
+      {/* Browser extensions (e.g. ColorZilla's cz-shortcut-listen) add attributes to <body>
+          before React loads. This ignores mismatches in body's own attributes only. */}
+      <body suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
