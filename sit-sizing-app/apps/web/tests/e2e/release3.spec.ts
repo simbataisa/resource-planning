@@ -51,6 +51,8 @@ test('actuals from one SIT cycle calibrate a published profile', async ({ page, 
     await dialog.getByLabel('Name').fill(profile);
     await dialog.getByRole('button', { name: 'Create profile' }).click();
     await expect(lead.getByRole('heading', { level: 1, name: profile })).toBeVisible();
+    // Assumption groups start collapsed: open the one that holds the retest rate.
+    await lead.locator('#asm-effort > summary').click();
     const retest = lead.getByRole('spinbutton', { name: 'Defect retest rate', exact: true });
     await retest.fill('25');
     await retest.press('Tab');

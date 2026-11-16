@@ -7,6 +7,7 @@ import type { Assumptions } from '@sit/schemas';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { CollapsibleSection } from '@/components/patterns/collapsible-section';
 import { NumberInput } from '@/components/patterns/number-input';
 import { getPath, setPath } from '@/lib/path';
 import { cn } from '@/lib/utils';
@@ -16,7 +17,8 @@ import { useEditor } from './store';
 const DEFAULTS = DEFAULT_ASSUMPTIONS as Assumptions;
 
 /**
- * Tab 5 (prototype `#p-asm`): every assumption, its calibration state and a reset.
+ * Tab 5 (prototype `#p-asm`): every assumption, its calibration state and a reset. Each group is
+ * a collapsible section, collapsed at first, with its own uncalibrated count in the header.
  * The profile editor (P-01) reuses it and adds a calibration-source cell per row, and
  * the estimate editor puts the "apply a profile" control in `header`.
  */
@@ -34,15 +36,21 @@ export function AssumptionsTab({
   const label = (l: MetaLabel) => tr(l.key, l.values);
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <p className="min-w-0 flex-1 basis-80 text-sm text-muted-foreground">{t('hint')}</p>
         <Badge variant="unc">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
       </div>
       {header}
       {ASSUMPTION_META.map((g) => (
-        <section key={g.group} className="grid gap-2">
-          <h3 className="pt-1.5 text-base font-semibold">{t(`groups.${g.group}`)}</h3>
+        <CollapsibleSection
+          key={g.group}
+          id={`asm-${g.group}`}
+          title={t(`groups.${g.group}`)}
+          summary={tr('editor.tabs.uncalibrated', {
+            n: g.rows.filter((r) => isDefaultRow(A, DEFAULTS, r.path)).length,
+          })}
+        >
           <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableBody>
@@ -100,7 +108,7 @@ export function AssumptionsTab({
               </TableBody>
             </Table>
           </div>
-        </section>
+        </CollapsibleSection>
       ))}
     </div>
   );
