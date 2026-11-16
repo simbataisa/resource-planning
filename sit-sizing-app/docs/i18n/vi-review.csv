@@ -322,7 +322,7 @@ detailTab.derived.f.dataMapping,detailTab,{n} mapped columns × {c} checks × {s
 detailTab.derived.f.dataQuality,detailTab,{n} data quality rules × {c} cases × {s} back in SIT,{n} quy tắc chất lượng dữ liệu × {c} case × {s} quay lại SIT,prototype,,
 detailTab.derived.f.dataReport,detailTab,{n} reports × {c} cases by complexity,{n} báo cáo × {c} case theo độ phức tạp,prototype,,
 detailTab.derived.f.dataAccess,detailTab,{d} secured datasets × {r} roles × 2 × {s} sampling,{d} tập dữ liệu được bảo vệ × {r} vai trò × 2 × lấy mẫu {s},prototype,,
-detailTab.derived.f.dataPrep,detailTab,"{n} feeds × {h} h × {c} load cycles (hours, no cases)","{n} nguồn × {h} giờ × {c} chu kỳ nạp (giờ, không có case)",prototype,,
+detailTab.derived.f.dataPrep,detailTab,"{n} feeds × {h} h by complexity × {c} load cycles (hours, no cases)","{n} nguồn × {h} giờ theo độ phức tạp × {c} chu kỳ nạp (giờ, không có case)",app,,
 detailTab.derived.f.aiIntent,detailTab,"{n} intents × {u} utterances by complexity × {l} languages; label {m} min, review {r} of outputs × {i} runs","{n} intent × {u} câu theo độ phức tạp × {l} ngôn ngữ; gán nhãn {m} phút, rà soát {r} đầu ra × {i} lượt",prototype,,
 detailTab.derived.f.aiRag,detailTab,{n} sources × {q} questions × {l} languages; reference answer {m} min,{n} nguồn × {q} câu hỏi × {l} ngôn ngữ; câu trả lời chuẩn {m} phút,prototype,,
 detailTab.derived.f.aiOcr,detailTab,{n} document types × {q} samples by complexity; label {m} min each,{n} loại tài liệu × {q} mẫu theo độ phức tạp; gán nhãn {m} phút mỗi mẫu,prototype,,

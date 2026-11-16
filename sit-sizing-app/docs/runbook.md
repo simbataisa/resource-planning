@@ -268,6 +268,27 @@ All values come from the platform secret store (design 11, Q4), never from a com
 4. Check `GET /api/v1/health` (process up) and `GET /api/v1/ready` (database and identity provider reachable), then sign in once.
 5. On failure, redeploy the previous tag of both web and worker (step 5 above).
 
+### 8.4 Profile data migration, ADR-0019 (engine 1.1.0)
+
+`20261120000000_sized_data_assumptions` is **not expand-only**. It rewrites `AssumptionProfile.values`: `dataDesign`, `dataExec` and `dataPrepHours` become `[Simple, Medium, Complex]`. A release before engine 1.1.0 cannot read those profiles, and versions saved by 1.1.0 (schema version 2) return 409 `NEWER_SCHEMA` there.
+
+To roll back to the previous image, first run this in the `app` database. It restores a single value wherever the sizes are the new default triple, or all three sizes are equal:
+
+```sql
+UPDATE "AssumptionProfile" SET "values" = jsonb_set("values", '{dataDesign}',
+  CASE WHEN "values"->'dataDesign' = '[10, 15, 25]'::jsonb THEN '10'::jsonb ELSE "values"->'dataDesign'->0 END)
+WHERE jsonb_typeof("values"->'dataDesign') = 'array'
+  AND ("values"->'dataDesign' = '[10, 15, 25]'::jsonb
+       OR ("values"->'dataDesign'->0 = "values"->'dataDesign'->1 AND "values"->'dataDesign'->1 = "values"->'dataDesign'->2));
+-- Repeat for dataExec with [5, 8, 12] → 5, and for dataPrepHours with [2, 3, 5] → 2.
+-- Profiles calibrated with different sizes are left as arrays; list them and decide per profile:
+SELECT id, name FROM "AssumptionProfile"
+WHERE jsonb_typeof("values"->'dataDesign') = 'array' OR jsonb_typeof("values"->'dataExec') = 'array'
+   OR jsonb_typeof("values"->'dataPrepHours') = 'array';
+```
+
+Moving forward again re-runs nothing: the migration is recorded as applied. Re-run its three `UPDATE` statements by hand after re-deploying 1.1.0.
+
 **Still open:** the hosting platform, secret store and import job for the realm are decided with the platform team (design section 16, Q4). Until then, these steps describe what any container platform must provide; they are not a platform-specific procedure.
 
 ## 9. Backup and restore (design 12.7)

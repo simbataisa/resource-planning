@@ -76,6 +76,16 @@ describe('export workbook model (X-02)', () => {
     expect(d.columns).toHaveLength(7);
     const api = d.rows.find((r) => r[0] === 'API endpoints')!;
     expect(api.slice(1)).toEqual([...R.counts.api, ...D.counts.api]);
+    // ADR-0019: mapped columns and DQ rules are counted by complexity too.
+    const cols = d.rows.find((r) => r[0] === 'Mapped columns (source-to-target spec)')!;
+    expect(cols.slice(1)).toEqual([...R.counts.data.columns, ...D.counts.data.columns]);
+    const dq = d.rows.find((r) => r[0] === 'Data quality rules')!;
+    expect(dq.slice(1)).toEqual([...R.counts.data.dq, ...D.counts.data.dq]);
+  });
+
+  it('shows the sized data rows as Simple, Medium and Complex (ADR-0019)', () => {
+    const row = byId(tables, 'assumptions').rows.find((r) => r[2] === 'dataPrepHours')!;
+    expect(row[3]).toBe('Simple 2 · Medium 3 · Complex 5');
   });
 
   it('lists all 142 assumptions with their calibration status', () => {

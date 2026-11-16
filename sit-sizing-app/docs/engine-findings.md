@@ -24,6 +24,9 @@ Status: **Review** = for the tech lead and QE practice lead to decide, ideally w
 | 12  | 2026-11-12 | Robustness     | The prototype crashes when a data or AI sub-array is missing (`sum3(undefined)`). The Zod schemas reject such input, so the engine keeps the same behaviour rather than adding fallbacks that the prototype does not have.    | None for valid input                                              | Keep                             |
 | 13  | 2026-11-12 | Evidence       | JaCoCo coverage is informational only; only the mutation score changes the estimate.                                                                                                                                          | None                                                              | Keep                             |
 
+| 14 | 2026-11-16 | Rules | Adding one Simple business rule can lower the rule group by one case (seen with random seed 7: 336 → 335), from rounding the critical/standard split per band. Found while changing random inputs for ADR-0019; the property test keeps its original seeds. | ±1 case | Review |
+| 15 | 2026-11-16 | Data | Engine 1.1.0 (ADR-0019): data-test design and execution minutes and preparation hours are sized Simple/Medium/Complex; mapped columns and DQ rules are counted by complexity. Per-size sums differ from the old `sum3 × rate` only by floating-point order (~1e-15). | Rises for Medium/Complex data tests; Simple unchanged | Keep |
+
 ## Port notes
 
 - `compute()` was split into the modules listed in design 6.3. Arithmetic order is unchanged, which is why results are bit-identical, not just within tolerance.
