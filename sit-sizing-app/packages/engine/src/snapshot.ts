@@ -1,5 +1,6 @@
 import type { Assumptions, EstimateInputs } from '@sit/schemas';
 import { uncalibratedCount } from './calibration.ts';
+import { assumptionPaths } from './catalogue.ts';
 import { computeBoth } from './compute.ts';
 import { DEFAULT_ASSUMPTIONS } from './defaults.ts';
 import { toStoredResult } from './summary.ts';
@@ -18,5 +19,7 @@ export function versionSnapshot(inputs: EstimateInputs, assumptions: Assumptions
     detailedFte: Math.round(both.detailed.fte * 100) / 100,
     totalCasesDetailed: both.detailed.cases,
     uncalibrated: uncalibratedCount(assumptions, DEFAULT_ASSUMPTIONS),
+    /** Rows this estimate has: 130 fixed plus 3 per size (ADR-0021). */
+    assumptionRows: assumptionPaths(assumptions).length,
   };
 }

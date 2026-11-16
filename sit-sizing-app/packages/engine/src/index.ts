@@ -22,9 +22,13 @@ export { itemHours } from './rubric.ts';
 export { fromPrototypeProfile, mergeShape, PrototypeImportError } from './prototype-import.ts';
 export { toStoredResult, toSummary } from './summary.ts';
 export { versionSnapshot } from './snapshot.ts';
+export { customSizePaths, isBuiltInSize, sameSizeSet, unknownFeatureSizes } from './sizes.ts';
 export { credit, type Credit } from './credit.ts';
 export {
   ASSUMPTION_PATHS,
+  assumptionPaths,
+  FIXED_ASSUMPTION_PATHS,
+  SIZE_ROW_TABLES,
   DRIVERS,
   FIELD_TYPES,
   GROUP_KEYS,

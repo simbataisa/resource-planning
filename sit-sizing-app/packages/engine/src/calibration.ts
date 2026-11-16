@@ -1,5 +1,6 @@
 import type { Assumptions } from '@sit/schemas';
-import { ASSUMPTION_PATHS } from './catalogue.ts';
+import { assumptionPaths } from './catalogue.ts';
+import { isBuiltInSize } from './sizes.ts';
 
 function get(o: unknown, path: string): unknown {
   return path
@@ -30,7 +31,31 @@ export function isDefaultRow(
   return canonical(get(assumptions, path)) === canonical(get(defaults, path));
 }
 
-/** How many of the 160 assumption rows are still uncalibrated defaults. */
-export function uncalibratedCount(assumptions: Assumptions, defaults: Assumptions): number {
-  return ASSUMPTION_PATHS.filter((p) => isDefaultRow(assumptions, defaults, p)).length;
+const pick = (o: unknown, keys: string[]) =>
+  Object.fromEntries(keys.map((k) => [k, (o as Record<string, unknown> | undefined)?.[k]]));
+
+/**
+ * How many assumption rows are still uncalibrated (ADR-0021):
+ * - a fixed row, or a row of a built-in size, while it equals the engine default;
+ * - a row of a custom size until `notes` (by default the copied `sizeNotes`) has an entry for it;
+ * - `ptRoughScen` is one row, judged by its built-in sizes only.
+ * Rows of a removed size are absent, so they count neither way.
+ */
+export function uncalibratedCount(
+  assumptions: Assumptions,
+  defaults: Assumptions,
+  notes: Readonly<Record<string, unknown>> = assumptions.sizeNotes ?? {},
+): number {
+  return assumptionPaths(assumptions).filter((p) => {
+    if (p === 'ptRoughScen') {
+      const builtIn = Object.keys(assumptions.ptRoughScen).filter(isBuiltInSize);
+      return (
+        canonical(pick(assumptions.ptRoughScen, builtIn)) ===
+        canonical(pick(defaults.ptRoughScen, builtIn))
+      );
+    }
+    const size = p.includes('.') && /^(d|a)?proxies\./.test(p) ? p.slice(p.indexOf('.') + 1) : null;
+    if (size !== null && !isBuiltInSize(size)) return !(p in notes);
+    return isDefaultRow(assumptions, defaults, p);
+  }).length;
 }

@@ -64,7 +64,7 @@ describe('profile data migration 20261122000000_more_feature_sizes (ADR-0020)', 
         expect((values as unknown as Record<string, Record<string, unknown>>)[g]![s]).toEqual(
           D[g]![s],
         );
-    expect(values.proxies.S.api).toBe(3);
+    expect(values.proxies.S!.api).toBe(3);
     // Only proxies.S was calibrated; the 18 new rows are uncalibrated defaults.
     expect(uncalibratedCount(values, DEFAULT_ASSUMPTIONS)).toBe(159);
   });

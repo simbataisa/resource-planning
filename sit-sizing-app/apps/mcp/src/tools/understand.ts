@@ -10,6 +10,7 @@ import {
   uncalibratedCount,
 } from '@sit/engine';
 import {
+  addSizeList,
   Assumptions,
   EstimateInputs,
   GroupKey,
@@ -224,7 +225,11 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
         start = { inputs, assumptions: assumptions ?? DEFAULT_ASSUMPTIONS };
       }
       // Validate the whole object before the engine sees it (Review Focus 5).
-      const doc = PreviewDoc.parse(applyChanges(start, changes ?? []));
+      // Assumptions written before sizes were data (ADR-0021) have no size list: add it, as a
+      // stored payload is upgraded. A list that is there is left alone.
+      const doc = PreviewDoc.parse(
+        applyChanges(addSizeList(structuredClone(start)), changes ?? []),
+      );
       return preview(doc.inputs, doc.assumptions, await localeOf(locale));
     },
   );

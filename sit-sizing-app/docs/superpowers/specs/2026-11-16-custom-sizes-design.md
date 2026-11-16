@@ -49,7 +49,7 @@ When an estimate uses a size that the profile being applied lacks:
 
 ### What a size is
 
-- **Name.** Trimmed, 1 to 6 characters, unique within the profile, case-sensitive. *Builder's call:* letters, digits, `+`, `-`; no `.`, because the name appears in assumption paths like `proxies.M+`.
+- **Name.** Trimmed, 1 to 6 characters, unique within the profile, case-sensitive. _Builder's call:_ letters, digits, `+`, `-`; no `.`, because the name appears in assumption paths like `proxies.M+`.
 - **Driver counts.** One row in each of `proxies`, `dproxies` and `aproxies`, with the same drivers as today.
 - **Scenario count.** One entry in `ptRoughScen`.
 - **Limits.** A profile has 1 to 20 sizes, and the order is set by the lead.
@@ -72,7 +72,7 @@ When an estimate uses a size that the profile being applied lacks:
 
 - The size picker lists `assumptions.sizes` in order.
 - Autosave and save refuse a feature whose size is not in the estimate's `sizes` (422), so the API and MCP cannot add one.
-- *Builder's call:* a draft's `sizes` and its size-table keys change only by applying a profile. Autosave refuses any other change to them (422).
+- _Builder's call:_ a draft's `sizes` and its size-table keys change only by applying a profile. Autosave refuses any other change to them (422).
 - Saved versions keep their own copy and never change.
 
 ### Calibration
@@ -81,9 +81,9 @@ When an estimate uses a size that the profile being applied lacks:
 - For any other name, a row counts as uncalibrated until the lead records a calibration source for that path. Adding a size must not look like calibration work that never happened.
 - **In estimates (decided by the user):** applying a profile, or creating an estimate from one, copies the profile's calibration notes for custom-size paths into the estimate, alongside the values. They are stored with the assumptions in the draft and in every saved version. The count for an estimate uses those copied notes, so an estimate shows the same calibration as its profile. `uncalibratedCount` and `versionSnapshot` take the notes as an argument; when there are none, every custom-size row is uncalibrated. Rejected: always treating custom-size rows as uncalibrated in estimates, because that would make the portfolio's "on defaults" view misleading.
 - Rows of a built-in size that was removed are simply absent: they are counted neither way.
-- *Builder's call:* `ptRoughScen` stays one row, as today. Its status compares only the built-in names it holds against the defaults; custom names in it are ignored. A custom size's calibration shows on its three driver rows.
+- _Builder's call:_ `ptRoughScen` stays one row, as today. Its status compares only the built-in names it holds against the defaults; custom names in it are ignored. A custom size's calibration shows on its three driver rows.
 - The row total becomes per estimate: the 130 fixed rows plus 3 × the number of sizes. With the ten defaults this is 160 as today, so no stored count changes.
-- *Builder's call:* a rename carries the size's calibration notes to the new paths. Built-in status follows the name, so renaming M to Med makes it a custom size: its rows count as calibrated only where a source is recorded.
+- _Builder's call:_ a rename carries the size's calibration notes to the new paths. Built-in status follows the name, so renaming M to Med makes it a custom size: its rows count as calibrated only where a source is recorded.
 - The portfolio and the profile list show "uncalibrated / total" using that per-row total. `EstimateVersion` stores the total next to `uncalibrated`, so the portfolio does not recompute it.
 
 ### Text and display

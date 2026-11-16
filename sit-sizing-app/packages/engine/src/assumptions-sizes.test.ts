@@ -1,9 +1,10 @@
 import { Assumptions } from '@sit/schemas';
+
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_ASSUMPTIONS } from './defaults.ts';
 
 const TABLES = ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'] as const;
-const clone = () => structuredClone(DEFAULT_ASSUMPTIONS) as Record<string, unknown> & typeof DEFAULT_ASSUMPTIONS;
+const clone = () => structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions;
 const withSizes = (names: string[]) => {
   const a = clone();
   const tables = a as unknown as Record<string, Record<string, unknown>>;
@@ -19,7 +20,18 @@ const paths = (a: unknown) => {
 
 describe('Assumptions: sizes are an ordered list (custom sizes)', () => {
   it('has the ten built-in sizes in order and no notes by default', () => {
-    expect(DEFAULT_ASSUMPTIONS.sizes).toEqual(['XXS', 'XS', 'S', 'M-', 'M', 'M+', 'L', 'XL', 'XXL', 'XXXL']);
+    expect(DEFAULT_ASSUMPTIONS.sizes).toEqual([
+      'XXS',
+      'XS',
+      'S',
+      'M-',
+      'M',
+      'M+',
+      'L',
+      'XL',
+      'XXL',
+      'XXXL',
+    ]);
     expect(DEFAULT_ASSUMPTIONS.sizeNotes).toEqual({});
     expect(Assumptions.safeParse(DEFAULT_ASSUMPTIONS).success).toBe(true);
   });

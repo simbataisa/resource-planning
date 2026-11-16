@@ -143,7 +143,18 @@ describe('version 3 → 4: sizes become an ordered list (custom sizes)', () => {
     inputs: { features: [{ size: 'M' }] },
     assumptions: {
       // jsonb returns keys sorted by length then bytes, not in size order
-      proxies: { L: {}, M: {}, S: {}, XL: {}, XS: {}, 'M+': {}, 'M-': {}, XXL: {}, XXS: {}, XXXL: {} },
+      proxies: {
+        L: {},
+        M: {},
+        S: {},
+        XL: {},
+        XS: {},
+        'M+': {},
+        'M-': {},
+        XXL: {},
+        XXS: {},
+        XXXL: {},
+      },
       dproxies: {},
       aproxies: {},
       ptRoughScen: {},
@@ -152,7 +163,18 @@ describe('version 3 → 4: sizes become an ordered list (custom sizes)', () => {
 
   it('lists the sizes in the built-in order and adds empty notes', () => {
     const { assumptions } = addSizeList(v3()) as { assumptions: Record<string, unknown> };
-    expect(assumptions.sizes).toEqual(['XXS', 'XS', 'S', 'M-', 'M', 'M+', 'L', 'XL', 'XXL', 'XXXL']);
+    expect(assumptions.sizes).toEqual([
+      'XXS',
+      'XS',
+      'S',
+      'M-',
+      'M',
+      'M+',
+      'L',
+      'XL',
+      'XXL',
+      'XXXL',
+    ]);
     expect(assumptions.sizeNotes).toEqual({});
   });
 
@@ -165,7 +187,10 @@ describe('version 3 → 4: sizes become an ordered list (custom sizes)', () => {
   it('leaves a payload that already has a size list alone', () => {
     const p = { inputs: {}, assumptions: { sizes: ['B', 'A'], sizeNotes: { x: 1 }, proxies: {} } };
     expect(addSizeList(structuredClone(p))).toEqual(p);
-    expect(addSizeList({ inputs: null, assumptions: null })).toEqual({ inputs: null, assumptions: null });
+    expect(addSizeList({ inputs: null, assumptions: null })).toEqual({
+      inputs: null,
+      assumptions: null,
+    });
   });
 
   it('is the step from version 3', () => {

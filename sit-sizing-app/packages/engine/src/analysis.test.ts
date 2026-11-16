@@ -94,7 +94,7 @@ describe('calibration', () => {
     const a = A();
     expect(uncalibratedCount(a, DEFAULT_ASSUMPTIONS)).toBe(160);
     a.minutes = [10, 20, 45];
-    a.proxies.S.api = 3;
+    a.proxies.S!.api = 3;
     expect(uncalibratedCount(a, DEFAULT_ASSUMPTIONS)).toBe(158);
     expect(isDefaultRow(a, DEFAULT_ASSUMPTIONS, 'minutes')).toBe(false);
     expect(isDefaultRow(a, DEFAULT_ASSUMPTIONS, 'cases.api')).toBe(true);

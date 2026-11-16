@@ -10,9 +10,9 @@ describe('counts', () => {
     const s = S();
     s.features = [{ name: 'Synthetic', size: 'M', cx: 2, qty: 2 }];
     const c = counts('rough', A, s);
-    expect(c.api).toEqual([0, 0, A.proxies.M.api * 2]);
-    expect(c.fields).toBe(A.proxies.M.field * 2);
-    expect(c.critical).toBeCloseTo(A.proxies.M.rule * 2 * A.criticalShare, 10);
+    expect(c.api).toEqual([0, 0, A.proxies.M!.api * 2]);
+    expect(c.fields).toBe(A.proxies.M!.field * 2);
+    expect(c.critical).toBeCloseTo(A.proxies.M!.rule * 2 * A.criticalShare, 10);
   });
 
   it('takes the maximum guardrail count across AI features (prototype behaviour)', () => {
@@ -22,7 +22,9 @@ describe('counts', () => {
       { name: 'b', type: 'ai', size: 'XL', cx: 1, qty: 1 },
       { name: 'c', type: 'ai', size: 'L', cx: 1, qty: 0 },
     ];
-    expect(counts('rough', A, s).ai.guard).toBe(Math.max(A.aproxies.S.guard, A.aproxies.XL.guard));
+    expect(counts('rough', A, s).ai.guard).toBe(
+      Math.max(A.aproxies.S!.guard, A.aproxies.XL!.guard),
+    );
   });
 
   it('adds data features to data counts and ignores quantity zero', () => {
@@ -32,10 +34,10 @@ describe('counts', () => {
       { name: 'e', type: 'data', size: 'L', cx: 0, qty: 0 },
     ];
     const c = counts('rough', A, s);
-    expect(c.data.feed).toEqual([0, A.dproxies.S.feed * 2, 0]);
-    expect(c.data.columns).toEqual([0, A.dproxies.S.columns * 2, 0]);
-    expect(c.data.dq).toEqual([0, A.dproxies.S.dq * 2, 0]);
-    expect(c.data.scd).toBe(A.dproxies.S.scd * 2);
+    expect(c.data.feed).toEqual([0, A.dproxies.S!.feed * 2, 0]);
+    expect(c.data.columns).toEqual([0, A.dproxies.S!.columns * 2, 0]);
+    expect(c.data.dq).toEqual([0, A.dproxies.S!.dq * 2, 0]);
+    expect(c.data.scd).toBe(A.dproxies.S!.scd * 2);
     expect(c.data.accessRoles).toBe(s.roughRoles);
   });
 
@@ -43,8 +45,8 @@ describe('counts', () => {
     const s = S();
     s.features = [{ name: 'd', type: 'data', size: 'M', cx: 2, qty: 1 }];
     const c = counts('rough', A, s);
-    expect(c.data.columns).toEqual([0, 0, A.dproxies.M.columns]);
-    expect(c.data.dq).toEqual([0, 0, A.dproxies.M.dq]);
+    expect(c.data.columns).toEqual([0, 0, A.dproxies.M!.columns]);
+    expect(c.data.dq).toEqual([0, 0, A.dproxies.M!.dq]);
   });
 
   it('reads detailed counts as entered and clamps minimums', () => {

@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Assumptions, EstimateInputs } from '@sit/schemas';
+import { addSizeList, Assumptions, EstimateInputs } from '@sit/schemas';
 import { describe, expect, it } from 'vitest';
 import { compute, GROUP_KEYS } from '../src/index.ts';
 
@@ -38,7 +38,14 @@ const dir = fileURLToPath(new URL('../golden/', import.meta.url));
 const files: GoldenFile[] = readdirSync(dir)
   .filter((f) => f.endsWith('.json'))
   .sort()
-  .map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8')) as GoldenFile);
+  .map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8')) as GoldenFile)
+  // Golden files keep the prototype's shape, which has no size list: add it as a stored
+  // payload is upgraded (ADR-0021), so the files themselves never change.
+  .map((g) => ({
+    ...g,
+    assumptions: addSizeList({ inputs: g.scope, assumptions: structuredClone(g.assumptions) })
+      .assumptions as GoldenFile['assumptions'],
+  }));
 
 describe('golden files', () => {
   it('has the reference example plus at least 25 further cases', () => {

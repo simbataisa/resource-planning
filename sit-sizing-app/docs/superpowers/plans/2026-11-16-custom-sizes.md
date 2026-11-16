@@ -5,6 +5,7 @@
 **Goal:** Feature sizes become profile data that QE Leads and Admins edit in draft profiles. Estimates copy them on apply, and are blocked when their features use a size the profile lacks.
 
 **Architecture:**
+
 - `Assumptions` gains an ordered `sizes` list and `sizeNotes`. The four size tables become records whose keys must equal `sizes`.
 - The engine derives assumption paths and row totals from `sizes` and counts custom-size rows with the copied notes.
 - Server services enforce:
@@ -51,6 +52,7 @@
 ### Task 1: Schemas: sizes become data
 
 **Files:**
+
 - Modify:
   - `packages/schemas/src/common.ts`
   - `packages/schemas/src/assumptions.ts`
@@ -63,6 +65,7 @@
   - `packages/schemas/src/upgrade.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `SizeName: z.ZodString` (regex `/^[A-Za-z0-9+-]{1,6}$/` after trim).
   - `SIZES` stays (built-in names). `Size` is now an alias of `SizeName`.
@@ -79,6 +82,7 @@
   - `rejects a name with a dot or longer than 6 characters`.
 
   In `upgrade.test.ts`, add `addSizeList orders sizes by SIZES and adds empty sizeNotes`. A v3 payload whose `proxies` keys are in jsonb order (`L, M, S, ...`) gets `sizes` equal to `SIZES` and `sizeNotes: {}`. An already-upgraded payload is left alone.
+
 - [ ] **Step 2: Run** `pnpm vitest run --project schemas`. Expected: the new tests FAIL.
 - [ ] **Step 3: Implement.**
   - The cross-field rules (unique names; each table's keys equal `sizes`) go in one `superRefine` on `Assumptions`.
@@ -90,6 +94,7 @@
 ### Task 2: Engine: paths, calibration and sensitivity follow `sizes`
 
 **Files:**
+
 - Modify:
   - `packages/engine/src/catalogue.ts`
   - `packages/engine/src/calibration.ts`
@@ -109,6 +114,7 @@
   - `catalogue.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 1 `Assumptions`.
 - Produces:
   - `FIXED_ASSUMPTION_PATHS: readonly string[]`: the 130 paths, with `ptRoughScen` included.
@@ -146,6 +152,7 @@
   - `pnpm --filter @sit/engine parity`
 
   Expected: PASS, and parity reports "bit-identical".
+
 - [ ] **Step 6: Write ADR-0021.** It records:
   - the decisions in the spec;
   - the row-total formula;
@@ -158,6 +165,7 @@
 ### Task 3: Profile data migration
 
 **Files:**
+
 - Create: `packages/db/prisma/migrations/20261123000000_custom_sizes_profiles/migration.sql`
 - Create: `apps/web/tests/integration/profiles-custom-sizes-migration.test.ts`. Copy the helper pattern from `profiles-feature-sizes-migration.test.ts`.
 
@@ -177,6 +185,7 @@
 ### Task 4: Apply block, note copying and the size guard
 
 **Files:**
+
 - Modify:
   - `apps/web/server/domain/profiles.ts`
   - `apps/web/server/services/profiles.ts`
@@ -190,6 +199,7 @@
   - `apps/web/tests/integration/draft-workflow.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 2 `unknownFeatureSizes`, `customSizePaths`, `sameSizeSet`, `assumptionPaths` and `uncalibratedCount`.
 - Produces:
   - `unknownCalibrationPaths(calibration: Record<string, unknown>, values: Assumptions): string[]`. This replaces the fixed `KNOWN` set.
@@ -217,6 +227,7 @@
 ### Task 5: Per-estimate row totals: DB, portfolio, export, MCP and OpenAPI
 
 **Files:**
+
 - Create: `packages/db/prisma/migrations/20261123010000_assumption_rows/migration.sql`. It runs `ALTER TABLE "EstimateVersion" ADD COLUMN "assumptionRows" INTEGER NOT NULL DEFAULT 160`.
 - Modify:
   - `packages/db/prisma/schema.prisma`
@@ -236,6 +247,7 @@
   - `apps/mcp/src/tools/understand.test.ts`
 
 **Interfaces:**
+
 - Consumes: `versionSnapshot().assumptionRows` and `assumptionPaths`.
 - Produces: the signature `totals(rows: PortfolioRow[]): PortfolioTotals` and `rollUp(rows, status)`. `onDefaults` uses `r.uncalibrated >= r.assumptionRows`.
 
@@ -259,9 +271,11 @@
 ### Task 6: Pure size-editing helpers
 
 **Files:**
+
 - Create: `apps/web/lib/profile-sizes.ts`, `apps/web/lib/profile-sizes.test.ts`
 
 **Interfaces:**
+
 - Produces, each returning a new `{ values, calibration }` or `{ error: 'NAME_TAKEN' | 'BAD_NAME' | 'LAST_SIZE' | 'TOO_MANY' }`:
   - `addSize(values, calibration, name: string, copyFrom: string)`
   - `removeSize(values, calibration, name: string)`
@@ -283,6 +297,7 @@
 ### Task 7: Screens
 
 **Files:**
+
 - Modify:
   - `apps/web/components/features/profiles/profile-editor.tsx` (size section, drafts only)
   - `profile-list.tsx` (`{p.uncalibrated} / {p.assumptionRows}`)
@@ -298,6 +313,7 @@
   - `tests/unit/prototype-ui-parity.test.tsx` (must stay green unchanged)
 
 **Interfaces:**
+
 - Consumes:
   - Task 6 helpers;
   - Task 4 `Profile.assumptionRows` and the 409 details;
@@ -325,6 +341,7 @@
 ### Task 8: End-to-end
 
 **Files:**
+
 - Create: `apps/web/tests/e2e/custom-sizes.spec.ts`. Reuse `helpers.ts` and `openAssumptionGroup`.
 
 - [ ] **Step 1: Write the spec.** As a synthetic QE Lead:
@@ -334,9 +351,11 @@
   4. Check that the rough-scope picker offers `XS2`.
 
   Then remove `XXL` in a new draft, publish, and apply it to an estimate that has an `XXL` feature. The block message appears and the estimate is unchanged.
+
 - [ ] **Step 2: Run the spec** against the stack:
   - `pnpm dev:up`, in the worktree's own compose project, never the user's `sit-sizing` stack;
   - then `pnpm --filter @sit/web exec playwright test tests/e2e/custom-sizes.spec.ts`.
 
   Expected: PASS.
+
 - [ ] **Step 3: Run the full suite.** Commit `E2E: custom sizes in a profile`, then open PR 3.
