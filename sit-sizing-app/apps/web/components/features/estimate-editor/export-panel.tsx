@@ -3,7 +3,13 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { ClipboardCopy, Download, FileSpreadsheet, Upload } from 'lucide-react';
-import { ASSUMPTION_PATHS, fromPrototypeProfile, PrototypeImportError, topGap } from '@sit/engine';
+import {
+  assumptionPaths,
+  fromPrototypeProfile,
+  PrototypeImportError,
+  SIZES,
+  topGap,
+} from '@sit/engine';
 import { Assumptions, EstimateInputs } from '@sit/schemas';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -43,7 +49,7 @@ export function prototypeProfileJson(
   uncalibrated: number,
   savedAt: Date,
 ): string {
-  const total = ASSUMPTION_PATHS.length;
+  const total = assumptionPaths(assumptions).length;
   return JSON.stringify(
     {
       tool: 'sit-sizing-model',
@@ -115,6 +121,11 @@ export function ExportPanel({
       return fail(t('notJson'));
     }
     try {
+      // A file has the ten built-in sizes: it cannot replace an estimate's own sizes, which
+      // change only by applying a profile (ADR-0021).
+      const own = state.assumptions.sizes;
+      if (own.length !== SIZES.length || own.some((s, i) => s !== SIZES[i]))
+        return fail(t('ownSizes'));
       const imported = fromPrototypeProfile(obj);
       const assumptions = Assumptions.safeParse(imported.assumptions);
       const inputs = EstimateInputs.safeParse(imported.inputs ?? state.inputs);
@@ -294,6 +305,6 @@ export function useQbrSummary(profile: string): string {
       u: E.feUnit,
       s: E.feMut,
     }),
-    t('calibration', { u: uncalibrated, t: ASSUMPTION_PATHS.length }),
+    t('calibration', { u: uncalibrated, t: assumptionPaths(state.assumptions).length }),
   ].join('\n');
 }

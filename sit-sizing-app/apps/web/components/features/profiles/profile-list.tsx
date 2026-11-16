@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ASSUMPTION_PATHS } from '@sit/engine';
 import type { Profile } from '@sit/schemas';
 import { Badge } from '@/components/ui/badge';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -105,7 +104,7 @@ export function ProfileList() {
                       <Badge variant={PROFILE_TONE[p.status]}>{t(`status.${p.status}`)}</Badge>
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
-                      {p.uncalibrated} / {ASSUMPTION_PATHS.length}
+                      {p.uncalibrated} / {p.assumptionRows}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {p.publishedAt ? formatDateTime(p.publishedAt, locale) : '—'}

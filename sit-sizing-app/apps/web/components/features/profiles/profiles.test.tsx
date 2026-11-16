@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { ApiClientError } from '@/lib/http';
 import { fireEvent, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS } from '@sit/engine';
@@ -200,5 +201,104 @@ describe('ApplyProfile', () => {
   it('only shows the current profile when read-only', () => {
     render(false);
     expect(screen.queryByRole('combobox')).toBeNull();
+  });
+});
+
+describe('feature sizes in a profile (ADR-0021)', () => {
+  it('lists a custom row total in the profile list', () => {
+    hooks.useProfiles.mockReturnValue(
+      ok({ items: [profile({ uncalibrated: 161, assumptionRows: 163 })] }),
+    );
+    renderWithIntl(<ProfileList />);
+    expect(screen.getByText('161 / 163')).toBeTruthy();
+  });
+
+  it('adds a size copied from another and removes one, then saves', async () => {
+    hooks.useProfile.mockReturnValue(ok(profile()));
+    const { container } = renderWithIntl(<ProfileEditor profileId="pr1" />);
+    const sizes = screen.getByRole('region', { name: 'Feature sizes' });
+    fireEvent.change(within(sizes).getByRole('textbox', { name: 'Size name' }), {
+      target: { value: 'XS2' },
+    });
+    fireEvent.change(within(sizes).getByRole('combobox', { name: 'Copy from' }), {
+      target: { value: 'S' },
+    });
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Add size' }));
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Remove XXL' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    const body = save.mutate.mock.calls[0]![0];
+    expect(body.values.sizes).toContain('XS2');
+    expect(body.values.sizes).not.toContain('XXL');
+    expect(body.values.proxies.XS2).toEqual(DEFAULTS.proxies.S);
+    await expectNoAxeViolations(container);
+  });
+
+  it('explains a name it cannot take', () => {
+    hooks.useProfile.mockReturnValue(ok(profile()));
+    renderWithIntl(<ProfileEditor profileId="pr1" />);
+    const sizes = screen.getByRole('region', { name: 'Feature sizes' });
+    fireEvent.change(within(sizes).getByRole('textbox', { name: 'Size name' }), {
+      target: { value: 'M' },
+    });
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Add size' }));
+    expect(within(sizes).getByText('That size already exists.')).toBeTruthy();
+  });
+
+  it('renames a size and moves it', () => {
+    hooks.useProfile.mockReturnValue(ok(profile()));
+    renderWithIntl(<ProfileEditor profileId="pr1" />);
+    const sizes = screen.getByRole('region', { name: 'Feature sizes' });
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Rename M' }));
+    fireEvent.change(within(sizes).getByRole('textbox', { name: 'New name for M' }), {
+      target: { value: 'Med' },
+    });
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Save name' }));
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Move Med up' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    const body = save.mutate.mock.calls[0]![0];
+    expect(body.values.sizes.slice(2, 5)).toEqual(['S', 'Med', 'M-']);
+  });
+
+  it('shows the sizes of a published profile without edit buttons', () => {
+    hooks.useProfile.mockReturnValue(ok(profile({ status: 'PUBLISHED', publishedAt: NOW })));
+    hooks.useProfiles.mockReturnValue(ok({ items: [] }));
+    renderWithIntl(<ProfileEditor profileId="pr1" />);
+    const sizes = screen.getByRole('region', { name: 'Feature sizes' });
+    expect(within(sizes).getByText('XXXL')).toBeTruthy();
+    expect(within(sizes).queryByRole('button', { name: 'Add size' })).toBeNull();
+  });
+
+  it('explains which features block applying a profile', () => {
+    hooks.useApplyProfile.mockReturnValue({
+      ...apply,
+      isError: true,
+      error: new ApiClientError(
+        409,
+        {
+          error: {
+            code: 'CONFLICT',
+            message: 'Some features use a size this profile does not have.',
+            details: [{ reason: 'SIZE_NOT_IN_PROFILE', size: 'XXL', features: 3 }],
+          },
+        } as never,
+        'x',
+      ),
+    });
+    hooks.useProfiles.mockReturnValue(ok({ items: [profile({ status: 'PUBLISHED' })] }));
+    renderWithIntl(
+      <EditorProvider
+        initial={{
+          inputs: EXAMPLE_INPUTS as EstimateInputs,
+          assumptions: structuredClone(DEFAULTS),
+          rowVersion: 4,
+        }}
+        editable
+      >
+        <ApplyProfile estimateId="e1" projectId="p1" profileId="g" />
+      </EditorProvider>,
+    );
+    expect(
+      screen.getByText("3 features use XXL, which this profile doesn't have. Resize them first."),
+    ).toBeTruthy();
   });
 });

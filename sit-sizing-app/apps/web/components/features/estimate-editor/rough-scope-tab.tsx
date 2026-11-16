@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl';
 import { Plus, X } from 'lucide-react';
 import type { Assumptions } from '@sit/schemas';
 import type { Feature } from '@sit/schemas';
-import { SIZES } from '@sit/engine';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -99,7 +98,8 @@ export function RoughScopeTab() {
                       edit(i, (x) => void (x.size = e.target.value as Feature['size']))
                     }
                   >
-                    {SIZES.map((s) => (
+                    {/* The estimate's own sizes, from its profile (ADR-0021). */}
+                    {assumptions.sizes.map((s) => (
                       <option key={s} value={s}>
                         {s}
                       </option>
