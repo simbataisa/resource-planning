@@ -25,6 +25,7 @@ export {
 export * from './api';
 export {
   StoredPayloadError,
+  expandLegacyDataShapes,
   UPGRADES,
   upgradeStored,
   type StoredPayload,

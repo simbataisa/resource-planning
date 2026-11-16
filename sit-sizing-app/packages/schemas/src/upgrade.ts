@@ -9,7 +9,7 @@ import { EstimateInputs } from './inputs';
  * UPGRADES that turns version N into N+1. Old rows are never rewritten in place: they are
  * upgraded each time they are read, and a version saved afterwards stores the current shape.
  */
-export const INPUTS_SCHEMA_VERSION = 1;
+export const INPUTS_SCHEMA_VERSION = 2;
 
 export interface StoredPayload {
   inputs: unknown;
@@ -17,11 +17,37 @@ export interface StoredPayload {
 }
 export type UpgradeStep = (p: StoredPayload) => StoredPayload;
 
+const isObj = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object';
+
 /**
- * Steps keyed by the version they upgrade from. Empty: version 1 is the first stored shape.
- * Each new step ships with a fixture of the old shape and a test (AGENTS.md rule 3).
+ * Version 1 → 2 (ADR-0019). Data-test design and execution minutes and preparation hours
+ * became Simple/Medium/Complex sizes: an old single value is copied to every size, so the
+ * numbers do not change. Mapped columns and DQ rules became counts by complexity: an old
+ * count is Simple, where the engine used to put it. Values already in the new shape are left
+ * alone, so the step is safe to run twice. Also used for prototype JSON files.
  */
-export const UPGRADES: Readonly<Record<number, UpgradeStep>> = {};
+export function expandLegacyDataShapes(p: StoredPayload): StoredPayload {
+  const a = p.assumptions;
+  if (isObj(a))
+    for (const k of ['dataDesign', 'dataExec', 'dataPrepHours'] as const) {
+      const v = a[k];
+      if (typeof v === 'number') a[k] = [v, v, v];
+    }
+  const detail = isObj(p.inputs) ? p.inputs.detail : undefined;
+  const data = isObj(detail) ? detail.data : undefined;
+  if (isObj(data))
+    for (const k of ['columns', 'dq'] as const) {
+      const n = data[k];
+      if (typeof n === 'number') data[k] = [n, 0, 0];
+    }
+  return p;
+}
+
+/**
+ * Steps keyed by the version they upgrade from. Each step ships with a fixture of the old
+ * shape and a test (AGENTS.md rule 3).
+ */
+export const UPGRADES: Readonly<Record<number, UpgradeStep>> = { 1: expandLegacyDataShapes };
 
 export class StoredPayloadError extends Error {
   readonly code: 'NEWER_THAN_APP' | 'NO_UPGRADE' | 'INVALID';
