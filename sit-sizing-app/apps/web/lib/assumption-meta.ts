@@ -19,7 +19,7 @@ export interface MetaGroup {
   rows: MetaRow[];
 }
 
-/** Key labels starting with "=" are shown as is (sizes S, M, L, XL). */
+/** Proxy keys per group; every size row of a group edits the same keys. */
 const DATA_PROXY_KEYS: [string, string][] = [
   ['feed', 'assumptionsTab.keys.feed'],
   ['pipe', 'assumptionsTab.keys.pipe'],
@@ -1125,6 +1125,7 @@ export const ASSUMPTION_META: MetaGroup[] = [
           key: 'assumptionsTab.rows.ptRoughScen',
         },
         kind: 'keys',
+        // Key labels starting with "=" are shown as is (the size names, XXS to XXXL).
         keys: SIZES.map((z): [string, string] => [z, `=${z}`]),
       },
       {

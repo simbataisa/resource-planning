@@ -24,6 +24,7 @@ Rough scope sizes each feature S, M, L or XL. Each size has default proxy counts
 5. **Stored data:**
    - `INPUTS_SCHEMA_VERSION` 3. `UPGRADES[2]` adds the new size keys at their defaults to `proxies`, `dproxies`, `aproxies` and `ptRoughScen`, keeping every existing value. Upgraded versions show the new rows as uncalibrated.
    - Data migration `20261122000000_more_feature_sizes` does the same for `AssumptionProfile.values` (existing keys win). It only adds; nothing existing changes.
+   - The same migration adds 18 to `EstimateVersion.uncalibrated` for versions saved before schema version 3. That column is a denormalised count used by the portfolio. The new rows are at their defaults once such a version is upgraded. It runs once (Prisma records applied migrations) and must not be re-run by hand.
    - Prototype files and imports need no step: the prototype's `merge` keeps defaults for missing keys.
 
 ## Consequences

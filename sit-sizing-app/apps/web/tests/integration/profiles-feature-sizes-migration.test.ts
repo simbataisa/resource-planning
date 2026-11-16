@@ -26,8 +26,11 @@ beforeAll(async () => {
   createdById = (await seeded()).profile.createdById;
 });
 
-async function migrate() {
-  for (const stmt of SQL.split(';').filter((s) => /\bUPDATE\b/.test(s)))
+/** Runs the statements once each; `profilesOnly` skips the run-once EstimateVersion count. */
+async function migrate(profilesOnly = false) {
+  for (const stmt of SQL.split(';').filter(
+    (s) => /\bUPDATE\b/.test(s) && !(profilesOnly && s.includes('"EstimateVersion"')),
+  ))
     await db().$executeRawUnsafe(stmt);
 }
 
@@ -66,12 +69,29 @@ describe('profile data migration 20261122000000_more_feature_sizes (ADR-0020)', 
     expect(uncalibratedCount(values, DEFAULT_ASSUMPTIONS)).toBe(159);
   });
 
-  it('changes nothing when it runs again', async () => {
+  it('changes no profile when it runs again', async () => {
     const p = await fourSizeProfile('twice');
     await migrate();
     const once = (await db().assumptionProfile.findUniqueOrThrow({ where: { id: p.id } })).values;
-    await migrate();
+    await migrate(true);
     const twice = (await db().assumptionProfile.findUniqueOrThrow({ where: { id: p.id } })).values;
     expect(twice).toEqual(once);
+  });
+
+  it('counts the 18 new rows as uncalibrated on versions saved before schema version 3', async () => {
+    const { example } = await seeded();
+    const v = await db().estimateVersion.findFirstOrThrow({ where: { estimateId: example.id } });
+    const before = { schemaVersion: v.schemaVersion, uncalibrated: v.uncalibrated };
+    try {
+      await db().estimateVersion.update({
+        where: { id: v.id },
+        data: { schemaVersion: 2, uncalibrated: 142 },
+      });
+      await migrate();
+      const after = await db().estimateVersion.findUniqueOrThrow({ where: { id: v.id } });
+      expect(after.uncalibrated).toBe(160); // all defaults: still counted as "on defaults"
+    } finally {
+      await db().estimateVersion.update({ where: { id: v.id }, data: before });
+    }
   });
 });

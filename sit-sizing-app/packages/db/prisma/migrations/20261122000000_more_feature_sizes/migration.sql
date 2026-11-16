@@ -18,3 +18,12 @@ WHERE jsonb_typeof("values"->'aproxies') = 'object';
 UPDATE "AssumptionProfile"
 SET "values" = jsonb_set("values", '{ptRoughScen}', '{"XXS": 1, "XS": 1, "M-": 2, "M+": 3, "XXL": 8, "XXXL": 13}'::jsonb || ("values"->'ptRoughScen'))
 WHERE jsonb_typeof("values"->'ptRoughScen') = 'object';
+
+-- Saved versions keep their payload (upgraded on read), but their denormalised "uncalibrated"
+-- column was counted out of 142 rows. The 18 new size rows are at their defaults once such a
+-- version is upgraded, so they count as uncalibrated too. Otherwise the portfolio would show
+-- an all-defaults version as partly calibrated (142 / 160). Unlike the statements above, this
+-- one must run only once. Prisma applies each migration once, so never re-run it by hand.
+UPDATE "EstimateVersion"
+SET "uncalibrated" = "uncalibrated" + 18
+WHERE "schemaVersion" < 3 AND "uncalibrated" <= 142;
