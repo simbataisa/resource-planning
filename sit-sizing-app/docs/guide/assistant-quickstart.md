@@ -42,14 +42,22 @@ Then start Claude Code (`claude`), type `/mcp`, choose `sit-sizing` and sign in.
 
 **Codex**
 
-Add the server to Codex's settings file, `~/.codex/config.toml`:
+```bash
+codex mcp add sit-sizing --url https://<host>/mcp
+```
+
+```bash
+codex mcp login sit-sizing
+```
+
+The login opens the usual SIT Sizing sign-in page in your browser. Do not set a client ID: Codex registers its own. Check the entry with `codex mcp list`. (Tested with Codex CLI 0.167.0; on another version check `codex mcp --help`.)
+
+If you prefer to edit the settings file, the command above adds this to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.sit-sizing]
 url = "https://<host>/mcp"
 ```
-
-Recent Codex versions also accept `codex mcp add sit-sizing --url https://<host>/mcp`; check `codex mcp --help` for your version. Start Codex and sign in when it opens the browser. Do not set a client ID: Codex registers its own.
 
 ### Local developer stack (no sign-in)
 
@@ -59,7 +67,11 @@ With `pnpm dev:up` running, the local server acts as the synthetic user `dev-est
 claude mcp add --transport http sit-sizing http://localhost:3100/mcp
 ```
 
-For Codex, use `url = "http://localhost:3100/mcp"` in the settings file above.
+```bash
+codex mcp add sit-sizing --url http://localhost:3100/mcp
+```
+
+There is nothing to log in to locally, so skip `/mcp` sign-in in Claude Code and `codex mcp login`.
 
 ### Check it works
 
@@ -148,16 +160,17 @@ Record what you found (assistant and version, document, pass or fail per checkli
 
 ## 6. Messages you may see
 
-| Message                        | What it means                                                          | What to do                                                        |
-| ------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `NOT_PROVISIONED`              | You have no active SIT Sizing account yet                              | Sign in once in the browser; ask an admin if you were deactivated |
-| `EDITOR_OPEN`                  | The draft is open in your web editor (another tab holds the edit lock) | Close the draft in the editor, then ask again                     |
-| `LOCKED`                       | Someone else is editing the draft; the message says who and until when | Wait, or ask them or a QE Lead                                    |
-| `NO_DRAFT`                     | The estimate has no open draft                                         | Ask the assistant to start a draft first                          |
-| `RATE_LIMITED`                 | Too many requests this minute                                          | Wait the time it gives, then retry                                |
-| "Not ready" / 503              | The server cannot reach the sign-in service right now                  | Wait a minute and retry; tell your team lead if it persists       |
-| It keeps asking you to sign in | Your session expired or sign-in did not finish                         | Sign in again in the browser window it opens                      |
-| Codex sign-in refused (403)    | The environment's limit of self-registered Codex clients is reached    | Tell your team lead; an admin clears old clients (runbook 11)     |
+| Message                              | What it means                                                                                  | What to do                                                                                                            |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `NOT_PROVISIONED`                    | You have no active SIT Sizing account yet                                                      | Sign in once in the browser; ask an admin if you were deactivated                                                     |
+| `EDITOR_OPEN`                        | The draft is open in your web editor (another tab holds the edit lock)                         | Close the draft in the editor, then ask again                                                                         |
+| `LOCKED`                             | Someone else is editing the draft; the message says who and until when                         | Wait, or ask them or a QE Lead                                                                                        |
+| `NO_DRAFT`                           | The estimate has no open draft                                                                 | Ask the assistant to start a draft first                                                                              |
+| `RATE_LIMITED`                       | Too many requests this minute                                                                  | Wait the time it gives, then retry                                                                                    |
+| "Not ready" / 503                    | The server cannot reach the sign-in service right now                                          | Wait a minute and retry; tell your team lead if it persists                                                           |
+| It keeps asking you to sign in       | Your session expired or sign-in did not finish                                                 | Sign in again in the browser window it opens                                                                          |
+| Sign-in page says "Client not found" | An old or mistyped MCP entry is trying to sign in (for example one left from an earlier trial) | Run `claude mcp list` or `codex mcp list` and remove any entry whose address is not your environment's `/mcp` address |
+| Codex sign-in refused (403)          | The environment's limit of self-registered Codex clients is reached                            | Tell your team lead; an admin clears old clients (runbook 11)                                                         |
 
 ## 7. Good practice
 
