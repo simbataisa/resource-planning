@@ -55,8 +55,9 @@ Option A.
      - The three upgraded rows, `[v, v, v]`, no longer equal the new defaults, so an upgraded version counts them as calibrated (142 → 139 uncalibrated). The profile migration avoids this for profiles; versions are not rewritten (ADR-0013).
 5. **Profiles.**
    - A Prisma data migration rewrites `AssumptionProfile.values` in place:
-     - A value still equal to the old default becomes the new default triple, and stays uncalibrated.
-     - A changed (calibrated) value `v` becomes `[v, v, v]`.
+     - A value still equal to the old default, with no entry for its path in `calibration`, becomes the new default triple and stays uncalibrated.
+     - A calibrated value `v` becomes `[v, v, v]`. That includes a value calibrated to exactly the old default: it has an entry in `calibration`.
+     - The first migration (`20261120000000_sized_data_assumptions`) decided by value alone. The fix-forward `20261121000000_sized_data_calibrated_defaults` puts rows that have a calibration entry and were moved to the new default triple back to `[v, v, v]`. Merged migrations are never edited.
    - This is an exception to "never rewritten in place" (ADR-0013), which covers versions. Profiles have no schema version and are read with a cast, not through `upgradeStored`.
    - It is also an exception to design 6.6 rule 6 ("default changes go into a new published global profile"), approved by the requester on 2026-11-16: a shape change may move rows still at the old default to the new default, so they stay uncalibrated. Design 6.6 records the exception.
    - The migration is not expand-only; the runbook (8.4) has the rollback SQL.
