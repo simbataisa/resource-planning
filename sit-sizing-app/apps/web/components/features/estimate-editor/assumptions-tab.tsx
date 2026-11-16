@@ -100,8 +100,11 @@ export function AssumptionsTab({
                         !isDefault && '[&>td:first-child]:shadow-[inset_3px_0_0_var(--good)]',
                       )}
                     >
-                      <TableCell className="w-2/5 align-top whitespace-normal">{name}</TableCell>
-                      <TableCell>
+                      <TableCell className="w-1/4 min-w-40 align-middle whitespace-normal">
+                        {name}
+                      </TableCell>
+                      {/* Room for Simple, Medium and Complex on one line; they wrap only below sm. */}
+                      <TableCell className="align-middle lg:min-w-[17rem]">
                         <RowInputs
                           row={r}
                           name={name}
@@ -110,17 +113,17 @@ export function AssumptionsTab({
                           onSet={(value) => editAssumptions((d) => setPath(d, r.path, value))}
                         />
                       </TableCell>
-                      <TableCell className="w-32 align-top">
+                      <TableCell className="w-32 align-middle">
                         <Badge variant={isDefault ? 'unc' : 'team'}>
                           {isDefault ? t('uncalibrated') : t('teamValue')}
                         </Badge>
                       </TableCell>
                       {calibrationCell ? (
-                        <TableCell className="w-64 align-top">
+                        <TableCell className="w-64 align-middle">
                           {calibrationCell(r.path, name, sameAsDefault)}
                         </TableCell>
                       ) : null}
-                      <TableCell className="w-24 align-top">
+                      <TableCell className="w-24 align-middle">
                         {hasDefault && !sameAsDefault ? (
                           <Button
                             variant="link"
@@ -207,7 +210,7 @@ function RowInputs({
   if (row.kind === 'cols') {
     const arr = v as number[];
     return (
-      <span className="flex flex-wrap items-end gap-2">
+      <span className="flex flex-wrap items-end gap-2 sm:flex-nowrap">
         {row.cols.map((c, b) => (
           <label key={c} className="grid gap-1 text-xs text-muted-foreground">
             {tr(c)}
@@ -217,7 +220,7 @@ function RowInputs({
               min={0}
               step="any"
               disabled={disabled}
-              className="w-20"
+              className="w-16"
               onValueChange={(x) => {
                 const next = arr.slice();
                 next[b] = x;

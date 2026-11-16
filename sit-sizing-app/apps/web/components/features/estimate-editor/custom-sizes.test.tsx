@@ -104,3 +104,18 @@ describe('AssumptionsTab title (profile layout)', () => {
     expect(heading.parentElement).toBe(badge.parentElement);
   });
 });
+
+describe('assumption row layout', () => {
+  it('centres each row vertically and leaves room for Simple, Medium and Complex on one line', () => {
+    render(<AssumptionsTab />, structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions);
+    const input = screen.getByRole('spinbutton', { name: 'API endpoint · Simple' });
+    const row = input.closest('tr')!;
+    const [nameCell, inputsCell] = Array.from(row.querySelectorAll('td'));
+    for (const td of row.querySelectorAll('td')) expect(td.className).toContain('align-middle');
+    expect(nameCell!.className).toContain('w-1/4');
+    expect(inputsCell!.className).toContain('lg:min-w-[17rem]');
+    expect(input.className).toContain('w-16');
+    // On one line from sm up; wrapping is left to small screens.
+    expect(input.closest('span.flex')!.className).toContain('sm:flex-nowrap');
+  });
+});
