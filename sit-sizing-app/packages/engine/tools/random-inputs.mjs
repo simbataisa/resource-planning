@@ -30,6 +30,8 @@ export function randomCase(P, seed, sizes = ['S', 'M', 'L', 'XL']) {
     // random sequence, and every seeded case, stays as it was.
     const sized = new Set(['dataDesign', 'dataExec', 'dataPrepHours']);
     for (const k of Object.keys(A)) {
+      // The size list and its notes are not numbers (ADR-0021): skip them without drawing.
+      if (k === 'sizes' || k === 'sizeNotes') continue;
       if (sized.has(k)) {
         if (chance(0.15)) {
           const f = 0.5 + r();

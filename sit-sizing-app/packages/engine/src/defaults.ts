@@ -1,4 +1,5 @@
 import type { Assumptions, EstimateInputs } from '@sit/schemas';
+import { SIZES } from './catalogue.ts';
 
 /**
  * The prototype's DEFAULTS, unchanged (golden-example.json "assumptions").
@@ -376,6 +377,8 @@ export const DEFAULT_ASSUMPTIONS: Readonly<Assumptions> = Object.freeze({
       actions: 16,
     },
   },
+  sizes: [...SIZES],
+  sizeNotes: {},
 } as Assumptions);
 
 /**

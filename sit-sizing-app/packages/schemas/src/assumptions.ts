@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { Band3, FIELD_TYPES, NonNeg, PT_TYPES, SIZES, keyed } from './common';
+import { Band3, FIELD_TYPES, NonNeg, PT_TYPES, SizeName, keyed } from './common';
 
 /**
- * Model assumptions (the prototype's DEFAULTS). 106 top-level keys; the UI shows
- * them as 160 calibratable rows (design 7). Field names follow the prototype so
+ * Model assumptions (the prototype's DEFAULTS). The UI shows them as calibratable rows:
+ * 130 fixed rows plus 3 per feature size, 160 with the ten built-in sizes (design 7, ADR-0021). Field names follow the prototype so
  * profiles exported from the HTML tool import without mapping.
  */
 const ProxyApp = z.object({
@@ -36,7 +36,19 @@ const ProxyAi = z.object({
   guard: NonNeg,
   hitl: NonNeg,
 });
-const bySize = <T extends z.ZodType>(v: T) => keyed(SIZES, v);
+/** A size table: one entry per size in `sizes` (checked on Assumptions). */
+const bySize = <T extends z.ZodType>(v: T) => z.record(SizeName, v);
+
+/** Where a calibrated value came from (P-01). */
+export const CalibrationEntry = z.object({
+  source: z.string().max(200),
+  measuredAt: z.iso.date().optional(),
+  note: z.string().max(1000).optional(),
+});
+
+/** The tables keyed by size; their keys must equal `sizes`. */
+export const SIZE_TABLES = ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'] as const;
+export const MAX_SIZES = 20;
 
 export const FieldTypeRate = z.object({
   /** Matrix cases for one field of this type. */
@@ -160,5 +172,19 @@ export const Assumptions = z.object({
   capacity: Band3,
   band: z.object({ rough: NonNeg, detailed: NonNeg }),
   proxies: bySize(ProxyApp),
+  /** Feature sizes in display order (ADR-0021). Profiles can add, rename and remove sizes. */
+  sizes: z.array(SizeName).min(1).max(MAX_SIZES),
+  /**
+   * Calibration notes for custom-size rows, copied from the profile when it is applied, so an
+   * estimate counts those rows as its profile does (ADR-0021).
+   */
+  sizeNotes: z.record(z.string().max(80), CalibrationEntry).default({}),
+}).superRefine((a, ctx) => {
+  if (new Set(a.sizes).size !== a.sizes.length)
+    ctx.addIssue({ code: 'custom', path: ['sizes'], message: 'Each size name must be unique.' });
+  const want = [...a.sizes].sort().join('\u0000');
+  for (const t of SIZE_TABLES)
+    if (Object.keys(a[t]).sort().join('\u0000') !== want)
+      ctx.addIssue({ code: 'custom', path: [t], message: 'The table must have one entry per size.' });
 });
 export type Assumptions = z.infer<typeof Assumptions>;

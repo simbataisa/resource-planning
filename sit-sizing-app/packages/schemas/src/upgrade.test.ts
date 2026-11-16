@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   INPUTS_SCHEMA_VERSION,
   addFeatureSizes,
+  addSizeList,
   expandLegacyDataShapes,
   NEW_FEATURE_SIZE_DEFAULTS,
   StoredPayloadError,
@@ -14,9 +15,9 @@ import {
 const bad = { inputs: { nope: true }, assumptions: {} };
 
 describe('upgradeStored (E-08)', () => {
-  it('is at schema version 3, with steps from versions 1 and 2 (ADR-0019, ADR-0020)', () => {
-    expect(INPUTS_SCHEMA_VERSION).toBe(3);
-    expect(Object.keys(UPGRADES)).toEqual(['1', '2']);
+  it('is at schema version 4, with steps from versions 1, 2 and 3 (ADR-0019, ADR-0020, ADR-0021)', () => {
+    expect(INPUTS_SCHEMA_VERSION).toBe(4);
+    expect(Object.keys(UPGRADES)).toEqual(['1', '2', '3']);
     expect(UPGRADES[1]).toBe(expandLegacyDataShapes);
     expect(UPGRADES[2]).toBe(addFeatureSizes);
   });
@@ -134,5 +135,41 @@ describe('version 2 → 3: ten feature sizes (ADR-0020)', () => {
       inputs: null,
       assumptions: null,
     });
+  });
+});
+
+describe('version 3 → 4: sizes become an ordered list (custom sizes)', () => {
+  const v3 = () => ({
+    inputs: { features: [{ size: 'M' }] },
+    assumptions: {
+      // jsonb returns keys sorted by length then bytes, not in size order
+      proxies: { L: {}, M: {}, S: {}, XL: {}, XS: {}, 'M+': {}, 'M-': {}, XXL: {}, XXS: {}, XXXL: {} },
+      dproxies: {},
+      aproxies: {},
+      ptRoughScen: {},
+    },
+  });
+
+  it('lists the sizes in the built-in order and adds empty notes', () => {
+    const { assumptions } = addSizeList(v3()) as { assumptions: Record<string, unknown> };
+    expect(assumptions.sizes).toEqual(['XXS', 'XS', 'S', 'M-', 'M', 'M+', 'L', 'XL', 'XXL', 'XXXL']);
+    expect(assumptions.sizeNotes).toEqual({});
+  });
+
+  it('keeps only the sizes that are in the tables', () => {
+    const p = v3();
+    p.assumptions.proxies = { M: {}, S: {} } as typeof p.assumptions.proxies;
+    expect((addSizeList(p).assumptions as { sizes: string[] }).sizes).toEqual(['S', 'M']);
+  });
+
+  it('leaves a payload that already has a size list alone', () => {
+    const p = { inputs: {}, assumptions: { sizes: ['B', 'A'], sizeNotes: { x: 1 }, proxies: {} } };
+    expect(addSizeList(structuredClone(p))).toEqual(p);
+    expect(addSizeList({ inputs: null, assumptions: null })).toEqual({ inputs: null, assumptions: null });
+  });
+
+  it('is the step from version 3', () => {
+    expect(INPUTS_SCHEMA_VERSION).toBe(4);
+    expect(UPGRADES[3]).toBe(addSizeList);
   });
 });

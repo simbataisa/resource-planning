@@ -11,7 +11,7 @@ export {
   type KnownApiErrorCode,
 } from './api-error';
 export * from './common';
-export { Assumptions, FieldTypeRate } from './assumptions';
+export { Assumptions, FieldTypeRate, MAX_SIZES, SIZE_TABLES } from './assumptions';
 export { AiScope, DataScope, DetailScope, EstimateInputs, Evidence, Feature, Team } from './inputs';
 export {
   EstimateResult,
@@ -26,6 +26,7 @@ export * from './api';
 export {
   StoredPayloadError,
   addFeatureSizes,
+  addSizeList,
   expandLegacyDataShapes,
   NEW_FEATURE_SIZE_DEFAULTS,
   UPGRADES,

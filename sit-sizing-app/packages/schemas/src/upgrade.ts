@@ -1,4 +1,5 @@
 import { Assumptions } from './assumptions';
+import { SIZES } from './common';
 import { EstimateInputs } from './inputs';
 
 /**
@@ -9,7 +10,7 @@ import { EstimateInputs } from './inputs';
  * UPGRADES that turns version N into N+1. Old rows are never rewritten in place: they are
  * upgraded each time they are read, and a version saved afterwards stores the current shape.
  */
-export const INPUTS_SCHEMA_VERSION = 3;
+export const INPUTS_SCHEMA_VERSION = 4;
 
 export interface StoredPayload {
   inputs: unknown;
@@ -168,12 +169,29 @@ export function addFeatureSizes(p: StoredPayload): StoredPayload {
 }
 
 /**
+ * Version 3 → 4 (ADR-0021). Sizes became data: the assumptions carry an ordered `sizes` list
+ * and `sizeNotes`. Stored tables only hold built-in sizes, and jsonb does not keep key order,
+ * so the list is the built-in names present in `proxies`, in built-in order. A payload that
+ * already has a list is left alone.
+ */
+export function addSizeList(p: StoredPayload): StoredPayload {
+  const a = p.assumptions;
+  if (isObj(a) && !Array.isArray(a.sizes)) {
+    const proxies = isObj(a.proxies) ? a.proxies : {};
+    a.sizes = SIZES.filter((s) => s in proxies);
+    if (!isObj(a.sizeNotes)) a.sizeNotes = {};
+  }
+  return p;
+}
+
+/**
  * Steps keyed by the version they upgrade from. Each step ships with a fixture of the old
  * shape and a test (AGENTS.md rule 3).
  */
 export const UPGRADES: Readonly<Record<number, UpgradeStep>> = {
   1: expandLegacyDataShapes,
   2: addFeatureSizes,
+  3: addSizeList,
 };
 
 export class StoredPayloadError extends Error {
