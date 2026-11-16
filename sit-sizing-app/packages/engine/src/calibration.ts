@@ -30,7 +30,7 @@ export function isDefaultRow(
   return canonical(get(assumptions, path)) === canonical(get(defaults, path));
 }
 
-/** How many of the 142 assumption rows are still uncalibrated defaults. */
+/** How many of the 160 assumption rows are still uncalibrated defaults. */
 export function uncalibratedCount(assumptions: Assumptions, defaults: Assumptions): number {
   return ASSUMPTION_PATHS.filter((p) => isDefaultRow(assumptions, defaults, p)).length;
 }

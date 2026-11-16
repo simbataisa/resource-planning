@@ -203,7 +203,7 @@ model AssumptionProfile {
   projectId   String?
   name        String        @db.VarChar(120)
   status      ProfileStatus @default(DRAFT)
-  /// zod: Assumptions (the 142 calibratable values)
+  /// zod: Assumptions (the 160 calibratable values)
   values      Json
   /// Per path: source, measuredAt, note
   calibration Json          @default("{}")

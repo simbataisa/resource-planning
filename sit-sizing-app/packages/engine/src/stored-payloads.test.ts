@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { upgradeStored } from '@sit/schemas';
+import { NEW_FEATURE_SIZE_DEFAULTS, upgradeStored } from '@sit/schemas';
 import { computeBoth } from './compute.ts';
 import { uncalibratedCount } from './calibration.ts';
 import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS } from './defaults.ts';
@@ -33,8 +33,9 @@ describe('stored payloads (E-08)', () => {
       expect(r[mode].hours).toBeCloseTo(v1Result.expected[mode].hours, 1);
       expect(r[mode].cases).toBe(v1Result.expected[mode].cases);
     }
-    // Only the three resized rows differ from today's defaults; jsonb key order does not count.
-    expect(uncalibratedCount(assumptions, DEFAULT_ASSUMPTIONS)).toBe(139);
+    // Only the three resized rows differ from today's defaults (the 18 new size rows are added at
+    // their defaults); jsonb key order does not count.
+    expect(uncalibratedCount(assumptions, DEFAULT_ASSUMPTIONS)).toBe(157);
   });
 
   it('the worked example with default assumptions matches the golden file', () => {
@@ -47,6 +48,15 @@ describe('stored payloads (E-08)', () => {
     ) as { expected: { rough: Expected; detailed: Expected } };
     expect(fresh.detailed.fte).toBeCloseTo(golden.expected.detailed.fte, 3);
     expect(fresh.detailed.cases).toBe(golden.expected.detailed.cases);
-    expect(uncalibratedCount(DEFAULT_ASSUMPTIONS, DEFAULT_ASSUMPTIONS)).toBe(142);
+    expect(uncalibratedCount(DEFAULT_ASSUMPTIONS, DEFAULT_ASSUMPTIONS)).toBe(160);
+  });
+
+  it('the version 3 upgrade adds the new sizes with the engine defaults (ADR-0020)', () => {
+    for (const [group, sizes] of Object.entries(NEW_FEATURE_SIZE_DEFAULTS))
+      for (const [size, value] of Object.entries(sizes))
+        expect(
+          (DEFAULT_ASSUMPTIONS as unknown as Record<string, Record<string, unknown>>)[group]![size],
+          `${group}.${size}`,
+        ).toEqual(value);
   });
 });

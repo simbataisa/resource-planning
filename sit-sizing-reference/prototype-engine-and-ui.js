@@ -7,7 +7,7 @@ function tr(s){ return (LANG==='vi' && DICT.js && DICT.js[s]!==undefined) ? DICT
 function trf(s,v){ return tr(s).replace(/\{(\w+)\}/g,function(m,k){ return v[k]!==undefined?v[k]:m; }); }
 function onLang(fn){ HOOKS.push(fn); }
 
-var CX=['Simple','Medium','Complex'], SIZES=['S','M','L','XL'];
+var CX=['Simple','Medium','Complex'], SIZES=['XXS','XS','S','M-','M','M+','L','XL','XXL','XXXL'];
 var ENV=['Dedicated or stubbed','Mostly available','Shared, real downstream','Shared core-banking windows'], ENV_SHORT=['Dedicated','Mostly up','Shared real','Core windows'];
 var AI=['None','Pilot','Embedded'];
 var CH=[{k:'web2',label:'Second web stack (Angular + React)'},{k:'ios',label:'iOS (Swift)'},{k:'android',label:'Android (Kotlin)'}];
@@ -47,12 +47,11 @@ var DEFAULTS={
   feUnitGate:80, feLogicUplift:0.20, feMutGate:60, feMutUplift:0.15,
   minutes:[10,20,40], designFSD:15, designNoFSD:25, cycles:2, regression:0.30, retest:0.20, overhead:0.15,
   aiDesignCut:[0,0.20,0.40],
-  dproxies:{S:{feed:1,pipe:1,table:3,report:1,columns:40,dq:6,scd:0,secured:1},M:{feed:2,pipe:3,table:8,report:2,columns:120,dq:20,scd:1,secured:3},
-    L:{feed:4,pipe:6,table:15,report:4,columns:260,dq:40,scd:3,secured:5},XL:{feed:7,pipe:10,table:28,report:8,columns:480,dq:80,scd:5,secured:8}},
+  dproxies:{XXS:{feed:0,pipe:0,table:1,report:0,columns:10,dq:2,scd:0,secured:0},XS:{feed:1,pipe:1,table:2,report:1,columns:20,dq:3,scd:0,secured:1},S:{feed:1,pipe:1,table:3,report:1,columns:40,dq:6,scd:0,secured:1},'M-':{feed:2,pipe:2,table:6,report:2,columns:80,dq:13,scd:1,secured:2},M:{feed:2,pipe:3,table:8,report:2,columns:120,dq:20,scd:1,secured:3},'M+':{feed:3,pipe:5,table:12,report:3,columns:190,dq:30,scd:2,secured:4},L:{feed:4,pipe:6,table:15,report:4,columns:260,dq:40,scd:3,secured:5},XL:{feed:7,pipe:10,table:28,report:8,columns:480,dq:80,scd:5,secured:8},XXL:{feed:13,pipe:18,table:50,report:14,columns:864,dq:144,scd:9,secured:14},XXXL:{feed:23,pipe:32,table:91,report:26,columns:1555,dq:259,scd:16,secured:26}},
   ptScript:[4,8,16], ptNfrFixed:16, ptNfrPer:2, ptDataFixed:8, ptDataPer:4, ptEnvHours:24, ptEnvApm:8, ptMobileFixed:8,
   ptRuns:{load:3,stress:2,soak:1,spike:1,failover:1}, ptRunHours:{load:4,stress:4,soak:12,spike:2,failover:4},
-  ptCycles:3, ptCyclesCI:2, ptAnalysis:0.5, ptReport:16, ptRoughScen:{S:1,M:2,L:3,XL:5}, ptEnvDays:2,
-  aproxies:{S:{intent:3,ocr:0,rag:1,tools:1,guard:4,hitl:1},M:{intent:8,ocr:1,rag:3,tools:3,guard:6,hitl:2},L:{intent:15,ocr:2,rag:5,tools:5,guard:6,hitl:3},XL:{intent:25,ocr:4,rag:8,tools:8,guard:8,hitl:4}},
+  ptCycles:3, ptCyclesCI:2, ptAnalysis:0.5, ptReport:16, ptRoughScen:{XXS:1,XS:1,S:1,'M-':2,M:2,'M+':3,L:3,XL:5,XXL:8,XXXL:13}, ptEnvDays:2,
+  aproxies:{XXS:{intent:1,ocr:0,rag:0,tools:0,guard:1,hitl:0},XS:{intent:2,ocr:0,rag:1,tools:1,guard:2,hitl:1},S:{intent:3,ocr:0,rag:1,tools:1,guard:4,hitl:1},'M-':{intent:6,ocr:1,rag:2,tools:2,guard:5,hitl:2},M:{intent:8,ocr:1,rag:3,tools:3,guard:6,hitl:2},'M+':{intent:12,ocr:2,rag:4,tools:4,guard:6,hitl:3},L:{intent:15,ocr:2,rag:5,tools:5,guard:6,hitl:3},XL:{intent:25,ocr:4,rag:8,tools:8,guard:8,hitl:4},XXL:{intent:45,ocr:7,rag:14,tools:14,guard:14,hitl:7},XXXL:{intent:81,ocr:13,rag:26,tools:26,guard:26,hitl:13}},
   dFeed:[3,4,6], dPipe:[4,6,9], dTable:[2,3,4], dScd:2, dCol:1.5, dDq:2, dReport:[4,6,8], dAccessSampling:0.5, dataSample:0.1,
   dataDesign:[10,15,25], dataExec:[5,8,12], dataCycles:3, dataPrepHours:[2,3,5], dataDaysPerCycle:2,
   aiUtt:[20,35,50], aiRagQ:15, aiOcrSamples:[50,100,200], aiAdv:40, aiToolCases:8, aiHitlCases:4,
@@ -60,10 +59,16 @@ var DEFAULTS={
   hoursPerDay:6, daysPerWeek:5, capacity:[0.7,1.0,1.2],
   band:{rough:0.40, detailed:0.15},
   proxies:{
+    XXS:{screen:0,field:2,api:1,integration:0,rule:1,journey:0,batch:0,event:0,workflow:0,actions:0},
+    XS:{screen:1,field:3,api:1,integration:0,rule:1,journey:1,batch:0,event:0,workflow:0,actions:1},
     S:{screen:1,field:6,api:2,integration:0,rule:2,journey:1,batch:0,event:0,workflow:0,actions:1},
+    'M-':{screen:2,field:11,api:3,integration:1,rule:4,journey:1,batch:1,event:1,workflow:1,actions:2},
     M:{screen:2,field:15,api:4,integration:1,rule:5,journey:1,batch:1,event:1,workflow:1,actions:2},
+    'M+':{screen:3,field:23,api:6,integration:2,rule:8,journey:2,batch:1,event:2,workflow:1,actions:3},
     L:{screen:4,field:30,api:8,integration:2,rule:10,journey:2,batch:1,event:2,workflow:1,actions:3},
-    XL:{screen:7,field:55,api:14,integration:3,rule:18,journey:3,batch:2,event:4,workflow:2,actions:5}}
+    XL:{screen:7,field:55,api:14,integration:3,rule:18,journey:3,batch:2,event:4,workflow:2,actions:5},
+    XXL:{screen:13,field:99,api:25,integration:5,rule:32,journey:5,batch:4,event:7,workflow:4,actions:9},
+    XXXL:{screen:23,field:178,api:45,integration:10,rule:58,journey:10,batch:6,event:13,workflow:6,actions:16}}
 };
 var SAMPLE_SCOPE={
   features:[
@@ -187,7 +192,7 @@ var META=[
     {p:'ptAnalysis',label:'Analysis time as a share of execution time',pct:1},
     {p:'ptReport',label:'Reporting and capacity recommendations',unit:'h'},
     {p:'ptMobileFixed',label:'Device-side performance checks per mobile platform (startup, memory)',unit:'h'},
-    {p:'ptRoughScen',label:'Scenarios per performance-critical feature, rough mode',keys:[['S','S'],['M','M'],['L','L'],['XL','XL']]},
+    {p:'ptRoughScen',label:'Scenarios per performance-critical feature, rough mode',keys:SIZES.map(function(z){ return [z,z]; })},
     {p:'ptEnvDays',label:'Calendar days in the performance environment per cycle',unit:'days'}]},
   {grp:'Effort',rows:[
     {p:'minutes',label:'Execution minutes per case, incl. data setup',cols:CX,unit:'min'},
@@ -625,18 +630,23 @@ function renderDetail(){
   }).join('');
   DRV.forEach(function(d){ [0,1,2].forEach(function(b){ $('d-'+d.k+'-'+b).addEventListener('input',function(e){ var v=parseFloat(e.target.value); if(isFinite(v)){ S.detail[d.k][b]=Math.max(0,v); update(); } }); }); });
 }
+/* Assumption groups are collapsible and start collapsed; the open ones stay open while the page is open. */
+var ASM_OPEN={};
 function renderAssumptions(){
+  META.forEach(function(g,gi){ var d=$('ag-'+gi); if(d) ASM_OPEN[gi]=d.open; });
   var html=META.map(function(g,gi){
-    return '<div class="agrp"><h3>'+tr(g.grp)+'</h3><div class="scroll"><table><tbody>'+g.rows.map(function(r,ri){
+    return '<details class="dsec agrp" id="ag-'+gi+'"'+(ASM_OPEN[gi]?' open':'')+'><summary><span class="dsec-t">'+tr(g.grp)+'</span><span class="dsec-b" id="ag-'+gi+'-b"></span></summary><div class="dsec-c"><div class="scroll"><table><tbody>'+g.rows.map(function(r,ri){
       var id='a-'+gi+'-'+ri, v=get(A,r.p), ins;
       if(r.cols){ ins=r.cols.map(function(c,b){ return '<label>'+tr(c)+'<input type="number" step="any" min="0" id="'+id+'-'+b+'" value="'+v[b]+'"></label>'; }).join(''); }
       else if(r.keys){ ins=r.keys.map(function(k){ return '<label>'+tr(k[1])+'<input type="number" step="any" min="0" id="'+id+'-'+k[0]+'" value="'+v[k[0]]+'" style="width:4.6em"></label>'; }).join(''); }
       else { ins='<input type="number" step="any" min="0" id="'+id+'" value="'+(r.pct?+(v*100).toFixed(2):v)+'"> <span class="small muted">'+(r.pct?'%':tr(r.unit||''))+'</span>'; }
       if(r.cols) ins+=' <span class="small muted" style="align-self:end;padding-bottom:6px">'+tr(r.unit||'')+'</span>';
       return '<tr class="arow" id="'+id+'-row"><td>'+rowLabel(r)+'</td><td><div class="ins">'+ins+'</div></td><td><span id="'+id+'-chip"></span></td><td><button class="link" id="'+id+'-reset" hidden>'+tr('Reset')+'</button></td></tr>';
-    }).join('')+'</tbody></table></div></div>';
+    }).join('')+'</tbody></table></div></div></details>';
   }).join('');
   $('asmBody').innerHTML=html;
+  META.forEach(function(g,gi){ var d=$('ag-'+gi); d.addEventListener('toggle',function(){ ASM_OPEN[gi]=d.open; }); });
+  paintAssumptionChips();
   META.forEach(function(g,gi){ g.rows.forEach(function(r,ri){
     var id='a-'+gi+'-'+ri;
     function hook(el,apply){ el.addEventListener('input',function(){ var x=parseFloat(el.value); if(!isFinite(x)||x<0) return; apply(x); update(); }); }
@@ -647,11 +657,12 @@ function renderAssumptions(){
   }); });
 }
 function paintAssumptionChips(){
-  META.forEach(function(g,gi){ g.rows.forEach(function(r,ri){
+  META.forEach(function(g,gi){ var unc=0; g.rows.forEach(function(r,ri){
     var id='a-'+gi+'-'+ri, d=isDefault(r), chip=$(id+'-chip'); if(!chip) return;
+    if(d) unc++;
     chip.className='chip '+(d?'unc':'team'); chip.textContent=d?tr('Uncalibrated'):tr('Team value');
     $(id+'-reset').hidden=d; $(id+'-row').classList.toggle('changed',!d);
-  }); });
+  }); var b=$('ag-'+gi+'-b'); if(b) b.textContent=trf('{n} uncalibrated',{n:unc}); });
 }
 var CHK=['web2','ios','android','a11y'];
 function chGet(k){ return k==='a11y'?!!S.a11y:!!(S.channels&&S.channels[k]); }

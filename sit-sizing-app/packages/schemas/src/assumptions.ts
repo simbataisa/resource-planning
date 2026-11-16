@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { Band3, FIELD_TYPES, NonNeg, PT_TYPES, keyed } from './common';
+import { Band3, FIELD_TYPES, NonNeg, PT_TYPES, SIZES, keyed } from './common';
 
 /**
  * Model assumptions (the prototype's DEFAULTS). 106 top-level keys; the UI shows
- * them as 142 calibratable rows (design 7). Field names follow the prototype so
+ * them as 160 calibratable rows (design 7). Field names follow the prototype so
  * profiles exported from the HTML tool import without mapping.
  */
 const ProxyApp = z.object({
@@ -36,7 +36,7 @@ const ProxyAi = z.object({
   guard: NonNeg,
   hitl: NonNeg,
 });
-const bySize = <T extends z.ZodType>(v: T) => z.object({ S: v, M: v, L: v, XL: v });
+const bySize = <T extends z.ZodType>(v: T) => keyed(SIZES, v);
 
 export const FieldTypeRate = z.object({
   /** Matrix cases for one field of this type. */

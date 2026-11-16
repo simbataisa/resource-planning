@@ -21,7 +21,7 @@ describe('Feature', () => {
   });
 
   it.each([
-    ['unknown size', { size: 'XXL' }],
+    ['unknown size', { size: 'XXXXL' }],
     ['complexity out of range', { cx: 3 }],
     ['negative quantity', { qty: -1 }],
     ['unknown type', { type: 'mobile' }],

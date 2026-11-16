@@ -70,7 +70,7 @@ describe('fromPrototypeProfile', () => {
       assumptions: {},
       scope: {
         features: [
-          { name: '', size: 'XXL', cx: '7', qty: -2, type: 'x' },
+          { name: '', size: 'XXXXL', cx: '7', qty: -2, type: 'x' },
           null,
           { name: 'Ok', size: 'S', cx: '2', qty: '3', pt: 1 },
         ],

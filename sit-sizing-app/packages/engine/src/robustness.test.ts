@@ -22,9 +22,9 @@ describe('tolerance for loose inputs (prototype behaviour)', () => {
   it('skips features whose size has no proxy, and missing proxy keys count as 0', () => {
     const s = S();
     s.features = loose([
-      { name: 'a', size: 'XXL', cx: 0, qty: 1 },
-      { name: 'b', type: 'data', size: 'XXL', cx: 0, qty: 1, pt: true },
-      { name: 'c', type: 'ai', size: 'XXL', cx: 0, qty: 1 },
+      { name: 'a', size: 'XXXXL', cx: 0, qty: 1 },
+      { name: 'b', type: 'data', size: 'XXXXL', cx: 0, qty: 1, pt: true },
+      { name: 'c', type: 'ai', size: 'XXXXL', cx: 0, qty: 1 },
     ]);
     const none = S();
     none.features = [];

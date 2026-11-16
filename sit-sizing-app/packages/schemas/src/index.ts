@@ -25,7 +25,9 @@ export {
 export * from './api';
 export {
   StoredPayloadError,
+  addFeatureSizes,
   expandLegacyDataShapes,
+  NEW_FEATURE_SIZE_DEFAULTS,
   UPGRADES,
   upgradeStored,
   type StoredPayload,

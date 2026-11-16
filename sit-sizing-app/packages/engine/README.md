@@ -22,7 +22,7 @@ The SIT sizing calculation engine (design section 6). A faithful TypeScript port
 | `calendarChecks(both, inputs, assumptions)`               | Data cycles, SME labelling and performance cycles against the SIT window       |
 | `gapRows(both)`, `topGap(both)`                           | Rough vs detailed by group                                                     |
 | `itemHours(driver, band, result, assumptions)`            | Hours per item for the complexity rubric                                       |
-| `uncalibratedCount(assumptions, defaults)`                | Rows (of 142) still at their default                                           |
+| `uncalibratedCount(assumptions, defaults)`                | Rows (of 160) still at their default                                           |
 | `fromPrototypeProfile(json)`                              | Import a profile exported from the HTML tool, with its tolerance rules         |
 | `DEFAULT_ASSUMPTIONS`, `EXAMPLE_INPUTS`, `ENGINE_VERSION` | Constants                                                                      |
 

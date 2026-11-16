@@ -18,7 +18,7 @@ describe('compute', () => {
   it('stamps both modes with the engine version', () => {
     const b = computeBoth(S(), A());
     expect(b.engineVersion).toBe(ENGINE_VERSION);
-    expect(ENGINE_VERSION).toBe('1.1.0');
+    expect(ENGINE_VERSION).toBe('1.2.0');
     expect(b.rough.mode).toBe('rough');
     expect(b.detailed.mode).toBe('detailed');
   });

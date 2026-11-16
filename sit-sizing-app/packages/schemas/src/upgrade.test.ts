@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   INPUTS_SCHEMA_VERSION,
+  addFeatureSizes,
   expandLegacyDataShapes,
+  NEW_FEATURE_SIZE_DEFAULTS,
   StoredPayloadError,
   UPGRADES,
   upgradeStored,
@@ -12,10 +14,11 @@ import {
 const bad = { inputs: { nope: true }, assumptions: {} };
 
 describe('upgradeStored (E-08)', () => {
-  it('is at schema version 2, with one step from version 1 (ADR-0019)', () => {
-    expect(INPUTS_SCHEMA_VERSION).toBe(2);
-    expect(Object.keys(UPGRADES)).toEqual(['1']);
+  it('is at schema version 3, with steps from versions 1 and 2 (ADR-0019, ADR-0020)', () => {
+    expect(INPUTS_SCHEMA_VERSION).toBe(3);
+    expect(Object.keys(UPGRADES)).toEqual(['1', '2']);
     expect(UPGRADES[1]).toBe(expandLegacyDataShapes);
+    expect(UPGRADES[2]).toBe(addFeatureSizes);
   });
 
   it('runs every step from the stored version to the current one, in order', () => {
@@ -90,6 +93,44 @@ describe('version 1 → 2: sized data-platform assumptions (ADR-0019)', () => {
     const p = { inputs: { detail: {} }, assumptions: {} };
     expect(expandLegacyDataShapes({ inputs: { detail: {} }, assumptions: {} })).toEqual(p);
     expect(expandLegacyDataShapes({ inputs: null, assumptions: null })).toEqual({
+      inputs: null,
+      assumptions: null,
+    });
+  });
+});
+
+describe('version 2 → 3: ten feature sizes (ADR-0020)', () => {
+  const v2 = () => ({
+    inputs: { features: [{ size: 'XL' }] },
+    assumptions: {
+      proxies: { S: { screen: 9 }, M: {}, L: {}, XL: {} },
+      dproxies: { S: {}, M: {}, L: {}, XL: {} },
+      aproxies: { S: {}, M: {}, L: {}, XL: {} },
+      ptRoughScen: { S: 4, M: 2, L: 3, XL: 5 },
+    },
+  });
+
+  it('adds the six new sizes at their defaults and keeps every existing value', () => {
+    const { assumptions } = addFeatureSizes(v2()) as {
+      assumptions: Record<string, Record<string, unknown>>;
+    };
+    for (const group of ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'] as const) {
+      expect(Object.keys(assumptions[group]!).sort()).toEqual(
+        ['XXS', 'XS', 'S', 'M-', 'M', 'M+', 'L', 'XL', 'XXL', 'XXXL'].sort(),
+      );
+      for (const size of ['XXS', 'XS', 'M-', 'M+', 'XXL', 'XXXL'] as const)
+        expect(assumptions[group]![size]).toEqual(NEW_FEATURE_SIZE_DEFAULTS[group][size]);
+    }
+    expect(assumptions.proxies!.S).toEqual({ screen: 9 });
+    expect(assumptions.ptRoughScen!.S).toBe(4);
+  });
+
+  it('never overwrites a size that is already there, so it is safe to run twice', () => {
+    const once = addFeatureSizes(v2());
+    const custom = JSON.parse(JSON.stringify(once)) as typeof once;
+    (custom.assumptions as { ptRoughScen: Record<string, number> }).ptRoughScen.XXL = 99;
+    expect(addFeatureSizes(JSON.parse(JSON.stringify(custom)) as typeof custom)).toEqual(custom);
+    expect(addFeatureSizes({ inputs: null, assumptions: null })).toEqual({
       inputs: null,
       assumptions: null,
     });

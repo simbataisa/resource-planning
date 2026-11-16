@@ -92,10 +92,10 @@ describe('calendarChecks', () => {
 describe('calibration', () => {
   it('counts rows that still equal the defaults', () => {
     const a = A();
-    expect(uncalibratedCount(a, DEFAULT_ASSUMPTIONS)).toBe(142);
+    expect(uncalibratedCount(a, DEFAULT_ASSUMPTIONS)).toBe(160);
     a.minutes = [10, 20, 45];
     a.proxies.S.api = 3;
-    expect(uncalibratedCount(a, DEFAULT_ASSUMPTIONS)).toBe(140);
+    expect(uncalibratedCount(a, DEFAULT_ASSUMPTIONS)).toBe(158);
     expect(isDefaultRow(a, DEFAULT_ASSUMPTIONS, 'minutes')).toBe(false);
     expect(isDefaultRow(a, DEFAULT_ASSUMPTIONS, 'cases.api')).toBe(true);
   });

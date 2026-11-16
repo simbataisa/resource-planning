@@ -91,13 +91,13 @@ export type FieldTypeKey = (typeof FIELD_TYPES)[number];
 export const PT_TYPES = ['load', 'stress', 'soak', 'spike', 'failover'] as const;
 export type PtTypeKey = (typeof PT_TYPES)[number];
 
-export const SIZES = ['S', 'M', 'L', 'XL'] as const;
+export const SIZES = ['XXS', 'XS', 'S', 'M-', 'M', 'M+', 'L', 'XL', 'XXL', 'XXXL'] as const;
 export type SizeKey = (typeof SIZES)[number];
 
 export const MOBILE_CHANNELS = ['ios', 'android'] as const;
 
 /**
- * The 142 calibratable assumption rows, as dotted paths into Assumptions
+ * The 160 calibratable assumption rows, as dotted paths into Assumptions
  * (prototype META → ROWS). A row is "uncalibrated" while it equals the default.
  */
 export const ASSUMPTION_PATHS: readonly string[] = [
@@ -231,16 +231,7 @@ export const ASSUMPTION_PATHS: readonly string[] = [
   'capacity',
   'band.rough',
   'band.detailed',
-  'dproxies.S',
-  'dproxies.M',
-  'dproxies.L',
-  'dproxies.XL',
-  'aproxies.S',
-  'aproxies.M',
-  'aproxies.L',
-  'aproxies.XL',
-  'proxies.S',
-  'proxies.M',
-  'proxies.L',
-  'proxies.XL',
+  ...SIZES.map((s) => `dproxies.${s}`),
+  ...SIZES.map((s) => `aproxies.${s}`),
+  ...SIZES.map((s) => `proxies.${s}`),
 ];

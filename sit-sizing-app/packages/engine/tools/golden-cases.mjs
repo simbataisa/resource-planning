@@ -414,4 +414,21 @@ export const GOLDEN_CASES = [
           S.features.push({ name: `Synthetic · ${size}${cx}`, size, cx, qty: 2, pt: cx === 2 });
     },
   },
+  {
+    name: 'sizes-extended',
+    description: 'The six sizes added by ADR-0020, as application, data and AI features',
+    edit: (A, S) => {
+      S.features = [];
+      for (const [i, size] of ['XXS', 'XS', 'M-', 'M+', 'XXL', 'XXXL'].entries())
+        for (const type of ['app', 'data', 'ai'])
+          S.features.push({
+            name: `Synthetic · ${type} ${size}`,
+            type,
+            size,
+            cx: i % 3,
+            qty: 1,
+            pt: type === 'app',
+          });
+    },
+  },
 ];

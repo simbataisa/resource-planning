@@ -391,7 +391,7 @@ export type ProfileDetail = z.infer<typeof ProfileDetail>;
 
 export const ProfileListQuery = z.object({ projectId: Id.optional() });
 
-/** Calibration notes per assumption path (P-01). Keys are checked against the engine's 142 rows. */
+/** Calibration notes per assumption path (P-01). Keys are checked against the engine's 160 rows. */
 export const CalibrationMap = z.record(z.string().max(80), CalibrationEntry);
 
 export const ProfileCreate = z

@@ -6,7 +6,8 @@ export const NonNeg = z.number().min(0);
 export const Band3 = z.tuple([NonNeg, NonNeg, NonNeg]);
 export type Band3 = z.infer<typeof Band3>;
 
-export const SIZES = ['S', 'M', 'L', 'XL'] as const;
+/** Rough-scope T-shirt sizes, smallest first (ADR-0020). */
+export const SIZES = ['XXS', 'XS', 'S', 'M-', 'M', 'M+', 'L', 'XL', 'XXL', 'XXXL'] as const;
 export const Size = z.enum(SIZES);
 export type Size = z.infer<typeof Size>;
 
