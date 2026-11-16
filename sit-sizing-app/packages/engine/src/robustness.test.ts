@@ -60,9 +60,9 @@ describe('tolerance for loose inputs (prototype behaviour)', () => {
       pipe: [0, 0, 0],
       table: [0, 0, 0],
       report: [0, 0, 0],
-      dq: 0,
+      dq: [0, 0, 0],
       secured: 0,
-      columns: 10,
+      columns: [10, 0, 0],
     };
     delete s.detail.fieldTypes;
     s.team.aiIters = 0;

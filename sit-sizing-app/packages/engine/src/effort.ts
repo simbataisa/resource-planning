@@ -1,7 +1,7 @@
 import type { Assumptions } from '@sit/schemas';
 import { GROUPS, type GroupKey } from './catalogue.ts';
 import type { GroupTotal, PtHours } from './types.ts';
-import { sum3, type Triple } from './util.ts';
+import { sum3, type Band, type Triple } from './util.ts';
 
 export interface EffortRates {
   /** Design minutes per functional case (after the AI-assist cut). */
@@ -17,7 +17,8 @@ export interface EffortRates {
   aiCut: number;
   dOn: boolean;
   aOn: boolean;
-  feedTot: number;
+  /** Feeds by complexity, for preparation hours. */
+  feedByBand: Triple;
   iters: number;
   reviewShare: number;
   reuse: number;
@@ -54,9 +55,16 @@ export function effort(A: Assumptions, g: Record<GroupKey, Triple>, r: EffortRat
           n * (r.design * A.mobileDesignShare + A.minutes[b as 0 | 1 | 2] * r.exec * A.mobileExec);
       });
     } else if (k === 'dataPrep') {
-      min = r.dOn ? r.feedTot * A.dataPrepHours * A.dataCycles * 60 : 0;
+      // Prototype order: Σ_b feeds[b] × hours[b], then × load cycles × 60 (ADR-0019).
+      min = r.dOn
+        ? r.feedByBand.reduce((t, n, b) => t + n * A.dataPrepHours[b as Band], 0) *
+          A.dataCycles *
+          60
+        : 0;
     } else if (G.family === 'data' && k !== 'dataReport') {
-      min = sum3(arr) * (A.dataDesign * (1 - r.aiCut) + A.dataExec * r.dataExecF);
+      arr.forEach((n, b) => {
+        min += n * (A.dataDesign[b as Band] * (1 - r.aiCut) + A.dataExec[b as Band] * r.dataExecF);
+      });
     } else if (lab !== undefined) {
       const labMin = sum3(arr) * lab * (1 - r.reuse);
       labelMinTotal += labMin;

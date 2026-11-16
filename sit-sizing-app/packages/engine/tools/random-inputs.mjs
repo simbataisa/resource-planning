@@ -22,8 +22,16 @@ export function randomCase(P, seed) {
 
   // Assumptions: mostly default, sometimes perturbed.
   if (chance(0.5)) {
+    // The data-test sizes (ADR-0019) were single values: perturb them with one factor so the
+    // random sequence, and every seeded case, stays as it was.
+    const sized = new Set(['dataDesign', 'dataExec', 'dataPrepHours']);
     for (const k of Object.keys(A)) {
-      if (typeof A[k] === 'number' && chance(0.15))
+      if (sized.has(k)) {
+        if (chance(0.15)) {
+          const f = 0.5 + r();
+          A[k] = A[k].map((v) => Math.round(v * f * 1000) / 1000);
+        }
+      } else if (typeof A[k] === 'number' && chance(0.15))
         A[k] = Math.round(A[k] * (0.5 + r()) * 1000) / 1000;
       else if (Array.isArray(A[k]) && chance(0.1))
         A[k] = A[k].map((v) => Math.round(v * (0.5 + r()) * 1000) / 1000);
@@ -60,14 +68,17 @@ export function randomCase(P, seed) {
   d.reqFields = chance(0.3) ? int(1, 400) : 0;
   d.respFields = chance(0.3) ? int(1, 600) : 0;
   for (const k of Object.keys(d.fieldTypes)) d.fieldTypes[k] = chance(0.25) ? int(0, 30) : 0;
+  // Columns and DQ rules by complexity (ADR-0019) reuse the one draw each had before, so the
+  // random sequence, and every seeded case after it, stays the same.
+  const spread = (n, m1, m2) => [n, (n * 7) % m1, (n * 3) % m2];
   d.data = chance(0.4)
     ? {
         feed: tri(4),
         pipe: tri(5),
         table: tri(8),
         report: tri(3),
-        columns: int(0, 400),
-        dq: int(0, 60),
+        columns: spread(int(0, 400), 151, 97),
+        dq: spread(int(0, 60), 23, 11),
         scd: int(0, 4),
         secured: int(0, 6),
         accessRoles: int(0, 6),
@@ -77,8 +88,8 @@ export function randomCase(P, seed) {
         pipe: [0, 0, 0],
         table: [0, 0, 0],
         report: [0, 0, 0],
-        columns: 0,
-        dq: 0,
+        columns: [0, 0, 0],
+        dq: [0, 0, 0],
         scd: int(0, 2),
         secured: 0,
         accessRoles: int(0, 3),

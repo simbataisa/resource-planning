@@ -28,8 +28,8 @@ export function counts(mode: Mode, A: Assumptions, S: EstimateInputs): Counts {
       pipe: zero3(),
       table: zero3(),
       report: zero3(),
-      columns: 0,
-      dq: 0,
+      columns: zero3(),
+      dq: zero3(),
       scd: 0,
       secured: 0,
       accessRoles: 0,
@@ -44,9 +44,9 @@ export function counts(mode: Mode, A: Assumptions, S: EstimateInputs): Counts {
       if (t === 'data') {
         const p = A.dproxies[f.size];
         if (!p) continue;
-        for (const k of ['feed', 'pipe', 'table', 'report'] as const)
+        for (const k of ['feed', 'pipe', 'table', 'report', 'columns', 'dq'] as const)
           c.data[k][b] += (p[k] || 0) * q;
-        for (const k of ['columns', 'dq', 'scd', 'secured'] as const) c.data[k] += (p[k] || 0) * q;
+        for (const k of ['scd', 'secured'] as const) c.data[k] += (p[k] || 0) * q;
         continue;
       }
       if (t === 'ai') {

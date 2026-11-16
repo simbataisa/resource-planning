@@ -29,7 +29,7 @@ var APP_KEYS=GROUPS.filter(function(g){ return !g.pf; }).map(function(g){ return
 var TYPES=[['app','Application'],['data','Data platform'],['ai','AI product']];
 var DPK=[['feed','Feeds'],['pipe','Pipelines'],['table','Tables'],['report','Reports'],['columns','Columns'],['dq','DQ rules'],['scd','SCD'],['secured','Secured']];
 var APK=[['intent','Intents'],['ocr','OCR types'],['rag','Sources'],['tools','Tools'],['guard','Guardrails'],['hitl','HITL']];
-var DDRV=[{k:'feed',label:'Data sources and feeds'},{k:'pipe',label:'ETL / ELT pipelines'},{k:'table',label:'Target tables'},{k:'report',label:'Reports, marts and dashboards'}];
+var DDRV=[{k:'feed',label:'Data sources and feeds'},{k:'pipe',label:'ETL / ELT pipelines'},{k:'table',label:'Target tables'},{k:'columns',label:'Mapped columns (source-to-target spec)'},{k:'dq',label:'Data quality rules'},{k:'report',label:'Reports, marts and dashboards'}];
 var ADRV=[{k:'intent',label:'Chatbot intents'},{k:'ocr',label:'OCR document types'}];
 var FTYPES=[{k:'text',label:'Text'},{k:'integer',label:'Integer'},{k:'decimal',label:'Decimal / Amount'},{k:'percentage',label:'Percentage'},{k:'currency',label:'Currency'},{k:'email',label:'Email'},{k:'phone',label:'Phone'},{k:'date',label:'Date'},{k:'datetime',label:'Datetime'},{k:'boolean',label:'Boolean'},{k:'enum',label:'Enum / Dropdown'},{k:'checkbox',label:'Checkbox'},{k:'radio',label:'Radio button'},{k:'password',label:'Password'},{k:'url',label:'URL'},{k:'account',label:'Account number'},{k:'citizenId',label:'Citizen ID'},{k:'taxCode',label:'Tax code'},{k:'iban',label:'IBAN / Bank account'},{k:'file',label:'File upload'},{k:'image',label:'Image upload'}];
 var PROXY_KEYS=[['screen','Screens'],['field','Fields'],['api','APIs'],['integration','Integr.'],['rule','Rules'],['journey','Journeys'],['batch','Batch'],['event','Events'],['workflow','Workflows'],['actions','Action grp']];
@@ -54,7 +54,7 @@ var DEFAULTS={
   ptCycles:3, ptCyclesCI:2, ptAnalysis:0.5, ptReport:16, ptRoughScen:{S:1,M:2,L:3,XL:5}, ptEnvDays:2,
   aproxies:{S:{intent:3,ocr:0,rag:1,tools:1,guard:4,hitl:1},M:{intent:8,ocr:1,rag:3,tools:3,guard:6,hitl:2},L:{intent:15,ocr:2,rag:5,tools:5,guard:6,hitl:3},XL:{intent:25,ocr:4,rag:8,tools:8,guard:8,hitl:4}},
   dFeed:[3,4,6], dPipe:[4,6,9], dTable:[2,3,4], dScd:2, dCol:1.5, dDq:2, dReport:[4,6,8], dAccessSampling:0.5, dataSample:0.1,
-  dataDesign:10, dataExec:5, dataCycles:3, dataPrepHours:2, dataDaysPerCycle:2,
+  dataDesign:[10,15,25], dataExec:[5,8,12], dataCycles:3, dataPrepHours:[2,3,5], dataDaysPerCycle:2,
   aiUtt:[20,35,50], aiRagQ:15, aiOcrSamples:[50,100,200], aiAdv:40, aiToolCases:8, aiHitlCases:4,
   aiLabelUtt:2, aiLabelRag:6, aiLabelOcr:4, aiLabelAdv:2, aiReviewAuto:0.20, aiReviewManual:0.60, aiReviewMin:2, aiAnalysisHours:6, qeLabelShare:0.5,
   hoursPerDay:6, daysPerWeek:5, capacity:[0.7,1.0,1.2],
@@ -75,7 +75,7 @@ var SAMPLE_SCOPE={
     {name:'Example · Transaction data mart',type:'data',size:'M',cx:1,qty:1},
     {name:'Example · Customer service chatbot',type:'ai',size:'M',cx:1,qty:1,pt:true}],
   roughRoles:5, roughLanguages:2, roughVariants:2, channels:{web2:false,ios:true,android:true}, a11y:true,
-  detail:{api:[8,14,8],screen:[5,8,3],integration:[1,4,4],rule:[10,18,12],journey:[2,4,3],batch:[1,2,1],event:[2,3,1],workflow:[1,2,1],fields:140,data:{feed:[1,1,0],pipe:[1,2,1],table:[3,4,2],report:[1,1,1],columns:140,dq:24,scd:1,secured:3,accessRoles:4},ai:{intent:[3,4,2],ocr:[0,0,0],rag:3,tools:3,guard:6,hitl:2},pt:{scen:[2,4,2],dataHeavy:2},reqFields:0,respFields:0,fieldTypes:{text:0,integer:0,decimal:0,percentage:0,currency:0,email:0,phone:0,date:0,datetime:0,boolean:0,enum:0,checkbox:0,radio:0,password:0,url:0,account:0,citizenId:0,taxCode:0,iban:0,file:0,image:0},roles:6,actions:14,approvals:2,critical:12,variants:3,languages:2},
+  detail:{api:[8,14,8],screen:[5,8,3],integration:[1,4,4],rule:[10,18,12],journey:[2,4,3],batch:[1,2,1],event:[2,3,1],workflow:[1,2,1],fields:140,data:{feed:[1,1,0],pipe:[1,2,1],table:[3,4,2],report:[1,1,1],columns:[140,0,0],dq:[24,0,0],scd:1,secured:3,accessRoles:4},ai:{intent:[3,4,2],ocr:[0,0,0],rag:3,tools:3,guard:6,hitl:2},pt:{scen:[2,4,2],dataHeavy:2},reqFields:0,respFields:0,fieldTypes:{text:0,integer:0,decimal:0,percentage:0,currency:0,email:0,phone:0,date:0,datetime:0,boolean:0,enum:0,checkbox:0,radio:0,password:0,url:0,account:0,citizenId:0,taxCode:0,iban:0,file:0,image:0},roles:6,actions:14,approvals:2,critical:12,variants:3,languages:2},
   team:{weeks:6,mix:{junior:30,mid:50,senior:20},env:1,automation:0,ai:0,aiIters:4,aiSmes:2},
   evidence:{mutation:62,valBE:100,valFE:80,mapCov:70,jacoco:82,feUnit:75,feMut:55,ruleCov:60,iosUnit:65,androidUnit:72,dqCov:50,contractCov:40,goldenReuse:0,evalCI:true,ptCI:false,ptReuse:0,apm:true},
   includeL4:true,
@@ -151,10 +151,10 @@ var META=[
     {p:'dReport',label:'Cases per report, mart or dashboard (totals reconcile, filters, periods)',cols:CX,unit:'cases'},
     {p:'dAccessSampling',label:'Sampling of data access roles × secured datasets',pct:1},
     {p:'dataSample',label:'Share of column and DQ checks repeated in SIT when data tests are proven',pct:1},
-    {p:'dataDesign',label:'Design minutes per data test (SQL comparison)',unit:'min'},
-    {p:'dataExec',label:'Execution and analysis minutes per data test per load cycle',unit:'min'},
+    {p:'dataDesign',label:'Design minutes per data test (SQL comparison)',cols:CX,unit:'min'},
+    {p:'dataExec',label:'Execution and analysis minutes per data test per load cycle',cols:CX,unit:'min'},
     {p:'dataCycles',label:'Load cycles in SIT (initial, incremental, rerun)',unit:'cycles'},
-    {p:'dataPrepHours',label:'Data preparation and environment refresh hours per feed per cycle',unit:'h'},
+    {p:'dataPrepHours',label:'Data preparation and environment refresh hours per feed per cycle',cols:CX,unit:'h'},
     {p:'dataDaysPerCycle',label:'Calendar days per load cycle (batch windows)',unit:'days'}]},
   {grp:'AI product (chatbot, OCR, AI workflow)',rows:[
     {p:'aiUtt',label:'Golden-set utterances per intent, per language',cols:CX,unit:'samples'},
@@ -228,9 +228,15 @@ var A=clone(DEFAULTS), S=clone(SAMPLE_SCOPE), PROFILE='';
 try{ var saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(saved){ loadProfile(saved); } }catch(e){}
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify({assumptions:A,scope:S,profile:PROFILE})); }catch(e){} }
 
+/* Files saved before data-test minutes and preparation hours were sized: one value becomes the same value for every size; columns and DQ rules count as Simple. */
+function expandLegacy(asm,sc){
+  ['dataDesign','dataExec','dataPrepHours'].forEach(function(k){ if(typeof asm[k]==='number') asm[k]=[asm[k],asm[k],asm[k]]; });
+  var dd=sc&&sc.detail&&sc.detail.data; if(dd) ['columns','dq'].forEach(function(k){ if(typeof dd[k]==='number') dd[k]=[dd[k],0,0]; });
+}
 function loadProfile(obj){
   if(!obj||typeof obj!=='object') throw new Error(tr('Not a profile.'));
   var asm=obj.assumptions||obj.A; if(!asm) throw new Error(tr('The JSON has no "assumptions" section.'));
+  expandLegacy(asm,obj.scope);
   A=merge(DEFAULTS,asm);
   if(obj.scope){
     var sc=obj.scope, base=clone(SAMPLE_SCOPE);
@@ -244,10 +250,10 @@ function loadProfile(obj){
 /* ---------- model ---------- */
 function counts(mode,A,S){
   var c={api:[0,0,0],screen:[0,0,0],integration:[0,0,0],rule:[0,0,0],workflow:[0,0,0],batch:[0,0,0],event:[0,0,0],journey:[0,0,0],fields:0,roles:0,actions:0,languages:1,critical:0,variants:1,approvals:0,ch:S.channels||{},a11y:!!S.a11y,
-    data:{feed:[0,0,0],pipe:[0,0,0],table:[0,0,0],report:[0,0,0],columns:0,dq:0,scd:0,secured:0,accessRoles:0},ai:{intent:[0,0,0],ocr:[0,0,0],rag:0,tools:0,guard:0,hitl:0}};
+    data:{feed:[0,0,0],pipe:[0,0,0],table:[0,0,0],report:[0,0,0],columns:[0,0,0],dq:[0,0,0],scd:0,secured:0,accessRoles:0},ai:{intent:[0,0,0],ocr:[0,0,0],rag:0,tools:0,guard:0,hitl:0}};
   if(mode==='rough'){
     S.features.forEach(function(f){ var t=f.type||'app', q=+f.qty||0, b=+f.cx||0, p;
-      if(t==='data'){ p=A.dproxies[f.size]; if(!p) return; ['feed','pipe','table','report'].forEach(function(k){ c.data[k][b]+=(p[k]||0)*q; }); ['columns','dq','scd','secured'].forEach(function(k){ c.data[k]+=(p[k]||0)*q; }); return; }
+      if(t==='data'){ p=A.dproxies[f.size]; if(!p) return; ['feed','pipe','table','report','columns','dq'].forEach(function(k){ c.data[k][b]+=(p[k]||0)*q; }); ['scd','secured'].forEach(function(k){ c.data[k]+=(p[k]||0)*q; }); return; }
       if(t==='ai'){ p=A.aproxies[f.size]; if(!p) return; ['intent','ocr'].forEach(function(k){ c.ai[k][b]+=(p[k]||0)*q; }); ['rag','tools','hitl'].forEach(function(k){ c.ai[k]+=(p[k]||0)*q; }); if(q>0) c.ai.guard=Math.max(c.ai.guard,p.guard||0); return; }
       p=A.proxies[f.size]; if(!p) return;
       DRV.forEach(function(d){ c[d.k][b]+=(p[d.k]||0)*q; }); c.fields+=p.field*q; c.actions+=p.actions*q; });
@@ -312,7 +318,7 @@ function compute(mode,A,S,E){
   var mapBase=respF*A.mapPerField*(1+A.formatShare);
   g.mapping=[mp==='sample'?0:mp==='partial'?mapBase*A.partialShare:mapBase,0,0];
   var dd=c.data, da=c.ai, Z=[0,0,0];
-  var dOn=sum3(dd.feed)+sum3(dd.pipe)+sum3(dd.table)+sum3(dd.report)+(+dd.columns||0)+(+dd.dq||0)+(+dd.secured||0)>0;
+  var dOn=sum3(dd.feed)+sum3(dd.pipe)+sum3(dd.table)+sum3(dd.report)+sum3(dd.columns)+sum3(dd.dq)+(+dd.secured||0)>0;
   var aOn=sum3(da.intent)+sum3(da.ocr)+(+da.rag||0)+(+da.tools||0)+(+da.hitl||0)>0;
   function bb(arr,per){ return [0,1,2].map(function(b){ return (+(arr||Z)[b]||0)*per[b]; }); }
   var dqC=credit(+E.dqCov||0), ctC=credit(+E.contractCov||0);
@@ -321,9 +327,8 @@ function compute(mode,A,S,E){
   g.dataSource=dOn?bb(dd.feed,A.dFeed).map(function(v,b){ return cr(ctC,v,(+(dd.feed||Z)[b]||0)); }):Z.slice();
   g.dataPipeline=dOn?bb(dd.pipe,A.dPipe):Z.slice();
   g.dataModel=dOn?bb(dd.table,A.dTable).map(function(v,b){ return v+(b===1?(+dd.scd||0)*A.dScd:0); }):Z.slice();
-  var colV=(+dd.columns||0)*A.dCol, dqV=(+dd.dq||0)*A.dDq;
-  g.dataMapping=dOn?[cr(dqC,colV,colV*A.dataSample),0,0]:Z.slice();
-  g.dataQuality=dOn?[cr(dqC,dqV,dqV*A.dataSample),0,0]:Z.slice();
+  g.dataMapping=dOn?bb(dd.columns,[A.dCol,A.dCol,A.dCol]).map(function(v){ return cr(dqC,v,v*A.dataSample); }):Z.slice();
+  g.dataQuality=dOn?bb(dd.dq,[A.dDq,A.dDq,A.dDq]).map(function(v){ return cr(dqC,v,v*A.dataSample); }):Z.slice();
   g.dataReport=dOn?bb(dd.report,A.dReport):Z.slice();
   g.dataAccess=dOn?[(+dd.secured||0)*(+dd.accessRoles||0)*2*A.dAccessSampling,0,0]:Z.slice();
   g.dataPrep=Z.slice();
@@ -355,8 +360,8 @@ function compute(mode,A,S,E){
     var arr=g[G.k].map(function(x){ return Math.max(0,Math.round(x)); }), min=0;
     if(G.k==='fieldFE'||G.k==='fieldBE'||G.k==='mapping'){ min=sum3(arr)*(valDesign+(G.k==='fieldFE'?A.valExecUI:A.valExecAPI)*valExec); }
     else if(G.k==='mobile') arr.forEach(function(n,b){ min+=n*(design*A.mobileDesignShare+A.minutes[b]*exec*A.mobileExec); });
-    else if(G.k==='dataPrep') min=dOn?feedTot*A.dataPrepHours*A.dataCycles*60:0;
-    else if(G.pf==='data'&&G.k!=='dataReport') min=sum3(arr)*(A.dataDesign*(1-aiCut)+A.dataExec*dataExecF);
+    else if(G.k==='dataPrep') min=dOn?bb(dd.feed,A.dataPrepHours).reduce(function(t,v){ return t+v; },0)*A.dataCycles*60:0;
+    else if(G.pf==='data'&&G.k!=='dataReport') arr.forEach(function(n,b){ min+=n*(A.dataDesign[b]*(1-aiCut)+A.dataExec[b]*dataExecF); });
     else if(LABEL[G.k]!==undefined){ var lab=sum3(arr)*LABEL[G.k]*(1-reuse); labelMinTotal+=lab; min=lab*A.qeLabelShare+sum3(arr)*iters*reviewShare*A.aiReviewMin; }
     else if(G.k==='aiEval') min=aOn?iters*A.aiAnalysisHours*60:0;
     else if(G.k==='ptDesign') min=pt.design*60; else if(G.k==='ptEnv') min=pt.env*60; else if(G.k==='ptRun') min=pt.run*60;
@@ -407,7 +412,7 @@ var SENS=[
   {label:'AI design time saving',f:function(A,k){ A.aiDesignCut=A.aiDesignCut.map(function(x){ return Math.min(0.9,x*k); }); }},
   {label:'Productive hours per day',f:function(A,k){ A.hoursPerDay*=k; }},
   {label:'Capacity per FTE level',f:function(A,k){ A.capacity=scaleArr(A.capacity,k); }},
-  {label:'Data test minutes',f:function(A,k){ A.dataDesign*=k; A.dataExec*=k; }},
+  {label:'Data test minutes',f:function(A,k){ A.dataDesign=scaleArr(A.dataDesign,k); A.dataExec=scaleArr(A.dataExec,k); }},
   {label:'Source-to-target checks per column',f:function(A,k){ A.dCol*=k; }},
   {label:'Data load cycles',f:function(A,k){ A.dataCycles*=k; }},
   {label:'Golden-set utterances per intent',f:function(A,k){ A.aiUtt=scaleArr(A.aiUtt,k); }},
@@ -443,7 +448,7 @@ function countTable(id,list,obj,prefix){
   list.forEach(function(d){ [0,1,2].forEach(function(b){ $(prefix+d.k+'-'+b).addEventListener('input',function(e){ var v=parseFloat(e.target.value); if(isFinite(v)){ obj[d.k][b]=Math.max(0,Math.round(v)); update(); } }); }); });
 }
 function renderDai(){ countTable('dataTable',DDRV,S.detail.data,'dd-'); countTable('aiTable',ADRV,S.detail.ai,'da-'); countTable('ptTable',[{k:'scen',label:'Performance scenarios (journeys or APIs under load)'}],S.detail.pt,'dp-'); }
-var DAI_NUM=[['dd-columns','data','columns'],['dd-dq','data','dq'],['dd-scd','data','scd'],['dd-secured','data','secured'],['dd-roles','data','accessRoles'],
+var DAI_NUM=[['dd-scd','data','scd'],['dd-secured','data','secured'],['dd-roles','data','accessRoles'],
   ['da-rag','ai','rag'],['da-tools','ai','tools'],['da-guard','ai','guard'],['da-hitl','ai','hitl']];
 function bindDai(){
   DAI_NUM.forEach(function(x){ bindNum(x[0],function(){ return S.detail[x[1]][x[2]]; },function(v){ S.detail[x[1]][x[2]]=Math.max(0,Math.round(v)); }); });
@@ -483,7 +488,7 @@ function updateDsec(D){
   set('fields',trf('{f} input · {q} request · {p} response fields',{f:fmt(c.fields),q:fmt(x.reqF)+(x.reqIn?'':' '+tr('est.')),p:fmt(x.respF)+(x.respIn?'':' '+tr('est.'))}),false);
   set('rules',trf('{r} roles · {a} actions · {w} approvals · {k} critical',{r:fmt(c.roles),a:fmt(c.actions),w:fmt(c.approvals),k:fmt(c.critical)}),false);
   set('channels',chNames(c)+' · '+trf('{l} languages',{l:c.languages}),false);
-  set('data',x.dOn?trf('{f} feeds · {t} tables · {c} columns',{f:fmt(sum3(c.data.feed)),t:fmt(sum3(c.data.table)),c:fmt(c.data.columns)}):tr('Not in scope'),!x.dOn);
+  set('data',x.dOn?trf('{f} feeds · {t} tables · {c} columns',{f:fmt(sum3(c.data.feed)),t:fmt(sum3(c.data.table)),c:fmt(sum3(c.data.columns))}):tr('Not in scope'),!x.dOn);
   set('ai',x.aOn?trf('{i} intents · {o} OCR types · {t} tools',{i:fmt(sum3(c.ai.intent)),o:fmt(sum3(c.ai.ocr)),t:fmt(c.ai.tools)}):tr('Not in scope'),!x.aOn);
   set('pt',x.ptOn?trf('{n} scenarios · {t} test types · {h} h',{n:x.ptN,t:PTT.filter(function(t){ return S.ptTypes[t[0]]; }).length,h:fmt((x.pt.design+x.pt.env+x.pt.run)*(1+A.overhead))}):tr('Not in scope'),!x.ptOn);
   if($('dp-scen-t')) $('dp-scen-t').textContent=fmt(sum3(S.detail.pt.scen));
@@ -542,11 +547,11 @@ function renderDerived(D){
     rows.push(['dataSource',trf('{n} feeds × {c} cases by complexity × {s} (data contract credit)',{n:num1(x.feedTot),c:A.dFeed.join('/'),s:x.ctC==='sample'?tr('1 case each'):x.ctC==='partial'?pctS(A.partialShare):'100%'})]);
     rows.push(['dataPipeline',trf('{n} pipelines × {c} cases by complexity',{n:num1(sum3(dd.pipe)),c:A.dPipe.join('/')})]);
     rows.push(['dataModel',trf('{n} tables × {c} cases by complexity + {d} SCD dimensions × {e}',{n:num1(sum3(dd.table)),c:A.dTable.join('/'),d:dd.scd,e:A.dScd})]);
-    rows.push(['dataMapping',trf('{n} mapped columns × {c} checks × {s} back in SIT',{n:fmt(dd.columns),c:A.dCol,s:dqs})]);
-    rows.push(['dataQuality',trf('{n} data quality rules × {c} cases × {s} back in SIT',{n:fmt(dd.dq),c:A.dDq,s:dqs})]);
+    rows.push(['dataMapping',trf('{n} mapped columns × {c} checks × {s} back in SIT',{n:fmt(sum3(dd.columns)),c:A.dCol,s:dqs})]);
+    rows.push(['dataQuality',trf('{n} data quality rules × {c} cases × {s} back in SIT',{n:fmt(sum3(dd.dq)),c:A.dDq,s:dqs})]);
     rows.push(['dataReport',trf('{n} reports × {c} cases by complexity',{n:num1(sum3(dd.report)),c:A.dReport.join('/')})]);
     rows.push(['dataAccess',trf('{d} secured datasets × {r} roles × 2 × {s} sampling',{d:dd.secured,r:dd.accessRoles,s:pctS(A.dAccessSampling)})]);
-    rows.push(['dataPrep',trf('{n} feeds × {h} h × {c} load cycles (hours, no cases)',{n:num1(x.feedTot),h:A.dataPrepHours,c:A.dataCycles})]); }
+    rows.push(['dataPrep',trf('{n} feeds × {h} h by complexity × {c} load cycles (hours, no cases)',{n:num1(x.feedTot),h:A.dataPrepHours.join('/'),c:A.dataCycles})]); }
   if(x.aOn){ var da=c.ai, rv=pctS(x.reviewShare);
     rows.push(['aiIntent',trf('{n} intents × {u} utterances by complexity × {l} languages; label {m} min, review {r} of outputs × {i} runs',{n:num1(sum3(da.intent)),u:A.aiUtt.join('/'),l:x.langs,m:A.aiLabelUtt,r:rv,i:x.iters})]);
     rows.push(['aiRag',trf('{n} sources × {q} questions × {l} languages; reference answer {m} min',{n:da.rag,q:A.aiRagQ,l:x.langs,m:A.aiLabelRag})]);
@@ -678,8 +683,6 @@ var TIPS={'d-fields':'Count every input control users can type or pick on the sc
  'e-femut':'Stryker mutation score from the frontend pipeline, if it runs.',
  'e-ios':'XCTest unit coverage of the iOS app logic (view models, services), from the iOS pipeline.',
  'e-android':'JUnit and Espresso unit coverage of the Android app logic, from the Android pipeline.',
- 'dd-columns':'Rows in the source-to-target mapping spec that carry a transformation or a direct mapping.',
- 'dd-dq':'Data quality rules in the DQ catalogue: completeness, validity, uniqueness, consistency checks.',
  'dd-scd':'Dimensions that keep history (slowly changing dimension type 2).',
  'dd-secured':'Datasets with row-level security, column masking or PII restrictions.',
  'dd-roles':'Distinct data access roles or groups that read the secured datasets.',
@@ -716,7 +719,7 @@ function renderGuide(D){
     trf('Scope: {a} APIs, {s} screens, {i} integrations, {r} rules, {w} workflows, {b} batch jobs, {e} event topics, {j} journeys on {ch}.',{a:num1(x.apis),s:num1(sum3(c.screen)),i:num1(sum3(c.integration)),r:num1(x.rTot),w:num1(x.wfTot),b:num1(sum3(c.batch)),e:num1(sum3(c.event)),j:num1(sum3(c.journey)),ch:chNames(c)}),
     trf('Cases: counted drivers × cases per driver by complexity, plus the derived rows (validation, mapping, roles, mobile, accessibility), after shift-left credit = {n} cases and samples.',{n:fmt(D.cases)}),
     trf('Application hours: each case gets {d} design minutes plus its execution minutes × (cycles {cy} + regression {rg} × (1 − automated {au})) × (1 + retest {rt}) × environment {env}.',{d:num1(D.design),cy:A.cycles,rg:pctS(A.regression),au:pctS(D.auto),rt:pctS(D.retest),env:D.env.toFixed(2)}),
-    x.dOn?trf('Data platform: {f} feeds, {p} pipelines, {t} tables, {c} mapped columns and {q} DQ rules over {l} load cycles = {h} h.',{f:fmt(sum3(c.data.feed)),p:fmt(sum3(c.data.pipe)),t:fmt(sum3(c.data.table)),c:fmt(c.data.columns),q:fmt(c.data.dq),l:A.dataCycles,h:fmt(grpH(D,'data'))}):tr('Data platform: not in scope.'),
+    x.dOn?trf('Data platform: {f} feeds, {p} pipelines, {t} tables, {c} mapped columns and {q} DQ rules over {l} load cycles = {h} h.',{f:fmt(sum3(c.data.feed)),p:fmt(sum3(c.data.pipe)),t:fmt(sum3(c.data.table)),c:fmt(sum3(c.data.columns)),q:fmt(sum3(c.data.dq)),l:A.dataCycles,h:fmt(grpH(D,'data'))}):tr('Data platform: not in scope.'),
     x.aOn?trf('AI product: {i} intents, {s} knowledge sources, {o} OCR document types and {g} guardrail categories, {r} evaluation runs = {h} h of QE time, plus {m} h of SME labelling.',{i:fmt(sum3(c.ai.intent)),s:fmt(c.ai.rag),o:fmt(sum3(c.ai.ocr)),g:fmt(c.ai.guard),r:x.iters,h:fmt(grpH(D,'ai')),m:fmt(D.smeLabelHours)}):tr('AI product: not in scope.'),
     x.ptOn?trf('Performance testing: {n} scenarios, {r} runs per cycle × {c} cycles = {h} h.',{n:x.ptN,r:x.runN,c:x.ptCycles,h:fmt(grpH(D,'pt'))}):tr('Performance testing: not in scope.'),
     trf('All hours, each including {oh} overhead: application + data + AI + performance = {h} h.',{oh:pctS(A.overhead),h:fmt(D.hours)}),

@@ -123,7 +123,7 @@ export function derivedRows(D: ModeResult, A: Assumptions): DerivedRow[] {
     rows.push([
       'dataMapping',
       {
-        columns: dd.columns,
+        columns: sum3(dd.columns),
         checksPerColumn: A.dCol,
         credit: x.dqC,
         sampleShare: A.dataSample,
@@ -133,7 +133,7 @@ export function derivedRows(D: ModeResult, A: Assumptions): DerivedRow[] {
     rows.push([
       'dataQuality',
       {
-        rules: dd.dq,
+        rules: sum3(dd.dq),
         casesEach: A.dDq,
         credit: x.dqC,
         sampleShare: A.dataSample,
@@ -147,7 +147,7 @@ export function derivedRows(D: ModeResult, A: Assumptions): DerivedRow[] {
     ]);
     rows.push([
       'dataPrep',
-      { feeds: x.feedTot, hoursEach: A.dataPrepHours, loadCycles: A.dataCycles },
+      { feeds: x.feedTot, hoursByComplexity: A.dataPrepHours.join('/'), loadCycles: A.dataCycles },
     ]);
   }
   if (x.aOn) {

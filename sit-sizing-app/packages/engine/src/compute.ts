@@ -113,7 +113,7 @@ export function compute(
     aiCut,
     dOn: data.dOn,
     aOn: ai.aOn,
-    feedTot: data.feedTot,
+    feedByBand: data.feedByBand,
     iters: ai.iters,
     reviewShare: ai.reviewShare,
     reuse: ai.reuse,

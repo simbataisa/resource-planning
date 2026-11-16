@@ -8,16 +8,17 @@ const A = () => structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions;
 const S = () => structuredClone(EXAMPLE_INPUTS) as EstimateInputs;
 
 describe('compute', () => {
-  it('reproduces the design document headline numbers (design 6.4)', () => {
+  it('reproduces the design document headline numbers (design 6.4; engine 1.1.0, ADR-0019)', () => {
     const r = compute('rough', S(), A());
     const d = compute('detailed', S(), A());
-    expect([r.cases, Math.round(r.hours), Number(r.fte.toFixed(2))]).toEqual([3511, 3499, 20.46]);
-    expect([d.cases, Math.round(d.hours), Number(d.fte.toFixed(2))]).toEqual([4047, 3681, 21.53]);
+    expect([r.cases, Math.round(r.hours), Number(r.fte.toFixed(2))]).toEqual([3511, 3562, 20.83]);
+    expect([d.cases, Math.round(d.hours), Number(d.fte.toFixed(2))]).toEqual([4047, 3709, 21.69]);
   });
 
   it('stamps both modes with the engine version', () => {
     const b = computeBoth(S(), A());
     expect(b.engineVersion).toBe(ENGINE_VERSION);
+    expect(ENGINE_VERSION).toBe('1.1.0');
     expect(b.rough.mode).toBe('rough');
     expect(b.detailed.mode).toBe('detailed');
   });

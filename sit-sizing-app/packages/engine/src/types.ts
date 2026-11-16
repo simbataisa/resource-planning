@@ -28,8 +28,8 @@ export interface Counts {
     pipe: Triple;
     table: Triple;
     report: Triple;
-    columns: number;
-    dq: number;
+    columns: Triple;
+    dq: Triple;
     scd: number;
     secured: number;
     accessRoles: number;
