@@ -79,6 +79,7 @@
 ### Task 2: Schemas and the upgrade step
 
 **Files:**
+
 - `packages/schemas/src/assumptions.ts`: the three fields become `Band3`/`Triple`, as `dFeed` is.
 - `packages/schemas/src/inputs.ts`: `columns` and `dq` become `Triple`.
 - `packages/schemas/src/upgrade.ts`.
@@ -96,6 +97,7 @@
 ### Task 3: Engine, reference and goldens
 
 **Files:**
+
 - Engine: `packages/engine/src/{defaults,data-platform,effort,counts,sensitivity,derived,version,prototype-import}.ts`, `tools/random-inputs.mjs` (triples for the three assumptions and the two inputs), `tools/golden-cases.mjs` (add a `data-sized` case).
 - Reference: `sit-sizing-reference/prototype-engine-and-ui.js`, re-extracted byte-for-byte from the HTML `<script>` (the IIFE). Also `vi-translations.json` if the dictionary changed, and `golden-example.json`.
 - Goldens: regenerated with `pnpm --filter @sit/engine golden:generate`.
@@ -113,6 +115,7 @@
 ### Task 4: Profile data migration
 
 **Files:**
+
 - Create `packages/db/prisma/migrations/20261120000000_sized_data_assumptions/migration.sql`.
 - Test: `apps/web/tests/integration/profiles-migration.test.ts` (Testcontainers).
 
@@ -133,6 +136,7 @@
 ### Task 5: The minimum app changes to keep the type check green
 
 **Files:**
+
 - `apps/web/lib/assumption-meta.ts`: the three rows get `cols` like `dFeed`.
 - `components/features/estimate-editor/detail-scope-tab.tsx`: columns and DQ move into the S/M/C data table, and the scalar fields for them are dropped. The summary uses `sum3`.
 - `derived-formulas.ts`, `components/features/results/results-panels.tsx`.

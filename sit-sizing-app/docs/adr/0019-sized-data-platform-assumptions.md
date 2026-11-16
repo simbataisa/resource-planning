@@ -1,11 +1,11 @@
 # ADR-0019: Simple / Medium / Complex sizes for data-test minutes and preparation hours
 
-|                           |                                                                                                    |
-| ------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Status**                | Accepted (numbers chosen by the requester on 2026-11-16); named review pending                     |
-| **Date**                  | 2026-11-16                                                                                         |
-| **Deciders**              | Product owner, QE lead (numbers); tech lead; named reviewer for `packages/engine` and migrations   |
-| **Backlog / design refs** | Design 6.4 (golden files), 6.6 (engine change policy); ADR-0008 (profiles), ADR-0013 (upgrade on read) |
+|                           |                                                                                                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**                | Accepted (numbers chosen by the requester on 2026-11-16); named review pending                                                                             |
+| **Date**                  | 2026-11-16                                                                                                                                                 |
+| **Deciders**              | Product owner, QE lead (numbers); tech lead; named reviewer for `packages/engine` and migrations                                                           |
+| **Backlog / design refs** | Design 6.4 (golden files), 6.6 (engine change policy); ADR-0008 (profiles), ADR-0013 (upgrade on read)                                                     |
 | **Spec**                  | [`docs/superpowers/specs/2026-11-16-data-platform-sized-assumptions-design.md`](../superpowers/specs/2026-11-16-data-platform-sized-assumptions-design.md) |
 
 ## Context
@@ -22,11 +22,11 @@ QE leads asked for these three assumptions to be t-shirt sized, like `minutes`, 
 
 ## Options considered
 
-| Option | Pros | Cons |
-| --- | --- | --- |
-| A. Triples for the three assumptions; columns and DQ as S/M/C inputs; old data copied to equal sizes (this ADR) | Complexity reaches the largest group of data tests. Old versions and profiles keep their numbers | API shape change. One profile data migration |
-| B. Triples only; columns and DQ stay in Simple | Smaller change | Most data tests (columns, DQ) can never use Medium or Complex sizes |
-| C. One size multiplier on the existing single values | No shape change | Not how the other sized assumptions work. Profiles can't calibrate each size |
+| Option                                                                                                          | Pros                                                                                             | Cons                                                                         |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| A. Triples for the three assumptions; columns and DQ as S/M/C inputs; old data copied to equal sizes (this ADR) | Complexity reaches the largest group of data tests. Old versions and profiles keep their numbers | API shape change. One profile data migration                                 |
+| B. Triples only; columns and DQ stay in Simple                                                                  | Smaller change                                                                                   | Most data tests (columns, DQ) can never use Medium or Complex sizes          |
+| C. One size multiplier on the existing single values                                                            | No shape change                                                                                  | Not how the other sized assumptions work. Profiles can't calibrate each size |
 
 ## Decision
 
@@ -34,11 +34,11 @@ Option A.
 
 1. **New defaults** (the values the QE lead chose; Simple equals today's value):
 
-   | Path | Old | New `[S, M, C]` |
-   | --- | --- | --- |
-   | `dataDesign` (min) | 10 | [10, 15, 25] |
-   | `dataExec` (min per load cycle) | 5 | [5, 8, 12] |
-   | `dataPrepHours` (h per feed per cycle) | 2 | [2, 3, 5] |
+   | Path                                   | Old | New `[S, M, C]` |
+   | -------------------------------------- | --- | --------------- |
+   | `dataDesign` (min)                     | 10  | [10, 15, 25]    |
+   | `dataExec` (min per load cycle)        | 5   | [5, 8, 12]      |
+   | `dataPrepHours` (h per feed per cycle) | 2   | [2, 3, 5]       |
 
 2. **Formulas.**
    - Data-test minutes: `Σ_b tests[b] × (dataDesign[b] × (1 − aiCut) + dataExec[b] × dataCycles × (1 + retest) × env)`.

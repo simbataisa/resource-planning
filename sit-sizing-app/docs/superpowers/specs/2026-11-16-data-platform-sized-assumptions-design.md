@@ -9,11 +9,11 @@ The "Data platform (Data Lake, Data Warehouse, ETL)" assumption section sizes da
 ## Goals
 
 - These three assumptions become size triples `[Simple, Medium, Complex]`:
-  | Path | Label | Today | New default |
-  |---|---|---|---|
-  | `dataDesign` | Design minutes per data test (SQL comparison) | 10 | **[10, 15, 25]** |
-  | `dataExec` | Execution and analysis minutes per data test per load cycle | 5 | **[5, 8, 12]** |
-  | `dataPrepHours` | Data preparation and environment refresh hours per feed per cycle | 2 | **[2, 3, 5]** |
+  | Path            | Label                                                             | Today | New default      |
+  | --------------- | ----------------------------------------------------------------- | ----- | ---------------- |
+  | `dataDesign`    | Design minutes per data test (SQL comparison)                     | 10    | **[10, 15, 25]** |
+  | `dataExec`      | Execution and analysis minutes per data test per load cycle       | 5     | **[5, 8, 12]**   |
+  | `dataPrepHours` | Data preparation and environment refresh hours per feed per cycle | 2     | **[2, 3, 5]**    |
 - Detailed-scope inputs `data.columns` and `data.dq` become `[S, M, C]` counts, like `data.feed`.
 - The prototype `SIT_Sizing_Model.html` and the app agree, and `pnpm --filter @sit/engine parity` passes against the updated reference.
 - Existing saved versions and profiles keep their exact numbers.
@@ -80,19 +80,19 @@ With the new defaults, Simple equals today's value. An estimate whose data tests
 
 ## Surfaces to change
 
-| Area | Change |
-|---|---|
-| `SIT_Sizing_Model.html` | DEFAULTS, ROWS (`cols:CX`), compute, SENS, derived text, rough `counts`, detailed-scope data inputs for columns and DQ (S/M/C), legacy expansion in `loadProfile`, VI dictionary for new or changed strings |
-| `sit-sizing-reference/prototype-engine-and-ui.js` | Re-extracted from the HTML script, byte-identical. `vi-translations.json` updated if the dictionary changed. `golden-example.json` regenerated |
-| `packages/schemas` | `assumptions.ts`: the three paths become `Triple`. `inputs.ts`: `columns` and `dq` become `Triple`. `upgrade.ts`: version 2 and `UPGRADES[1]` |
-| `packages/engine` | `defaults.ts`, `data-platform.ts`, `effort.ts`, `counts.ts` (rough), `sensitivity.ts`, `derived.ts`, `version.ts`, `catalogue.ts` if it records shape, `tools/random-inputs.mjs`, the affected tests. Goldens regenerated with `pnpm --filter @sit/engine golden:generate` |
-| `packages/db` | New data migration. Seed values come from `DEFAULT_ASSUMPTIONS` (check). `schema.prisma` comment unchanged (still 142) |
-| `apps/web` | `lib/assumption-meta.ts`: the three rows get `cols` (S/M/C). Detailed-scope tab: columns and DQ as S/M/C inputs. Results and derived formulas. Export: the workbook writes the triples in the same way as other triples. EN/VI messages. `openapi.json` regenerated |
-| `apps/mcp` | Regenerate `src/generated/*` (assumption rows, messages, glossary). `describe_assumptions` then shows sizes and `describe_inputs` the new input shape |
-| `docs/i18n` | `assumption-help-draft.md`: new explanations for the three rows and the two inputs, marked as needing approval. Removed from `assumption-help-approved.json` until a QE lead re-approves. VI goes through `pnpm i18n:review` |
-| `docs/adr/0019-…` | The decision, the numbers and the human approval |
-| `SIT_Sizing_Model_Solution_Design.md` | The data-platform formula, `ENGINE_VERSION` 1.1.0 and schema version 2 notes. Revision bumped |
-| `docs/engine-findings.md`, runbook | A note on the change, plus the profile-migration rollback |
+| Area                                              | Change                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SIT_Sizing_Model.html`                           | DEFAULTS, ROWS (`cols:CX`), compute, SENS, derived text, rough `counts`, detailed-scope data inputs for columns and DQ (S/M/C), legacy expansion in `loadProfile`, VI dictionary for new or changed strings                                                                |
+| `sit-sizing-reference/prototype-engine-and-ui.js` | Re-extracted from the HTML script, byte-identical. `vi-translations.json` updated if the dictionary changed. `golden-example.json` regenerated                                                                                                                             |
+| `packages/schemas`                                | `assumptions.ts`: the three paths become `Triple`. `inputs.ts`: `columns` and `dq` become `Triple`. `upgrade.ts`: version 2 and `UPGRADES[1]`                                                                                                                              |
+| `packages/engine`                                 | `defaults.ts`, `data-platform.ts`, `effort.ts`, `counts.ts` (rough), `sensitivity.ts`, `derived.ts`, `version.ts`, `catalogue.ts` if it records shape, `tools/random-inputs.mjs`, the affected tests. Goldens regenerated with `pnpm --filter @sit/engine golden:generate` |
+| `packages/db`                                     | New data migration. Seed values come from `DEFAULT_ASSUMPTIONS` (check). `schema.prisma` comment unchanged (still 142)                                                                                                                                                     |
+| `apps/web`                                        | `lib/assumption-meta.ts`: the three rows get `cols` (S/M/C). Detailed-scope tab: columns and DQ as S/M/C inputs. Results and derived formulas. Export: the workbook writes the triples in the same way as other triples. EN/VI messages. `openapi.json` regenerated        |
+| `apps/mcp`                                        | Regenerate `src/generated/*` (assumption rows, messages, glossary). `describe_assumptions` then shows sizes and `describe_inputs` the new input shape                                                                                                                      |
+| `docs/i18n`                                       | `assumption-help-draft.md`: new explanations for the three rows and the two inputs, marked as needing approval. Removed from `assumption-help-approved.json` until a QE lead re-approves. VI goes through `pnpm i18n:review`                                               |
+| `docs/adr/0019-…`                                 | The decision, the numbers and the human approval                                                                                                                                                                                                                           |
+| `SIT_Sizing_Model_Solution_Design.md`             | The data-platform formula, `ENGINE_VERSION` 1.1.0 and schema version 2 notes. Revision bumped                                                                                                                                                                              |
+| `docs/engine-findings.md`, runbook                | A note on the change, plus the profile-migration rollback                                                                                                                                                                                                                  |
 
 ## Constraints
 
