@@ -270,7 +270,7 @@ All values come from the platform secret store (design 11, Q4), never from a com
 
 ### 8.4 Profile data migration, ADR-0019 (engine 1.1.0)
 
-`20261120000000_sized_data_assumptions` is **not expand-only**. It rewrites `AssumptionProfile.values`: `dataDesign`, `dataExec` and `dataPrepHours` become `[Simple, Medium, Complex]`. A release before engine 1.1.0 cannot read those profiles, and versions saved by 1.1.0 (schema version 2) return 409 `NEWER_SCHEMA` there.
+`20261120000000_sized_data_assumptions` and its fix-forward `20261121000000_sized_data_calibrated_defaults` are **not expand-only**. It rewrites `AssumptionProfile.values`: `dataDesign`, `dataExec` and `dataPrepHours` become `[Simple, Medium, Complex]`. A release before engine 1.1.0 cannot read those profiles, and versions saved by 1.1.0 (schema version 2) return 409 `NEWER_SCHEMA` there.
 
 To roll back to the previous image, first run this in the `app` database. It restores a single value wherever the sizes are the new default triple, or all three sizes are equal:
 
@@ -287,7 +287,7 @@ WHERE jsonb_typeof("values"->'dataDesign') = 'array' OR jsonb_typeof("values"->'
    OR jsonb_typeof("values"->'dataPrepHours') = 'array';
 ```
 
-Moving forward again re-runs nothing: the migration is recorded as applied. Re-run its three `UPDATE` statements by hand after re-deploying 1.1.0.
+Moving forward again re-runs nothing: the migrations are recorded as applied. Re-run the `UPDATE` statements of both migrations, in order, by hand after re-deploying 1.1.0.
 
 **Still open:** the hosting platform, secret store and import job for the realm are decided with the platform team (design section 16, Q4). Until then, these steps describe what any container platform must provide; they are not a platform-specific procedure.
 
