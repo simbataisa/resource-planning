@@ -1776,7 +1776,10 @@
         "LAST_SIZE": "Hồ sơ phải giữ ít nhất một kích cỡ.",
         "TOO_MANY": "Hồ sơ có tối đa 20 kích cỡ.",
         "BUILT_IN_NAME": "Đây là tên kích cỡ có sẵn. Kích cỡ có sẵn giữ giá trị mặc định: hãy thêm kích cỡ đó thay vì đổi tên một kích cỡ khác."
-      }
+      },
+      "removeTitle": "Xoá kích cỡ {size}?",
+      "removeBody": "Giá trị và ghi chú hiệu chỉnh của kích cỡ này sẽ bị xoá theo khi bạn lưu. Các ước lượng vẫn giữ bản sao riêng cho đến khi hồ sơ này được áp dụng lại.",
+      "removeConfirm": "Xoá"
     }
   },
   "export": {

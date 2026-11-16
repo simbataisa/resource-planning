@@ -60,6 +60,7 @@ test('applying a profile without a size the features use is refused', async ({ p
   await asLead(browser, (lead) =>
     publishProfile(lead, profile, async (sizes) => {
       await sizes.getByRole('button', { name: 'Remove L', exact: true }).click();
+      await lead.getByRole('dialog').getByRole('button', { name: 'Remove', exact: true }).click();
       await expect(sizes.getByText('L', { exact: true })).toHaveCount(0);
     }),
   );

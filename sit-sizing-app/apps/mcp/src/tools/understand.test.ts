@@ -262,6 +262,53 @@ describe('understand tools', () => {
     }
   });
 
+  it('preview refuses a feature whose size the assumptions do not have (ADR-0021)', async () => {
+    const { call, text } = await connect();
+    const inputs = structuredClone(EXAMPLE_INPUTS);
+    inputs.features[0]!.size = 'Q';
+    const r = await call('preview_estimate', { inputs });
+    expect(r.isError).toBe(true);
+    expect(text(r)).toMatch(/^VALIDATION_FAILED/);
+    expect(text(r)).toContain('Q');
+  });
+
+  it('describe_assumptions on a version counts custom sizes with its copied notes (ADR-0021)', async () => {
+    const values = structuredClone(DEFAULT_ASSUMPTIONS) as Record<string, unknown> & {
+      sizes: string[];
+    };
+    for (const t of ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'])
+      (values[t] as Record<string, unknown>).XS9 = structuredClone(
+        (values[t] as Record<string, unknown>).S,
+      );
+    values.sizes = [...values.sizes, 'XS9'];
+    const note = { source: 'Synthetic pilot' };
+    const { call } = await connect({
+      [`/estimates/${EST_ID}/versions/9`]: {
+        ...VERSION,
+        number: 9,
+        profileId: PROFILE_ID,
+        assumptions: { ...values, sizeNotes: { 'proxies.XS9': note } },
+      },
+      // The profile has since been noted on more rows; the version keeps what it copied.
+      [`/profiles/${PROFILE_ID}`]: {
+        ...PROFILE,
+        values,
+        calibration: { 'proxies.XS9': note, 'dproxies.XS9': note },
+      },
+    });
+    const r = (
+      await call('describe_assumptions', {
+        estimateId: EST_ID,
+        number: 9,
+        paths: ['proxies.XS9', 'dproxies.XS9'],
+        locale: 'en',
+      })
+    ).structuredContent as { rows: Array<Record<string, unknown>>; uncalibrated: number };
+    expect(r.rows.find((x) => x.path === 'proxies.XS9')).toMatchObject({ calibrated: true });
+    expect(r.rows.find((x) => x.path === 'dproxies.XS9')).toMatchObject({ calibrated: false });
+    expect(r.uncalibrated).toBe(162);
+  });
+
   it('preview of EXAMPLE_INPUTS with DEFAULT_ASSUMPTIONS equals toStoredResult(computeBoth(...)) summary figures', async () => {
     const { call } = await connect();
     const r = await call('preview_estimate', { inputs: EXAMPLE_INPUTS });

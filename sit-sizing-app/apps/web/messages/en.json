@@ -1776,7 +1776,10 @@
         "LAST_SIZE": "A profile keeps at least one size.",
         "TOO_MANY": "A profile has at most 20 sizes.",
         "BUILT_IN_NAME": "That is a built-in size name. A built-in size keeps its default values: add it instead of renaming another size."
-      }
+      },
+      "removeTitle": "Remove size {size}?",
+      "removeBody": "Its values and calibration notes go with it when you save. Estimates keep their own copy until this profile is applied to them again.",
+      "removeConfirm": "Remove"
     }
   },
   "export": {

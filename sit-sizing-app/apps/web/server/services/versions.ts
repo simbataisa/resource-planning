@@ -292,7 +292,11 @@ export async function patchDraft(
     }
     const stored = readStored(draft);
     const inputs = input.inputs ?? stored.inputs;
-    const assumptions = input.assumptions ?? stored.assumptions;
+    // Copied notes come only from applying a profile: an autosave keeps the stored ones, so it
+    // cannot mark custom-size rows calibrated (ADR-0021).
+    const assumptions = input.assumptions
+      ? { ...input.assumptions, sizeNotes: stored.assumptions.sizeNotes }
+      : stored.assumptions;
     // An estimate's sizes change only by applying a profile (ADR-0021).
     if (input.assumptions && !sameSizeSet(stored.assumptions, input.assumptions))
       throw new HttpError(

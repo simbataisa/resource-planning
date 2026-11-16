@@ -51,6 +51,15 @@ export function ApplyProfile({
   // Refused as open in another tab or the assistant (LOCKED_ELSEWHERE or RACE).
   const [elsewhere, setElsewhere] = useState(false);
   const picked = published.find((p) => p.id === choice);
+  // A refused apply names sizes the profile lacks: count them in the scope as it is now, so the
+  // message follows the estimator's resizing and goes once no feature uses them (ADR-0021).
+  const refusedSizes = apply.isError ? sizeMissing(apply.error) : [];
+  const stillMissing = refusedSizes
+    .map((m) => ({
+      size: m.size,
+      features: state.inputs.features.filter((f) => f.size === m.size).length,
+    }))
+    .filter((m) => m.features > 0);
 
   return (
     <div className="grid gap-3 rounded-lg border bg-muted/40 p-4">
@@ -96,11 +105,11 @@ export function ApplyProfile({
         <Alert variant="destructive">
           <AlertDescription>{t('lockedElsewhere')}</AlertDescription>
         </Alert>
-      ) : apply.isError ? (
+      ) : apply.isError && !(refusedSizes.length && !stillMissing.length) ? (
         <Alert variant="destructive">
           <AlertDescription>
-            {sizeMissing(apply.error).length
-              ? sizeMissing(apply.error)
+            {stillMissing.length
+              ? stillMissing
                   .map((m) => t('sizeMissing', { size: m.size, count: m.features }))
                   .join(' ')
               : apply.error.message}

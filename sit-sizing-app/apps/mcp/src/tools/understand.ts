@@ -8,6 +8,7 @@ import {
   toStoredResult,
   topGap,
   uncalibratedCount,
+  unknownFeatureSizes,
 } from '@sit/engine';
 import {
   addSizeList,
@@ -187,7 +188,15 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
         calibration = profile.calibration;
       }
       return {
-        rows: describeAssumptions({ locale: lang, group, paths, values, calibration }),
+        rows: describeAssumptions({
+          locale: lang,
+          group,
+          paths,
+          values,
+          calibration,
+          // A version counts custom sizes with the notes it copied, as its stored count does.
+          ...(estimateId && values ? { sizeNotes: values.sizeNotes } : {}),
+        }),
         // A profile counts its custom sizes with its own notes; a version with its copied ones.
         uncalibrated: uncalibratedCount(
           values ?? DEFAULT_ASSUMPTIONS,
@@ -237,6 +246,14 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       const doc = PreviewDoc.parse(
         applyChanges(addSizeList(structuredClone(start)), changes ?? []),
       );
+      // The server refuses a feature on a size the estimate lacks; so does the preview, rather
+      // than counting it as nothing (ADR-0021).
+      const missing = unknownFeatureSizes(doc.inputs, doc.assumptions);
+      if (missing.length)
+        throw invalidInput(
+          'inputs.features',
+          `uses sizes the assumptions do not have: ${missing.map((m) => m.size).join(', ')}`,
+        );
       return preview(doc.inputs, doc.assumptions, await localeOf(locale));
     },
   );
