@@ -1,7 +1,6 @@
 import { blankInputs, EXAMPLE_INPUTS, versionSnapshot } from '@sit/engine';
 import type { Prisma } from '@sit/db';
 import {
-  Assumptions,
   INPUTS_SCHEMA_VERSION,
   type EstimateCreate,
   type EstimateDetail,
@@ -14,7 +13,7 @@ import { db, type DbOrTx } from '../db';
 import { estimateDto, lockDto, versionSummaryDto } from '../dto';
 import { lockExpiry } from '../domain/lock';
 import { newLockToken } from '../domain/lock-token';
-import { applicable } from '../domain/profiles';
+import { applicable, profileAssumptions } from '../domain/profiles';
 import { HttpError } from '../http/route';
 import { recordAudit } from '../repositories/audit';
 import { ESTIMATE_DETAIL_INCLUDE, ESTIMATE_LIST_INCLUDE } from '../repositories/includes';
@@ -93,7 +92,7 @@ export async function createEstimate(
     const project = await projectFor(tx, user, projectId, 'estimate.create');
     if (project.archived) throw new HttpError(409, 'CONFLICT', 'The project is archived.');
     const profile = await resolveProfile(tx, user, projectId, input.profileId);
-    const assumptions = Assumptions.parse(profile.values);
+    const assumptions = profileAssumptions(profile.values, profile.calibration);
     const inputs = input.template === 'blank' ? blankInputs() : structuredClone(EXAMPLE_INPUTS);
     const snap = versionSnapshot(inputs, assumptions);
     const now = clock.now();

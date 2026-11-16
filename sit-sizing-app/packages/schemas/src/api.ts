@@ -372,6 +372,8 @@ export const Profile = z
     name: z.string(),
     status: ProfileStatus,
     uncalibrated: z.number().int(),
+    /** Assumption rows of this profile: 130 fixed plus 3 per size (ADR-0021). */
+    assumptionRows: z.number().int(),
     /** The profile this one was cloned from. */
     basedOnId: Id.nullable(),
     createdAt: IsoDateTime,

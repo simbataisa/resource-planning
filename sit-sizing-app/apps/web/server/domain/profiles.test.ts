@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { applicable, decideProfile, managePermission, unknownCalibrationPaths } from './profiles';
+import { DEFAULT_ASSUMPTIONS } from '@sit/engine';
+import type { Assumptions } from '@sit/schemas';
+import {
+  applicable,
+  decideProfile,
+  managePermission,
+  profileAssumptions,
+  unknownCalibrationPaths,
+} from './profiles';
+
+const D = DEFAULT_ASSUMPTIONS as Assumptions;
+const withXS2 = (): Assumptions => {
+  const a = structuredClone(D);
+  for (const t of ['proxies', 'dproxies', 'aproxies', 'ptRoughScen'] as const)
+    (a[t] as Record<string, unknown>).XS2 = structuredClone((a[t] as Record<string, unknown>).S);
+  a.sizes = [...a.sizes, 'XS2'];
+  return a;
+};
 
 describe('profile rules (P-01)', () => {
   it('maps scope to the manage permission', () => {
@@ -60,8 +77,23 @@ describe('profile rules (P-01)', () => {
   });
 
   it('flags calibration keys that are not assumption rows', () => {
-    expect(unknownCalibrationPaths({ 'cases.api': {}, criticalShare: {} })).toEqual([]);
-    expect(unknownCalibrationPaths({ 'cases.api': {}, 'nope.x': {} })).toEqual(['nope.x']);
+    expect(unknownCalibrationPaths({ 'cases.api': {}, criticalShare: {} }, D)).toEqual([]);
+    expect(unknownCalibrationPaths({ 'cases.api': {}, 'nope.x': {} }, D)).toEqual(['nope.x']);
+  });
+
+  it('accepts notes for a custom size only when the profile has it (ADR-0021)', () => {
+    expect(unknownCalibrationPaths({ 'proxies.XS2': {} }, withXS2())).toEqual([]);
+    expect(unknownCalibrationPaths({ 'proxies.XS2': {} }, D)).toEqual(['proxies.XS2']);
+  });
+
+  it('copies the notes of custom-size rows into the assumptions it hands out (ADR-0021)', () => {
+    const note = { source: 'Synthetic pilot' };
+    const a = profileAssumptions(withXS2(), {
+      'proxies.XS2': note,
+      sampleFE: note,
+      'proxies.S': note,
+    });
+    expect(a.sizeNotes).toEqual({ 'proxies.XS2': note });
   });
 
   it('applies only published profiles in scope', () => {

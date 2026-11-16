@@ -44,6 +44,7 @@ function profile(over: Partial<ProfileDetail> = {}): ProfileDetail {
     name: 'Synthetic · Retail 2026',
     status: 'DRAFT',
     uncalibrated: 142,
+    assumptionRows: 160,
     basedOnId: null,
     createdAt: NOW,
     publishedAt: null,

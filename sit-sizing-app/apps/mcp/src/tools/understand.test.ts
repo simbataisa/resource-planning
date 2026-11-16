@@ -67,6 +67,7 @@ const PROFILE = {
   name: 'Synthetic profile',
   status: 'PUBLISHED',
   uncalibrated: 141,
+  assumptionRows: 160,
   basedOnId: null,
   createdAt: AT,
   publishedAt: AT,
