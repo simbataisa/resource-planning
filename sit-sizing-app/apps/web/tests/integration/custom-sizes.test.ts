@@ -140,6 +140,25 @@ describe('applying a profile with custom sizes (ADR-0021)', () => {
 });
 
 describe('an estimate keeps the sizes of its profile (ADR-0021)', () => {
+  it('keeps the copied notes: an autosave cannot calibrate custom-size rows', async () => {
+    const p = await publishedProfile('notes guard', values(['XS5']));
+    const e = await estimateWith('notes guard', ['M'], p.id);
+    const v = await db().estimateVersion.findFirstOrThrow({ where: { estimateId: e.estimateId } });
+    const assumptions = structuredClone(v.assumptions) as unknown as Assumptions;
+    const note = { source: 'Synthetic, not from the profile' };
+    assumptions.sizeNotes = { 'proxies.XS5': note, 'dproxies.XS5': note, 'aproxies.XS5': note };
+    const res = await call(draft.PATCH, {
+      who: 'dev-estimator',
+      method: 'PATCH',
+      params: { estimateId: e.estimateId },
+      body: { rowVersion: e.rowVersion, assumptions },
+      lockToken: e.lockToken,
+    });
+    expect(res.status, JSON.stringify(res.json)).toBe(200);
+    expect(res.json.assumptions.sizeNotes).toEqual({});
+    expect(res.json.uncalibrated).toBe(v.uncalibrated);
+  });
+
   it('refuses an autosave that changes the size list', async () => {
     const e = await estimateWith('guard sizes', ['M']);
     const res = await call(draft.PATCH, {
