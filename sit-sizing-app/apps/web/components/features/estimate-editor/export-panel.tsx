@@ -3,7 +3,7 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { ClipboardCopy, Download, FileSpreadsheet, Upload } from 'lucide-react';
-import { ASSUMPTION_PATHS, fromPrototypeProfile, PrototypeImportError, topGap } from '@sit/engine';
+import { assumptionPaths, fromPrototypeProfile, PrototypeImportError, topGap } from '@sit/engine';
 import { Assumptions, EstimateInputs } from '@sit/schemas';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,7 @@ export function prototypeProfileJson(
   uncalibrated: number,
   savedAt: Date,
 ): string {
-  const total = ASSUMPTION_PATHS.length;
+  const total = assumptionPaths(assumptions).length;
   return JSON.stringify(
     {
       tool: 'sit-sizing-model',
@@ -294,6 +294,6 @@ export function useQbrSummary(profile: string): string {
       u: E.feUnit,
       s: E.feMut,
     }),
-    t('calibration', { u: uncalibrated, t: ASSUMPTION_PATHS.length }),
+    t('calibration', { u: uncalibrated, t: assumptionPaths(state.assumptions).length }),
   ].join('\n');
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { ASSUMPTION_PATHS, topGap, type ModeResult } from '@sit/engine';
+import { assumptionPaths, topGap, type ModeResult } from '@sit/engine';
 import { StatCard } from '@/components/patterns/stat-card';
 import { formatFte, formatInt, signed } from '@/lib/format';
 import { useEditor } from './store';
@@ -13,7 +13,8 @@ export function SummaryCards() {
   const { results, uncalibrated, state } = useEditor();
   const { rough: R, detailed: D } = results;
   const weeks = state.inputs.team.weeks;
-  const total = ASSUMPTION_PATHS.length;
+  // The estimate's own rows: 130 fixed plus 3 per size (ADR-0021).
+  const total = assumptionPaths(state.assumptions).length;
   const gapF = D.fte - R.fte;
   const gapC = D.cases - R.cases;
   const top = topGap(results);

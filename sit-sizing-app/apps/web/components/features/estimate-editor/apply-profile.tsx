@@ -98,7 +98,13 @@ export function ApplyProfile({
         </Alert>
       ) : apply.isError ? (
         <Alert variant="destructive">
-          <AlertDescription>{apply.error.message}</AlertDescription>
+          <AlertDescription>
+            {sizeMissing(apply.error).length
+              ? sizeMissing(apply.error)
+                  .map((m) => t('sizeMissing', { size: m.size, count: m.features }))
+                  .join(' ')
+              : apply.error.message}
+          </AlertDescription>
         </Alert>
       ) : null}
       {confirm && picked ? (
@@ -150,4 +156,17 @@ export function ApplyProfile({
       ) : null}
     </div>
   );
+}
+
+/** The sizes a refused apply names, one per size the profile lacks (ADR-0021). */
+function sizeMissing(error: unknown): { size: string; features: number }[] {
+  const details = (error as { details?: unknown[] } | null)?.details ?? [];
+  return details.flatMap((d) => {
+    const x = d as { reason?: unknown; size?: unknown; features?: unknown };
+    return x.reason === 'SIZE_NOT_IN_PROFILE' &&
+      typeof x.size === 'string' &&
+      typeof x.features === 'number'
+      ? [{ size: x.size, features: x.features }]
+      : [];
+  });
 }
