@@ -57,14 +57,18 @@ export function SizeEditor({
   const [renaming, setRenaming] = useState<{ from: string; to: string } | null>(null);
   const [error, setError] = useState<{ at: 'add' | 'rename'; code: SizeEditError } | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
-  const [focus, setFocus] = useState<{ size: string } | 'heading' | null>(null);
-
-  // Moves focus once the list has re-rendered after a rename or a removal.
+  // Where focus goes once the list has re-rendered after a rename or a removal.
+  const pendingFocus = useRef<{ size: string } | 'heading' | null>(null);
+  const setFocus = (target: { size: string } | 'heading') => {
+    pendingFocus.current = target;
+  };
   useEffect(() => {
-    if (focus === 'heading') heading.current?.focus();
-    else if (focus) renameButtons.current.get(focus.size)?.focus();
-    if (focus) setFocus(null);
-  }, [focus]);
+    const target = pendingFocus.current;
+    if (!target) return;
+    pendingFocus.current = null;
+    if (target === 'heading') heading.current?.focus();
+    else renameButtons.current.get(target.size)?.focus();
+  });
 
   const run = (at: 'add' | 'rename', edit: SizeEdit) => {
     if ('error' in edit) {
