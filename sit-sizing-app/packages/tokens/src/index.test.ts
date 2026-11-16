@@ -57,6 +57,11 @@ describe('tokens', () => {
     expect(nonTextPairs.map(([a, b]) => `${a}/${b}`)).toContain('sidebar-ring/sidebar');
   });
 
+  it('chart bars use the prototype green and are checked as interface parts', () => {
+    expect(colorTokens.light['chart-good']).toBe('#1E8E4A');
+    expect(nonTextPairs.map(([a, b]) => `${a}/${b}`)).toContain('chart-good/muted');
+  });
+
   it('contrast maths matches known values', () => {
     expect(contrastRatio('#000000', '#FFFFFF')).toBeCloseTo(21, 5);
     expect(luminance('#FFFFFF')).toBeCloseTo(1, 10);

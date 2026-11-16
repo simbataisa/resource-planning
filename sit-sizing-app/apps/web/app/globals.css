@@ -38,6 +38,7 @@
   --color-detailed-foreground: var(--detailed-foreground);
   --color-good: var(--good);
   --color-good-soft: var(--good-soft);
+  --color-chart-good: var(--chart-good);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
   --color-bad: var(--bad);

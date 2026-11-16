@@ -45,7 +45,7 @@ export function TornadoChart({ label, rows, base, className }: TornadoChartProps
               className="relative h-[18px] rounded-[4px] border border-border bg-muted"
             >
               <span
-                className="absolute inset-y-0.5 rounded-[3px] bg-good"
+                className="absolute inset-y-0.5 rounded-[3px] bg-chart-good"
                 style={{ left: `${Math.min(lo, 50)}%`, width: `${Math.max(0, 50 - lo)}%` }}
               />
               <span
