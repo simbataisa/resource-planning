@@ -5,6 +5,7 @@
 | **Status** | Revision 4, delivered. Releases 1 (steps 1.0–1.7), 2 (V-01, P-01, X-02, N-01) and 3 (P-02, R-01, E-08, H-01) are complete and merged to main, each with its E2E exit-criteria suite. Notes marked "Step x note" and the ADRs in `sit-sizing-app/docs/adr/` record where the build departed from this text. |
 | **Changes in revision 3** | Identity provider is self-hosted Keycloak, not a custom build. Plan restructured into three releases. Added non-functional targets, pipeline, observability, backup, engine change policy, notifications, Excel export, portfolio view, governance. |
 | **Changes in revision 4** | API contract follows OpenAPI 3.2 (3.1 fallback, decided by a spike) and is documented with a self-hosted Scalar API Reference (section 9.4, ADR-0003). |
+| **Amendment 2026-11-16** | Engine 1.1.0 (ADR-0019): data-test design and execution minutes and preparation hours are sized Simple/Medium/Complex (defaults 10/15/25 min, 5/8/12 min, 2/3/5 h); mapped columns and DQ rules are counted by complexity; stored payloads are at schema version 2. Sections 6.2, 6.4 and 6.6 updated. |
 | **Audience** | Engineering, QE leads, and the AI coding agents that will build it |
 | **Prototype** | `SIT_Sizing_Model.html` (single-file tool, EN/VI, 34 driver groups, 142 assumptions) |
 | **Reference files** | `sit-sizing-reference/` (prototype logic, translations, golden example) |
@@ -456,7 +457,7 @@ export function fromPrototypeProfile(json: unknown): { assumptions; inputs; prof
 export const DEFAULT_ASSUMPTIONS: Assumptions;
 export const EXAMPLE_INPUTS: EstimateInputs;
 export const SENSITIVITY_ITEMS: { key: string; roughOnly?: true }[];      // 42 items, labels live in the UI
-export const ENGINE_VERSION: string;                                       // "1.0.0" = faithful port
+export const ENGINE_VERSION: string;                                       // "1.0.0" = faithful port; "1.1.0" = ADR-0019
 ```
 
 ### 6.3 Module map
@@ -488,8 +489,10 @@ Port from `sit-sizing-reference/prototype-engine-and-ui.js`. The prototype's `co
 | Golden value (example scope, default assumptions) | Rough | Detailed |
 |---|---|---|
 | Cases and samples | 3,511 | 4,047 |
-| Hours | 3,499 | 3,681 |
-| FTE | 20.46 | 21.53 |
+| Hours | 3,562 | 3,709 |
+| FTE | 20.83 | 21.69 |
+
+Engine 1.1.0 values (ADR-0019, sized data-test minutes and preparation hours). Engine 1.0.0, the faithful port, gave 3,499 / 3,681 hours and 20.46 / 21.53 FTE; a version 1 payload still recomputes to those numbers (`golden/stored/v1-example-result.json`).
 
 Requirements:
 
@@ -516,7 +519,7 @@ What happens to saved estimates when a formula or default changes:
 3. **Recompute is a user action** that creates a new draft version; the comparison view then shows what the engine change did to the numbers.
 4. **Approved versions are immutable**, whatever the engine version.
 5. **Schema changes** to inputs or assumptions ship with a tested upgrade function (`upgradeInputs(vN → vN+1)`); old payloads are upgraded on read, never rewritten in place.
-6. **Default changes** go into a new published global profile, not into existing profiles.
+6. **Default changes** go into a new published global profile, not into existing profiles. Exception (ADR-0019, approved 2026-11-16): when an assumption changes shape, a data migration may move profile rows still at the old default to the new default, so they stay uncalibrated; calibrated rows keep their numbers.
 
 ---
 

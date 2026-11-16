@@ -50,16 +50,22 @@ Option A.
 4. **Versions.**
    - `ENGINE_VERSION` becomes 1.1.0.
    - `INPUTS_SCHEMA_VERSION` becomes 2.
-   - `UPGRADES[1]` turns each old single assumption `v` into `[v, v, v]`, and `columns` and `dq` from `n` into `[n, 0, 0]`. A version saved with engine 1.0.0 therefore recomputes to exactly its stored result. It still shows the "Computed with engine 1.0" flag (ADR-0013).
+   - `UPGRADES[1]` turns each old single assumption `v` into `[v, v, v]`, and `columns` and `dq` from `n` into `[n, 0, 0]`. A version saved with engine 1.0.0 keeps its stored result (never recomputed silently) and shows the "Computed with engine 1.0" flag (ADR-0013). Recomputing it (a new draft from it) gives its old numbers in detailed mode, up to floating-point order. Two known differences:
+     - Rough mode with Medium or Complex data features differs, because their column and DQ proxies now land in the feature's own bucket. This is the intended formula change. Per-band rounding can also move a calibrated, fractional count by ±1 case.
+     - The three upgraded rows, `[v, v, v]`, no longer equal the new defaults, so an upgraded version counts them as calibrated (142 → 139 uncalibrated). The profile migration avoids this for profiles; versions are not rewritten (ADR-0013).
 5. **Profiles.**
    - A Prisma data migration rewrites `AssumptionProfile.values` in place:
      - A value still equal to the old default becomes the new default triple, and stays uncalibrated.
      - A changed (calibrated) value `v` becomes `[v, v, v]`.
    - This is an exception to "never rewritten in place" (ADR-0013), which covers versions. Profiles have no schema version and are read with a cast, not through `upgradeStored`.
+   - It is also an exception to design 6.6 rule 6 ("default changes go into a new published global profile"), approved by the requester on 2026-11-16: a shape change may move rows still at the old default to the new default, so they stay uncalibrated. Design 6.6 records the exception.
+   - The migration is not expand-only; the runbook (8.4) has the rollback SQL.
    - Calibrated rows keep their numbers. Uncalibrated default rows adopt the new defaults, which affects only future drafts that apply the profile. Existing drafts and versions keep their own copies.
 6. **Prototype files.** Prototype localStorage and exported JSON files are expanded the same way on load, in the prototype and in the app's prototype import.
 
 ## Consequences
+
+- **Bug found and fixed on the way.** `readStored` passed the whole Prisma row to `upgradeStored`, which clones it before each step; the row's Decimal columns made that throw. With this first upgrade step, every version 1 read would have returned 500. It now passes only the inputs and assumptions.
 
 - **The numbers change** for any estimate with Medium or Complex data tests: feeds, pipelines, tables, and from now on columns and DQ rules. Golden files are regenerated from the updated prototype in the same PR. Estimates with only Simple data tests keep their numbers.
 - **Rough estimates for Medium and Complex data features rise.** Their column and DQ proxies now carry Medium and Complex minutes.
@@ -69,8 +75,8 @@ Option A.
   - The OpenAPI breaking-change gate needs one code-owner approval (`OPENAPI_BREAKING_APPROVED`).
 - **Rollback.**
   - An older release can't read migrated profiles or v2 versions. Versions return 409 `NEWER_SCHEMA`.
-  - The runbook has a reverse SQL snippet for profiles. It is valid only while each triple's three values are equal.
-- **Help texts.** The explanations for the three rows and the two inputs are redrafted. They need QE lead re-approval in `docs/i18n/assumption-help-approved.json`.
+  - The runbook (8.4) has a reverse SQL snippet for profiles. It restores default triples and equal sizes, and lists profiles calibrated with different sizes for a decision.
+- **Help texts.** The draft explanations for the three rows are updated and marked "needs approval" in `docs/i18n/assumption-help-draft.md` (no row was approved yet, so nothing is withdrawn).
 - **Unchanged.** The assumption row count stays at 142, because a triple is one row.
 
 ## Approval

@@ -58,7 +58,7 @@ With the new defaults, Simple equals today's value. An estimate whose data tests
 - `INPUTS_SCHEMA_VERSION` goes from 1 to **2**. `UPGRADES[1]` does the following:
   - `assumptions.dataDesign | dataExec | dataPrepHours`: a number `v` becomes `[v, v, v]`. Arrays are left as they are, so the step is idempotent.
   - `inputs.detail.data.columns | dq`: a number `n` becomes `[n, 0, 0]`.
-  - Old versions read through `server/stored.ts` therefore recompute to exactly their old numbers.
+  - Old versions read through `server/stored.ts` recompute to their old numbers in detailed mode (up to floating-point order). Rough mode with Medium or Complex data features differs by design; see ADR-0019, Decision 4.
   - The step ships with a v1 fixture (the existing `golden/stored/v1-example.json`) and a test that compute(upgraded v1) equals the stored v1 result.
 - Profiles have no schema version. A new Prisma migration `2026111X000000_sized_data_assumptions` rewrites `AssumptionProfile.values` in SQL, but only for keys that still hold a number (`jsonb_typeof = 'number'`), so it is idempotent:
   - A value still equal to the old default (`dataDesign` 10, `dataExec` 5, `dataPrepHours` 2) becomes the **new default triple**. The row stays uncalibrated, so `isDefaultRow` still matches it. This covers the seeded "Default (uncalibrated)" global profile.
