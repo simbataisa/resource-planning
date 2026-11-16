@@ -783,7 +783,8 @@ export const ASSUMPTION_META: MetaGroup[] = [
         label: {
           key: 'assumptionsTab.rows.dataDesign',
         },
-        kind: 'scalar',
+        kind: 'cols',
+        cols: ['catalogue.complexity.0', 'catalogue.complexity.1', 'catalogue.complexity.2'],
         unit: 'min',
       },
       {
@@ -791,7 +792,8 @@ export const ASSUMPTION_META: MetaGroup[] = [
         label: {
           key: 'assumptionsTab.rows.dataExec',
         },
-        kind: 'scalar',
+        kind: 'cols',
+        cols: ['catalogue.complexity.0', 'catalogue.complexity.1', 'catalogue.complexity.2'],
         unit: 'min',
       },
       {
@@ -807,7 +809,8 @@ export const ASSUMPTION_META: MetaGroup[] = [
         label: {
           key: 'assumptionsTab.rows.dataPrepHours',
         },
-        kind: 'scalar',
+        kind: 'cols',
+        cols: ['catalogue.complexity.0', 'catalogue.complexity.1', 'catalogue.complexity.2'],
         unit: 'h',
       },
       {

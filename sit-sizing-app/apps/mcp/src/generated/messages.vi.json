@@ -243,7 +243,7 @@
         "dataQuality": "{n} quy tắc chất lượng dữ liệu × {c} case × {s} quay lại SIT",
         "dataReport": "{n} báo cáo × {c} case theo độ phức tạp",
         "dataAccess": "{d} tập dữ liệu được bảo vệ × {r} vai trò × 2 × lấy mẫu {s}",
-        "dataPrep": "{n} nguồn × {h} giờ × {c} chu kỳ nạp (giờ, không có case)",
+        "dataPrep": "{n} nguồn × {h} giờ theo độ phức tạp × {c} chu kỳ nạp (giờ, không có case)",
         "aiIntent": "{n} intent × {u} câu theo độ phức tạp × {l} ngôn ngữ; gán nhãn {m} phút, rà soát {r} đầu ra × {i} lượt",
         "aiRag": "{n} nguồn × {q} câu hỏi × {l} ngôn ngữ; câu trả lời chuẩn {m} phút",
         "aiOcr": "{n} loại tài liệu × {q} mẫu theo độ phức tạp; gán nhãn {m} phút mỗi mẫu",

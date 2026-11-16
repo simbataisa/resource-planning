@@ -125,14 +125,17 @@ export function derivedFormulas(
       'dataModel',
       t('dataModel', { n: num1(sum3(dd.table)), c: A.dTable.join('/'), d: dd.scd, e: A.dScd }),
     );
-    push('dataMapping', t('dataMapping', { n: fmt(dd.columns), c: A.dCol, s: dqs }));
-    push('dataQuality', t('dataQuality', { n: fmt(dd.dq), c: A.dDq, s: dqs }));
+    push('dataMapping', t('dataMapping', { n: fmt(sum3(dd.columns)), c: A.dCol, s: dqs }));
+    push('dataQuality', t('dataQuality', { n: fmt(sum3(dd.dq)), c: A.dDq, s: dqs }));
     push('dataReport', t('dataReport', { n: num1(sum3(dd.report)), c: A.dReport.join('/') }));
     push(
       'dataAccess',
       t('dataAccess', { d: dd.secured, r: dd.accessRoles, s: pctS(A.dAccessSampling) }),
     );
-    push('dataPrep', t('dataPrep', { n: num1(x.feedTot), h: A.dataPrepHours, c: A.dataCycles }));
+    push(
+      'dataPrep',
+      t('dataPrep', { n: num1(x.feedTot), h: A.dataPrepHours.join('/'), c: A.dataCycles }),
+    );
   }
   if (x.aOn) {
     const da = c.ai;

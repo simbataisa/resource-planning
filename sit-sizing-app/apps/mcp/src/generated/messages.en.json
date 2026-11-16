@@ -243,7 +243,7 @@
         "dataQuality": "{n} data quality rules × {c} cases × {s} back in SIT",
         "dataReport": "{n} reports × {c} cases by complexity",
         "dataAccess": "{d} secured datasets × {r} roles × 2 × {s} sampling",
-        "dataPrep": "{n} feeds × {h} h × {c} load cycles (hours, no cases)",
+        "dataPrep": "{n} feeds × {h} h by complexity × {c} load cycles (hours, no cases)",
         "aiIntent": "{n} intents × {u} utterances by complexity × {l} languages; label {m} min, review {r} of outputs × {i} runs",
         "aiRag": "{n} sources × {q} questions × {l} languages; reference answer {m} min",
         "aiOcr": "{n} document types × {q} samples by complexity; label {m} min each",

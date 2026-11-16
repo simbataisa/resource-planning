@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
 import {
   INPUTS_SCHEMA_VERSION,
   expandLegacyDataShapes,
@@ -60,30 +59,36 @@ describe('upgradeStored (E-08)', () => {
   });
 });
 
-const v1 = JSON.parse(
-  readFileSync(new URL('../../engine/golden/stored/v1-example.json', import.meta.url), 'utf8'),
-) as { schemaVersion: number; inputs: unknown; assumptions: unknown };
+/** The parts of a version 1 payload that changed shape; the engine tests the full v1 fixture. */
+const v1 = () => ({
+  inputs: { detail: { data: { feed: [1, 1, 0], columns: 140, dq: 24, scd: 1 } } },
+  assumptions: { dataDesign: 10, dataExec: 5, dataCycles: 3, dataPrepHours: 2 },
+});
 
 describe('version 1 → 2: sized data-platform assumptions (ADR-0019)', () => {
   it('copies each old single value to every size and counts columns and DQ rules as Simple', () => {
-    const { inputs, assumptions, upgradedFrom } = upgradeStored(v1.schemaVersion, v1);
-    expect(upgradedFrom).toBe(1);
-    expect(assumptions.dataDesign).toEqual([10, 10, 10]);
-    expect(assumptions.dataExec).toEqual([5, 5, 5]);
-    expect(assumptions.dataPrepHours).toEqual([2, 2, 2]);
-    expect(inputs.detail.data.columns).toEqual([140, 0, 0]);
-    expect(inputs.detail.data.dq).toEqual([24, 0, 0]);
+    expect(expandLegacyDataShapes(v1())).toEqual({
+      inputs: {
+        detail: { data: { feed: [1, 1, 0], columns: [140, 0, 0], dq: [24, 0, 0], scd: 1 } },
+      },
+      assumptions: {
+        dataDesign: [10, 10, 10],
+        dataExec: [5, 5, 5],
+        dataCycles: 3,
+        dataPrepHours: [2, 2, 2],
+      },
+    });
   });
 
   it('is idempotent and leaves payloads already in the new shape alone', () => {
-    const once = expandLegacyDataShapes(structuredClone(v1));
-    const twice = expandLegacyDataShapes(structuredClone(once));
+    const once = expandLegacyDataShapes(v1());
+    const twice = expandLegacyDataShapes(JSON.parse(JSON.stringify(once)) as typeof once);
     expect(twice).toEqual(once);
   });
 
   it('tolerates payloads without a data block', () => {
     const p = { inputs: { detail: {} }, assumptions: {} };
-    expect(expandLegacyDataShapes(structuredClone(p))).toEqual(p);
+    expect(expandLegacyDataShapes({ inputs: { detail: {} }, assumptions: {} })).toEqual(p);
     expect(expandLegacyDataShapes({ inputs: null, assumptions: null })).toEqual({
       inputs: null,
       assumptions: null,
