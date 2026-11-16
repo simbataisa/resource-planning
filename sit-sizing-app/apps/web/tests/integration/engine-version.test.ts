@@ -5,6 +5,7 @@ import * as draft from '@/app/api/v1/estimates/[estimateId]/draft/route';
 import * as one from '@/app/api/v1/estimates/[estimateId]/versions/[number]/route';
 import * as versions from '@/app/api/v1/estimates/[estimateId]/versions/route';
 import * as estimates from '@/app/api/v1/projects/[projectId]/estimates/route';
+import type { Prisma } from '@sit/db';
 import { db } from '@/server/db';
 import { call, seeded } from './helpers';
 
@@ -91,7 +92,11 @@ describe('engine version (E-08)', () => {
     Object.assign(inputs.detail.data, { columns: 140, dq: 24 });
     await db().estimateVersion.update({
       where: { id: v1.id },
-      data: { schemaVersion: 1, assumptions, inputs },
+      data: {
+        schemaVersion: 1,
+        assumptions: assumptions as Prisma.InputJsonValue,
+        inputs: inputs as unknown as Prisma.InputJsonValue,
+      },
     });
     const res = await getVersion(1);
     expect(res.status, JSON.stringify(res.json)).toBe(200);
