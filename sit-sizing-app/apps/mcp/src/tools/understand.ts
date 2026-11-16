@@ -30,6 +30,7 @@ import {
   describeInputs,
   INPUT_GROUPS,
   InputField,
+  isSizeRowPath,
   sensitivityLabel,
 } from '../glossary';
 import { applyChanges, PathError } from '../merge';
@@ -168,8 +169,9 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
         );
       }
       const lang = await localeOf(locale);
-      // Unknown paths are refused before any API call.
-      describeAssumptions({ locale: lang, paths });
+      // Unknown paths are refused before any API call. Size rows depend on the sizes of the
+      // version or profile (ADR-0021), so those are checked once its values are read.
+      describeAssumptions({ locale: lang, paths: paths?.filter((p) => !isSizeRowPath(p)) });
       let values: Assumptions | undefined;
       let calibration: ProfileDetail['calibration'] | undefined;
       if (estimateId && number !== undefined) {
@@ -186,7 +188,12 @@ export function registerUnderstandTools(server: McpServer, ctx: ToolContext): vo
       }
       return {
         rows: describeAssumptions({ locale: lang, group, paths, values, calibration }),
-        uncalibrated: uncalibratedCount(values ?? DEFAULT_ASSUMPTIONS, DEFAULT_ASSUMPTIONS),
+        // A profile counts its custom sizes with its own notes; a version with its copied ones.
+        uncalibrated: uncalibratedCount(
+          values ?? DEFAULT_ASSUMPTIONS,
+          DEFAULT_ASSUMPTIONS,
+          profileId ? calibration : undefined,
+        ),
       };
     },
   );

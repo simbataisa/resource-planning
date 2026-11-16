@@ -550,7 +550,7 @@ export const OPERATIONS: Operation[] = [
     tag: 'Versions',
     minRole: 'ESTIMATOR',
     summary: "Apply a published profile to the draft's assumptions",
-    description: `Lock holder only. ${LOCK_TOKEN_NOTE} Replaces every assumption with the profile's values and recomputes; inputs are kept.`,
+    description: `Lock holder only. ${LOCK_TOKEN_NOTE} Replaces every assumption with the profile's values and recomputes; inputs are kept. Sizes come with the profile (ADR-0021): when a rough-scope feature uses a size the profile does not have, nothing changes and the response is 409 with one detail per missing size (\`reason: SIZE_NOT_IN_PROFILE\`, \`size\`, \`features\`).`,
     params: EstimateParams,
     headers: LockTokenHeaders,
     body: ProfileApply,

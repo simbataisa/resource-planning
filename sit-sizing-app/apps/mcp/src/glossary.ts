@@ -1,4 +1,11 @@
-import { DEFAULT_ASSUMPTIONS, FIELD_TYPES, isDefaultRow, PT_TYPES, SIZES } from '@sit/engine';
+import {
+  DEFAULT_ASSUMPTIONS,
+  FIELD_TYPES,
+  isUncalibratedRow,
+  PT_TYPES,
+  SIZE_ROW_TABLES,
+  SIZES,
+} from '@sit/engine';
 import type { Assumptions, CalibrationEntry } from '@sit/schemas';
 import { z } from 'zod';
 import type { Locale } from './context';
@@ -26,7 +33,37 @@ interface RowMeta {
   unitKey?: string;
 }
 const ROWS = rowsJson as RowMeta[];
-const ROW_BY_PATH = new Map(ROWS.map((r) => [r.path, r]));
+const SIZE_GROUPS: ReadonlySet<string> = new Set(SIZE_ROW_TABLES);
+
+/**
+ * The rows for these sizes (ADR-0021): the generated rows without their size rows, with one
+ * row per size added to each size group, in the order of `sizes`.
+ */
+function rowsFor(sizes: readonly string[]): RowMeta[] {
+  const out: RowMeta[] = [];
+  const done = new Set<string>();
+  for (const r of ROWS) {
+    if (!SIZE_GROUPS.has(r.group)) {
+      out.push(r);
+      continue;
+    }
+    if (done.has(r.group)) continue;
+    done.add(r.group);
+    for (const s of sizes)
+      out.push({
+        path: `${r.group}.${s}`,
+        group: r.group,
+        labelKey: 'assumptionsTab.size',
+        labelValues: { s },
+      });
+  }
+  return out;
+}
+
+/** True for a path shaped like a size row, whatever the size (checked once values are known). */
+export function isSizeRowPath(path: string): boolean {
+  return /^(d|a)?proxies\.[A-Za-z0-9+-]{1,6}$/.test(path);
+}
 
 /** The message at a dotted key, with `{name}` placeholders filled; undefined when absent. */
 function t(locale: Locale, key: string, values?: Record<string, string>): string | undefined {
@@ -67,7 +104,7 @@ export const AssumptionRow = z.object({
 export type AssumptionRow = z.infer<typeof AssumptionRow>;
 
 /**
- * The 160 assumption rows with label, explanation and default; with `values`, also the
+ * The assumption rows (130 fixed plus 3 per size, 160 by default) with label, explanation and default; with `values`, also the
  * current value and whether it is calibrated (differs from the default); with
  * `calibration`, the source and measured date. Throws `PathError` for an unknown path.
  */
@@ -79,23 +116,37 @@ export function describeAssumptions(opts: {
   calibration?: Calibration;
 }): AssumptionRow[] {
   const { locale, group, paths, values, calibration } = opts;
+  const rows = rowsFor((values ?? DEFAULT_ASSUMPTIONS).sizes);
+  const known = new Set(rows.map((r) => r.path));
   for (const p of paths ?? []) {
-    if (!ROW_BY_PATH.has(p)) throw new PathError(p, 'is not an assumption row');
+    if (!known.has(p)) throw new PathError(p, 'is not an assumption row');
   }
   const wanted = paths ? new Set(paths) : undefined;
-  return ROWS.filter((r) => (!group || r.group === group) && (!wanted || wanted.has(r.path))).map(
-    (r) => {
+  return rows
+    .filter((r) => (!group || r.group === group) && (!wanted || wanted.has(r.path)))
+    .map((r) => {
       const row: AssumptionRow = {
         path: r.path,
         group: r.group,
         label: t(locale, r.labelKey, r.labelValues) ?? r.path,
         ...(r.unitKey ? { unit: t(locale, r.unitKey) } : {}),
-        explanation: t(locale, `assumptionsTab.help.${r.path.replaceAll('.', '_')}`) ?? null,
+        explanation:
+          t(locale, `assumptionsTab.help.${r.path.replaceAll('.', '_')}`) ??
+          (SIZE_GROUPS.has(r.group)
+            ? t(locale, `assumptionsTab.help.sizeRow.${r.group}`, r.labelValues)
+            : undefined) ??
+          null,
         default: getPath(DEFAULT_ASSUMPTIONS, r.path),
       };
       if (values) {
         row.value = getPath(values, r.path);
-        row.calibrated = !isDefaultRow(values, DEFAULT_ASSUMPTIONS, r.path);
+        // Custom-size rows count as calibrated only with a note (ADR-0021).
+        row.calibrated = !isUncalibratedRow(
+          values,
+          DEFAULT_ASSUMPTIONS,
+          r.path,
+          calibration ?? values.sizeNotes,
+        );
       }
       const note = calibration?.[r.path];
       if (note) {
@@ -103,8 +154,7 @@ export function describeAssumptions(opts: {
         if (note.measuredAt) row.measuredAt = note.measuredAt;
       }
       return row;
-    },
-  );
+    });
 }
 
 // ---- Sensitivity ---------------------------------------------------------------

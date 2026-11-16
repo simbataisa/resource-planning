@@ -117,6 +117,7 @@ export async function createEstimate(
             detailedFte: snap.detailedFte,
             totalCasesDetailed: snap.totalCasesDetailed,
             uncalibrated: snap.uncalibrated,
+            assumptionRows: snap.assumptionRows,
             createdById: user.id,
             lockedById: user.id,
             lockExpiresAt: lockExpiry(now),

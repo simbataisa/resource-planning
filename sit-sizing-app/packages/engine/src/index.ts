@@ -16,7 +16,7 @@ export { sensitivity, SENSITIVITY_ITEMS, type SensitivityRow } from './sensitivi
 export { shiftLeftScenarios, type Scenario, type ScenarioKey } from './scenarios.ts';
 export { derivedRows, type DerivedRow, type ParamValue } from './derived.ts';
 export { calendarChecks, type CalendarCheck } from './calendar.ts';
-export { uncalibratedCount, isDefaultRow } from './calibration.ts';
+export { uncalibratedCount, isDefaultRow, isUncalibratedRow } from './calibration.ts';
 export { gapRows, topGap, type GapRow } from './gap.ts';
 export { itemHours } from './rubric.ts';
 export { fromPrototypeProfile, mergeShape, PrototypeImportError } from './prototype-import.ts';

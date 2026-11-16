@@ -35,6 +35,7 @@ const row = (over: Partial<PortfolioRow>): PortfolioRow => ({
   hours: 3680.8,
   roughFte: 20.46,
   uncalibrated: 142,
+  assumptionRows: 142,
   ...over,
 });
 const rows = [

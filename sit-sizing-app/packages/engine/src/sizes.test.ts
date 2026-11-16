@@ -1,6 +1,6 @@
 import type { Assumptions, EstimateInputs } from '@sit/schemas';
 import { describe, expect, it } from 'vitest';
-import { uncalibratedCount } from './calibration.ts';
+import { isUncalibratedRow, uncalibratedCount } from './calibration.ts';
 import { ASSUMPTION_PATHS, assumptionPaths, FIXED_ASSUMPTION_PATHS, SIZES } from './catalogue.ts';
 import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS } from './defaults.ts';
 import { SENSITIVITY_ITEMS } from './sensitivity.ts';
@@ -131,5 +131,16 @@ describe('versionSnapshot row total (ADR-0021)', () => {
       versionSnapshot(structuredClone(EXAMPLE_INPUTS) as EstimateInputs, withSize('Z'))
         .assumptionRows,
     ).toBe(163);
+  });
+});
+
+describe('isUncalibratedRow (ADR-0021)', () => {
+  it('judges one row as uncalibratedCount does', () => {
+    const a = withSize('XS2');
+    a.sizeNotes = { 'proxies.XS2': { source: 'x' } };
+    expect(isUncalibratedRow(a, D, 'proxies.XS2')).toBe(false);
+    expect(isUncalibratedRow(a, D, 'dproxies.XS2')).toBe(true);
+    expect(isUncalibratedRow(a, D, 'proxies.S')).toBe(true);
+    expect(isUncalibratedRow(a, D, 'ptRoughScen')).toBe(true);
   });
 });

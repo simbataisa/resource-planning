@@ -78,6 +78,7 @@ export function snapshotData(inputs: EstimateInputs, assumptions: Assumptions) {
     detailedFte: snap.detailedFte,
     totalCasesDetailed: snap.totalCasesDetailed,
     uncalibrated: snap.uncalibrated,
+    assumptionRows: snap.assumptionRows,
   };
 }
 

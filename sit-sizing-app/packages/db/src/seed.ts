@@ -134,6 +134,7 @@ async function main() {
               detailedFte: snap.detailedFte,
               totalCasesDetailed: snap.totalCasesDetailed,
               uncalibrated: snap.uncalibrated,
+              assumptionRows: snap.assumptionRows,
               note: 'Seeded example',
               createdById: admin.id,
             },

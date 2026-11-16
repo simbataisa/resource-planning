@@ -196,3 +196,15 @@ describe('a profile counts its own custom sizes (ADR-0021)', () => {
     expect(res.json.uncalibrated).toBe(161);
   });
 });
+
+describe('each version stores its own row total (ADR-0021)', () => {
+  it('stores 130 fixed rows plus 3 per size', async () => {
+    const p = await publishedProfile(
+      'rows',
+      values([], ['XXS', 'XS', 'M-', 'M+', 'XL', 'XXL', 'XXXL']),
+    );
+    const e = await estimateWith('rows', ['S', 'M'], p.id);
+    const v = await db().estimateVersion.findFirstOrThrow({ where: { estimateId: e.estimateId } });
+    expect(v.assumptionRows).toBe(139);
+  });
+});

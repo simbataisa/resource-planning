@@ -603,6 +603,8 @@ export const PortfolioRow = z.object({
   hours: z.number(),
   roughFte: z.number(),
   uncalibrated: z.number().int(),
+  /** This version's assumption rows: 130 fixed plus 3 per size (ADR-0021). */
+  assumptionRows: z.number().int(),
 });
 export type PortfolioRow = z.infer<typeof PortfolioRow>;
 
@@ -632,7 +634,7 @@ export const Portfolio = z
       }),
     ),
     total: PortfolioTotals,
-    /** Assumption rows per estimate, for the calibration share. */
+    /** Assumption rows with the ten built-in sizes (160); each row carries its own total. */
     assumptionRows: z.number().int(),
   })
   .meta({ id: 'Portfolio' });
