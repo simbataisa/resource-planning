@@ -29,10 +29,13 @@ const DEFAULTS = DEFAULT_ASSUMPTIONS as Assumptions;
  * the estimate editor puts the "apply a profile" control in `header`.
  */
 export function AssumptionsTab({
+  title,
   header,
   calibrationCell,
   notes,
 }: {
+  /** A heading shown beside the uncalibrated badge, with the hint below (profile page). */
+  title?: ReactNode;
   header?: ReactNode;
   /**
    * The calibration cell of a row. `sameAsDefault` is false for a row with no engine default
@@ -52,10 +55,20 @@ export function AssumptionsTab({
 
   return (
     <div className="grid gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-        <p className="min-w-0 flex-1 basis-80 text-sm text-muted-foreground">{t('hint')}</p>
-        <Badge variant="unc">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
-      </div>
+      {title ? (
+        <div className="grid gap-1">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+            {title}
+            <Badge variant="unc">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">{t('hint')}</p>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <p className="min-w-0 flex-1 basis-80 text-sm text-muted-foreground">{t('hint')}</p>
+          <Badge variant="unc">{tr('editor.tabs.uncalibrated', { n: uncalibrated })}</Badge>
+        </div>
+      )}
       {header}
       {assumptionMeta(A.sizes).map((g) => (
         <CollapsibleSection

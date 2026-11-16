@@ -92,3 +92,15 @@ describe('reset with custom sizes (ADR-0021)', () => {
     expect(screen.queryByRole('button', { name: `Reset ${ROW} to the default` })).toBeNull();
   });
 });
+
+describe('AssumptionsTab title (profile layout)', () => {
+  it('shows a title beside the uncalibrated badge', () => {
+    render(
+      <AssumptionsTab title={<h2>Assumption values</h2>} />,
+      structuredClone(DEFAULT_ASSUMPTIONS) as Assumptions,
+    );
+    const heading = screen.getByRole('heading', { name: 'Assumption values' });
+    const badge = screen.getAllByText('160 uncalibrated')[0]!;
+    expect(heading.parentElement).toBe(badge.parentElement);
+  });
+});
