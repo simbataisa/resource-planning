@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Save } from 'lucide-react';
-import { DEFAULT_ASSUMPTIONS, EXAMPLE_INPUTS, isDefaultRow } from '@sit/engine';
+import {
+  assumptionPaths,
+  DEFAULT_ASSUMPTIONS,
+  EXAMPLE_INPUTS,
+  isDefaultRow,
+  uncalibratedCount,
+} from '@sit/engine';
 import type { Assumptions, EstimateInputs, ProfileDetail } from '@sit/schemas';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +36,7 @@ import { EditorProvider, useEditor } from '../estimate-editor/store';
 import { useQueryState } from '../shared/use-query-state';
 import { NewProfileDialog } from './new-profile-dialog';
 import { PROFILE_TONE } from './profile-list';
+import { CalibrationCard, SizesCard, StatusCard } from './profile-panel';
 import { SizeEditor } from './size-editor';
 
 type Calibration = ProfileDetail['calibration'];
@@ -90,6 +97,8 @@ function ProfileBody({ profile, manage }: { profile: ProfileDetail; manage: bool
     : [];
   const canGlobal = principal ? can(principal, 'profile.global.manage') : false;
   const changed = dirty || calDirty || name.trim() !== profile.name;
+  const tDraft = useTranslations('draft');
+  const rowTotal = assumptionPaths(assumptions).length;
   const onSave = () => {
     // Keep notes only for rows that differ from the default and have a source.
     const kept = Object.fromEntries(
@@ -120,22 +129,6 @@ function ProfileBody({ profile, manage }: { profile: ProfileDetail; manage: bool
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={PROFILE_TONE[profile.status]}>{t(`status.${profile.status}`)}</Badge>
-            {editable ? (
-              <>
-                <Button variant="outline" disabled={!changed || save.isPending} onClick={onSave}>
-                  <Save aria-hidden="true" />
-                  {save.isPending ? t('saving') : t('save')}
-                </Button>
-                <Button
-                  disabled={changed || setStatus.isPending}
-                  title={changed ? t('saveFirst') : undefined}
-                  onClick={() => setConfirm('publish')}
-                >
-                  {t('publish')}
-                </Button>
-              </>
-            ) : null}
             {manage && profile.status === 'PUBLISHED' ? (
               <Button variant="outline" onClick={() => setConfirm('retire')}>
                 {t('retire')}
@@ -156,63 +149,100 @@ function ProfileBody({ profile, manage }: { profile: ProfileDetail; manage: bool
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       ) : null}
-      <Alert>
-        <AlertDescription>
-          {isDraft
-            ? t('draftNotice')
-            : t('readOnlyNotice', {
-                when: profile.publishedAt ? formatDateTime(profile.publishedAt, locale) : '—',
-              })}
-        </AlertDescription>
-      </Alert>
-      {editable ? (
-        <div className="max-w-md">
-          <Field label={t('name')}>
-            {(c) => (
-              <Input
-                {...c}
-                value={name}
-                maxLength={120}
-                onChange={(e) => setName(e.target.value)}
+      {/* Two columns from lg up: a sticky panel with the key facts, the values beside it. */}
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(16rem,1fr)_2fr]">
+        <aside className="grid gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto">
+          <StatusCard>
+            <div>
+              <Badge variant={PROFILE_TONE[profile.status]}>{t(`status.${profile.status}`)}</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {isDraft
+                ? t('draftNotice')
+                : t('readOnlyNotice', {
+                    when: profile.publishedAt ? formatDateTime(profile.publishedAt, locale) : '—',
+                  })}
+            </p>
+            {editable ? (
+              <>
+                <Field label={t('name')}>
+                  {(c) => (
+                    <Input
+                      {...c}
+                      value={name}
+                      maxLength={120}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  )}
+                </Field>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" disabled={!changed || save.isPending} onClick={onSave}>
+                    <Save aria-hidden="true" />
+                    {save.isPending ? t('saving') : t('save')}
+                  </Button>
+                  <Button
+                    disabled={changed || setStatus.isPending}
+                    title={changed ? t('saveFirst') : undefined}
+                    onClick={() => setConfirm('publish')}
+                  >
+                    {t('publish')}
+                  </Button>
+                </div>
+                {changed ? (
+                  <p role="status" className="text-xs text-muted-foreground">
+                    {tDraft('status.unsaved')}
+                  </p>
+                ) : null}
+              </>
+            ) : null}
+          </StatusCard>
+          <CalibrationCard
+            calibrated={rowTotal - uncalibratedCount(assumptions, DEFAULTS, calibration)}
+            total={rowTotal}
+          />
+          <SizesCard
+            sizes={assumptions.sizes}
+            editable={editable}
+            editor={(titleId) => (
+              <SizeEditor
+                values={assumptions}
+                calibration={calibration}
+                editable={editable}
+                labelledBy={titleId}
+                onChange={(next) => {
+                  // Sizes move their notes with them (ADR-0021).
+                  editAssumptions((d) => void Object.assign(d, next.values));
+                  setCalibration(next.calibration as Calibration);
+                  setCalDirty(true);
+                }}
               />
             )}
-          </Field>
-        </div>
-      ) : null}
-      <section className="grid gap-4 rounded-lg border bg-card p-5 shadow-card">
-        <h2 className="text-[1.6rem] font-light">{t('valuesTitle')}</h2>
-        <SizeEditor
-          values={assumptions}
-          calibration={calibration}
-          editable={editable}
-          onChange={(next) => {
-            // Sizes move their notes with them (ADR-0021).
-            editAssumptions((d) => void Object.assign(d, next.values));
-            setCalibration(next.calibration as Calibration);
-            setCalDirty(true);
-          }}
-        />
-        <AssumptionsTab
-          notes={calibration}
-          // The source column only takes space when it can hold something.
-          calibrationCell={
-            editable || Object.keys(calibration).length
-              ? (path, label, isDefault) =>
-                  isDefault ? null : (
-                    <CalibrationInputs
-                      label={label}
-                      value={calibration[path]}
-                      disabled={!editable}
-                      onChange={(entry) => {
-                        setCalDirty(true);
-                        setCalibration((c) => ({ ...c, [path]: entry }));
-                      }}
-                    />
-                  )
-              : undefined
-          }
-        />
-      </section>
+          />
+        </aside>
+        <section className="grid min-w-0 gap-4 rounded-lg border bg-card p-5 shadow-card">
+          <AssumptionsTab
+            title={<h2 className="text-[1.6rem] font-light">{t('valuesTitle')}</h2>}
+            notes={calibration}
+            // The source column only takes space when it can hold something.
+            calibrationCell={
+              editable || Object.keys(calibration).length
+                ? (path, label, isDefault) =>
+                    isDefault ? null : (
+                      <CalibrationInputs
+                        label={label}
+                        value={calibration[path]}
+                        disabled={!editable}
+                        onChange={(entry) => {
+                          setCalDirty(true);
+                          setCalibration((c) => ({ ...c, [path]: entry }));
+                        }}
+                      />
+                    )
+                : undefined
+            }
+          />
+        </section>
+      </div>
       {confirm ? (
         <Dialog open onOpenChange={(o) => !o && setConfirm(null)}>
           <DialogContent closeLabel={tc('close')}>
