@@ -1780,6 +1780,14 @@
       "removeTitle": "Remove size {size}?",
       "removeBody": "Its values and calibration notes go with it when you save. Estimates keep their own copy until this profile is applied to them again.",
       "removeConfirm": "Remove"
+    },
+    "panel": {
+      "status": "Status",
+      "calibration": "Calibration",
+      "calibrated": "{n} of {t} rows calibrated",
+      "sizes": "Feature sizes",
+      "sizesHint": "Rough scope offers them in this order.",
+      "editSizes": "Edit sizes"
     }
   },
   "export": {

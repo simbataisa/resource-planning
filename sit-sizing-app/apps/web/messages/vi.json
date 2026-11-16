@@ -1780,6 +1780,14 @@
       "removeTitle": "Xoá kích cỡ {size}?",
       "removeBody": "Giá trị và ghi chú hiệu chỉnh của kích cỡ này sẽ bị xoá theo khi bạn lưu. Các ước lượng vẫn giữ bản sao riêng cho đến khi hồ sơ này được áp dụng lại.",
       "removeConfirm": "Xoá"
+    },
+    "panel": {
+      "status": "Trạng thái",
+      "calibration": "Hiệu chỉnh",
+      "calibrated": "{n} trên {t} dòng đã hiệu chỉnh",
+      "sizes": "Kích cỡ tính năng",
+      "sizesHint": "Phạm vi sơ bộ cho chọn theo đúng thứ tự này.",
+      "editSizes": "Sửa kích cỡ"
     }
   },
   "export": {

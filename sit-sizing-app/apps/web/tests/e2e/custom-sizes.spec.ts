@@ -20,8 +20,11 @@ async function publishProfile(
   await dialog.getByLabel('Name').fill(name);
   await dialog.getByRole('button', { name: 'Create profile' }).click();
   await expect(lead.getByRole('heading', { level: 1, name })).toBeVisible();
-  const sizes = lead.getByRole('region', { name: 'Feature sizes' });
+  // Sizes are edited in a side panel (two-column profile page).
+  await lead.getByRole('button', { name: 'Edit sizes' }).click();
+  const sizes = lead.getByRole('dialog', { name: 'Feature sizes' });
   await edit(sizes);
+  await sizes.getByRole('button', { name: 'Close' }).click();
   await lead.getByRole('button', { name: 'Save changes' }).click();
   await expect(lead.getByRole('button', { name: 'Publish' })).toBeEnabled();
   await lead.getByRole('button', { name: 'Publish' }).click();
@@ -60,7 +63,10 @@ test('applying a profile without a size the features use is refused', async ({ p
   await asLead(browser, (lead) =>
     publishProfile(lead, profile, async (sizes) => {
       await sizes.getByRole('button', { name: 'Remove L', exact: true }).click();
-      await lead.getByRole('dialog').getByRole('button', { name: 'Remove', exact: true }).click();
+      await lead
+        .getByRole('dialog', { name: 'Remove size L?' })
+        .getByRole('button', { name: 'Remove', exact: true })
+        .click();
       await expect(sizes.getByText('L', { exact: true })).toHaveCount(0);
     }),
   );

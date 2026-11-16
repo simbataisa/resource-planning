@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { type RefObject, useEffect, useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { Assumptions } from '@sit/schemas';
@@ -40,17 +40,20 @@ export function SizeEditor({
   calibration,
   editable,
   onChange,
+  labelledBy,
 }: {
   values: Assumptions;
   calibration: Notes;
   editable: boolean;
   onChange: (next: { values: Assumptions; calibration: Notes }) => void;
+  /** The id of a heading outside (e.g. a side panel's title); then no heading of its own. */
+  labelledBy?: string;
 }) {
   const t = useTranslations('profiles.sizes');
   const tc = useTranslations('common');
   const headingId = useId();
   const renameErrorId = useId();
-  const heading = useRef<HTMLHeadingElement>(null);
+  const heading = useRef<HTMLElement>(null);
   const renameButtons = useRef(new Map<string, HTMLButtonElement>());
   const [name, setName] = useState('');
   const [copyFrom, setCopyFrom] = useState(values.sizes[0] ?? '');
@@ -98,11 +101,23 @@ export function SizeEditor({
   };
 
   return (
-    <section aria-labelledby={headingId} className="grid gap-3">
+    <section
+      aria-labelledby={labelledBy ?? headingId}
+      ref={labelledBy ? heading : undefined}
+      tabIndex={labelledBy ? -1 : undefined}
+      className="grid gap-3 outline-none"
+    >
       <div className="grid gap-1">
-        <h3 id={headingId} ref={heading} tabIndex={-1} className="text-lg font-medium">
-          {t('title')}
-        </h3>
+        {labelledBy ? null : (
+          <h3
+            id={headingId}
+            ref={heading as RefObject<HTMLHeadingElement>}
+            tabIndex={-1}
+            className="text-lg font-medium"
+          >
+            {t('title')}
+          </h3>
+        )}
         <p className="text-sm text-muted-foreground">{t('hint')}</p>
       </div>
       <ol className="grid gap-1.5">

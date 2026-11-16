@@ -55,6 +55,15 @@ function profile(over: Partial<ProfileDetail> = {}): ProfileDetail {
   };
 }
 
+/** Opens the size editor side panel of a draft profile (two-column layout). */
+function openSizes() {
+  fireEvent.click(screen.getByRole('button', { name: 'Edit sizes' }));
+  return screen.getByRole('dialog', { name: 'Feature sizes' });
+}
+function closeSizes(sheet: HTMLElement) {
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Close' }));
+}
+
 function me(role: 'VIEWER' | 'ESTIMATOR' | 'QE_LEAD') {
   return ok({
     id: 'u1',
@@ -216,7 +225,7 @@ describe('feature sizes in a profile (ADR-0021)', () => {
   it('adds a size copied from another and removes one, then saves', async () => {
     hooks.useProfile.mockReturnValue(ok(profile()));
     const { container } = renderWithIntl(<ProfileEditor profileId="pr1" />);
-    const sizes = screen.getByRole('region', { name: 'Feature sizes' });
+    const sizes = openSizes();
     fireEvent.change(within(sizes).getByRole('textbox', { name: 'Size name' }), {
       target: { value: 'XS2' },
     });
@@ -225,7 +234,12 @@ describe('feature sizes in a profile (ADR-0021)', () => {
     });
     fireEvent.click(within(sizes).getByRole('button', { name: 'Add size' }));
     fireEvent.click(within(sizes).getByRole('button', { name: 'Remove XXL' }));
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Remove size XXL?' })).getByRole('button', {
+        name: 'Remove',
+      }),
+    );
+    closeSizes(sizes);
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     const body = save.mutate.mock.calls[0]![0];
     expect(body.values.sizes).toContain('XS2');
@@ -237,7 +251,7 @@ describe('feature sizes in a profile (ADR-0021)', () => {
   it('explains a name it cannot take', () => {
     hooks.useProfile.mockReturnValue(ok(profile()));
     renderWithIntl(<ProfileEditor profileId="pr1" />);
-    const sizes = screen.getByRole('region', { name: 'Feature sizes' });
+    const sizes = openSizes();
     fireEvent.change(within(sizes).getByRole('textbox', { name: 'Size name' }), {
       target: { value: 'M' },
     });
@@ -248,13 +262,14 @@ describe('feature sizes in a profile (ADR-0021)', () => {
   it('renames a size and moves it', () => {
     hooks.useProfile.mockReturnValue(ok(profile()));
     renderWithIntl(<ProfileEditor profileId="pr1" />);
-    const sizes = screen.getByRole('region', { name: 'Feature sizes' });
+    const sizes = openSizes();
     fireEvent.click(within(sizes).getByRole('button', { name: 'Rename M' }));
     fireEvent.change(within(sizes).getByRole('textbox', { name: 'New name for M' }), {
       target: { value: 'Med' },
     });
     fireEvent.click(within(sizes).getByRole('button', { name: 'Save name' }));
     fireEvent.click(within(sizes).getByRole('button', { name: 'Move Med up' }));
+    closeSizes(sizes);
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     const body = save.mutate.mock.calls[0]![0];
     expect(body.values.sizes.slice(2, 5)).toEqual(['S', 'Med', 'M-']);
@@ -266,7 +281,7 @@ describe('feature sizes in a profile (ADR-0021)', () => {
     renderWithIntl(<ProfileEditor profileId="pr1" />);
     const sizes = screen.getByRole('region', { name: 'Feature sizes' });
     expect(within(sizes).getByText('XXXL')).toBeTruthy();
-    expect(within(sizes).queryByRole('button', { name: 'Add size' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit sizes' })).toBeNull();
   });
 
   function renderBlocked(sizes: string[]) {
@@ -323,7 +338,7 @@ describe('size editor details (ADR-0021 follow-up)', () => {
   const open = () => {
     hooks.useProfile.mockReturnValue(ok(profile()));
     renderWithIntl(<ProfileEditor profileId="pr1" />);
-    return screen.getByRole('region', { name: 'Feature sizes' });
+    return openSizes();
   };
 
   it('closes a rename that keeps the same name, without an error', () => {
@@ -348,12 +363,15 @@ describe('size editor details (ADR-0021 follow-up)', () => {
   it('asks before removing a size', () => {
     const sizes = open();
     fireEvent.click(within(sizes).getByRole('button', { name: 'Remove XXL' }));
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Remove size XXL?')).toBeTruthy();
+    const dialog = screen.getByRole('dialog', { name: 'Remove size XXL?' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(within(sizes).getByRole('button', { name: 'Remove XXL' })).toBeTruthy();
     fireEvent.click(within(sizes).getByRole('button', { name: 'Remove XXL' }));
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Remove size XXL?' })).getByRole('button', {
+        name: 'Remove',
+      }),
+    );
     expect(within(sizes).queryByRole('button', { name: 'Remove XXL' })).toBeNull();
   });
 
@@ -375,5 +393,41 @@ describe('size editor details (ADR-0021 follow-up)', () => {
     expect(name.getAttribute('aria-invalid')).toBe('true');
     const described = name.getAttribute('aria-describedby') ?? '';
     expect(document.getElementById(described)?.textContent).toBe('That size already exists.');
+  });
+});
+
+describe('two-column profile page', () => {
+  it('shows status, calibration and sizes in the side panel', async () => {
+    hooks.useProfile.mockReturnValue(
+      ok(profile({ status: 'PUBLISHED', publishedAt: NOW, uncalibrated: 159 })),
+    );
+    hooks.useProfiles.mockReturnValue(ok({ items: [] }));
+    const { container } = renderWithIntl(<ProfileEditor profileId="pr1" />);
+    const sizes = screen.getByRole('region', { name: 'Feature sizes' });
+    expect(within(sizes).getAllByRole('listitem')).toHaveLength(10);
+    expect(screen.getByText('0 of 160 rows calibrated')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Edit sizes' })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: 'Name' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Assumption values' })).toBeTruthy();
+    await expectNoAxeViolations(container);
+  });
+
+  it('edits sizes in a side panel and counts the new rows', () => {
+    hooks.useProfile.mockReturnValue(ok(profile()));
+    renderWithIntl(<ProfileEditor profileId="pr1" />);
+    expect(screen.getByText('0 of 160 rows calibrated')).toBeTruthy();
+    const sheet = openSizes();
+    fireEvent.change(within(sheet).getByRole('textbox', { name: 'Size name' }), {
+      target: { value: 'XS2' },
+    });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Add size' }));
+    closeSizes(sheet);
+    expect(screen.getByText('Unsaved changes')).toBeTruthy();
+    expect(screen.getByText('0 of 163 rows calibrated')).toBeTruthy();
+    expect(
+      within(screen.getByRole('region', { name: 'Feature sizes' })).getByText('XS2'),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(save.mutate.mock.calls[0]![0].values.sizes).toContain('XS2');
   });
 });
