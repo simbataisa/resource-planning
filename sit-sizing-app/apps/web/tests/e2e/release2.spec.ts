@@ -116,6 +116,7 @@ test('a published profile is applied to a new estimate', async ({ page, browser 
   await expect(page.getByRole('region', { name: 'Summary' })).toContainText('141');
   await page.getByRole('tab', { name: /^Assumptions/ }).click();
   await expect(page.getByText(`Assumptions come from the profile ${profile}.`)).toBeVisible();
+  await openAssumptionGroup(page, 'rules');
   await expect(page.getByRole('spinbutton', { name: /^Critical-rule share, rough/ })).toHaveValue(
     '35',
   );
