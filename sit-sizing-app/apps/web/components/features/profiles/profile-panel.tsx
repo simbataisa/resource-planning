@@ -91,7 +91,7 @@ export function SizesCard({
         editable ? (
           <Sheet>
             <SheetTriggerButton label={t('editSizes')} />
-            <SheetContent closeLabel={tc('close')} className="overflow-y-auto p-5">
+            <SheetContent closeLabel={tc('close')} className="overflow-y-auto p-5 sm:max-w-md">
               <SheetHeader>
                 <SheetTitle>{t('sizes')}</SheetTitle>
                 <SheetDescription className="sr-only">{t('sizesHint')}</SheetDescription>

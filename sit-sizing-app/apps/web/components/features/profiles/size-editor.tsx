@@ -105,7 +105,7 @@ export function SizeEditor({
       aria-labelledby={labelledBy ?? headingId}
       ref={labelledBy ? heading : undefined}
       tabIndex={labelledBy ? -1 : undefined}
-      className="grid gap-3 outline-none"
+      className="grid gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="grid gap-1">
         {labelledBy ? null : (

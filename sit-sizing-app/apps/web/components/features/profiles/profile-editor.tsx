@@ -151,7 +151,7 @@ function ProfileBody({ profile, manage }: { profile: ProfileDetail; manage: bool
       ) : null}
       {/* Two columns from lg up: a sticky panel with the key facts, the values beside it. */}
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(16rem,1fr)_2fr]">
-        <aside className="grid gap-4 lg:sticky lg:top-4">
+        <aside className="grid gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto">
           <StatusCard>
             <div>
               <Badge variant={PROFILE_TONE[profile.status]}>{t(`status.${profile.status}`)}</Badge>
@@ -189,7 +189,9 @@ function ProfileBody({ profile, manage }: { profile: ProfileDetail; manage: bool
                   </Button>
                 </div>
                 {changed ? (
-                  <p className="text-xs text-muted-foreground">{tDraft('status.unsaved')}</p>
+                  <p role="status" className="text-xs text-muted-foreground">
+                    {tDraft('status.unsaved')}
+                  </p>
                 ) : null}
               </>
             ) : null}

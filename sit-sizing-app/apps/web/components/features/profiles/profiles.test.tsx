@@ -431,3 +431,41 @@ describe('two-column profile page', () => {
     expect(save.mutate.mock.calls[0]![0].values.sizes).toContain('XS2');
   });
 });
+
+describe('two-column profile page: review fixes', () => {
+  it('lets the side panel scroll on its own when it is taller than the screen', () => {
+    hooks.useProfile.mockReturnValue(ok(profile()));
+    const { container } = renderWithIntl(<ProfileEditor profileId="pr1" />);
+    const aside = container.querySelector('aside')!;
+    expect(aside.className).toContain('lg:max-h-[calc(100dvh-2rem)]');
+    expect(aside.className).toContain('lg:overflow-y-auto');
+  });
+
+  it('announces unsaved changes', () => {
+    hooks.useProfile.mockReturnValue(ok(profile()));
+    renderWithIntl(<ProfileEditor profileId="pr1" />);
+    const sheet = openSizes();
+    fireEvent.change(within(sheet).getByRole('textbox', { name: 'Size name' }), {
+      target: { value: 'XS2' },
+    });
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Add size' }));
+    closeSizes(sheet);
+    expect(screen.getByRole('status').textContent).toBe('Unsaved changes');
+  });
+
+  it('keeps focus visible in the side panel after removing a size', () => {
+    hooks.useProfile.mockReturnValue(ok(profile()));
+    renderWithIntl(<ProfileEditor profileId="pr1" />);
+    const sheet = openSizes();
+    expect(sheet.className).toContain('sm:max-w-md');
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Remove XXL' }));
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Remove size XXL?' })).getByRole('button', {
+        name: 'Remove',
+      }),
+    );
+    const region = within(sheet).getByRole('region', { name: 'Feature sizes' });
+    expect(document.activeElement).toBe(region);
+    expect(region.className).toContain('focus-visible:ring-2');
+  });
+});
