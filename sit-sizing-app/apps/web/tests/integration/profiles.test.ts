@@ -88,7 +88,7 @@ describe('assumption profiles', () => {
       calibration: { 'cases.api': { source: 'Synthetic · SIT cycle', measuredAt: '2026-10-01' } },
     });
     expect(res.status, JSON.stringify(res.json)).toBe(200);
-    expect(res.json.uncalibrated).toBe(141);
+    expect(res.json.uncalibrated).toBe(159);
     expect(res.json.calibration['cases.api'].source).toBe('Synthetic · SIT cycle');
     expect((await patch('dev-viewer', { name: 'x' })).status).toBe(403);
   });
@@ -117,7 +117,7 @@ describe('assumption profiles', () => {
     expect(res.status, JSON.stringify(res.json)).toBe(201);
     const v = await db().estimateVersion.findFirstOrThrow({ where: { estimateId: res.json.id } });
     expect(v.profileId).toBe(profileId);
-    expect(v.uncalibrated).toBe(141);
+    expect(v.uncalibrated).toBe(159);
   });
 
   it('applies a published profile to an open draft (lock holder, current rowVersion)', async () => {
@@ -142,7 +142,7 @@ describe('assumption profiles', () => {
     expect(res.status, JSON.stringify(res.json)).toBe(200);
     expect(res.json.profileId).toBe(profileId);
     expect(res.json.rowVersion).toBe(draft.rowVersion + 1);
-    expect(res.json.uncalibrated).toBe(141);
+    expect(res.json.uncalibrated).toBe(159);
     expect(
       await db().auditEvent.count({
         where: { action: 'estimate.draft.profile.apply', entityId: draft.id },

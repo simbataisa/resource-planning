@@ -113,7 +113,7 @@ test('a published profile is applied to a new estimate', async ({ page, browser 
   await dialog.getByLabel('Assumption profile').selectOption({ label: `${profile} · Project` });
   await dialog.getByRole('button', { name: 'Create estimate' }).click();
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Summary' })).toContainText('141');
+  await expect(page.getByRole('region', { name: 'Summary' })).toContainText('159');
   await page.getByRole('tab', { name: /^Assumptions/ }).click();
   await expect(page.getByText(`Assumptions come from the profile ${profile}.`)).toBeVisible();
   await openAssumptionGroup(page, 'rules');

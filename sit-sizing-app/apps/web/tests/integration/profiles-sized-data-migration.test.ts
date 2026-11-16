@@ -67,8 +67,8 @@ describe('profile data migration 20261120000000_sized_data_assumptions (ADR-0019
     expect(values.dataDesign).toEqual([10, 15, 25]);
     expect(values.dataExec).toEqual([7, 7, 7]);
     expect(values.dataPrepHours).toEqual([2, 3, 5]);
-    // Only dataExec was calibrated, so 141 rows still equal the defaults.
-    expect(uncalibratedCount(values, DEFAULT_ASSUMPTIONS)).toBe(141);
+    // Only dataExec was calibrated, so 159 of the 160 rows still equal the defaults.
+    expect(uncalibratedCount(values, DEFAULT_ASSUMPTIONS)).toBe(159);
   });
 
   it('keeps a row calibrated to the old default value at that value for every size', async () => {
