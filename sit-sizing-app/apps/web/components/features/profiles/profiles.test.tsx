@@ -269,7 +269,7 @@ describe('feature sizes in a profile (ADR-0021)', () => {
     expect(within(sizes).queryByRole('button', { name: 'Add size' })).toBeNull();
   });
 
-  it('explains which features block applying a profile', () => {
+  function renderBlocked(sizes: string[]) {
     hooks.useApplyProfile.mockReturnValue({
       ...apply,
       isError: true,
@@ -286,21 +286,36 @@ describe('feature sizes in a profile (ADR-0021)', () => {
       ),
     });
     hooks.useProfiles.mockReturnValue(ok({ items: [profile({ status: 'PUBLISHED' })] }));
+    const inputs = structuredClone(EXAMPLE_INPUTS) as EstimateInputs;
+    inputs.features = sizes.map((size, i) => ({ ...inputs.features[0]!, name: `F${i}`, size }));
     renderWithIntl(
       <EditorProvider
-        initial={{
-          inputs: EXAMPLE_INPUTS as EstimateInputs,
-          assumptions: structuredClone(DEFAULTS),
-          rowVersion: 4,
-        }}
+        initial={{ inputs, assumptions: structuredClone(DEFAULTS), rowVersion: 4 }}
         editable
       >
         <ApplyProfile estimateId="e1" projectId="p1" profileId="g" />
       </EditorProvider>,
     );
+  }
+
+  it('explains which features block applying a profile', () => {
+    renderBlocked(['XXL', 'M', 'XXL', 'XXL']);
     expect(
       screen.getByText("3 features use XXL, which this profile doesn't have. Resize them first."),
     ).toBeTruthy();
+  });
+
+  it('counts the features as they are now', () => {
+    renderBlocked(['XXL', 'M']);
+    expect(
+      screen.getByText("1 feature uses XXL, which this profile doesn't have. Resize them first."),
+    ).toBeTruthy();
+  });
+
+  it('shows no message once the features are resized', () => {
+    renderBlocked(['M', 'L']);
+    expect(screen.queryByText(/which this profile doesn't have/)).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });
 
