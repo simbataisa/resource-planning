@@ -114,8 +114,13 @@ export function describeAssumptions(opts: {
   paths?: readonly string[];
   values?: Assumptions;
   calibration?: Calibration;
+  /**
+   * Notes that decide whether custom-size rows are calibrated. A version passes its copied
+   * `sizeNotes`; by default the profile's `calibration`, then the values' own (ADR-0021).
+   */
+  sizeNotes?: Readonly<Record<string, unknown>>;
 }): AssumptionRow[] {
-  const { locale, group, paths, values, calibration } = opts;
+  const { locale, group, paths, values, calibration, sizeNotes } = opts;
   const rows = rowsFor((values ?? DEFAULT_ASSUMPTIONS).sizes);
   const known = new Set(rows.map((r) => r.path));
   for (const p of paths ?? []) {
@@ -145,7 +150,7 @@ export function describeAssumptions(opts: {
           values,
           DEFAULT_ASSUMPTIONS,
           r.path,
-          calibration ?? values.sizeNotes,
+          sizeNotes ?? calibration ?? values.sizeNotes,
         );
       }
       const note = calibration?.[r.path];
