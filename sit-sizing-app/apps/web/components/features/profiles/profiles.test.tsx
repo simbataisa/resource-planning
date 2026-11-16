@@ -225,6 +225,7 @@ describe('feature sizes in a profile (ADR-0021)', () => {
     });
     fireEvent.click(within(sizes).getByRole('button', { name: 'Add size' }));
     fireEvent.click(within(sizes).getByRole('button', { name: 'Remove XXL' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     const body = save.mutate.mock.calls[0]![0];
     expect(body.values.sizes).toContain('XS2');
@@ -300,5 +301,64 @@ describe('feature sizes in a profile (ADR-0021)', () => {
     expect(
       screen.getByText("3 features use XXL, which this profile doesn't have. Resize them first."),
     ).toBeTruthy();
+  });
+});
+
+describe('size editor details (ADR-0021 follow-up)', () => {
+  const open = () => {
+    hooks.useProfile.mockReturnValue(ok(profile()));
+    renderWithIntl(<ProfileEditor profileId="pr1" />);
+    return screen.getByRole('region', { name: 'Feature sizes' });
+  };
+
+  it('closes a rename that keeps the same name, without an error', () => {
+    const sizes = open();
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Rename M' }));
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Save name' }));
+    expect(within(sizes).queryByRole('textbox', { name: 'New name for M' })).toBeNull();
+    expect(within(sizes).queryByRole('alert')).toBeNull();
+  });
+
+  it('limits names to 6 characters', () => {
+    const sizes = open();
+    expect(
+      within(sizes).getByRole('textbox', { name: 'Size name' }).getAttribute('maxlength'),
+    ).toBe('6');
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Rename M' }));
+    expect(
+      within(sizes).getByRole('textbox', { name: 'New name for M' }).getAttribute('maxlength'),
+    ).toBe('6');
+  });
+
+  it('asks before removing a size', () => {
+    const sizes = open();
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Remove XXL' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Remove size XXL?')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(within(sizes).getByRole('button', { name: 'Remove XXL' })).toBeTruthy();
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Remove XXL' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    expect(within(sizes).queryByRole('button', { name: 'Remove XXL' })).toBeNull();
+  });
+
+  it('focuses the rename field, saves on Enter and gives focus back', () => {
+    const sizes = open();
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Rename M' }));
+    const input = within(sizes).getByRole('textbox', { name: 'New name for M' });
+    expect(document.activeElement).toBe(input);
+    fireEvent.change(input, { target: { value: 'Med' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(document.activeElement).toBe(within(sizes).getByRole('button', { name: 'Rename Med' }));
+  });
+
+  it('links an error to the name field', () => {
+    const sizes = open();
+    const name = within(sizes).getByRole('textbox', { name: 'Size name' });
+    fireEvent.change(name, { target: { value: 'M' } });
+    fireEvent.click(within(sizes).getByRole('button', { name: 'Add size' }));
+    expect(name.getAttribute('aria-invalid')).toBe('true');
+    const described = name.getAttribute('aria-describedby') ?? '';
+    expect(document.getElementById(described)?.textContent).toBe('That size already exists.');
   });
 });
