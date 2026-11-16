@@ -264,7 +264,7 @@ function SensitivityPanel() {
           {t('fewer')}
         </span>
         <span className="flex items-center gap-1.5">
-          <i aria-hidden="true" className="size-2.5 rounded-sm bg-bad" />
+          <i aria-hidden="true" className="size-2.5 rounded-sm bg-brand" />
           {t('more')}
         </span>
         <span>{t('centre')}</span>

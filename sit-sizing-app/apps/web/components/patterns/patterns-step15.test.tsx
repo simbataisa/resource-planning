@@ -122,6 +122,10 @@ describe('patterns added in step 1.5', () => {
     const list = screen.getByRole('list', { name: 'What moves the number' });
     expect(list.querySelectorAll('li')).toHaveLength(2);
     expect(screen.getByText('19.9 – 23.1 FTE')).toBeInTheDocument();
+    // Bars use the brand red, like the prototype (--bad is the darker red for text, ADR-0005).
+    const bars = list.querySelectorAll('li')[0]!.querySelectorAll('span[style]');
+    expect(bars[1]!.className).toContain('bg-brand');
+    expect(bars[1]!.className).not.toContain('bg-bad');
     await expectNoAxeViolations(container);
   });
 });
