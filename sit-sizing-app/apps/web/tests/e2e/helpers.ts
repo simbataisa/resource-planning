@@ -63,3 +63,10 @@ export async function submitAndApprove(page: Page, browser: Browser) {
   await page.reload();
   await expect(versionRow(page, 1).getByText('Approved', { exact: true })).toBeVisible();
 }
+
+/** Assumption groups start collapsed: opens one (e.g. 'effort', 'rules') unless it is open already. */
+export async function openAssumptionGroup(page: Page, group: string): Promise<void> {
+  const details = page.locator(`#asm-${group}`);
+  if ((await details.getAttribute('open')) === null) await details.locator('> summary').click();
+  await expect(details).toHaveAttribute('open', '');
+}

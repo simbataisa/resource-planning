@@ -909,6 +909,13 @@ describe('Editing the scope', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /L4 end-to-end journeys/ }));
 
     tab(/Assumptions/);
+    // Every assumption group is collapsible and starts collapsed, with its own count.
+    const groups = Array.from(document.querySelectorAll<HTMLDetailsElement>('details[id^="asm-"]'));
+    expect(groups.length).toBeGreaterThan(10);
+    expect(groups.every((d) => !d.open)).toBe(true);
+    const effort = groups.find((d) => d.id === 'asm-effort')!;
+    expect(effort.querySelector('summary')!.textContent).toMatch(/\d+ uncalibrated/);
+    const effortBefore = effort.querySelector('summary')!.textContent;
     fireEvent.change(
       screen.getByRole('spinbutton', { name: 'Planning, reporting and coordination overhead' }),
       {
@@ -916,6 +923,7 @@ describe('Editing the scope', () => {
       },
     );
     expect(screen.getAllByText('Team value').length).toBe(1);
+    expect(effort.querySelector('summary')!.textContent).not.toBe(effortBefore);
     fireEvent.click(
       screen.getByRole('button', {
         name: 'Reset Planning, reporting and coordination overhead to the default',
