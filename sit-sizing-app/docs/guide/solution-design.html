@@ -1,0 +1,3641 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SIT Sizing solution design</title>
+    <meta
+      name="description"
+      content="The SIT Sizing solution design, feature by feature, with the architecture decision records (ADR-0001 to ADR-0021) behind each feature."
+    />
+    <style>
+      :root {
+        --bg: #f7f7f8;
+        --surface: #ffffff;
+        --surface-2: #f1f1f3;
+        --text: #1b1b1f;
+        --muted: #5d5d66;
+        --line: #e2e2e6;
+        --red: #ed1c24;
+        --red-strong: #c8141c;
+        --red-soft: #fde8e9;
+        --green: #18733c;
+        --green-soft: #e3f4ea;
+        --amber: #7a5f1e;
+        --amber-soft: #fdf1dc;
+        --blue: #1b1564;
+        --blue-soft: #e8e7f5;
+        --gold: #a8873a;
+        --gold-soft: #f6efdc;
+        --grey-soft: #ececef;
+        --radius: 14px;
+        --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.06);
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #111114;
+          --surface: #1a1a1f;
+          --surface-2: #232329;
+          --text: #ececf1;
+          --muted: #a3a3ad;
+          --line: #2e2e36;
+          --red: #ff4d54;
+          --red-strong: #ff6b70;
+          --red-soft: #3a1618;
+          --green: #4cc27f;
+          --green-soft: #12301f;
+          --amber: #f0b44c;
+          --amber-soft: #352710;
+          --blue: #9d98f0;
+          --blue-soft: #1c1a3d;
+          --gold: #e2c47e;
+          --gold-soft: #33290f;
+          --grey-soft: #2a2a31;
+          --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #111114;
+        --surface: #1a1a1f;
+        --surface-2: #232329;
+        --text: #ececf1;
+        --muted: #a3a3ad;
+        --line: #2e2e36;
+        --red: #ff4d54;
+        --red-strong: #ff6b70;
+        --red-soft: #3a1618;
+        --green: #4cc27f;
+        --green-soft: #12301f;
+        --amber: #f0b44c;
+        --amber-soft: #352710;
+        --blue: #9d98f0;
+        --blue-soft: #1c1a3d;
+        --gold: #e2c47e;
+        --gold-soft: #33290f;
+        --grey-soft: #2a2a31;
+        --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.6 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        border-top: 4px solid var(--red);
+      }
+      a {
+        color: var(--red-strong);
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.86em;
+        background: var(--surface-2);
+        padding: 0.1em 0.35em;
+        border-radius: 5px;
+        overflow-wrap: anywhere;
+      }
+      :focus-visible {
+        outline: 3px solid var(--red);
+        outline-offset: 2px;
+      }
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+      .skip:focus {
+        left: 16px;
+        top: 12px;
+        z-index: 10;
+        background: var(--surface);
+        padding: 8px 12px;
+        border-radius: 8px;
+      }
+
+      /* Layout */
+      .layout {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+      aside {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        padding: 24px 12px 24px 16px;
+        border-right: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        margin: 0 0 18px 8px;
+      }
+      .brand-mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: var(--red);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+      }
+      aside .group {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin: 16px 8px 4px;
+      }
+      aside a {
+        display: block;
+        padding: 5px 10px;
+        border-radius: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 14px;
+      }
+      aside a:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      aside a.active {
+        background: var(--red-soft);
+        color: var(--red-strong);
+        font-weight: 600;
+      }
+      main {
+        padding: 32px 32px 80px;
+        min-width: 0;
+      }
+      /* Top bar and drawer: phones and tablets only */
+      .topbar,
+      .scrim,
+      .drawer-close {
+        display: none;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .topbar {
+          position: sticky;
+          top: 0;
+          z-index: 20;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px 16px;
+          background: var(--bg);
+          border-bottom: 1px solid var(--line);
+        }
+        .topbar .brand {
+          margin: 0;
+          flex: none;
+        }
+        .topbar .current {
+          flex: 1;
+          min-width: 0;
+          color: var(--muted);
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .menu-btn,
+        .drawer-close {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font: inherit;
+          font-size: 14px;
+          font-weight: 600;
+          min-height: 40px;
+          padding: 6px 14px;
+          border-radius: 999px;
+          border: 1px solid var(--line);
+          background: var(--surface);
+          color: var(--text);
+          cursor: pointer;
+        }
+        .menu-btn svg,
+        .drawer-close svg {
+          width: 18px;
+          height: 18px;
+        }
+        aside {
+          position: fixed;
+          z-index: 40;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          width: min(320px, 86vw);
+          height: auto;
+          background: var(--surface);
+          border-right: 1px solid var(--line);
+          box-shadow: var(--shadow);
+          padding: 16px 12px 32px;
+          transform: translateX(-102%);
+          visibility: hidden;
+          transition:
+            transform 0.2s ease,
+            visibility 0s linear 0.2s;
+        }
+        body.nav-open aside {
+          transform: none;
+          visibility: visible;
+          transition: transform 0.2s ease;
+        }
+        .drawer-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin: 0 0 4px 8px;
+        }
+        .drawer-head .brand {
+          margin: 0;
+        }
+        .drawer-close {
+          display: inline-flex;
+          padding: 6px 10px;
+        }
+        aside a {
+          padding: 9px 10px;
+          font-size: 15px;
+        }
+        .scrim {
+          position: fixed;
+          inset: 0;
+          z-index: 30;
+          background: rgb(0 0 0 / 0.4);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+        }
+        body.nav-open .scrim {
+          display: block;
+          opacity: 1;
+          pointer-events: auto;
+        }
+        body.nav-open {
+          overflow: hidden;
+        }
+        section.feature,
+        details.adr {
+          scroll-margin-top: 72px;
+        }
+        main {
+          padding: 24px 16px 64px;
+        }
+      }
+      @media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+        aside,
+        body.nav-open aside,
+        .scrim {
+          transition: none;
+        }
+      }
+
+      /* Type */
+      h1 {
+        font-size: clamp(30px, 5vw, 42px);
+        line-height: 1.15;
+        margin: 0 0 12px;
+        letter-spacing: -0.02em;
+        font-weight: 400;
+      }
+      h2 {
+        font-size: 26px;
+        margin: 0 0 6px;
+        letter-spacing: -0.01em;
+        font-weight: 500;
+      }
+      h3 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+      .eyebrow {
+        color: var(--red-strong);
+        font-weight: 600;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 18px;
+        max-width: 70ch;
+        margin: 0 0 20px;
+      }
+      .summary {
+        color: var(--muted);
+        max-width: 72ch;
+        margin: 0 0 18px;
+      }
+      section.feature {
+        padding: 40px 0 8px;
+        border-top: 1px solid var(--line);
+        scroll-margin-top: 64px;
+      }
+      section.feature:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      /* Cards and grids */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px 20px;
+        min-width: 0;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+        margin: 0 0 16px;
+      }
+      .grid.two {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+      }
+      .card ul,
+      .card ol {
+        margin: 0;
+        padding-left: 20px;
+      }
+      .card li + li {
+        margin-top: 4px;
+      }
+      .card p {
+        margin: 0 0 8px;
+      }
+      .card p:last-child {
+        margin-bottom: 0;
+      }
+      .card h3 .tag {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 2px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+        gap: 12px;
+        margin: 0 0 20px;
+      }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-top: 4px solid var(--red);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+      .stat.gold {
+        border-top-color: var(--gold);
+      }
+      .stat.navy {
+        border-top-color: var(--blue);
+      }
+      .stat.grey {
+        border-top-color: var(--muted);
+      }
+      .stat b {
+        display: block;
+        font-size: 26px;
+        font-weight: 300;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      /* Chips */
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0 0 14px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: var(--grey-soft);
+        color: var(--text);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      a.chip.adr {
+        background: var(--red-soft);
+        color: var(--red-strong);
+      }
+      a.chip.adr:hover {
+        text-decoration: underline;
+      }
+      .chip.r1 {
+        background: var(--gold-soft);
+        color: var(--amber);
+      }
+      .chip.r2 {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+      .chip.r3 {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+      .chip.post {
+        background: var(--surface-2);
+        color: var(--muted);
+        border: 1px dashed var(--muted);
+      }
+      .status {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 6px;
+        white-space: nowrap;
+      }
+      .status.accepted {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+      .status.proposed {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+      .status.pending {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      /* Tables */
+      .table-wrap {
+        overflow-x: auto;
+        padding: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        background: var(--surface-2);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      .table-wrap td code {
+        white-space: nowrap;
+      }
+
+      /* Flow */
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin: 4px 0 8px;
+      }
+      .step {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-size: 13px;
+        line-height: 1.3;
+      }
+      .step small {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .step.hot {
+        border-color: var(--red);
+        background: var(--red-soft);
+      }
+      .step.ok {
+        border-color: var(--green);
+        background: var(--green-soft);
+      }
+      .step.wait {
+        border-color: var(--amber);
+        background: var(--amber-soft);
+      }
+      .arr {
+        color: var(--muted);
+      }
+      .caption {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 8px 0 0;
+      }
+      .callout {
+        border-left: 4px solid var(--blue);
+        background: var(--blue-soft);
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin: 0 0 16px;
+        font-size: 14px;
+      }
+      .callout.warn {
+        border-left-color: var(--amber);
+        background: var(--amber-soft);
+      }
+      .files {
+        overflow-wrap: anywhere;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      /* Diagram */
+      .diagram {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .diagram .box {
+        fill: var(--surface-2);
+        stroke: var(--line);
+        stroke-width: 1.5;
+      }
+      .diagram .box.red {
+        fill: var(--red-soft);
+        stroke: var(--red);
+      }
+      .diagram .box.navy {
+        fill: var(--blue-soft);
+        stroke: var(--blue);
+      }
+      .diagram .box.gold {
+        fill: var(--gold-soft);
+        stroke: var(--gold);
+      }
+      .diagram .box.green {
+        fill: var(--green-soft);
+        stroke: var(--green);
+      }
+      .diagram text {
+        fill: var(--text);
+        font:
+          600 13px system-ui,
+          sans-serif;
+      }
+      .diagram text.sub {
+        fill: var(--muted);
+        font-weight: 400;
+        font-size: 11px;
+      }
+      .diagram text.lane {
+        fill: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+      }
+      .diagram .wire {
+        stroke: var(--muted);
+        stroke-width: 1.4;
+        fill: none;
+        marker-end: url(#arrow);
+      }
+      .diagram .wire.dash {
+        stroke-dasharray: 5 4;
+      }
+      .diagram .wire.red {
+        stroke: var(--red);
+      }
+      /* Motion: flows reveal step by step; the diagram draws, then pulses run along request paths. */
+      .step.navy {
+        border-color: var(--blue);
+        background: var(--blue-soft);
+      }
+      .anim-card {
+        position: relative;
+      }
+      .replay {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .replay:hover {
+        color: var(--text);
+        border-color: var(--muted);
+      }
+      .anim-card > svg:first-child {
+        margin-top: 28px;
+      }
+      .anim-card > h3,
+      .anim-card > .flow:first-child {
+        padding-right: 84px;
+      }
+      .js-motion .flow .s {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+      }
+      .js-motion .flow.play .s {
+        animation: step-in 0.38s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+        animation-delay: calc(var(--i) * 110ms);
+      }
+      .js-motion .flow .step.spot {
+        box-shadow:
+          0 0 0 2px var(--red),
+          0 6px 16px rgb(237 28 36 / 0.22);
+        transform: translateY(-2px);
+        transition:
+          box-shadow 0.25s ease,
+          transform 0.25s ease;
+      }
+      @keyframes step-in {
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .js-motion .diagram .box,
+      .js-motion .diagram text {
+        opacity: 0;
+      }
+      .js-motion .diagram.play .box,
+      .js-motion .diagram.play text {
+        animation: fade-in 0.45s ease forwards;
+        animation-delay: var(--d, 0ms);
+      }
+      .js-motion .diagram .wire {
+        opacity: 0;
+      }
+      .js-motion .diagram.play .wire {
+        opacity: 1;
+        transition: opacity 0.2s ease var(--d, 0ms);
+      }
+      .js-motion .diagram.play .wire.draw {
+        animation: draw 0.6s ease forwards;
+        animation-delay: var(--d, 0ms);
+      }
+      @keyframes draw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      @keyframes fade-in {
+        to {
+          opacity: 1;
+        }
+      }
+      .diagram .pulse {
+        fill: var(--red);
+        stroke: var(--surface);
+        stroke-width: 2.5;
+        filter: drop-shadow(0 0 5px rgb(237 28 36 / 0.55));
+        opacity: 0;
+      }
+      .diagram .pulse.navy {
+        fill: var(--blue);
+      }
+      .diagram .pulse.gold {
+        fill: var(--gold);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .replay {
+          display: none;
+        }
+      }
+      .diagram marker path {
+        fill: var(--muted);
+      }
+
+      /* ERD cards */
+      .erd {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+        gap: 12px;
+      }
+      .entity {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 12.5px;
+      }
+      .entity h4 {
+        margin: 0;
+        padding: 6px 10px;
+        background: var(--blue);
+        color: #fff;
+        font-size: 13px;
+      }
+      :root[data-theme='dark'] .entity h4 {
+        color: #111;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) .entity h4 {
+          color: #111;
+        }
+      }
+      .entity ul {
+        list-style: none;
+        margin: 0;
+        padding: 6px 10px 8px;
+        font-family: var(--mono);
+        line-height: 1.55;
+      }
+      .entity li .new {
+        color: var(--red-strong);
+        font-weight: 700;
+      }
+
+      /* ADR index */
+      .adr-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin: 0 0 14px;
+      }
+      .adr-tools input[type='search'] {
+        flex: 1 1 260px;
+        min-width: 0;
+        font: inherit;
+        padding: 8px 12px;
+        border: 1px solid #8c8c8c;
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+      }
+      .adr-tools button {
+        font: inherit;
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+      }
+      .adr-tools button[aria-pressed='true'] {
+        background: var(--red);
+        color: #fff;
+        border-color: var(--red);
+      }
+      details.adr {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 0 10px;
+        scroll-margin-top: 64px;
+      }
+      details.adr[open] {
+        box-shadow: var(--shadow);
+      }
+      details.adr summary {
+        cursor: pointer;
+        padding: 12px 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        align-items: center;
+        list-style: none;
+      }
+      details.adr summary::-webkit-details-marker {
+        display: none;
+      }
+      details.adr summary::before {
+        content: '▸';
+        color: var(--muted);
+        transition: transform 0.15s;
+      }
+      details.adr[open] summary::before {
+        transform: rotate(90deg);
+      }
+      details.adr .num {
+        font-family: var(--mono);
+        font-weight: 700;
+        color: var(--red-strong);
+      }
+      details.adr .ttl {
+        font-weight: 600;
+        flex: 1 1 260px;
+      }
+      details.adr .date {
+        color: var(--muted);
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+      details.adr .body {
+        padding: 0 16px 16px 36px;
+        font-size: 14.5px;
+      }
+      details.adr .body h4 {
+        margin: 12px 0 4px;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      details.adr .body ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      footer {
+        color: var(--muted);
+        font-size: 13px;
+        border-top: 1px solid var(--line);
+        margin-top: 40px;
+        padding-top: 16px;
+      }
+      @media print {
+        aside {
+          display: none;
+        }
+        .layout {
+          display: block;
+        }
+        details.adr {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="layout">
+      <header class="topbar">
+        <span class="brand"><span class="brand-mark" aria-hidden="true">S</span></span>
+        <span class="current" id="current-section">Overview</span>
+        <button type="button" class="menu-btn" aria-controls="sections-nav" aria-expanded="false">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+          Sections
+        </button>
+      </header>
+      <div class="scrim" aria-hidden="true"></div>
+      <aside id="sections-nav" aria-label="Sections">
+        <div class="drawer-head">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">S</span> Solution design
+          </div>
+          <button type="button" class="drawer-close" aria-label="Close sections menu">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+        <div class="group">Big picture</div>
+        <a href="#overview">Overview</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#data">Data model</a>
+        <a href="#engine">Calculation engine</a>
+        <div class="group">Access</div>
+        <a href="#signin">Sign-in and roles</a>
+        <a href="#projects">Projects and members</a>
+        <div class="group">Estimating</div>
+        <a href="#editor">Editor, autosave, lock</a>
+        <a href="#results">Results</a>
+        <a href="#sizes">Feature sizes</a>
+        <div class="group">Review and reuse</div>
+        <a href="#versions">Versions and approval</a>
+        <a href="#profiles">Assumption profiles</a>
+        <a href="#export">Export</a>
+        <a href="#notifications">Notifications</a>
+        <div class="group">Calibrate and report</div>
+        <a href="#actuals">Actuals and variance</a>
+        <a href="#portfolio">Portfolio</a>
+        <a href="#admin">Admin and audit</a>
+        <div class="group">Experience</div>
+        <a href="#ui">Design system and i18n</a>
+        <a href="#navigation">Sidebar navigation</a>
+        <a href="#tours">Guided tours</a>
+        <div class="group">Integration</div>
+        <a href="#api">API contract and errors</a>
+        <a href="#mcp">AI assistant (MCP)</a>
+        <div class="group">Platform</div>
+        <a href="#platform">Containers, pipeline, ops</a>
+        <a href="#testing">Testing and gates</a>
+        <div class="group">Decisions</div>
+        <a href="#adrs">ADR index</a>
+        <a href="#open">Open items</a>
+      </aside>
+
+      <main id="main">
+        <!-- ================= OVERVIEW ================= -->
+        <section class="feature" id="overview">
+          <div class="eyebrow">Solution design · revision 5 · main at aaeb9fb</div>
+          <h1>SIT Sizing, feature by feature</h1>
+          <p class="lead">
+            SIT Sizing turns the single-file HTML prototype into a multi-user web app that estimates
+            QE test cases, hours and FTE for SIT, data platform, AI product and performance testing.
+            This page walks through the detailed design of each feature and links every one to the
+            architecture decision records (ADRs) behind it.
+          </p>
+          <div class="stats">
+            <div class="stat">
+              <b>3 + post</b><span>releases delivered, plus post-release-3 work</span>
+            </div>
+            <div class="stat gold"><b>1.3.0</b><span>engine version</span></div>
+            <div class="stat navy"><b>4</b><span>stored-payload schema version</span></div>
+            <div class="stat grey"><b>160</b><span>assumption rows (130 + 3 per size)</span></div>
+            <div class="stat"><b>21</b><span>ADRs</span></div>
+            <div class="stat gold"><b>34</b><span>REST route files under /api/v1</span></div>
+            <div class="stat navy"><b>17</b><span>MCP tools for AI assistants</span></div>
+            <div class="stat grey"><b>13</b><span>database migrations</span></div>
+          </div>
+          <div class="card">
+            <h3>The life of an estimate</h3>
+            <div class="flow">
+              <span class="step">Project<small>members and roles</small></span
+              ><span class="arr">→</span>
+              <span class="step">Estimate<small>one release or change</small></span
+              ><span class="arr">→</span>
+              <span class="step hot">Draft<small>edited live, locked</small></span
+              ><span class="arr">→</span>
+              <span class="step">Saved version<small>immutable</small></span
+              ><span class="arr">→</span>
+              <span class="step wait">Submitted<small>for review</small></span
+              ><span class="arr">→</span>
+              <span class="step ok">Approved<small>by a QE Lead</small></span
+              ><span class="arr">→</span> <span class="step">Actuals<small>after SIT</small></span
+              ><span class="arr">→</span>
+              <span class="step">Calibrated profile<small>next estimate starts here</small></span>
+            </div>
+            <p class="caption">
+              The source of truth is
+              <a href="../../../SIT_Sizing_Model_Solution_Design.md"
+                ><code>SIT_Sizing_Model_Solution_Design.md</code></a
+              >. Each section below names its design sections, its ADRs and the code that implements
+              it.
+            </p>
+          </div>
+          <div class="chips" style="margin-top: 14px">
+            <span class="chip r1">Release 1 · replace the HTML tool</span>
+            <span class="chip r2">Release 2 · review and reuse</span>
+            <span class="chip r3">Release 3 · calibrate and report</span>
+            <span class="chip post">Post-release 3</span>
+          </div>
+        </section>
+
+        <!-- ================= ARCHITECTURE ================= -->
+        <section class="feature" id="architecture">
+          <div class="eyebrow">Big picture · design 4</div>
+          <h2>Architecture</h2>
+          <p class="summary">
+            Three app deployables built from one monorepo, plus Keycloak off the shelf. They share
+            nothing at runtime but OpenID Connect and the REST API. The engine runs in the browser
+            for live results and again on the server, whose numbers are authoritative.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0001">ADR-0001 stack</a>
+            <a class="chip adr" href="#adr-0002">ADR-0002 Keycloak</a>
+            <a class="chip adr" href="#adr-0016">ADR-0016 MCP</a>
+          </div>
+          <div class="card" style="margin-bottom: 16px">
+            <svg
+              class="diagram"
+              id="arch-diagram"
+              viewBox="0 0 960 440"
+              role="img"
+              aria-labelledby="arch-t arch-d"
+            >
+              <title id="arch-t">SIT Sizing deployment architecture</title>
+              <desc id="arch-d">
+                Browser and AI coding agents sign in with Keycloak. The browser calls the web app;
+                the agent calls the MCP server, which calls the web app's REST API with the user's
+                token. The web app and worker use the app database; Keycloak uses its own database.
+                The worker sends email through SMTP.
+              </desc>
+              <defs>
+                <marker
+                  id="arrow"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M0,0 L10,5 L0,10 z" />
+                </marker>
+              </defs>
+              <text class="lane" x="20" y="24">CLIENTS</text>
+              <text class="lane" x="250" y="24">APPLICATIONS</text>
+              <text class="lane" x="720" y="24">DATA AND SERVICES</text>
+
+              <rect class="box" x="20" y="50" width="180" height="70" rx="10" />
+              <text x="36" y="78">Browser</text>
+              <text class="sub" x="36" y="98">live engine in the page</text>
+
+              <rect class="box" x="20" y="250" width="180" height="70" rx="10" />
+              <text x="36" y="278">AI coding agent</text>
+              <text class="sub" x="36" y="298">Claude Code · Codex</text>
+
+              <rect class="box red" x="250" y="40" width="300" height="130" rx="12" />
+              <text x="266" y="66">apps/web · Next.js 16</text>
+              <text class="sub" x="266" y="88">pages (EN/VI) · /api/v1 route handlers</text>
+              <text class="sub" x="266" y="106">services → domain → Prisma · @sit/engine</text>
+              <text class="sub" x="266" y="124">openid-client · encrypted session cookie</text>
+              <text class="sub" x="266" y="142">Scalar API reference at /api/v1/docs</text>
+
+              <rect class="box gold" x="250" y="250" width="300" height="80" rx="12" />
+              <text x="266" y="276">apps/mcp · MCP server</text>
+              <text class="sub" x="266" y="296">17 tools · Streamable HTTP /mcp</text>
+              <text class="sub" x="266" y="314">calls /api/v1 only, with the user's token</text>
+
+              <rect class="box" x="250" y="360" width="300" height="60" rx="12" />
+              <text x="266" y="386">worker · same image as web</text>
+              <text class="sub" x="266" y="406">claims outbox emails, retries with backoff</text>
+
+              <rect class="box navy" x="600" y="40" width="160" height="80" rx="12" />
+              <text x="616" y="68">Keycloak 26.8</text>
+              <text class="sub" x="616" y="88">realm as code · SSO, MFA</text>
+              <text class="sub" x="616" y="104">back-channel logout</text>
+
+              <rect class="box green" x="790" y="40" width="150" height="80" rx="12" />
+              <text x="806" y="68">keycloak DB</text>
+              <text class="sub" x="806" y="88">PostgreSQL 17</text>
+              <text class="sub" x="806" y="104">own role, own schema</text>
+
+              <rect class="box green" x="640" y="200" width="200" height="90" rx="12" />
+              <text x="656" y="228">app DB</text>
+              <text class="sub" x="656" y="248">projects, estimates, versions,</text>
+              <text class="sub" x="656" y="264">profiles, actuals, outbox, audit</text>
+
+              <rect class="box" x="640" y="350" width="200" height="60" rx="12" />
+              <text x="656" y="376">SMTP · Mailpit locally</text>
+              <text class="sub" x="656" y="396">EN/VI templates</text>
+
+              <path id="w-browser-web" class="wire" d="M200 85 H248" />
+              <path id="w-browser-kc" class="wire dash" d="M110 50 V30 H680 V38" />
+              <path id="w-agent-mcp" class="wire" d="M200 285 H248" />
+              <path id="w-agent-kc" class="wire dash" d="M110 320 V340 H230 V240 H580 V110 H598" />
+              <path id="w-mcp-web" class="wire red" d="M400 250 V172" />
+              <path id="w-web-kc" class="wire" d="M550 130 H575 V80 H598" />
+              <path id="w-kc-db" class="wire" d="M760 80 H788" />
+              <path id="w-web-db" class="wire" d="M550 150 H610 V230 H638" />
+              <path id="w-worker-db" class="wire" d="M550 390 H600 V270 H638" />
+              <path id="w-worker-mail" class="wire" d="M550 405 H638" />
+            </svg>
+            <p class="caption">
+              Solid arrows: requests. Dashed: OIDC sign-in. Red: the MCP server calling the same
+              REST API, as the signed-in user. Moving dots trace three request paths: browser → web
+              → app DB (red), agent → MCP → web → app DB (gold), worker → mail (navy).
+            </p>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3><span class="tag">Request path</span>Thin handler, one service</h3>
+              <ol>
+                <li>
+                  <code>app/api/v1/**/route.ts</code> wraps in <code>api()</code>: user, rate limit,
+                  request ID, error mapping.
+                </li>
+                <li>
+                  <code>server/services/*</code>: access check, Prisma transaction, audit, DTO
+                  mapping.
+                </li>
+                <li>
+                  <code>server/domain/*</code>: pure rules (lock, review, compare, portfolio,
+                  variance) tested without a DB.
+                </li>
+                <li>
+                  <code>packages/db</code>: Prisma client, imported only via
+                  <code>server/db.ts</code>.
+                </li>
+              </ol>
+            </div>
+            <div class="card">
+              <h3><span class="tag">Schema first</span>One contract</h3>
+              <p>
+                Zod 4 schemas in <code>packages/schemas</code> validate route input, parse client
+                responses and generate the OpenAPI 3.2 document. A change flows schema → service →
+                route → <code>operations.ts</code> → <code>pnpm openapi:generate</code>.
+              </p>
+            </div>
+            <div class="card">
+              <h3><span class="tag">Client</span>Hooks over a typed client</h3>
+              <p>
+                Pages under <code>app/[locale]/(app)/</code>. TanStack Query hooks in
+                <code>lib/query/</code> call typed functions in <code>lib/api/</code> on the one
+                Axios instance in <code>lib/http.ts</code>. Components never fetch directly.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= DATA ================= -->
+        <section class="feature" id="data">
+          <div class="eyebrow">Big picture · design 5</div>
+          <h2>Data model</h2>
+          <p class="summary">
+            Two databases: <code>app</code> (owned by the web app) and <code>keycloak</code> (owned
+            by Keycloak, never read by the app). The only link is the OIDC subject. Deep documents
+            (inputs, assumptions, results) are JSONB validated by Zod; anything lists filter or sort
+            on is a column. Fields in red were added after the original ERD.
+          </p>
+          <div class="erd" role="list">
+            <div class="entity" role="listitem">
+              <h4>User</h4>
+              <ul>
+                <li>subject (OIDC sub)</li>
+                <li>email · displayName</li>
+                <li>globalRole USER|ADMIN</li>
+                <li>locale · active</li>
+                <li><span class="new">tours</span> jsonb</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>Project</h4>
+              <ul>
+                <li>key · name</li>
+                <li>description</li>
+                <li>archived</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>ProjectMember</h4>
+              <ul>
+                <li>(projectId, userId) PK</li>
+                <li>role VIEWER|ESTIMATOR|QE_LEAD</li>
+                <li>addedBy · addedAt</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>Estimate</h4>
+              <ul>
+                <li>projectId · name</li>
+                <li>description · archived</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>EstimateVersion</h4>
+              <ul>
+                <li>(estimateId, number) UK</li>
+                <li>status DRAFT…SUPERSEDED</li>
+                <li>inputs · assumptions · result</li>
+                <li>engineVersion · schemaVersion</li>
+                <li>roughFte · detailedFte</li>
+                <li>uncalibrated · <span class="new">assumptionRows</span></li>
+                <li>rowVersion · lockedBy · lockExpiresAt</li>
+                <li><span class="new">lockTokenHash</span></li>
+                <li><span class="new">submittedBy</span> · approvedBy</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>AssumptionProfile</h4>
+              <ul>
+                <li>scope GLOBAL|PROJECT</li>
+                <li>status DRAFT|PUBLISHED|RETIRED</li>
+                <li>values (incl. sizes)</li>
+                <li>calibration per path</li>
+                <li>basedOnId (clone)</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>Actuals</h4>
+              <ul>
+                <li>(versionId, cycleLabel) UK</li>
+                <li>data jsonb</li>
+                <li><span class="new">note</span></li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>ReviewComment</h4>
+              <ul>
+                <li>kind COMMENT|RETURN|APPROVE</li>
+                <li>body</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>Notification</h4>
+              <ul>
+                <li>kind · channel EMAIL|IN_APP</li>
+                <li>status PENDING|SENT|FAILED</li>
+                <li>attempts · <span class="new">nextAttemptAt</span></li>
+                <li><span class="new">lastError</span> · readAt</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4>AuditEvent</h4>
+              <ul>
+                <li>action · entity · entityId</li>
+                <li>projectId · detail</li>
+                <li>requestId · at</li>
+                <li>append-only</li>
+              </ul>
+            </div>
+            <div class="entity" role="listitem">
+              <h4><span class="new" style="color: inherit">RevokedSession</span></h4>
+              <ul>
+                <li>sid PK</li>
+                <li>revokedAt · expiresAt</li>
+                <li>back-channel logout</li>
+              </ul>
+            </div>
+          </div>
+          <div class="grid" style="margin-top: 16px">
+            <div class="card">
+              <h3>Rules the database enforces</h3>
+              <ul>
+                <li>One <code>DRAFT</code> per estimate (partial unique index).</li>
+                <li>
+                  Profile names unique per scope and project (index plus a trigger for global).
+                </li>
+                <li><code>AuditEvent</code>: no update or delete grants for the app role.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Migrations</h3>
+              <p class="files">
+                init · revoked_sessions · version_submitter · notification_retry · actuals_note ·
+                user_tours · draft_lock_token · lock_token_needs_lock · sized_data_assumptions ·
+                sized_data_calibrated_defaults · more_feature_sizes · custom_sizes_profiles ·
+                assumption_rows
+              </p>
+              <p>Merged migrations are never edited; fixes go forward.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ENGINE ================= -->
+        <section class="feature" id="engine">
+          <div class="eyebrow">Big picture · design 6 · <span class="chip r1">R1</span></div>
+          <h2>Calculation engine</h2>
+          <p class="summary">
+            <code>@sit/engine</code> is a pure TypeScript port of the prototype's maths: no I/O, no
+            dates, no UI text. It imports only <code>zod</code> and <code>@sit/schemas</code>. The
+            prototype's numbers are locked in as golden files, and the stored payload of every
+            version carries the engine and schema version that produced it.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0013">ADR-0013 engine version, upgrade on read</a>
+            <a class="chip adr" href="#adr-0019">ADR-0019 engine 1.1.0</a>
+            <a class="chip adr" href="#adr-0020">ADR-0020 engine 1.2.0</a>
+            <a class="chip adr" href="#adr-0021">ADR-0021 engine 1.3.0</a>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3><span class="tag">Parity</span>The numbers cannot drift</h3>
+              <ul>
+                <li>
+                  36 golden files in <code>packages/engine/golden/</code>: every group's cases
+                  exact, hours to 0.01, both modes.
+                </li>
+                <li>
+                  Property tests: never negative; more scope never lowers cases; all gates met never
+                  raises FTE.
+                </li>
+                <li>
+                  <code>pnpm --filter @sit/engine parity</code>: 5,000 random cases against the
+                  prototype source.
+                </li>
+                <li>Stryker mutation score ≥ 70%; coverage 95%.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>
+                <span class="tag">Example scope, default assumptions</span>Golden result (engine ≥
+                1.1.0)
+              </h3>
+              <table>
+                <tr>
+                  <th></th>
+                  <th>Rough</th>
+                  <th>Detailed</th>
+                </tr>
+                <tr>
+                  <td>Cases</td>
+                  <td>3,511</td>
+                  <td>4,047</td>
+                </tr>
+                <tr>
+                  <td>Hours</td>
+                  <td>3,562</td>
+                  <td>3,709</td>
+                </tr>
+                <tr>
+                  <td>FTE</td>
+                  <td>20.83</td>
+                  <td>21.69</td>
+                </tr>
+              </table>
+            </div>
+            <div class="card">
+              <h3><span class="tag">Change policy</span>Flag, don't recompute</h3>
+              <ul>
+                <li>Stored results never change silently.</li>
+                <li>Older engine → "Computed with engine x.y" and "recompute as new draft".</li>
+                <li>
+                  Every read goes through <code>upgradeStored()</code>; rows are never rewritten.
+                </li>
+                <li>Newer schema after a rollback → 409 <code>NEWER_SCHEMA</code>.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="card table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Engine</th>
+                  <th>Schema</th>
+                  <th>ADR</th>
+                  <th>What changed</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1.0.0</td>
+                  <td>1</td>
+                  <td>—</td>
+                  <td>Faithful port of the prototype</td>
+                </tr>
+                <tr>
+                  <td>1.1.0</td>
+                  <td>2</td>
+                  <td><a href="#adr-0019">0019</a></td>
+                  <td>
+                    Data-test design, execution and preparation sized Simple/Medium/Complex; columns
+                    and DQ rules counted by complexity
+                  </td>
+                </tr>
+                <tr>
+                  <td>1.2.0</td>
+                  <td>3</td>
+                  <td><a href="#adr-0020">0020</a></td>
+                  <td>Ten T-shirt sizes; 142 → 160 rows; no formula change</td>
+                </tr>
+                <tr>
+                  <td>1.3.0</td>
+                  <td>4</td>
+                  <td><a href="#adr-0021">0021</a></td>
+                  <td>Size list is profile data (1–20 sizes); no formula or default change</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ================= SIGN-IN ================= -->
+        <section class="feature" id="signin">
+          <div class="eyebrow">Access · design 10 · <span class="chip r1">R1</span></div>
+          <h2>Sign-in and roles</h2>
+          <p class="summary">
+            Who you are comes from Keycloak; what you may do in a project is stored in the app. The
+            web app never sees a password.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0002">ADR-0002 Keycloak</a>
+            <a class="chip adr" href="#adr-0004">ADR-0004 openid-client</a>
+            <a class="chip adr" href="#adr-0014">ADR-0014 admin role</a>
+          </div>
+          <div class="card" style="margin-bottom: 16px">
+            <h3>Sign-in flow</h3>
+            <div class="flow">
+              <span class="step">GET page<small>no session</small></span
+              ><span class="arr">→</span>
+              <span class="step">302 to Keycloak<small>PKCE S256, state, nonce</small></span
+              ><span class="arr">→</span>
+              <span class="step navy">Sign in<small>password (+ TOTP) or SSO</small></span
+              ><span class="arr">→</span>
+              <span class="step">/api/auth/callback<small>code exchange</small></span
+              ><span class="arr">→</span>
+              <span class="step hot"
+                >Encrypted cookie<small>JWE A256GCM, 8 h idle / 12 h max</small></span
+              ><span class="arr">→</span>
+              <span class="step ok">Upsert User by sub<small>group → Admin</small></span>
+            </div>
+            <p class="caption">
+              The proxy refreshes every 10 minutes. Back-channel logout puts the Keycloak session id
+              in
+              <code>RevokedSession</code>, so sign-out elsewhere ends the app session on the next
+              request.
+            </p>
+          </div>
+          <div class="grid">
+            <div class="card table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Role</th>
+                    <th>Scope</th>
+                    <th>Adds</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Viewer</td>
+                    <td>Project</td>
+                    <td>Read estimates, versions, profiles, actuals; export</td>
+                  </tr>
+                  <tr>
+                    <td>Estimator</td>
+                    <td>Project</td>
+                    <td>Create and edit estimates, save and submit, record actuals</td>
+                  </tr>
+                  <tr>
+                    <td>QE Lead</td>
+                    <td>Project</td>
+                    <td>
+                      Approve, return, project profiles, members, audit, lock takeover, portfolio
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Admin</td>
+                    <td>Global</td>
+                    <td>Everything; projects, global profiles, users</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h3>Rules</h3>
+              <ul>
+                <li>
+                  One permission matrix, <code>lib/rbac.ts</code> (27 actions). Services enforce it;
+                  the UI only hides.
+                </li>
+                <li>Cross-project access returns 404, not 403.</li>
+                <li>
+                  Admin = Keycloak group <code>sit-sizing-admins</code>, re-read at every sign-in;
+                  read-only in the app.
+                </li>
+                <li>
+                  Realm baseline (password policy, lockout, token lifetimes, disabled flows) tested
+                  by <code>pnpm test:idp</code>.
+                </li>
+              </ul>
+              <p class="files">
+                server/auth/ · app/api/auth/{signin,callback,signout,backchannel-logout} · proxy.ts
+                · docker/keycloak/
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PROJECTS ================= -->
+        <section class="feature" id="projects">
+          <div class="eyebrow">
+            Access · design 7 · <span class="chip r1">R1</span> <span class="chip r3">R3</span>
+          </div>
+          <h2>Projects and members</h2>
+          <p class="summary">
+            A project owns estimates and project profiles and has members with roles. Admins create
+            projects; QE Leads manage members from a panel on the project page.
+          </p>
+          <div class="chips"><a class="chip adr" href="#adr-0014">ADR-0014 members panel</a></div>
+          <div class="grid">
+            <div class="card">
+              <h3>Members panel</h3>
+              <ul>
+                <li>
+                  Everyone in the project sees who is in it; QE Leads and Admins add by work email,
+                  change roles, remove.
+                </li>
+                <li>Uses the replace-all <code>PUT /projects/:id/members</code>.</li>
+                <li>People who have not signed in yet are named in the error.</li>
+                <li>At least one QE Lead must remain (browser and API).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>API</h3>
+              <p>
+                <code>GET/POST /projects</code> · <code>GET/PATCH /projects/:id</code> ·
+                <code>PUT /projects/:id/members</code> ·
+                <code>GET/POST /projects/:id/estimates</code>
+              </p>
+              <p class="files">
+                components/features/projects · admin/members-panel.tsx · server/services/projects.ts
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= EDITOR ================= -->
+        <section class="feature" id="editor">
+          <div class="eyebrow">Estimating · design 8.3 · <span class="chip r1">R1</span></div>
+          <h2>Estimate editor, autosave and the edit lock</h2>
+          <p class="summary">
+            The prototype's five tabs (Rough scope, Detailed scope with nine sections,
+            Window/team/environment, Shift-left evidence, Assumptions) with live results. One person
+            edits a draft at a time; everyone else gets a read-only view.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0006">ADR-0006 editor and parity</a>
+            <a class="chip adr" href="#adr-0016">ADR-0016 lock token</a>
+          </div>
+          <div class="card" style="margin-bottom: 16px">
+            <h3>Lock and autosave lifecycle</h3>
+            <div class="flow">
+              <span class="step">Open draft<small>POST …/draft/lock</small></span
+              ><span class="arr">→</span>
+              <span class="step hot">Lock token<small>returned once, SHA-256 stored</small></span
+              ><span class="arr">→</span>
+              <span class="step">Edit<small>computeBoth in browser</small></span
+              ><span class="arr">→</span>
+              <span class="step">Autosave 1.5 s<small>PATCH, X-Lock-Token, rowVersion</small></span
+              ><span class="arr">→</span>
+              <span class="step ok">Server recomputes<small>authoritative result</small></span>
+            </div>
+            <div class="flow">
+              <span class="step">Heartbeat<small>every 5 min, 15-min lock</small></span>
+              <span class="step wait">409<small>lock lost → recovery, values kept</small></span>
+              <span class="step">QE Lead takeover<small>takeover: true</small></span>
+              <span class="step">Save version<small>flush, then freeze</small></span>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Store</h3>
+              <p>
+                <code>estimate-editor/store.tsx</code>: React context + reducer holding
+                <code>{ inputs, assumptions, dirty, rowVersion, revision }</code>. Inputs are
+                controlled and normalised as the prototype does (clamp, round). No React Hook Form.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Assumptions tab</h3>
+              <ul>
+                <li>Collapsible groups, each with its own uncalibrated count.</li>
+                <li>A help text per row; size rows share a generic text.</li>
+                <li>Simple/Medium/Complex on one line from <code>sm</code>.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Import and export (browser)</h3>
+              <ul>
+                <li>
+                  Prototype JSON import via <code>fromPrototypeProfile</code>, validated by Zod.
+                </li>
+                <li>Export in the prototype's file format; QBR summary text line for line.</li>
+                <li>No import endpoint: the draft is autosaved.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="callout">
+            <b>Prototype parity:</b> <code>tests/unit/prototype-ui-parity.test.tsx</code> runs
+            <code>SIT_Sizing_Model.html</code> in jsdom with the same scope and language and checks
+            that every figure and sentence it renders also appears in the app.
+          </div>
+        </section>
+
+        <!-- ================= RESULTS ================= -->
+        <section class="feature" id="results">
+          <div class="eyebrow">Estimating · design 7 · <span class="chip r1">R1</span></div>
+          <h2>Results</h2>
+          <p class="summary">
+            Summary cards (gold rough, navy detailed, grey gap, gold-brown calibration), rough vs
+            detailed gap table, sensitivity tornado (42 items), shift-left scenarios, derived-driver
+            formulas, calendar check and the worked-example trace. All figures come from the engine
+            and are formatted by <code>lib/format.ts</code> with the prototype's rounding.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0006">ADR-0006</a
+            ><a class="chip adr" href="#adr-0005">ADR-0005 colours</a>
+          </div>
+          <p class="files">
+            components/features/results/results-panels.tsx · estimate-editor/summary-cards.tsx ·
+            patterns/tornado-chart.tsx · engine sensitivity.ts, scenarios.ts, derived.ts,
+            calendar.ts, gap.ts
+          </p>
+        </section>
+
+        <!-- ================= SIZES ================= -->
+        <section class="feature" id="sizes">
+          <div class="eyebrow">
+            Estimating · design 6.7 · <span class="chip post">post-R3</span>
+          </div>
+          <h2>Feature sizes and sized data assumptions</h2>
+          <p class="summary">
+            Rough scope sizes each feature with a T-shirt size. To the engine a size is only a
+            lookup key into four tables, so sizes became calibration data that QE Leads own in
+            profiles.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0019">ADR-0019 sized data minutes</a>
+            <a class="chip adr" href="#adr-0020">ADR-0020 ten sizes</a>
+            <a class="chip adr" href="#adr-0021">ADR-0021 sizes are profile data</a>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3><span class="tag">ADR-0020</span>Ten built-in sizes</h3>
+              <div class="chips">
+                <span class="chip">XXS</span><span class="chip">XS</span><span class="chip">S</span
+                ><span class="chip">M-</span><span class="chip">M</span><span class="chip">M+</span
+                ><span class="chip">L</span><span class="chip">XL</span><span class="chip">XXL</span
+                ><span class="chip">XXXL</span>
+              </div>
+              <p>
+                Each size has proxy counts for application, data and AI features, plus performance
+                scenarios (1, 1, 1, 2, 2, 3, 3, 5, 8, 13).
+              </p>
+            </div>
+            <div class="card">
+              <h3><span class="tag">ADR-0021</span>Custom sizes</h3>
+              <ul>
+                <li>
+                  <code>Assumptions.sizes</code>: ordered list of 1–20 names (1–6 of letters,
+                  digits, <code>+</code>, <code>-</code>).
+                </li>
+                <li>
+                  Edited only in draft profiles, in a side-panel size editor; a new size copies an
+                  existing one.
+                </li>
+                <li>
+                  Rows = 130 fixed + 3 per size. Custom rows stay uncalibrated until they have a
+                  note.
+                </li>
+                <li>
+                  Apply refused with 409 <code>SIZE_NOT_IN_PROFILE</code> when a feature uses a
+                  missing size.
+                </li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3><span class="tag">ADR-0019</span>Sized data-test effort</h3>
+              <table>
+                <tr>
+                  <th>Path</th>
+                  <th>S / M / C</th>
+                </tr>
+                <tr>
+                  <td><code>dataDesign</code> min</td>
+                  <td>10 / 15 / 25</td>
+                </tr>
+                <tr>
+                  <td><code>dataExec</code> min per cycle</td>
+                  <td>5 / 8 / 12</td>
+                </tr>
+                <tr>
+                  <td><code>dataPrepHours</code> h per feed</td>
+                  <td>2 / 3 / 5</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VERSIONS ================= -->
+        <section class="feature" id="versions">
+          <div class="eyebrow">
+            Review and reuse · design 5.2, 10.5 · <span class="chip r1">R1</span>
+            <span class="chip r2">R2</span> <span class="chip r3">R3</span>
+          </div>
+          <h2>Versions, approval, compare and restore</h2>
+          <p class="summary">
+            Saved versions are immutable. A QE Lead signs off one version as the figure the team
+            commits to, with segregation of duties.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0007">ADR-0007 approval and compare</a>
+            <a class="chip adr" href="#adr-0013">ADR-0013 recompute as new draft</a>
+          </div>
+          <div class="card" style="margin-bottom: 16px">
+            <h3>States</h3>
+            <div class="flow">
+              <span class="step hot">DRAFT<small>one per estimate</small></span
+              ><span class="arr">→</span> <span class="step">SAVED<small>immutable</small></span
+              ><span class="arr">→</span>
+              <span class="step wait">SUBMITTED<small>one at a time</small></span
+              ><span class="arr">→</span>
+              <span class="step ok">APPROVED<small>by a QE Lead</small></span
+              ><span class="arr">→</span>
+              <span class="step">SUPERSEDED<small>when a newer one is approved</small></span>
+            </div>
+            <p class="caption">
+              Return sends a submitted version back to SAVED with a note. Restore and "recompute as
+              new draft" both start a draft from an old version.
+            </p>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Segregation of duties</h3>
+              <p>
+                The author or submitter of a version cannot approve it, Admins included (403
+                <code>SEGREGATION_OF_DUTIES</code>). Pure rule in
+                <code>server/domain/review.ts</code>; the UI disables Approve and says why.
+              </p>
+            </div>
+            <div class="card">
+              <h3>One transaction per step</h3>
+              <p>
+                Guarded <code>updateMany</code> (409 <code>RACE</code> on a race),
+                <code>ReviewComment</code> for the note, audit
+                <code>estimate.version.{submit,approve,return}</code>, notification outbox rows.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Compare</h3>
+              <p>
+                <code>GET /estimates/:id/compare?a=&amp;b=</code>: both summaries, per-group cases
+                and hours, changed input and assumption paths (capped at 500). Uses stored results;
+                never recomputes.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PROFILES ================= -->
+        <section class="feature" id="profiles">
+          <div class="eyebrow">
+            Review and reuse · design 5, 6.6 · <span class="chip r2">R2</span>
+            <span class="chip post">post-R3 layout</span>
+          </div>
+          <h2>Assumption profiles and calibration</h2>
+          <p class="summary">
+            Named sets of assumption values, global (Admin) or per project (QE Lead), so teams start
+            from measured values instead of uncalibrated defaults.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0008">ADR-0008 profiles</a>
+            <a class="chip adr" href="#adr-0021">ADR-0021 sizes</a>
+          </div>
+          <div class="card" style="margin-bottom: 16px">
+            <div class="flow">
+              <span class="step hot">DRAFT<small>editable · clone with basedOnId</small></span
+              ><span class="arr">→</span>
+              <span class="step ok">PUBLISHED<small>never changes</small></span
+              ><span class="arr">→</span>
+              <span class="step">RETIRED<small>stops new use</small></span>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Calibration</h3>
+              <ul>
+                <li>
+                  A row is calibrated when it differs from the engine default (custom-size rows:
+                  when it has a note).
+                </li>
+                <li>Source and measured date per calibrated row; unknown paths refused (422).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Using a profile</h3>
+              <ul>
+                <li>
+                  New estimate: choose a published profile; default is the oldest published global
+                  one.
+                </li>
+                <li>
+                  Open draft: <code>POST …/draft/profile</code> copies values, recomputes, records
+                  <code>profileId</code> (lock and <code>rowVersion</code> required).
+                </li>
+                <li>
+                  Copy, don't link. The last published global profile cannot be retired (409
+                  <code>LAST_GLOBAL</code>).
+                </li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Detail page</h3>
+              <p>
+                Two columns from <code>xl</code>: a sticky left panel (status and actions,
+                calibration progress "N of T rows", size chips with <b>Edit sizes</b> in a side
+                sheet) and the values on the right.
+              </p>
+              <p class="files">
+                components/features/profiles/{profile-editor,profile-panel,size-editor}.tsx
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= EXPORT ================= -->
+        <section class="feature" id="export">
+          <div class="eyebrow">
+            Review and reuse · design 7, 9.2 · <span class="chip r1">R1</span>
+            <span class="chip r2">R2</span>
+          </div>
+          <h2>Export</h2>
+          <p class="summary">
+            Browser exports (prototype JSON, QBR text) from release 1; server-side Excel and CSV
+            from release 2, audited per download.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0009">ADR-0009 Excel and CSV</a
+            ><a class="chip adr" href="#adr-0006">ADR-0006 JSON and QBR</a>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Workbook</h3>
+              <p>
+                Sheets: Summary, Drivers, Gap by group, Assumptions (with calibration status),
+                Inputs. Totals are <code>SUM()</code> formulas with the engine total as the cached
+                result; numbers unrounded and formatted by Excel.
+              </p>
+            </div>
+            <div class="card">
+              <h3>CSV safety</h3>
+              <p>
+                UTF-8 with BOM, CRLF, RFC 4180 quoting; cells starting with <code>= + - @</code>,
+                tab or CR get an apostrophe (OWASP CSV injection).
+              </p>
+              <p class="files">
+                server/export/{workbook,xlsx,csv}.ts · GET
+                …/versions/:n/export?format=xlsx|csv&amp;lang=
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= NOTIFICATIONS ================= -->
+        <section class="feature" id="notifications">
+          <div class="eyebrow">
+            Review and reuse · design 5.2, 12.2 · <span class="chip r2">R2</span>
+          </div>
+          <h2>Notifications</h2>
+          <p class="summary">
+            In-app and email notices on submit, approve, return and profile publish, written as an
+            outbox in the same transaction as the change.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0010">ADR-0010 outbox and worker</a>
+          </div>
+          <div class="card" style="margin-bottom: 16px">
+            <div class="flow">
+              <span class="step"
+                >Business change<small>submit, approve, return, publish</small></span
+              ><span class="arr">→</span>
+              <span class="step hot">Outbox rows<small>same transaction</small></span
+              ><span class="arr">→</span>
+              <span class="step ok">IN_APP<small>visible at once</small></span>
+              <span class="step wait"
+                >EMAIL PENDING<small>worker claims with SKIP LOCKED</small></span
+              ><span class="arr">→</span>
+              <span class="step"
+                >SMTP<small>retry 1, 2, 4, 8, 16, 30 min; FAILED after 6</small></span
+              >
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Who is told</h3>
+              <p>
+                Submitted: project QE Leads. Approved or returned: author and submitter. Profile
+                published: project Estimators and QE Leads, or every QE Lead and Admin for global.
+                Never the actor; never inactive users.
+              </p>
+            </div>
+            <div class="card">
+              <h3>In-app</h3>
+              <p>
+                Bell in the sidebar header, refreshed every minute: <code>GET /notifications</code>,
+                <code>POST /notifications/:id/read</code>,
+                <code>POST /notifications/read-all</code>.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ACTUALS ================= -->
+        <section class="feature" id="actuals">
+          <div class="eyebrow">
+            Calibrate and report · design 7 · <span class="chip r3">R3</span>
+          </div>
+          <h2>Actuals and variance</h2>
+          <p class="summary">
+            After an SIT cycle the team records what it measured against the approved version.
+            Variance is computed, never stored. People, not the tool, calibrate the profile.
+          </p>
+          <div class="chips"><a class="chip adr" href="#adr-0011">ADR-0011 actuals</a></div>
+          <div class="grid">
+            <div class="card">
+              <h3>What is recorded</h3>
+              <p>
+                Required: cases executed and total SIT hours. Optional: execution hours, cases
+                designed and design hours, retested cases, productive hours per day, split by group.
+                One record per cycle name and version. Only <code>APPROVED</code> or
+                <code>SUPERSEDED</code> versions (409 <code>NOT_APPROVED</code>).
+              </p>
+            </div>
+            <div class="card">
+              <h3>Rates inform the assumptions</h3>
+              <p>
+                Execution minutes per case → <code>minutes</code>; design minutes →
+                <code>designFSD</code>; retest rate → <code>retest</code>; productive hours →
+                <code>hoursPerDay</code>. Variance = actual − stored detailed estimate
+                (<code>server/domain/variance.ts</code>).
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PORTFOLIO ================= -->
+        <section class="feature" id="portfolio">
+          <div class="eyebrow">
+            Calibrate and report · design 7 · <span class="chip r3">R3</span>
+          </div>
+          <h2>Portfolio</h2>
+          <p class="summary">
+            One QBR view of effort across projects: one row per estimate, with totals, ranges and
+            calibration status.
+          </p>
+          <div class="chips"><a class="chip adr" href="#adr-0012">ADR-0012 portfolio</a></div>
+          <div class="grid">
+            <div class="card">
+              <h3>Rows and totals</h3>
+              <p>
+                <code>status=approved</code> (default) or <code>latest</code> saved; never drafts or
+                archived records. Figures from stored results (detailed FTE, range, cases, hours;
+                rough FTE alongside). Ranges sum low with low and high with high.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Access and export</h3>
+              <p>
+                Permission <code>portfolio.read</code>: QE Leads see projects they lead, Admins all.
+                <code>GET /portfolio/export</code> gives the same rows as CSV in EN or VI.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ADMIN ================= -->
+        <section class="feature" id="admin">
+          <div class="eyebrow">
+            Calibrate and report · design 7, 11 · <span class="chip r3">R3</span>
+          </div>
+          <h2>Admin and audit</h2>
+          <p class="summary">
+            Users list with activation, and an audit log viewer. Security headers and per-user rate
+            limiting came with the same step.
+          </p>
+          <div class="chips"><a class="chip adr" href="#adr-0014">ADR-0014 admin and audit</a></div>
+          <div class="grid">
+            <div class="card">
+              <h3>Users</h3>
+              <p>
+                <code>GET /users?q=</code> (Admin) with project roles and last sign-in.
+                <code>PATCH /users/:id { active }</code>: a deactivated user is refused on the next
+                request; an Admin cannot deactivate themselves (409 <code>SELF</code>). Global role
+                is read-only (Keycloak).
+              </p>
+            </div>
+            <div class="card">
+              <h3>Audit log</h3>
+              <p>
+                <code>GET /audit</code> with project, entity, action (prefix when it ends with a
+                dot), actor and whole-UTC-day filters; newest first, paged. QE Leads see their
+                project; Admins see everything, including global events.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= UI ================= -->
+        <section class="feature" id="ui">
+          <div class="eyebrow">Experience · design 8 · <span class="chip r1">R1</span></div>
+          <h2>Design system, components and languages</h2>
+          <p class="summary">
+            TCB-DS red in the prototype's theme, a layered component base, and EN/VI everywhere.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0005">ADR-0005 tokens and components</a>
+            <a class="chip adr" href="#adr-0006">ADR-0006 locale routing</a>
+          </div>
+          <div class="card table-wrap" style="margin-bottom: 16px">
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>Where</th>
+                  <th>What</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1 Tokens</td>
+                  <td><code>packages/tokens</code></td>
+                  <td>
+                    <code>tokens.ts</code> → <code>tokens.css</code>; Tailwind 4
+                    <code>@theme inline</code>; contrast tests in both themes
+                  </td>
+                </tr>
+                <tr>
+                  <td>2 Primitives</td>
+                  <td><code>components/ui</code></td>
+                  <td>shadcn on Radix; labels are props; no domain words</td>
+                </tr>
+                <tr>
+                  <td>3 Patterns</td>
+                  <td><code>components/patterns</code></td>
+                  <td>
+                    NumberField, CollapsibleSection, StatCard, StatusChip, ComparisonBars,
+                    TornadoChart, LangSwitch, PageHeader…
+                  </td>
+                </tr>
+                <tr>
+                  <td>4 Features</td>
+                  <td><code>components/features</code></td>
+                  <td>Domain screens; data through TanStack Query hooks</td>
+                </tr>
+                <tr>
+                  <td>5 Pages</td>
+                  <td><code>app/[locale]</code></td>
+                  <td>Routing and layout, thin</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Theme</h3>
+              <p>
+                Red <code>#ED1C24</code> top bar, buttons, links, focus and selected tab; light
+                headings; system fonts; no logo. White on red (4.0:1) is an approved exception
+                tested at 3:1. Motion only behind <code>usePrefersReducedMotion</code>,
+                <code>useCountUp</code>, <code>useEnterAnimation</code>.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Languages</h3>
+              <p>
+                next-intl with the locale in the URL (<code>/en</code>, <code>/vi</code>), cookie
+                and profile language. Messages from the prototype's EN text and VI dictionary;
+                numbers keep prototype formatting (Q6). Vietnamese review via
+                <code>pnpm i18n:review</code> / <code>i18n:apply</code>.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= NAVIGATION ================= -->
+        <section class="feature" id="navigation">
+          <div class="eyebrow">
+            Experience · design 8.7 · <span class="chip post">post-R3</span>
+          </div>
+          <h2>Sidebar navigation</h2>
+          <p class="summary">
+            A shadcn Sidebar copied into <code>components/ui</code> replaced the header row of nine
+            links.
+          </p>
+          <div class="chips"><a class="chip adr" href="#adr-0015">ADR-0015 sidebar</a></div>
+          <div class="grid">
+            <div class="card">
+              <h3>Groups</h3>
+              <p>
+                <b>Work</b>: Projects, Profiles, Portfolio. <b>Admin</b>: Audit log, Users (hidden
+                when neither applies). <b>Reference</b>: Guide, Method, Standards, API reference.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Behaviour</h3>
+              <p>
+                Header: brand, bell, collapse toggle. Footer: language switch and account menu with
+                Sign out. Collapses to icons with Ctrl/⌘+B, remembered in
+                <code>sidebar_state</code>; a slide-over sheet below 768px.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TOURS ================= -->
+        <section class="feature" id="tours">
+          <div class="eyebrow">
+            Experience · design 8.8 · <span class="chip post">post-R3</span>
+          </div>
+          <h2>Guided tours</h2>
+          <p class="summary">
+            A first-time tour walks a new person through the real screens until they save their
+            first estimate; short tours introduce later features.
+          </p>
+          <div class="chips"><a class="chip adr" href="#adr-0017">ADR-0017 tours</a></div>
+          <div class="grid">
+            <div class="card">
+              <h3>Tours</h3>
+              <p>
+                <code>first-estimate@1</code>, <code>first-estimate-admin@1</code>,
+                <code>reading-tour@1</code> (Viewer), <code>no-project@1</code>. Registry in
+                <code>lib/tours/registry.ts</code>; steps target <code>data-tour</code> attributes;
+                replay from the help menu.
+              </p>
+            </div>
+            <div class="card">
+              <h3>"Seen" state</h3>
+              <p>
+                Stored on the account (<code>User.tours</code>, <code>PATCH /me</code>) and in
+                <code>localStorage</code>; closing is optimistic and never rolls back. React Joyride
+                3.2 (MIT), imported only in <code>features/tours</code> (ESLint).
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= API ================= -->
+        <section class="feature" id="api">
+          <div class="eyebrow">Integration · design 9 · <span class="chip r1">R1</span></div>
+          <h2>API contract and error codes</h2>
+          <p class="summary">
+            REST under <code>/api/v1</code>, JSON only, every operation registered in a generated
+            OpenAPI 3.2 document and browsable in a self-hosted Scalar reference behind sign-in.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0003">ADR-0003 OpenAPI and Scalar</a>
+            <a class="chip adr" href="#adr-0018">ADR-0018 extensible error codes</a>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Contract gates</h3>
+              <ul>
+                <li>
+                  No third-party generator: <code>z.toJSONSchema</code> plus
+                  <code>server/openapi/build.ts</code>.
+                </li>
+                <li>
+                  Contract test: registry equals the route files; every <code>$ref</code> resolves.
+                </li>
+                <li>
+                  Redocly lint; oasdiff breaking-change diff against <code>main</code> (<code
+                    >OPENAPI_BREAKING_APPROVED</code
+                  >
+                  to pass).
+                </li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Error envelope</h3>
+              <p>
+                <code>{ error: { code, message, details?, requestId? } }</code>.
+                <code>code</code> is a string with <code>x-extensible-enum</code>, so a new code is
+                additive; clients fall back to status and message.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Draft writes</h3>
+              <p>
+                Every autosave, apply, renew and release sends <code>X-Lock-Token</code> and the
+                draft's <code>rowVersion</code>. Rate limit 300 requests per user per minute by
+                default.
+              </p>
+            </div>
+          </div>
+          <details class="adr" style="margin-top: 4px">
+            <summary><span class="ttl">All 34 route files</span></summary>
+            <div class="body table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Method and path</th>
+                    <th>Minimum role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>GET · POST /projects</code></td>
+                    <td>USER · ADMIN</td>
+                  </tr>
+                  <tr>
+                    <td><code>GET · PATCH /projects/:id</code> · <code>PUT …/members</code></td>
+                    <td>VIEWER · QE_LEAD</td>
+                  </tr>
+                  <tr>
+                    <td><code>GET · POST /projects/:id/estimates</code></td>
+                    <td>VIEWER · ESTIMATOR</td>
+                  </tr>
+                  <tr>
+                    <td><code>GET /estimates/:id</code> · <code>GET …/versions/:n</code></td>
+                    <td>VIEWER</td>
+                  </tr>
+                  <tr>
+                    <td><code>POST · PATCH /estimates/:id/draft</code></td>
+                    <td>ESTIMATOR</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <code>POST · DELETE …/draft/lock</code> · <code>POST …/draft/profile</code>
+                    </td>
+                    <td>ESTIMATOR</td>
+                  </tr>
+                  <tr>
+                    <td><code>POST /estimates/:id/versions</code> · <code>…/:n/submit</code></td>
+                    <td>ESTIMATOR</td>
+                  </tr>
+                  <tr>
+                    <td><code>POST …/:n/approve</code> · <code>…/:n/return</code></td>
+                    <td>QE_LEAD</td>
+                  </tr>
+                  <tr>
+                    <td><code>GET /estimates/:id/compare</code> · <code>GET …/:n/export</code></td>
+                    <td>VIEWER</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <code>GET · POST …/:n/actuals</code> · <code>DELETE …/actuals/:id</code>
+                    </td>
+                    <td>VIEWER · ESTIMATOR</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <code>GET · POST /profiles</code> · <code>GET · PATCH /profiles/:id</code> ·
+                      <code>POST …/publish</code> · <code>…/retire</code>
+                    </td>
+                    <td>VIEWER · QE_LEAD · ADMIN</td>
+                  </tr>
+                  <tr>
+                    <td><code>GET /portfolio</code> · <code>GET /portfolio/export</code></td>
+                    <td>QE_LEAD · ADMIN</td>
+                  </tr>
+                  <tr>
+                    <td><code>GET /audit</code></td>
+                    <td>QE_LEAD · ADMIN</td>
+                  </tr>
+                  <tr>
+                    <td><code>GET /users</code> · <code>PATCH /users/:id</code></td>
+                    <td>ADMIN</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <code>GET /notifications</code> · <code>POST …/:id/read</code> ·
+                      <code>POST …/read-all</code>
+                    </td>
+                    <td>USER</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <code>GET · PATCH /me</code> · <code>GET /openapi.json</code> ·
+                      <code>GET /docs</code>
+                    </td>
+                    <td>USER</td>
+                  </tr>
+                  <tr>
+                    <td><code>GET /health</code> · <code>GET /ready</code></td>
+                    <td>none</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+
+        <!-- ================= MCP ================= -->
+        <section class="feature" id="mcp">
+          <div class="eyebrow">
+            Integration · design 9.5, 10.8 · <span class="chip post">post-R3</span>
+          </div>
+          <h2>AI assistant (MCP server)</h2>
+          <p class="summary">
+            A QE talks to an AI coding agent, which proposes inputs and a profile from a BRD or FSD,
+            explains every value, previews the result and, after an explicit yes, saves a version.
+            The engine computes; the assistant never invents figures.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0016">ADR-0016 MCP server</a>
+            <a class="chip adr" href="#adr-0018">ADR-0018 error codes</a>
+          </div>
+          <div class="card" style="margin-bottom: 16px">
+            <div class="flow">
+              <span class="step">Coding agent<small>Claude Code · Codex</small></span
+              ><span class="arr">→</span>
+              <span class="step"
+                >Keycloak sign-in<small>public client or restricted DCR</small></span
+              ><span class="arr">→</span>
+              <span class="step hot">apps/mcp<small>token: aud sit-sizing-api, sid</small></span
+              ><span class="arr">→</span>
+              <span class="step">/api/v1<small>same RBAC, lock, rate limit</small></span
+              ><span class="arr">→</span>
+              <span class="step ok">Audit<small>channel mcp</small></span>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Read (8)</h3>
+              <p>
+                <code>whoami</code>, <code>list_projects</code>, <code>list_estimates</code>,
+                <code>get_estimate</code>, <code>get_version</code>, <code>compare_versions</code>,
+                <code>list_profiles</code>, <code>get_profile</code>
+              </p>
+            </div>
+            <div class="card">
+              <h3>Understand (3)</h3>
+              <p>
+                <code>describe_inputs</code>, <code>describe_assumptions</code> (glossary with only
+                QE-approved help texts), <code>preview_estimate</code>
+              </p>
+            </div>
+            <div class="card">
+              <h3>Write (6), each behind an explicit yes</h3>
+              <p>
+                <code>create_estimate</code>, <code>start_draft</code>, <code>update_draft</code>,
+                <code>apply_profile</code>, <code>save_version</code>, <code>submit_version</code>.
+                Never approve or return.
+              </p>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Realm changes</h3>
+              <ul>
+                <li>Public client <code>sit-sizing-mcp</code>, PKCE S256, loopback redirects.</li>
+                <li>
+                  Anonymous dynamic registration under STRICT policies: public, PKCE, loopback, no
+                  mappers.
+                </li>
+                <li>
+                  Default audience scope; tokens without <code>sid</code> or from built-in clients
+                  refused.
+                </li>
+                <li>No offline tokens.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Lock safety</h3>
+              <p>
+                Write tools take the lock with <code>takeover: false</code>. If the editor holds it,
+                the tool answers <code>EDITOR_OPEN</code> and writes nothing; the lock token means
+                it can never end the editor's lock.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Clients</h3>
+              <p>
+                Supported: Claude Code, Codex. Antigravity: unsupported (never starts sign-in).
+                Kiro: untested. Quickstart:
+                <a href="assistant-quickstart.md">assistant-quickstart.md</a>.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PLATFORM ================= -->
+        <section class="feature" id="platform">
+          <div class="eyebrow">Platform · design 12 · <span class="chip r1">R1</span></div>
+          <h2>Containers, pipeline and operations</h2>
+          <p class="summary">
+            One multi-stage image, promoted unchanged from dev to sit to prod; configuration only
+            through validated environment variables.
+          </p>
+          <div class="chips">
+            <a class="chip adr" href="#adr-0001">ADR-0001 stack and versions</a>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Compose services</h3>
+              <p class="files">
+                db · migrate · seed · keycloak · web · worker · mcp · mail (Mailpit) · jaeger (obs)
+              </p>
+              <p>
+                <code>pnpm dev:up</code> creates <code>.env</code>, starts the stack with hot reload
+                and seeds synthetic data. Works on Docker Desktop and Rancher Desktop (dockerd).
+              </p>
+            </div>
+            <div class="card">
+              <h3>Pipeline</h3>
+              <p>
+                Jenkins multibranch via Nexus: install → type check, lint → unit → parity and
+                mutation → integration → image → scans → E2E smoke → publish. Migrations run as a
+                separate step; expand-then-contract.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Observability and recovery</h3>
+              <p>
+                pino JSON logs with request ID (no inputs, tokens or personal data), OpenTelemetry
+                traces, <code>/health</code> and <code>/ready</code>. Nightly backups;
+                <code>pnpm db:restore-test</code> before every release.
+              </p>
+            </div>
+          </div>
+          <p class="files">
+            Runbook: <a href="../runbook.md">docs/runbook.md</a> · Release checklist:
+            <a href="../release-checklist.md">docs/release-checklist.md</a> · Threat model:
+            <a href="../threat-model.md">docs/threat-model.md</a> · Run guide:
+            <a href="run-and-deploy.html">run-and-deploy.html</a>
+          </p>
+        </section>
+
+        <!-- ================= TESTING ================= -->
+        <section class="feature" id="testing">
+          <div class="eyebrow">Platform · design 13, 15 · all releases</div>
+          <h2>Testing and quality gates</h2>
+          <p class="summary">
+            Every merge runs the full suite on the exact tree being merged; a partial run never
+            counts.
+          </p>
+          <div class="card table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Command</th>
+                  <th>Covers</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>pnpm check</code></td>
+                  <td>
+                    Type check, lint (layer boundaries), format, unit, golden and prototype UI
+                    parity tests
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>pnpm test:coverage</code></td>
+                  <td>Engine 95%, schemas 90%, patterns and features 80% lines and branches</td>
+                </tr>
+                <tr>
+                  <td><code>pnpm test:int</code></td>
+                  <td>
+                    API integration with Testcontainers PostgreSQL: RBAC matrix, lock, workflow,
+                    audit
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>pnpm test:e2e</code></td>
+                  <td>
+                    Production-like images and Playwright E2E with Keycloak, plus the MCP flow
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>pnpm --filter @sit/engine parity</code></td>
+                  <td>5,000 random cases vs the prototype (when the engine changes)</td>
+                </tr>
+                <tr>
+                  <td><code>pnpm test:idp</code></td>
+                  <td>Realm baseline and MCP registration policies against a Keycloak container</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ================= ADR INDEX ================= -->
+        <section class="feature" id="adrs">
+          <div class="eyebrow">Decisions · design 18.1</div>
+          <h2>ADR index</h2>
+          <p class="summary">
+            Every architecture decision record, with what it decided and what it means. Click a row
+            to open it; the link opens the full ADR in <code>docs/adr/</code>. "Proposed" means the
+            file still says so although the feature is merged: accepting it is a human step.
+          </p>
+          <div class="adr-tools" role="search">
+            <label for="adr-q" class="skip">Filter ADRs</label>
+            <input id="adr-q" type="search" placeholder="Filter by number, title or keyword…" />
+            <button type="button" data-status="all" aria-pressed="true">All</button>
+            <button type="button" data-status="accepted" aria-pressed="false">Accepted</button>
+            <button type="button" data-status="proposed" aria-pressed="false">Proposed</button>
+            <button type="button" data-status="pending" aria-pressed="false">Review pending</button>
+            <button type="button" id="adr-expand">Expand all</button>
+          </div>
+          <p id="adr-count" class="caption" aria-live="polite"></p>
+
+          <details class="adr" id="adr-0001" data-status="proposed">
+            <summary>
+              <span class="num">0001</span
+              ><span class="ttl">Technology stack and version policy</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  Lockfile is the exact pin; <code>minimumReleaseAge</code> 14 days; shared
+                  toolchain in the pnpm catalog.
+                </li>
+                <li>
+                  Node 24 LTS, pnpm 10, Next.js 16, React 19, TypeScript 6.0, Zod 4, Prisma 7,
+                  Keycloak 26.8, PostgreSQL 17, Vitest, pino, OpenTelemetry.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  Upgrades in their own PRs; TypeScript 7, ESLint 10 and pnpm 12 are tracked
+                  follow-ups.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0001-stack.md">Read ADR-0001</a> · Features:
+                <a href="#architecture">architecture</a>, <a href="#platform">platform</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0002" data-status="proposed">
+            <summary>
+              <span class="num">0002</span
+              ><span class="ttl">Identity provider: self-hosted Keycloak</span
+              ><span class="status proposed">Proposed (Q2)</span
+              ><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  Keycloak in its own container, database and role; the web app is only an OIDC
+                  client and never sees passwords.
+                </li>
+                <li>
+                  All configuration is the realm export in <code>docker/keycloak/</code>; no manual
+                  console changes in sit or prod.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  A named IdP owner; realm baseline tested automatically. Fallback: a
+                  <code>node-oidc-provider</code> service, with no app change.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0002-identity-provider.md">Read ADR-0002</a> · Feature:
+                <a href="#signin">sign-in</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0003" data-status="accepted">
+            <summary>
+              <span class="num">0003</span
+              ><span class="ttl">OpenAPI 3.2 contract and Scalar API Reference</span
+              ><span class="status accepted">Accepted</span><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  No third-party generator: Zod 4 <code>z.toJSONSchema</code> plus a ~150-line
+                  builder over one registry.
+                </li>
+                <li>
+                  <code>openapi: 3.2.0</code> (3.1.1 is a one-line fallback). Scalar self-hosted at
+                  <code>/api/v1/docs</code>, telemetry and hosted links off.
+                </li>
+                <li>
+                  Redocly lint, oasdiff breaking-change diff, contract test that the registry equals
+                  the route files.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  One source of truth for validation, client parsing and docs; the committed
+                  <code>openapi.json</code> is regenerated with every API change.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0003-openapi-and-api-reference.md">Read ADR-0003</a> · Feature:
+                <a href="#api">API contract</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0004" data-status="accepted">
+            <summary>
+              <span class="num">0004</span
+              ><span class="ttl">Sign-in with openid-client and an encrypted session cookie</span
+              ><span class="status accepted">Accepted</span><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  openid-client v6 (OpenID Certified) instead of the Auth.js v5 beta: code flow with
+                  PKCE S256, state, nonce, refresh, RP-initiated logout.
+                </li>
+                <li>
+                  Session in a JWE cookie (<code>dir</code> + <code>A256GCM</code>), idle 8 h,
+                  absolute 12 h; refresh every 10 min revokes disabled users.
+                </li>
+                <li>
+                  Amendment: back-channel logout endpoint; <code>sid</code> stored in
+                  <code>RevokedSession</code> so sign-out elsewhere takes effect at once.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  Auth code lives only in <code>server/auth</code> and <code>app/api/auth</code>;
+                  every change needs named security review.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0004-sign-in-library.md">Read ADR-0004</a> · Feature:
+                <a href="#signin">sign-in</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0005" data-status="accepted">
+            <summary>
+              <span class="num">0005</span
+              ><span class="ttl">Design tokens and component base (TCB-DS red)</span
+              ><span class="status accepted">Accepted</span><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  <code>tokens.ts</code> is the only place for colours, radius, fonts and motion;
+                  semantic, shadcn-compatible names plus <code>rough</code>, <code>detailed</code>,
+                  <code>good</code>, <code>warn</code>, <code>bad</code>.
+                </li>
+                <li>
+                  Layers ui → patterns → features enforced by ESLint; Storybook 10 with the a11y
+                  addon.
+                </li>
+                <li>
+                  Amendment: TCB-DS red <code>#ED1C24</code> in the prototype's theme; system fonts;
+                  no logo; red-on-white contrast exception tested at 3:1.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  Replacing the palette changes <code>tokens.ts</code> only; the Keycloak login
+                  theme takes the same values.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0005-design-tokens-and-component-base.md">Read ADR-0005</a> ·
+                Feature: <a href="#ui">design system</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0006" data-status="accepted">
+            <summary>
+              <span class="num">0006</span
+              ><span class="ttl">Estimate editor, locale routing and prototype parity</span
+              ><span class="status accepted">Accepted</span><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>Locale in the URL with next-intl; <code>proxy.ts</code> adds the prefix.</li>
+                <li>
+                  Messages from the prototype; numbers formatted as the prototype does
+                  (<code>lib/format.ts</code>).
+                </li>
+                <li>
+                  Context + reducer store, controlled inputs with the prototype's normalisers; no
+                  React Hook Form.
+                </li>
+                <li>
+                  Lock lifecycle: 15-min lock, 5-min heartbeat, 1.5 s autosave, recovery on 409.
+                </li>
+                <li>
+                  Export and import in the prototype's file format; parity test runs the HTML
+                  prototype in jsdom.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>A UI change that alters a figure, rounding or sentence fails CI.</li>
+              </ul>
+              <p>
+                <a href="../adr/0006-estimate-editor.md">Read ADR-0006</a> · Features:
+                <a href="#editor">editor</a>, <a href="#results">results</a>,
+                <a href="#ui">languages</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0007" data-status="proposed">
+            <summary>
+              <span class="num">0007</span
+              ><span class="ttl">Approval workflow, version compare and restore</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  <code>SAVED → SUBMITTED → APPROVED</code>; return to SAVED with a note; previous
+                  approved becomes SUPERSEDED.
+                </li>
+                <li>
+                  Author or submitter cannot approve, Admins included (403
+                  <code>SEGREGATION_OF_DUTIES</code>).
+                </li>
+                <li>
+                  Compare from stored results, changed paths capped at 500; restore = new draft from
+                  that version.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  A single-lead project needs an Admin or second lead to approve (open question
+                  Q13).
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0007-approval-workflow-and-compare.md">Read ADR-0007</a> · Feature:
+                <a href="#versions">versions</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0008" data-status="proposed">
+            <summary>
+              <span class="num">0008</span><span class="ttl">Assumption profiles</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  <code>DRAFT → PUBLISHED → RETIRED</code>; only drafts change; clone to change a
+                  published one.
+                </li>
+                <li>
+                  Project profiles by QE Lead, global by Admin; calibration source and date per row.
+                </li>
+                <li>
+                  Apply to a draft copies values (lock and <code>rowVersion</code> required); last
+                  published global cannot be retired.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>Draft profile edits are last-write-wins (no optimistic lock).</li>
+              </ul>
+              <p>
+                <a href="../adr/0008-assumption-profiles.md">Read ADR-0008</a> · Feature:
+                <a href="#profiles">profiles</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0009" data-status="proposed">
+            <summary>
+              <span class="num">0009</span><span class="ttl">Excel and CSV export</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  Server-side, audited <code>GET …/export?format=xlsx|csv</code>; one table model,
+                  two renderers (ExcelJS, CSV).
+                </li>
+                <li>
+                  Totals are formulas with cached engine results; numbers unrounded; CSV injection
+                  guarded.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>ExcelJS on the release checklist; a print-friendly view is not built.</li>
+              </ul>
+              <p>
+                <a href="../adr/0009-spreadsheet-export.md">Read ADR-0009</a> · Feature:
+                <a href="#export">export</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0010" data-status="proposed">
+            <summary>
+              <span class="num">0010</span
+              ><span class="ttl">Notifications: outbox, worker, email and in-app</span
+              ><span class="status proposed">Proposed (Q12)</span
+              ><span class="date">2026-11-12</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  Outbox rows in the business transaction; IN_APP visible at once, EMAIL sent by the
+                  worker.
+                </li>
+                <li>
+                  Worker claims with <code>FOR UPDATE SKIP LOCKED</code>, 5-min lease, backoff 1–30
+                  min, FAILED after 6 attempts.
+                </li>
+                <li>
+                  nodemailer over <code>SMTP_URL</code>; EN/VI templates; no tracking or remote
+                  images.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>Mail service outside local is open (Q12); retention undecided.</li>
+              </ul>
+              <p>
+                <a href="../adr/0010-notifications.md">Read ADR-0010</a> · Feature:
+                <a href="#notifications">notifications</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0011" data-status="proposed">
+            <summary>
+              <span class="num">0011</span><span class="ttl">Actuals and variance</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-13</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  Per cycle: cases and SIT hours required; rates and group split optional; only
+                  approved or superseded versions.
+                </li>
+                <li>
+                  Variance computed against the stored detailed result, never stored; four rates
+                  shown beside the assumption they inform.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  A person updates the profile; calibration suggestions stay a later candidate.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0011-actuals-and-variance.md">Read ADR-0011</a> · Feature:
+                <a href="#actuals">actuals</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0012" data-status="proposed">
+            <summary>
+              <span class="num">0012</span><span class="ttl">Portfolio view</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-13</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  One row per estimate: approved (default) or latest saved; stored figures; plain
+                  sums; ranges low+low, high+high.
+                </li>
+                <li>
+                  New permission <code>portfolio.read</code> (QE Lead per project, Admin all); CSV
+                  export.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  No release field yet; pagination when portfolios grow past a few hundred
+                  estimates.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0012-portfolio.md">Read ADR-0012</a> · Feature:
+                <a href="#portfolio">portfolio</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0013" data-status="proposed">
+            <summary>
+              <span class="num">0013</span
+              ><span class="ttl">Engine version flag, recompute as new draft, upgrade on read</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-13</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  One read path: <code>upgradeStored()</code> runs steps to the current schema, then
+                  Zod; rows never rewritten.
+                </li>
+                <li>
+                  Newer schema → 409 <code>NEWER_SCHEMA</code>; older engine → flag and "recompute
+                  as new draft", which opens the comparison.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  Schema change checklist: bump version, add a step, add an old-shape fixture and
+                  its test.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0013-engine-version-and-stored-payloads.md">Read ADR-0013</a> ·
+                Features: <a href="#engine">engine</a>, <a href="#versions">versions</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0014" data-status="proposed">
+            <summary>
+              <span class="num">0014</span><span class="ttl">Admin and audit screens</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-13</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  Admin role is read-only in the app (Keycloak group); activation is the one user
+                  change made in the app.
+                </li>
+                <li>
+                  Users list, filtered and paged audit log, members panel on the project page.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>Making someone Admin is a Keycloak change; audit retention undecided.</li>
+              </ul>
+              <p>
+                <a href="../adr/0014-admin-and-audit-screens.md">Read ADR-0014</a> · Features:
+                <a href="#admin">admin</a>, <a href="#projects">members</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0015" data-status="proposed">
+            <summary>
+              <span class="num">0015</span><span class="ttl">Sidebar navigation</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-13</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  Layout A: everything in a left sidebar (Work, Admin, Reference), no top bar;
+                  shadcn Sidebar copied by hand and trimmed.
+                </li>
+                <li>
+                  Collapse to icons with Ctrl/⌘+B (cookie), sheet on phones; six new sidebar tokens.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  Sign-out moves into the account menu; option C (icon rail) is a default change
+                  away.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0015-sidebar-navigation.md">Read ADR-0015</a> · Feature:
+                <a href="#navigation">navigation</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0016" data-status="accepted">
+            <summary>
+              <span class="num">0016</span
+              ><span class="ttl">MCP server and client compatibility</span
+              ><span class="status accepted">Accepted</span
+              ><span class="date">2026-11-13 · accepted 11-15</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  A separate hosted MCP server that calls the REST API; the engine computes; writes
+                  need an explicit yes; never approve or return.
+                </li>
+                <li>
+                  Realm: public client <code>sit-sizing-mcp</code> plus restricted anonymous dynamic
+                  registration (for Codex), default audience scope, no offline tokens.
+                </li>
+                <li>Amendment: draft lock token closes the editor/assistant lock race.</li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  Claude Code and Codex supported; Antigravity not; Kiro untested. Bearer requests
+                  are audited as channel <code>mcp</code>.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0016-mcp-server.md">Read ADR-0016</a> · Features:
+                <a href="#mcp">MCP</a>, <a href="#editor">editor lock</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0017" data-status="proposed">
+            <summary>
+              <span class="num">0017</span><span class="ttl">Guided tours</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-15</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  React Joyride 3.2 (MIT); Intro.js fails the licence gate, Driver.js is imperative.
+                </li>
+                <li>
+                  "Seen" on the account (<code>User.tours</code>) with an optimistic browser copy;
+                  library allowed only in <code>features/tours</code>.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  A new tour is a registry entry, messages and targets; every existing user sees the
+                  first tour once.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0017-guided-tours.md">Read ADR-0017</a> · Feature:
+                <a href="#tours">tours</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0018" data-status="proposed">
+            <summary>
+              <span class="num">0018</span><span class="ttl">Error codes are an extensible set</span
+              ><span class="status proposed">Proposed</span><span class="date">2026-11-15</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  <code>error.code</code> published as a string with <code>x-extensible-enum</code>;
+                  the server keeps a closed type; clients accept any code.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  One breaking-change approval for the switch; new codes are additive afterwards;
+                  removing a code is still breaking.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0018-extensible-error-codes.md">Read ADR-0018</a> · Feature:
+                <a href="#api">API contract</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0019" data-status="pending">
+            <summary>
+              <span class="num">0019</span
+              ><span class="ttl"
+                >Simple / Medium / Complex sizes for data-test minutes and preparation hours</span
+              ><span class="status pending">Accepted · review pending</span
+              ><span class="date">2026-11-16</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  <code>dataDesign</code> [10, 15, 25], <code>dataExec</code> [5, 8, 12],
+                  <code>dataPrepHours</code> [2, 3, 5]; columns and DQ as S/M/C inputs.
+                </li>
+                <li>
+                  Engine 1.1.0, schema 2; profile data migration keeps calibrated rows' numbers
+                  (exception to design 6.6 rule 6).
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  Numbers change for Medium and Complex data tests; API shape change; rollback SQL
+                  in the runbook.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0019-sized-data-platform-assumptions.md">Read ADR-0019</a> ·
+                Feature: <a href="#sizes">sizes</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0020" data-status="pending">
+            <summary>
+              <span class="num">0020</span
+              ><span class="ttl">Ten T-shirt sizes for rough-scope features</span
+              ><span class="status pending">Accepted · review pending</span
+              ><span class="date">2026-11-16</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>XXS, XS, S, M-, M, M+, L, XL, XXL, XXXL; S–XL unchanged; 142 → 160 rows.</li>
+                <li>Engine 1.2.0, schema 3; add-only profile migration.</li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>Existing estimates unchanged; new size rows show as uncalibrated.</li>
+              </ul>
+              <p>
+                <a href="../adr/0020-more-feature-sizes.md">Read ADR-0020</a> · Feature:
+                <a href="#sizes">sizes</a>
+              </p>
+            </div>
+          </details>
+          <details class="adr" id="adr-0021" data-status="pending">
+            <summary>
+              <span class="num">0021</span><span class="ttl">Feature sizes are profile data</span
+              ><span class="status pending">Accepted · review pending</span
+              ><span class="date">2026-11-16</span>
+            </summary>
+            <div class="body">
+              <h4>Decision</h4>
+              <ul>
+                <li>
+                  <code>Assumptions.sizes</code>: 1–20 ordered names; edited only in draft profiles;
+                  apply refused with <code>SIZE_NOT_IN_PROFILE</code>.
+                </li>
+                <li>
+                  130 fixed rows + 3 per size; custom rows uncalibrated until noted; engine 1.3.0,
+                  schema 4; goldens unchanged.
+                </li>
+              </ul>
+              <h4>Consequences</h4>
+              <ul>
+                <li>
+                  <code>Size</code> becomes a constrained string in the API; the prototype keeps ten
+                  fixed sizes.
+                </li>
+              </ul>
+              <p>
+                <a href="../adr/0021-custom-feature-sizes.md">Read ADR-0021</a> · Feature:
+                <a href="#sizes">sizes</a>
+              </p>
+            </div>
+          </details>
+        </section>
+
+        <!-- ================= OPEN ITEMS ================= -->
+        <section class="feature" id="open">
+          <div class="eyebrow">Decisions · design 14.4, 16</div>
+          <h2>Open items</h2>
+          <p class="summary">
+            The code is merged. What remains is human sign-off and a few product questions.
+          </p>
+          <div class="grid">
+            <div class="card">
+              <h3>Sign-offs</h3>
+              <ul>
+                <li>
+                  Named reviewers for sensitive paths: engine, migrations, <code>lib/rbac.ts</code>,
+                  auth, realm.
+                </li>
+                <li>
+                  QE lead sign-off of size defaults (ADR-0019 to 0021) and assumption help texts.
+                </li>
+                <li>Vietnamese review of all VI text.</li>
+                <li>Accept the ADRs still marked Proposed.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Questions (design 16)</h3>
+              <ul>
+                <li>Q2 Keycloak acceptance by information security.</li>
+                <li>Q4 Hosting and secret store; Q12 mail service.</li>
+                <li>Q13 Single-QE-Lead approvals; Q14 retention.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Checks not yet run</h3>
+              <ul>
+                <li>First Jenkins run on <code>main</code>.</li>
+                <li>Phone-width and screen-reader checks.</li>
+                <li>Kiro with the MCP server.</li>
+              </ul>
+            </div>
+          </div>
+          <footer>
+            Generated from the solution design (revision 5), the ADRs in <code>docs/adr/</code> and
+            the code on <code>main</code> at <code>aaeb9fb</code>, 2026-11-18. Synthetic examples
+            only. Results from the tool are a planning range, not a commitment.
+          </footer>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        // Sections menu on narrow screens: a drawer opened from the top bar.
+        var body = document.body;
+        var menuBtn = document.querySelector('.menu-btn');
+        var closeBtn = document.querySelector('.drawer-close');
+        var nav = document.getElementById('sections-nav');
+        var current = document.getElementById('current-section');
+        var narrow = window.matchMedia('(max-width: 900px)');
+        function setOpen(open, restoreFocus) {
+          body.classList.toggle('nav-open', open);
+          menuBtn.setAttribute('aria-expanded', String(open));
+          if (narrow.matches) {
+            if (open) nav.setAttribute('role', 'dialog');
+            else nav.removeAttribute('role');
+            nav.setAttribute('aria-modal', String(open));
+          }
+          if (open) {
+            var target = nav.querySelector('a.active') || nav.querySelector('a');
+            if (target) target.focus();
+          } else if (restoreFocus) {
+            menuBtn.focus();
+          }
+        }
+        menuBtn.addEventListener('click', function () {
+          setOpen(!body.classList.contains('nav-open'), true);
+        });
+        closeBtn.addEventListener('click', function () {
+          setOpen(false, true);
+        });
+        document.querySelector('.scrim').addEventListener('click', function () {
+          setOpen(false, true);
+        });
+        nav.addEventListener('click', function (e) {
+          if (e.target.closest('a')) setOpen(false, false);
+        });
+        document.addEventListener('keydown', function (e) {
+          if (!body.classList.contains('nav-open')) return;
+          if (e.key === 'Escape') {
+            setOpen(false, true);
+            return;
+          }
+          if (e.key !== 'Tab') return;
+          var items = Array.prototype.slice.call(nav.querySelectorAll('a, button'));
+          var first = items[0];
+          var last = items[items.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        });
+        narrow.addEventListener('change', function () {
+          if (!narrow.matches) {
+            body.classList.remove('nav-open');
+            menuBtn.setAttribute('aria-expanded', 'false');
+            nav.removeAttribute('role');
+            nav.removeAttribute('aria-modal');
+          }
+        });
+
+        // ---------- Motion ----------
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (!reduce.matches) document.documentElement.classList.add('js-motion');
+
+        function addReplay(card, label, run) {
+          card.classList.add('anim-card');
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'replay';
+          b.textContent = '↻ Replay';
+          b.setAttribute('aria-label', 'Replay animation: ' + label);
+          b.addEventListener('click', run);
+          card.appendChild(b);
+        }
+        function whenVisible(el, fn) {
+          if (!('IntersectionObserver' in window)) return fn();
+          var o = new IntersectionObserver(
+            function (es) {
+              if (es[0].isIntersecting) {
+                o.disconnect();
+                fn();
+              }
+            },
+            { threshold: 0.35 },
+          );
+          o.observe(el);
+        }
+
+        // Flows: steps and arrows appear in order, then a spotlight walks the steps once.
+        Array.prototype.slice.call(document.querySelectorAll('.flow')).forEach(function (flow) {
+          var parts = Array.prototype.slice.call(flow.children);
+          var steps = parts.filter(function (p) {
+            return p.classList.contains('step');
+          });
+          parts.forEach(function (p, i) {
+            p.classList.add('s');
+            p.style.setProperty('--i', i);
+          });
+          var timers = [];
+          function play() {
+            if (reduce.matches) return;
+            timers.forEach(clearTimeout);
+            timers = [];
+            steps.forEach(function (st) {
+              st.classList.remove('spot');
+            });
+            flow.classList.remove('play');
+            void flow.offsetWidth; // restart the CSS animation
+            flow.classList.add('play');
+            var start = parts.length * 110 + 350;
+            steps.forEach(function (st, i) {
+              timers.push(
+                setTimeout(
+                  function () {
+                    steps.forEach(function (x) {
+                      x.classList.remove('spot');
+                    });
+                    st.classList.add('spot');
+                  },
+                  start + i * 550,
+                ),
+              );
+            });
+            timers.push(
+              setTimeout(
+                function () {
+                  steps.forEach(function (x) {
+                    x.classList.remove('spot');
+                  });
+                },
+                start + steps.length * 550 + 400,
+              ),
+            );
+          }
+          var card = flow.closest('.card');
+          var title = card && card.querySelector('h3');
+          if (card && !card.querySelector('.replay'))
+            addReplay(card, title ? title.textContent : 'flow', play);
+          whenVisible(flow, play);
+        });
+
+        // Architecture diagram: boxes fade in, wires draw, then pulses travel along request paths.
+        (function () {
+          var svg = document.getElementById('arch-diagram');
+          if (!svg) return;
+          var boxes = Array.prototype.slice.call(svg.querySelectorAll('.box'));
+          var texts = Array.prototype.slice.call(svg.querySelectorAll('text:not(.lane)'));
+          var lanes = Array.prototype.slice.call(svg.querySelectorAll('text.lane'));
+          boxes.forEach(function (b, i) {
+            b.style.setProperty('--d', i * 70 + 'ms');
+          });
+          texts.forEach(function (t) {
+            // A text belongs to the box it sits in; take that box's delay.
+            var y = +t.getAttribute('y');
+            var x = +t.getAttribute('x');
+            var idx = boxes.findIndex(function (b) {
+              var bx = +b.getAttribute('x'),
+                by = +b.getAttribute('y');
+              return (
+                x >= bx &&
+                x <= bx + +b.getAttribute('width') &&
+                y >= by &&
+                y <= by + +b.getAttribute('height')
+              );
+            });
+            t.style.setProperty('--d', (idx < 0 ? 0 : idx * 70 + 120) + 'ms');
+          });
+          lanes.forEach(function (t) {
+            t.style.setProperty('--d', '0ms');
+          });
+          var order = [
+            'w-browser-kc',
+            'w-agent-kc',
+            'w-browser-web',
+            'w-agent-mcp',
+            'w-mcp-web',
+            'w-web-kc',
+            'w-kc-db',
+            'w-web-db',
+            'w-worker-db',
+            'w-worker-mail',
+          ];
+          var wiresStart = boxes.length * 70 + 300;
+          order.forEach(function (id, i) {
+            var w = document.getElementById(id);
+            var delay = wiresStart + i * 160;
+            w.style.setProperty('--d', delay + 'ms');
+            if (!w.classList.contains('dash')) {
+              var len = w.getTotalLength();
+              w.style.strokeDasharray = len;
+              w.style.strokeDashoffset = len;
+              w.classList.add('draw');
+            }
+          });
+          var drawn = wiresStart + order.length * 160 + 600;
+
+          var ns = 'http://www.w3.org/2000/svg';
+          var routes = [
+            { wires: ['w-browser-web', 'w-web-db'], cls: '' },
+            { wires: ['w-agent-mcp', 'w-mcp-web', 'w-web-db'], cls: 'gold' },
+            { wires: ['w-worker-mail'], cls: 'navy' },
+          ].map(function (r) {
+            var paths = r.wires.map(function (id) {
+              return document.getElementById(id);
+            });
+            var lens = paths.map(function (p) {
+              return p.getTotalLength();
+            });
+            var dot = document.createElementNS(ns, 'circle');
+            dot.setAttribute('r', '8');
+            dot.setAttribute('class', 'pulse ' + r.cls);
+            dot.setAttribute('aria-hidden', 'true');
+            svg.appendChild(dot);
+            return {
+              paths: paths,
+              lens: lens,
+              total: lens.reduce(function (a, b) {
+                return a + b;
+              }, 0),
+              dot: dot,
+            };
+          });
+
+          var raf = 0,
+            t0 = 0,
+            onScreen = false,
+            started = false,
+            pulseTimer = 0;
+          var SPEED = 0.16; // px per ms
+          var GAP = 900; // pause between laps, ms
+          function frame(now) {
+            if (!t0) t0 = now;
+            var elapsed = now - t0;
+            routes.forEach(function (r, ri) {
+              var lap = r.total / SPEED + GAP;
+              var t = (elapsed - ri * 700) % lap;
+              if (elapsed < ri * 700 || t > r.total / SPEED) {
+                r.dot.style.opacity = 0;
+                return;
+              }
+              var d = t * SPEED,
+                k = 0;
+              while (k < r.paths.length - 1 && d > r.lens[k]) {
+                d -= r.lens[k];
+                k++;
+              }
+              var pt = r.paths[k].getPointAtLength(Math.min(d, r.lens[k]));
+              r.dot.setAttribute('cx', pt.x);
+              r.dot.setAttribute('cy', pt.y);
+              r.dot.style.opacity = 1;
+            });
+            raf = requestAnimationFrame(frame);
+          }
+          function startPulses() {
+            cancelAnimationFrame(raf);
+            if (reduce.matches || !onScreen || document.hidden || !started) return;
+            raf = requestAnimationFrame(frame);
+          }
+          function stopPulses() {
+            cancelAnimationFrame(raf);
+            routes.forEach(function (r) {
+              r.dot.style.opacity = 0;
+            });
+          }
+          function play() {
+            if (reduce.matches) return;
+            stopPulses();
+            clearTimeout(pulseTimer);
+            started = false;
+            t0 = 0;
+            svg.classList.remove('play');
+            void svg.getBoundingClientRect();
+            svg.classList.add('play');
+            pulseTimer = setTimeout(function () {
+              started = true;
+              startPulses();
+            }, drawn);
+          }
+          if ('IntersectionObserver' in window) {
+            new IntersectionObserver(
+              function (es) {
+                onScreen = es[0].isIntersecting;
+                if (onScreen) startPulses();
+                else cancelAnimationFrame(raf);
+              },
+              { threshold: 0.1 },
+            ).observe(svg);
+          } else onScreen = true;
+          document.addEventListener('visibilitychange', function () {
+            if (document.hidden) cancelAnimationFrame(raf);
+            else startPulses();
+          });
+          reduce.addEventListener('change', function () {
+            if (reduce.matches) {
+              document.documentElement.classList.remove('js-motion');
+              stopPulses();
+            } else {
+              document.documentElement.classList.add('js-motion');
+              play();
+            }
+          });
+          addReplay(svg.closest('.card'), 'architecture diagram', play);
+          whenVisible(svg, play);
+        })();
+
+        // Highlight the current section in the side index.
+        var links = Array.prototype.slice.call(document.querySelectorAll('aside a'));
+        var byId = {};
+        links.forEach(function (a) {
+          byId[a.getAttribute('href').slice(1)] = a;
+        });
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (e) {
+                if (!e.isIntersecting) return;
+                links.forEach(function (a) {
+                  a.classList.remove('active');
+                  a.removeAttribute('aria-current');
+                });
+                var a = byId[e.target.id];
+                if (a) {
+                  a.classList.add('active');
+                  a.setAttribute('aria-current', 'true');
+                  current.textContent = a.textContent;
+                }
+              });
+            },
+            { rootMargin: '-20% 0px -70% 0px' },
+          );
+          document.querySelectorAll('section.feature').forEach(function (s) {
+            io.observe(s);
+          });
+        }
+
+        // Open an ADR when its chip or a #adr-NNNN link is followed.
+        function openFromHash() {
+          var el = location.hash && document.getElementById(location.hash.slice(1));
+          if (el && el.tagName === 'DETAILS') el.open = true;
+        }
+        window.addEventListener('hashchange', openFromHash);
+        openFromHash();
+
+        // ADR filter.
+        var q = document.getElementById('adr-q');
+        var buttons = Array.prototype.slice
+          .call(document.querySelectorAll('[data-status]'))
+          .filter(function (b) {
+            return b.tagName === 'BUTTON';
+          });
+        var adrs = Array.prototype.slice.call(document.querySelectorAll('details.adr[id^="adr-"]'));
+        var count = document.getElementById('adr-count');
+        var status = 'all';
+        function apply() {
+          var term = q.value.trim().toLowerCase();
+          var shown = 0;
+          adrs.forEach(function (d) {
+            var ok =
+              (status === 'all' || d.dataset.status === status) &&
+              (!term || d.textContent.toLowerCase().indexOf(term) !== -1);
+            d.classList.toggle('hidden', !ok);
+            if (ok) shown++;
+          });
+          count.textContent = shown + ' of ' + adrs.length + ' ADRs shown';
+        }
+        q.addEventListener('input', apply);
+        buttons.forEach(function (b) {
+          b.addEventListener('click', function () {
+            status = b.dataset.status;
+            buttons.forEach(function (x) {
+              x.setAttribute('aria-pressed', String(x === b));
+            });
+            apply();
+          });
+        });
+        var expand = document.getElementById('adr-expand');
+        expand.addEventListener('click', function () {
+          var open = expand.textContent === 'Expand all';
+          adrs.forEach(function (d) {
+            if (!d.classList.contains('hidden')) d.open = open;
+          });
+          expand.textContent = open ? 'Collapse all' : 'Expand all';
+        });
+        apply();
+      })();
+    </script>
+  </body>
+</html>
